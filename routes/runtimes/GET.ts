@@ -1,9 +1,9 @@
-import { defaultRuntime } from '../../services/defaultRuntime'
+import { defaultRuntime, runtimeAllowed } from '../../services/defaultRuntime'
 import { requirePrincipal } from '../../services/principal'
 import { listRuntimes } from '../../services/runtimeLoader'
 
 export const openapi = {
-  summary: 'List the runtimes (how a sandbox runs: dind, sysbox)',
+  summary: 'List the runtimes new sandboxes may use (how a sandbox runs: dind, sysbox; ALLOWED_RUNTIMES)',
   tags: ['templates'],
   security: [{ bearerAuth: [] }],
   responses: {
@@ -26,5 +26,5 @@ export default async (req: Request): Promise<Response> => {
   const p = requirePrincipal(req)
   if (p instanceof Response) return p
   const def = await defaultRuntime()
-  return Response.json(listRuntimes().map(r => ({ name: r.name, description: r.description, default: r.name === def })))
+  return Response.json(listRuntimes().filter(r => runtimeAllowed(r.name)).map(r => ({ name: r.name, description: r.description, default: r.name === def })))
 }

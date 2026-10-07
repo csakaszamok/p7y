@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 let installed = ['runc']
 vi.mock('../../services/docker', () => ({ dockerRuntimes: vi.fn(async () => installed) }))
-const { defaultRuntime, runtimeMissing, _resetDefaultRuntime } = await import('../../services/defaultRuntime')
+const { defaultRuntime, runtimeMissing, runtimeAllowed, allowedRuntimes, _resetDefaultRuntime } = await import('../../services/defaultRuntime')
 
 beforeEach(() => { _resetDefaultRuntime(); installed = ['runc'] })
 
@@ -24,5 +24,19 @@ describe('runtimeMissing', () => {
     expect(await runtimeMissing('dind')).toBeNull()
     _resetDefaultRuntime(); installed = ['runc', 'sysbox-runc']
     expect(await runtimeMissing('sysbox')).toBeNull()
+  })
+})
+
+describe('ALLOWED_RUNTIMES', () => {
+  it('empty or unset: every runtime is allowed', () => {
+    expect(allowedRuntimes({})).toBeNull()
+    expect(allowedRuntimes({ ALLOWED_RUNTIMES: ' , ' })).toBeNull()
+    expect(runtimeAllowed('dind', {})).toBe(true)
+  })
+  it('a comma list (spaces and case ignored) allows only those', () => {
+    const env = { ALLOWED_RUNTIMES: ' Sysbox, kata ' }
+    expect(allowedRuntimes(env)).toEqual(['sysbox', 'kata'])
+    expect(runtimeAllowed('sysbox', env)).toBe(true)
+    expect(runtimeAllowed('dind', env)).toBe(false)
   })
 })

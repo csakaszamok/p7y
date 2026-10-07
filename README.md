@@ -122,6 +122,7 @@ Main settings in `.env`:
 | `SANDBOX_QUOTA` | `3` | Sandboxes a user may have running at once; asleep and deep-sleeping ones are not counted; `0` = unlimited |
 | `SANDBOX_MAX_TOTAL` | `200` | Users' running and asleep sandboxes on the whole server (each holds a Docker network and its subnet); the admin's are not counted and the admin is not limited; `0` = no limit |
 | `DEFAULT_RUNTIME` | `auto` | Runtime for new sandboxes when a request names none: `auto` picks `sysbox` where the host has sysbox installed (no privileged container) and `dind` otherwise; or name one (see [Runtimes and templates](#runtimes-and-templates)) |
+| `ALLOWED_RUNTIMES` | — (all) | Runtimes new sandboxes may use, as a comma list: `sysbox` forbids the privileged `dind` on a shared server. Others are left out of `GET /runtimes` and the **New sandbox** form, and a create asking for one is a 400 (so is one without a runtime when the default is not allowed). Existing sandboxes keep running, sleeping and waking |
 | `SANDBOX_CPUS`, `SANDBOX_MEMORY` | `2`, `4g` | CPU and memory limit of every new sandbox (see [CPU and memory](#cpu-and-memory)) |
 | `SANDBOX_MAX_CPUS`, `SANDBOX_MAX_MEMORY` | `4`, `8g` | How far a user can raise their sandbox's limits; the admin can go up to the host |
 | `SANDBOX_DISK` | `20g` | Disk use above which a sandbox is flagged; a warning only, see [Disk](#disk) |
@@ -228,7 +229,7 @@ Both runtimes have the same wiring (FRP tunnel, Traefik route, Sablier sleep/wak
 | `DELETE` | `/sandboxes/:name/registry/:app/:digest` | Delete one version of an image |
 | `POST` | `/sandboxes/:name/restart` | Restart a sandbox |
 | `DELETE` | `/sandboxes/:name` | Archive the sandbox, then remove it (**Archive…** in the UI; see [Delete = archive](#delete--archive)) |
-| `GET` | `/runtimes` | List the runtimes (`name`, `description`, `default`) |
+| `GET` | `/runtimes` | List the runtimes new sandboxes may use (`name`, `description`, `default`; only those in `ALLOWED_RUNTIMES` when it is set) |
 | `GET` | `/templates` | List the templates (`name`, `description`, `default`) |
 | `GET` | `/ssh-keys` | Your SSH public keys (`id`, `name`, `type`, `fingerprint`, `created_at`) |
 | `POST` | `/ssh-keys` | Add a public key (`key`, optional `name`); it lets you into all your sandboxes with SSH |
