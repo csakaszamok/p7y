@@ -141,6 +141,21 @@ describe('POST /sandboxes', () => {
     expect((await res.json()).error).toBe('Unknown runtime')
   })
 
+  it('a runtime not in ALLOWED_RUNTIMES: 400, nothing created (the default too, saying so)', async () => {
+    vi.mocked(sandboxService.createSandbox).mockClear()
+    vi.stubEnv('ALLOWED_RUNTIMES', 'sysbox')
+    vi.stubEnv('DEFAULT_RUNTIME', 'dind')
+    try {
+      const res = await handler(jsonReq({ name: 'na', runtime: 'dind' }))
+      expect(res.status).toBe(400)
+      expect((await res.json()).error).toMatch(/dind is not allowed on this server/)
+      const def = await handler(jsonReq({ name: 'na2' }))
+      expect(def.status).toBe(400)
+      expect((await def.json()).error).toMatch(/the default runtime \(dind\) is not allowed/)
+      expect(sandboxService.createSandbox).not.toHaveBeenCalled()
+    } finally { vi.stubEnv('ALLOWED_RUNTIMES', ''); vi.stubEnv('DEFAULT_RUNTIME', '') }
+  })
+
   it('rejects a non-string runtime or template with 400', async () => {
     expect((await handler(jsonReq({ name: 'bad', runtime: 1 }))).status).toBe(400)
     expect((await handler(jsonReq({ name: 'bad', template: ['starter'] }))).status).toBe(400)

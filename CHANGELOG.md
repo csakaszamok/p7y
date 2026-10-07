@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- `ALLOWED_RUNTIMES`: the runtimes new sandboxes may use (comma list, empty = all), e.g. `sysbox` so nobody creates a privileged `dind` sandbox on a shared server. The others are left out of `GET /runtimes` and the create form; asking for one is a 400. Existing sandboxes are not affected.
+
 ## [0.3.0] - 2026-10-07
 
 The first release from the public repository. The images of 0.1.0 and 0.2.0 are no longer published: use 0.3.0 or later.

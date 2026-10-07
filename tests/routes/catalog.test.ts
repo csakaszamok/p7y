@@ -44,6 +44,14 @@ describe('GET /runtimes and GET /templates', () => {
     } finally { delete process.env.DEFAULT_RUNTIME; delete process.env.DEFAULT_TEMPLATE }
   })
 
+  it('list only the runtimes in ALLOWED_RUNTIMES', async () => {
+    vi.stubEnv('DEFAULT_RUNTIME', 'sysbox')
+    vi.stubEnv('ALLOWED_RUNTIMES', 'sysbox')
+    try {
+      expect((await (await runtimes(req('/runtimes'))).json()).map((r: { name: string }) => r.name)).toEqual(['sysbox'])
+    } finally { vi.stubEnv('ALLOWED_RUNTIMES', ''); vi.stubEnv('DEFAULT_RUNTIME', '') }
+  })
+
   it('require authentication', async () => {
     expect((await runtimes(req('/runtimes', null))).status).toBe(401)
     expect((await templates(req('/templates', null))).status).toBe(401)

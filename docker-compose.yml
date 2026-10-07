@@ -26,6 +26,8 @@ services:
       # Per-route auth is handled by ADMIN_TOKEN in services/auth.ts instead.
       ADMIN_TOKEN: ${ADMIN_TOKEN:-abc123}
       DEFAULT_RUNTIME: ${DEFAULT_RUNTIME:-auto}
+      # Runtimes new sandboxes may use (comma list, e.g. sysbox); empty = all
+      ALLOWED_RUNTIMES: ${ALLOWED_RUNTIMES:-}
       DEFAULT_TEMPLATE: ${DEFAULT_TEMPLATE:-starter}
       SANDBOX_CPUS: ${SANDBOX_CPUS:-2}
       SANDBOX_MEMORY: ${SANDBOX_MEMORY:-4g}

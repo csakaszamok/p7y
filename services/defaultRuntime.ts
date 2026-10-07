@@ -23,3 +23,15 @@ export async function runtimeMissing(name: string): Promise<string | null> {
   if (name !== 'sysbox' || (await hostRuntimes()).includes(SYSBOX_RUNC)) return null
   return 'sysbox is not installed on this host (no sysbox-runc runtime in Docker): install sysbox, or use the dind runtime'
 }
+
+/** ALLOWED_RUNTIMES: the runtimes new sandboxes may use (comma list, case-insensitive), or null = all of them. */
+export function allowedRuntimes(env: NodeJS.ProcessEnv = process.env): string[] | null {
+  const list = (env.ALLOWED_RUNTIMES ?? '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+  return list.length ? list : null
+}
+
+/** Whether new sandboxes may use this runtime (existing ones keep running whatever it says). */
+export function runtimeAllowed(name: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  const allowed = allowedRuntimes(env)
+  return !allowed || allowed.includes(name.toLowerCase())
+}

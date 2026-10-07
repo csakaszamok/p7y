@@ -18,7 +18,7 @@ import { writeWebResponse } from "./services/http";
 import { attachTerminals } from "./services/terminalServer";
 import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
-import { defaultRuntime } from "./services/defaultRuntime";
+import { defaultRuntime, runtimeAllowed } from "./services/defaultRuntime";
 import { startRegistryGc } from "./services/registryGc";
 import { resumeScans } from "./services/registryScans";
 import { notifySecret } from "./services/notifySecret";
@@ -267,6 +267,7 @@ void defaultRuntime().then(rt => {
   const auto = !process.env.DEFAULT_RUNTIME || process.env.DEFAULT_RUNTIME === "auto";
   if (auto && rt === "dind") console.warn("[runtime] sysbox is not installed: new sandboxes run privileged (dind). Install sysbox on a Linux host for isolation.");
   else console.log(`[runtime] new sandboxes run on ${rt}${auto ? " (auto)" : ""}`);
+  if (!runtimeAllowed(rt)) console.warn(`[runtime] the default runtime ${rt} is not in ALLOWED_RUNTIMES: a create without a runtime is refused; set DEFAULT_RUNTIME to an allowed one`);
 });
 startRegistryGc();
 // Scans interrupted by a restart run again (their repos stay private meanwhile)
