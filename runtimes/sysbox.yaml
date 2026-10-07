@@ -1,0 +1,122 @@
+# How a sandbox runs: its own compose file (the DinD container, frps, socat, Traefik and Sablier labels).
+# The stack inside comes from a template (templates/<name>/compose.yaml).
+description: "Sysbox: no privileged mode, isolated by the sysbox runtime (needs sysbox on a Linux host)"
+
+# The sysbox image runs plain `dockerd` (no dind entrypoint), so TLS and the
+# 2376 listener come from daemon.json. Certs are mounted at /certs.
+daemon_json:
+  hosts: ["unix:///var/run/docker.sock", "tcp://0.0.0.0:2376"]
+  tls: true
+  tlsverify: true
+  tlscacert: /certs/server/ca.pem
+  tlscert: /certs/server/cert.pem
+  tlskey: /certs/server/key.pem
+
+docker_compose:
+  services:
+    sandbox:
+      image: csakaszamok/foxglove:0.6.0-sysbox
+      container_name: ${name}
+      runtime: sysbox-runc
+      environment:
+        FRP_SERVER_ADDR: "${name}-frps"
+        FRP_SERVER_PORT: "7000"
+        FRP_TOKEN: "${frp_token}"
+        BASE_DOMAIN: "${host_domain}"
+      volumes:
+        - "${sandbox_dir}/certs:/certs"
+        - "${sandbox_dir}/instance-name:/etc/instance/name:ro"
+        - "${sandbox_dir}/authorized_keys:/etc/instance/authorized_keys:ro"
+        - "${sandbox_dir}/ssh-host-keys:/etc/ssh/host-keys"
+        - "${sandbox_dir}/inner:/inner"
+        - "${sandbox_dir}/daemon.json:/etc/docker/daemon.json:ro"
+        - docker_data:/var/lib/docker
+        # The sandbox's own files survive a deep sleep or a recreated container
+        - sandbox_opt:/opt
+        - sandbox_root:/root
+        - sandbox_home:/home
+        - sandbox_srv:/srv
+      restart: unless-stopped
+      cpus: ${cpus}
+      mem_limit: ${memory}
+      memswap_limit: ${memory}
+      networks:
+        - default
+        - traefik-net
+      labels:
+        p7y.managed: "true"
+        p7y.name: ${name}
+        p7y.template: ${template_name}
+        p7y.runtime: ${runtime_name}
+        p7y.compose: ${compose_source}
+        p7y.ssh: "true"
+        p7y.created_at: ${created_at}
+        p7y.deep_sleep_after: ${deep_sleep_after}
+        p7y.owner: ${owner}
+        sablier.enable: "true"
+        sablier.group: ${name}
+
+    frps:
+      image: fatedier/frps:v0.62.1
+      container_name: ${name}-frps
+      command:
+        - -c
+        - /etc/frp/frps.toml
+      volumes:
+        - "${sandbox_dir}/frps.toml:/etc/frp/frps.toml:ro"
+      networks:
+        - default
+      restart: unless-stopped
+      labels:
+        sablier.enable: "true"
+        sablier.group: ${name}
+
+    socat:
+      image: alpine/socat:1.8.1.3
+      container_name: ${name}-socat
+      entrypoint: /bin/sh
+      command: -c "trap 'exit 0' TERM; socat -d -d -v TCP-LISTEN:8080,fork,reuseaddr TCP:${name}-frps:8080 & socat -d -d -v TCP-LISTEN:7500,fork,reuseaddr TCP:${name}-frps:7500 & wait"
+      networks:
+        - default
+        - traefik-net
+      restart: unless-stopped
+      depends_on:
+        - frps
+      # Healthy only once frpc inside the sandbox has registered its proxies,
+      # so Sablier does not redirect the user before the tunnel works.
+      healthcheck:
+        test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7500/api/proxy/http | grep -q online"]
+        interval: 2s
+        timeout: 2s
+        retries: 60
+      labels:
+        sablier.enable: "true"
+        sablier.group: ${name}
+        # No allownonrunning: the router exists only while the sandbox runs, so running traffic never goes
+        # through p7y; asleep, its requests fall to p7y's catch-all (p7y-wake), which wakes it within the limits
+        traefik.enable: "true"
+        traefik.http.routers.frps-${name}.rule: "HostRegexp(`^${raw_name}-[a-z0-9-]+[.]${host_domain}$`)"
+        traefik.http.routers.frps-${name}.middlewares: sablier-${name}
+        traefik.http.middlewares.sablier-${name}.plugin.sablier.sablierUrl: http://sablier:10000
+        traefik.http.middlewares.sablier-${name}.plugin.sablier.group: ${name}
+        traefik.http.middlewares.sablier-${name}.plugin.sablier.sessionDuration: ${idle_timeout}
+        traefik.http.middlewares.sablier-${name}.plugin.sablier.dynamic.displayName: ${raw_name}
+        traefik.http.middlewares.sablier-${name}.plugin.sablier.dynamic.theme: p7y
+        traefik.http.middlewares.sablier-${name}.plugin.sablier.dynamic.refreshFrequency: 3s
+        traefik.http.routers.frps-${name}.entrypoints: web,websecure
+        # By name, not the container's address: Traefik learns a woken container's address only ~1.5 s after
+        # Sablier lets the request through, and meanwhile sent it to the stopped one's empty address (500)
+        traefik.http.services.frps-${name}.loadbalancer.server.url: http://${name}-socat:8080
+        traefik.docker.network: traefik-net
+
+  volumes:
+    docker_data:
+    sandbox_opt:
+    sandbox_root:
+    sandbox_home:
+    sandbox_srv:
+
+  networks:
+    traefik-net:
+      external: true
+

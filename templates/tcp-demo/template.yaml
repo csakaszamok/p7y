@@ -1,0 +1,4 @@
+description: "TCP demo: Postgres (sample orders table), Redis and SSH on TLS TCP addresses, pgweb in the browser; one generated demo password"
+
+before_script: |
+  return { demo_password: crypto.randomBytes(12).toString('hex') }

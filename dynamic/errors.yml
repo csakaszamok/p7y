@@ -1,0 +1,14 @@
+http:
+  middlewares:
+    global-error-pages:
+      errors:
+        status:
+          - "404"
+        service: error-pages
+        query: "/404.html"
+
+  services:
+    error-pages:
+      loadBalancer:
+        servers:
+          - url: "http://error-pages:80"

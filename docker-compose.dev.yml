@@ -1,0 +1,9 @@
+# Development: run Purgatory from this checkout's code instead of the code in the image.
+# Enable with COMPOSE_PATH_SEPARATOR=: and COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml in .env; edits apply on the next request.
+services:
+  p7y:
+    volumes:
+      - ./server.ts:/app/server.ts
+      - ./routes:/app/routes
+      - ./services:/app/services
+      - ./ui:/app/ui

@@ -1,0 +1,40 @@
+name: Bug report
+description: Something does not work as the README says
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Create a sandbox with ...
+        2. Open ...
+        3. See ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Purgatory version or commit
+      placeholder: v0.1.0, or the output of git rev-parse --short HEAD
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Host
+      description: OS, Docker version, and the template (dind-standard or sysbox-sandbox)
+      placeholder: Ubuntu 24.04, Docker 29.8, dind-standard
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant output of `docker compose logs p7y` (and of the sandbox, `docker logs p7y-<name>`). Remove secrets and tokens.
+      render: text

@@ -1,0 +1,222 @@
+* { box-sizing: border-box }
+body { margin: 0; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f0f0f; color: #e8e8e8 }
+a { color: #7aa7ff }
+code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace }
+.muted { color: #888 }
+.error { color: #ef4444 }
+button { font: inherit; color: #e8e8e8; background: #252525; border: 1px solid #333; border-radius: 6px; padding: 6px 12px; cursor: pointer }
+button:hover { background: #2e2e2e }
+button.primary, a.primary { background: #ea580c; border-color: #ea580c; color: #fff; text-decoration: none; display: inline-block; text-align: center; padding: 7px 14px; border-radius: 6px }
+button.primary:hover, a.primary:hover { background: #c2410c; border-color: #c2410c }
+button.primary:disabled { background: #5a3a28; border-color: #5a3a28; color: #b9aea7; cursor: not-allowed }
+button.danger { border-color: #7f1d1d; color: #fca5a5 }
+button.link { background: none; border: none; color: #7aa7ff; padding: 0 }
+.wide { width: 100% }
+input, select { font: inherit; color: #e8e8e8; background: #141414; border: 1px solid #333; border-radius: 6px; padding: 6px 8px; width: 100% }
+label { display: block; margin: 10px 0 2px }
+label.check { display: flex; gap: 8px; align-items: center }
+label.check input { width: auto }
+.topbar { display: flex; align-items: center; gap: 24px; padding: 10px 20px; background: #151515; border-bottom: 1px solid #242424 }
+.brand { font-weight: 700; display: inline-flex; align-items: center; gap: 8px }
+.topbar nav { display: flex; gap: 16px; flex: 1 }
+.topbar nav a { color: #aaa; text-decoration: none }
+.topbar nav a.active { color: #fff; font-weight: 600 }
+.who { display: flex; gap: 12px; align-items: center; margin: 0; color: #aaa }
+main { padding: 20px }
+.split { display: flex; gap: 20px; align-items: flex-start }
+.list { flex: 3; min-width: 0 }
+.panel { flex: 2; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 16px; position: sticky; top: 20px }
+.list-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px }
+.list-head h1 { font-size: 18px; margin: 0; flex: 1 }
+.filters { display: flex; gap: 8px }
+.filters input { width: 220px }
+.filters select { width: 140px }
+table.grid { width: 100%; border-collapse: collapse }
+table.grid th { text-align: left; color: #888; font-weight: 500; padding: 6px 8px; border-bottom: 1px solid #242424 }
+table.grid td { padding: 8px; border-bottom: 1px solid #1e1e1e }
+table.grid tbody tr[data-name] { cursor: pointer }
+table.grid tbody tr[data-name]:hover { background: #161616 }
+table.grid tbody tr.selected { background: rgba(37, 99, 235, .15) }
+/* Status: an ember dot in the list (running flickers, asleep breathes, deep sleep is ash),
+   a glowing pill at the top of the details panel. Failed stays plainly red. */
+.status { display: inline-flex; align-items: center; gap: 8px }
+.status::before { content: ""; width: 9px; height: 9px; border-radius: 50%; flex: none }
+.status.running::before { background: radial-gradient(circle at 50% 60%, #fff3c4 0 18%, #ffb347 40%, #ff6a00 75%); box-shadow: 0 0 6px 2px rgba(255,120,20,.6); animation: ember-flicker 1.6s infinite ease-in-out }
+.status.exited::before, .status.starting::before { background: radial-gradient(circle at 50% 55%, #ff9a3c 0 25%, #c2410c 70%, #7a1f05); animation: ember-breathe 3.2s infinite ease-in-out }
+.status.deep_sleep { color: #9a9aa0 }
+.status.deep_sleep::before { background: radial-gradient(circle at 45% 45%, #8b8b90, #4a4a4f 70%) }
+.status.failed { color: #f87171 }
+.status.failed::before { background: #ef4444; box-shadow: 0 0 4px 1px rgba(239,68,68,.5) }
+.panel-head > .status { font-size: 12.5px; padding: 2px 10px 2px 9px; border-radius: 999px; border: 1px solid transparent; gap: 7px }
+.panel-head > .status::before { width: 7px; height: 7px }
+.panel-head > .status.running { color: #ffd9a8; background: rgba(255,106,0,.12); border-color: rgba(255,140,40,.35) }
+.panel-head > .status.exited, .panel-head > .status.starting { color: #f2a36b; background: rgba(194,65,12,.12); border-color: rgba(194,65,12,.35) }
+.panel-head > .status.deep_sleep { background: rgba(120,120,128,.1); border-color: rgba(120,120,128,.3) }
+.panel-head > .status.failed { color: #fca5a5; background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.35) }
+@keyframes ember-flicker { 0%,100% { transform: scale(1) } 30% { transform: scale(1.14); box-shadow: 0 0 9px 3px rgba(255,150,40,.8) } 60% { transform: scale(.94) } }
+@keyframes ember-breathe { 0%,100% { opacity: .5; box-shadow: 0 0 2px 0 rgba(230,90,20,.3) } 50% { opacity: 1; box-shadow: 0 0 7px 2px rgba(240,100,20,.6) } }
+@media (prefers-reduced-motion: reduce) { .status::before { animation: none !important } }
+.panel h2 { margin: 0 0 4px; font-size: 16px }
+.panel .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px }
+button:disabled { opacity: .55; cursor: wait }
+button.busy { opacity: 1; display: inline-flex; align-items: center; gap: 8px; border-color: rgba(255,140,60,.45); color: #ffd9a8 }
+button.busy::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: radial-gradient(circle at 50% 55%, #ff9a3c 0 25%, #c2410c 70%, #7a1f05); animation: ember-breathe 1.2s infinite ease-in-out }
+dialog { background: #1a1a1a; color: #e8e8e8; border: 1px solid #2a2a2a; border-radius: 10px; width: min(460px, 92vw) }
+dialog::backdrop { background: rgba(0, 0, 0, .6) }
+dialog h2 { margin-top: 0; font-size: 17px }
+dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px }
+details { margin-top: 12px }
+.created { background: #10261a; border: 1px solid #14532d; border-radius: 8px; padding: 12px; margin: 12px 0 }
+.copy { display: flex; gap: 8px; margin-top: 8px }
+.copy code { flex: 1; background: #0b0b0b; padding: 6px 8px; border-radius: 6px; word-break: break-all }
+body.login { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0a0705; overflow: hidden }
+body.login .heat { position: fixed; left: 50%; bottom: -35vh; width: 130vw; height: 70vh; transform: translateX(-50%); pointer-events: none;
+                   background: radial-gradient(ellipse at center, rgba(255,110,40,.20), rgba(255,80,20,.06) 45%, transparent 70%) }
+body.login .card { position: relative; z-index: 1; background: rgba(20,15,12,.72); backdrop-filter: blur(6px); border: 1px solid rgba(255,140,60,.14);
+                   border-radius: 16px; padding: 32px; width: min(380px, 92vw); box-shadow: 0 20px 60px rgba(0,0,0,.5) }
+body.login .logo { display: block; margin-bottom: 12px; filter: drop-shadow(0 0 8px rgba(255,120,30,.45)) }
+body.login h1 { margin: 0 }
+body.login form button { margin-top: 14px }
+@media (max-width: 800px) { .split { flex-direction: column } .panel { position: static; width: 100% } }
+
+/* Starter stack viewer */
+dialog.wide { width: min(880px, 94vw) }
+pre.code { margin: 0; max-height: 60vh; overflow: auto; background: #0c0c0d; border: 1px solid #242424; border-radius: 8px; padding: 12px 14px;
+           font: 12.5px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; color: #d6d6da; white-space: pre }
+textarea[data-compose-editor] { display: block; width: 100%; min-height: 24em; margin-top: 6px; box-sizing: border-box; resize: vertical; font: 12px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; background: #0c0c0d; color: #e8e8e8; border: 1px solid #242424; border-radius: 8px; padding: 10px 12px; tab-size: 2; white-space: pre; overflow: auto }
+textarea[data-compose-editor]:disabled { opacity: .5 }
+.small { font-size: 12px; margin-top: 8px }
+dialog .actions form { margin: 0 }
+.tcp { font: 12.5px ui-monospace, SFMono-Regular, Consolas, monospace; color: #d6d6da }
+.not-answering { color: #f59e0b; font-size: 0.9em }
+dialog h3 { font-size: 13px; margin: 14px 0 6px; color: #b9aea7 }
+
+body.terminal-page { margin: 0; height: 100vh; display: flex; flex-direction: column }
+body.terminal-page .topbar { gap: 16px }
+body.terminal-page [data-term] { flex: 1; min-height: 0; padding: 4px 8px; background: #000 }
+body.logs-page { margin: 0; height: 100vh; display: flex; flex-direction: column }
+body.logs-page .topbar { gap: 16px }
+body.logs-page .log-tools { margin-left: auto; display: flex; gap: 8px; align-items: center }
+body.logs-page [data-log] { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 10px; background: #000; color: #e5e5e5; font: 13px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace }
+.log-line { white-space: pre-wrap; overflow-wrap: anywhere }
+.log-line.err .log-text { color: #fca5a5 }
+.log-line.marker .log-text { color: #a3a3a3; font-style: italic }
+.log-time { color: #737373; margin-right: 8px }
+.log-service { margin-right: 8px }
+.log-newer { position: fixed; right: 24px; bottom: 20px }
+.meter { display: inline-block; width: 90px; height: 6px; border-radius: 3px; background: #2a2a2a; vertical-align: middle; margin-right: 6px; overflow: hidden }
+.meter > span { display: block; height: 100%; background: #4caf7d }
+.meter.warm > span { background: #f0a020 }
+.meter.hot > span { background: #e5484d }
+
+/* details panel: header + tabs + tables */
+.panel-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap }
+.panel-head h2 { margin: 0 }
+.panel-head .head-actions { margin: 0 0 0 auto; display: flex; gap: 6px }
+.panel-sub { margin: 8px 0 0; color: #a1a1aa; font-size: 13px }
+.panel-error { margin: 8px 0 0 }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid #2a2a2a; margin: 14px 0 10px; overflow-x: auto }
+.tabs [role="tab"] { background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: #9a9aa2; padding: 7px 12px; white-space: nowrap; cursor: pointer }
+.tabs [role="tab"][aria-selected="true"] { color: #fff; border-bottom-color: #ff6a00 }
+.tabs [role="tab"]:focus-visible { outline: 2px solid #ff6a00; outline-offset: -2px }
+.panel-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 12px }
+.panel-table th { text-align: left; color: #888; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; padding: 4px 6px; border-bottom: 1px solid #2a2a2a }
+.panel-table td { padding: 6px; border-bottom: 1px solid #222; vertical-align: middle }
+.panel-table .tcp { overflow-wrap: anywhere }
+.apps-table td:not(:nth-child(3)), .panel-table button.link, .panel-table a { white-space: nowrap }
+.panel-table td.k { color: #888; width: 34% }
+.ok { color: #5fd38d }
+.warn { color: #f59e0b }
+.danger-zone { margin-top: 16px; border-top: 1px solid #3a1f1f; padding-top: 10px }
+.danger-zone h3 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #f87171 }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+@media (max-width: 560px) {
+  .apps-table thead { display: none }
+  .apps-table tr, .apps-table td { display: block }
+  .apps-table td { border: 0; padding: 2px 0 }
+  .apps-table tr { border-bottom: 1px solid #222; padding: 6px 0 }
+}
+.findings { margin: 4px 0 0; padding-left: 16px; color: #fca5a5; font-size: 12px }
+h3.repo { font-size: 13px; margin: 12px 0 4px }
+.danger-link { color: #f87171 }
+.agent-actions { margin: 0 0 12px }
+
+/* Overview: cards per state (the list's ember dots, bigger), host resources, disk, owners */
+.ov { max-width: 1240px }
+.ov-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px }
+.ov-head h1 { font-size: 20px; margin: 0 }
+.ov-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); gap: 14px; margin-bottom: 18px }
+.ov-card { position: relative; display: block; background: linear-gradient(180deg, #1c1c1c, #171717); border: 1px solid #2a2a2a; border-radius: 12px; padding: 16px 16px 14px; text-decoration: none; color: inherit; transition: border-color .15s, transform .15s; overflow: hidden }
+a.ov-card:hover { border-color: #ea580c; transform: translateY(-1px) }
+.ov-top { display: flex; align-items: center; justify-content: space-between; color: #9a9aa0; font-size: 12.5px; text-transform: uppercase; letter-spacing: .06em }
+.ov-num { font-size: 34px; font-weight: 700; line-height: 1.15; margin-top: 8px; font-variant-numeric: tabular-nums }
+.ov-num small { font-size: 18px; color: #888; font-weight: 500 }
+.ov-sub { color: #888; font-size: 12.5px; margin-top: 2px }
+.ov-glow { position: absolute; right: -30px; bottom: -40px; width: 120px; height: 120px; border-radius: 50%; filter: blur(30px); opacity: .18; pointer-events: none }
+.ov-card.running .ov-glow { background: #ff6a00; opacity: .28 }
+.ov-card.asleep .ov-glow { background: #c2410c }
+.ov-card.deep .ov-glow { background: #6b6b72 }
+.ov-card.allowed .ov-glow { background: #ea580c }
+.ov-card.warn { border-color: #7a3b0c; background: linear-gradient(180deg, #24170c, #171310) }
+.ov-card.warn .ov-glow { background: #f59e0b; opacity: .25 }
+.ov-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; display: inline-block }
+.ov-dot.running { background: radial-gradient(circle at 50% 60%, #fff3c4 0 18%, #ffb347 40%, #ff6a00 75%); box-shadow: 0 0 8px 3px rgba(255,120,20,.6); animation: ember-flicker 1.6s infinite ease-in-out }
+.ov-dot.asleep { background: radial-gradient(circle at 50% 55%, #ff9a3c 0 25%, #c2410c 70%, #7a1f05); animation: ember-breathe 3.2s infinite ease-in-out }
+.ov-dot.deep { background: radial-gradient(circle at 45% 45%, #8b8b90, #4a4a4f 70%) }
+.ov-dot.archived { background: none; border: 2px solid #555; border-radius: 3px }
+.ov-dot.small { width: 8px; height: 8px; box-shadow: none; vertical-align: baseline; margin-right: 6px; animation: none }
+@media (prefers-reduced-motion: reduce) { .ov-dot { animation: none !important } }
+.ov-ring { width: 30px; height: 30px; transform: rotate(-90deg) }
+.ov-ring circle { fill: none; stroke-width: 5 }
+.ov-ring .track { stroke: #2c2c2c }
+.ov-ring .fill { stroke: #ea580c; stroke-linecap: round }
+.ov-ring .fill.full { stroke: #f59e0b }
+.ov-stack { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: #222; margin: -4px 0 8px }
+.ov-stack span { display: block; height: 100% }
+.ov-stack .r { background: linear-gradient(90deg, #ff6a00, #ffb347) }
+.ov-stack .a { background: #c2410c }
+.ov-stack .d { background: #4a4a4f }
+.ov-legend { display: flex; gap: 16px; color: #888; font-size: 12.5px; margin-bottom: 22px; flex-wrap: wrap }
+.ov-grid2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; margin-bottom: 18px; align-items: start }
+.ov-box { background: #171717; border: 1px solid #2a2a2a; border-radius: 12px; padding: 16px; margin-bottom: 18px }
+.ov-grid2 .ov-box { margin-bottom: 0 }
+.ov-box h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #9a9aa0; margin: 0 0 12px; font-weight: 600 }
+.ov-meterrow { display: grid; grid-template-columns: 70px 1fr auto; gap: 12px; align-items: center; margin: 10px 0 }
+.ov-meter { position: relative; height: 10px; background: #242424; border-radius: 999px; overflow: hidden }
+.ov-meter .use { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #ea580c, #ffb347); border-radius: 999px }
+.ov-meter .res { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(45deg, rgba(234,88,12,.22) 0 6px, rgba(234,88,12,.1) 6px 12px); border-radius: 999px }
+.ov-val { font-variant-numeric: tabular-nums; color: #ccc; font-size: 13px; white-space: nowrap }
+.ov-note { color: #888; font-size: 12.5px; margin: 8px 0 0 }
+.ov-big { font-size: 26px; font-weight: 700 }
+.ov-top3 { list-style: none; padding: 0; margin: 10px 0 0 }
+.ov-top3 li { display: grid; grid-template-columns: 1fr 90px 64px; gap: 10px; align-items: center; padding: 4px 0; font-size: 13px }
+.ov-top3 .bar { height: 6px; background: #242424; border-radius: 999px; overflow: hidden }
+.ov-top3 .bar span { display: block; height: 100%; background: #c2410c }
+.ov-top3 li.over { color: #fbbf24 }
+.ov-top3 li.over .bar span { background: #f59e0b }
+.ov-top3 .v { text-align: right; color: #aaa; font-variant-numeric: tabular-nums }
+.ov-tablewrap { overflow-x: auto }
+.ov-table { width: 100%; border-collapse: collapse }
+.ov-table th { text-align: left; color: #888; font-weight: 500; padding: 6px 8px; border-bottom: 1px solid #242424; font-size: 12.5px }
+.ov-table td { padding: 9px 8px; border-bottom: 1px solid #1e1e1e; font-variant-numeric: tabular-nums }
+.ov-table td a { color: inherit; text-decoration: none }
+.ov-table tr:hover td { background: #1b1b1b }
+.ov-table td a:hover { color: #fff; text-decoration: underline }
+.ov-qbar { display: inline-block; width: 70px; height: 6px; background: #242424; border-radius: 999px; overflow: hidden; vertical-align: middle; margin-right: 8px }
+.ov-qbar span { display: block; height: 100%; background: #ea580c }
+.ov-qbar.full span { background: #f59e0b }
+@media (max-width: 860px) { .ov-grid2 { grid-template-columns: 1fr } }
+@media (max-width: 560px) {
+  .ov-cards { grid-template-columns: 1fr 1fr; gap: 10px }
+  .ov-num { font-size: 28px }
+  .ov-hide { display: none }
+  .ov-meterrow { grid-template-columns: 60px 1fr; row-gap: 4px }
+  .ov-val { grid-column: 2; white-space: normal; font-size: 12px }
+}
+/* Phones: the menu gets its own row and scrolls sideways instead of widening the page */
+@media (max-width: 640px) {
+  .topbar { flex-wrap: wrap; gap: 8px 16px; padding: 10px 16px }
+  .topbar nav { order: 3; flex-basis: 100%; overflow-x: auto; flex-wrap: nowrap; gap: 18px; padding-bottom: 2px }
+  .topbar nav a { white-space: nowrap }
+  .who { margin-left: auto }
+}

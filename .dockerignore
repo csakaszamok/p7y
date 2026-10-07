@@ -1,0 +1,8 @@
+node_modules
+data
+opt
+dynamic
+docs
+tests
+.git
+*.md

@@ -1,0 +1,31 @@
+* { box-sizing: border-box; margin: 0; padding: 0 }
+html, body { height: 100% }
+body { background: #0a0705; color: #ece6e1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden }
+.heat { position: fixed; left: 50%; bottom: -35vh; width: 130vw; height: 70vh; transform: translateX(-50%); pointer-events: none;
+        background: radial-gradient(ellipse at center, rgba(255,110,40,.20), rgba(255,80,20,.06) 45%, transparent 70%) }
+.wrap { position: relative; z-index: 1; min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 24px }
+.card { width: min(440px, 100%); background: rgba(20,15,12,.72); backdrop-filter: blur(6px); border: 1px solid rgba(255,140,60,.14);
+        border-radius: 16px; padding: 36px 40px 28px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.5) }
+.coal { width: 64px; height: 64px; margin: 0 auto 18px; position: relative }
+.coal .core { position: absolute; inset: 14px; border-radius: 50%;
+              background: radial-gradient(circle at 50% 60%, #ffd9a0 0 12%, #ff9a3c 35%, #c2410c 70%, #5a1604);
+              animation: p7y-heat 2.4s infinite ease-in-out; transition: opacity .6s }
+.coal svg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .6s }
+.coal.ready .core { opacity: 0 }
+.coal.ready svg { opacity: 1 }
+@keyframes p7y-heat { 0%,100% { box-shadow: 0 0 14px 4px rgba(230,90,20,.35); transform: scale(.96); filter: brightness(.85) }
+                      50% { box-shadow: 0 0 30px 10px rgba(255,120,30,.6); transform: scale(1.04); filter: brightness(1.15) } }
+h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px }
+.name { color: #9a8f88; font: 13px ui-monospace, SFMono-Regular, Consolas, monospace; margin-bottom: 24px }
+ul { list-style: none; text-align: left; font-size: 13px; color: #b9aea7 }
+li { padding: 7px 0; border-top: 1px solid rgba(255,255,255,.06); display: flex; justify-content: space-between; gap: 12px }
+li span:first-child { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.status { font-size: 13px; color: #b9aea7 }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: middle }
+.dot.starting { background: #ea580c; animation: p7y-breathe 1.6s infinite ease-in-out }
+.dot.ready { background: radial-gradient(circle at 50% 60%, #fff3c4 0 18%, #ffb347 40%, #ff6a00 75%); box-shadow: 0 0 6px 2px rgba(255,120,20,.6) }
+.dot.error { background: #ef4444 }
+.error { color: #f87171 }
+@keyframes p7y-breathe { 0%,100% { opacity: .45 } 50% { opacity: 1 } }
+.hint { margin-top: 22px; font-size: 12px; color: #6f6560 }
+@media (prefers-reduced-motion: reduce) { .coal .core, .dot.starting { animation: none } }

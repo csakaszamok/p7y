@@ -1,0 +1,34 @@
+node_modules/
+data/*.db
+.env
+opt
+# runtime-generated
+data/registry-auth.key
+data/registry-auth.crt
+data/tcp-tls.key
+data/tcp-tls.crt
+data/access-tokens.json
+data/ssh-keys.json
+data/*.tmp
+dynamic/sandbox-*.yml
+
+# local tooling
+.claude/
+
+# superpowers scratch (brainstorm companion, SDD ledgers)
+.superpowers/
+
+# copied-in TLS certificate (tls.crt, tls.key)
+certs/
+
+# internal working notes (specs, plans, briefs, release plan): kept locally, not published
+docs/superpowers/
+docs/kiadasi-terv.md
+
+# more runtime-generated data and local config
+data/registry-gc.json
+data/registry-notify.secret
+data/registry-scans.json
+data/disk-usage.json
+dynamic/tls.yml
+.vscode/

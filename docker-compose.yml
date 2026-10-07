@@ -1,0 +1,210 @@
+services:
+  p7y:
+    # A released image; `docker compose build` (or a missing image) builds it from this checkout.
+    # To work on the code, mount it instead: COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
+    # (and COMPOSE_PATH_SEPARATOR=: on Windows) in .env.
+    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.2.0}
+    build: .
+    ports:
+      # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
+      # to localhost (P7Y_API_BIND=127.0.0.1) so everything goes through HTTPS.
+      # LEANDER_API_BIND is the pre-rename name of the same setting.
+      - "${P7Y_API_BIND:-${LEANDER_API_BIND:-0.0.0.0}}:8081:3000"
+    volumes:
+      - ./templates:/app/templates
+      - ./runtimes:/app/runtimes
+      - ./data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./opt/sandboxes:/opt/sandboxes
+      # Sandboxes from before opt/sandboxes/<owner>/<name>: read by the startup move; removed in a later version
+      - ./opt/users:/opt/users
+      - ./opt/archive:/opt/archive
+      - ./certs:/app/certs:ro
+      - ./dynamic:/app/traefik-dynamic
+    environment:
+      # NOTE: Do NOT set TOKEN here — the base image's global TOKEN gate would block the UI and sign-in.
+      # Per-route auth is handled by ADMIN_TOKEN in services/auth.ts instead.
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-abc123}
+      DEFAULT_RUNTIME: ${DEFAULT_RUNTIME:-auto}
+      DEFAULT_TEMPLATE: ${DEFAULT_TEMPLATE:-starter}
+      SANDBOX_CPUS: ${SANDBOX_CPUS:-2}
+      SANDBOX_MEMORY: ${SANDBOX_MEMORY:-4g}
+      SANDBOX_MAX_CPUS: ${SANDBOX_MAX_CPUS:-4}
+      SANDBOX_MAX_MEMORY: ${SANDBOX_MAX_MEMORY:-8g}
+      SANDBOX_DISK: ${SANDBOX_DISK:-20g}
+      SANDBOX_MAX_TOTAL: ${SANDBOX_MAX_TOTAL:-200}
+      HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
+      HOST_DOMAIN: ${HOST_DOMAIN:-lvh.me}
+      # Whether images that passed the secret scan can be pulled without a login
+      REGISTRY_PUBLIC_PULL: ${REGISTRY_PUBLIC_PULL:-true}
+      TRAEFIK_DYNAMIC_DIR: /app/traefik-dynamic
+      API_TITLE: "Purgatory API"
+      # Host path of ./opt/sandboxes; override only if auto-detect fails (e.g. HOST_SANDBOXES_DIR=C:/m/docker/.../opt/sandboxes).
+      # HOST_USERS_DIR (the old ./opt/users) still works: its sibling `sandboxes` is used.
+      HOST_SANDBOXES_DIR: ${HOST_SANDBOXES_DIR:-}
+      HOST_USERS_DIR: ${HOST_USERS_DIR:-}
+      # How often to look for sandboxes to put into deep sleep (e.g. 30s, 1m, 1h)
+      DEEP_SLEEP_CHECK_INTERVAL: ${DEEP_SLEEP_CHECK_INTERVAL:-1m}
+      # Max sandboxes per signed-in user (0 = unlimited); the admin is not limited
+      SANDBOX_QUOTA: ${SANDBOX_QUOTA:-3}
+      # UI sign-in. Admin: local account. Everyone else: OIDC (Google or any OpenID Connect provider).
+      PUBLIC_URL: ${PUBLIC_URL:-http://p7y.${HOST_DOMAIN:-lvh.me}}
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_PROVIDER_NAME: ${OIDC_PROVIDER_NAME:-Google}
+    networks:
+      - default
+      - traefik-net
+      - sablier-net   # read Sablier's /metrics (session expiry per sandbox)
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.p7y.rule: "Host(`p7y.${HOST_DOMAIN:-lvh.me}`)"
+      traefik.http.routers.p7y.entrypoints: web,websecure
+      traefik.http.routers.p7y.service: p7y
+      traefik.http.services.p7y.loadbalancer.server.port: "3000"
+      # TLS-only TCP addresses for sandbox ports (<http-name>-tcp.<domain>:443) and sandbox Docker APIs
+      # (<raw>-docker.<domain>:443), passed through to the TCP gateway
+      traefik.tcp.routers.p7y-tcp.rule: "HostSNIRegexp(`^[a-z0-9-]+-(tcp|docker)[.]${HOST_DOMAIN:-lvh.me}$$`)"
+      traefik.tcp.routers.p7y-tcp.entrypoints: websecure
+      traefik.tcp.routers.p7y-tcp.tls.passthrough: "true"
+      traefik.tcp.routers.p7y-tcp.service: p7y-tcp
+      traefik.tcp.services.p7y-tcp.loadbalancer.server.port: "4443"
+      traefik.docker.network: traefik-net
+      # The UI's pre-rename address (Leander) redirects to the new one.
+      traefik.http.routers.p7y-legacy-host.rule: "Host(`leander.${HOST_DOMAIN:-lvh.me}`)"
+      traefik.http.routers.p7y-legacy-host.entrypoints: web,websecure
+      traefik.http.routers.p7y-legacy-host.middlewares: "legacy-host-redirect@docker"
+      traefik.http.routers.p7y-legacy-host.service: p7y
+      traefik.http.middlewares.legacy-host-redirect.redirectregex.regex: "^(https?)://leander[.](.*)$$"
+      traefik.http.middlewares.legacy-host-redirect.redirectregex.replacement: "$${1}://p7y.$${2}"
+      traefik.http.middlewares.legacy-host-redirect.redirectregex.permanent: "true"
+      # Catch-all (lowest priority): hosts without a sandbox router — deep-sleeping
+      # or unknown sandboxes — go to /wake, which rebuilds or 404s.
+      traefik.http.routers.p7y-wake.rule: "HostRegexp(`.+`)"
+      traefik.http.routers.p7y-wake.priority: "1"
+      traefik.http.routers.p7y-wake.entrypoints: web,websecure
+      traefik.http.routers.p7y-wake.middlewares: "wake-path@docker"
+      traefik.http.routers.p7y-wake.service: p7y
+      traefik.http.middlewares.wake-path.replacepath.path: "/wake"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /app/data/registry-auth.crt && test -f /app/data/registry-notify.secret"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 5s
+
+  registry:
+    image: registry:2.8.3
+    environment:
+      REGISTRY_AUTH: token
+      # Where docker clients get registry tokens: p7y via PUBLIC_URL when set (https in a public deployment)
+      REGISTRY_AUTH_TOKEN_REALM: "${PUBLIC_URL:-http://${HOST_ADDRESS:-localhost}:8081}/v2/auth"
+      REGISTRY_AUTH_TOKEN_SERVICE: "registry.${HOST_DOMAIN:-lvh.me}"
+      REGISTRY_AUTH_TOKEN_ISSUER: p7y
+      REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE: /auth/registry-auth.crt
+      REGISTRY_HTTP_SECRET: "${REGISTRY_HTTP_SECRET:-changeme}"
+    # registry/config.yml adds push notifications (to Purgatory, for secret scanning) and deletes
+    entrypoint: ["/bin/sh", "-c", "sed \"s|__NOTIFY_SECRET__|$$(cat /auth/registry-notify.secret)|\" /etc/p7y/config.yml > /etc/docker/registry/config.yml && exec registry serve /etc/docker/registry/config.yml"]
+    volumes:
+      - registry_data:/var/lib/registry
+      - ./registry/config.yml:/etc/p7y/config.yml:ro
+      - ./data:/auth:ro
+    networks:
+      - traefik-net
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.registry.rule: "Host(`registry.${HOST_DOMAIN:-lvh.me}`)"
+      traefik.http.routers.registry.entrypoints: web,websecure
+      traefik.http.services.registry.loadbalancer.server.port: 5000
+      traefik.docker.network: traefik-net
+    restart: unless-stopped
+    depends_on:
+      p7y:
+        condition: service_healthy
+
+  traefik:
+    image: traefik:v3.6.25
+    command:
+      - --experimental.plugins.sablier.moduleName=github.com/sablierapp/sablier-traefik-plugin
+      - --experimental.plugins.sablier.version=v1.3.0
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network=traefik-net
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls=true
+      - --api.insecure=true
+
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+      - "--entrypoints.web.http.middlewares=global-error-pages@file"
+      - "--entrypoints.websecure.http.middlewares=global-error-pages@file"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dynamic:/etc/traefik/dynamic:ro
+      - ./certs:/certs:ro
+    networks:
+      traefik-net:
+        aliases:
+          # Sandboxes reach the registry and its token endpoint through Traefik by name (not 127.0.0.1)
+          - registry.${HOST_DOMAIN:-lvh.me}
+          - p7y.${HOST_DOMAIN:-lvh.me}
+      sablier-net: {}
+    restart: unless-stopped
+
+  sablier:
+    image: sablierapp/sablier:1.18.0
+    command:
+      - start
+      - --provider.name=docker
+      # Persist sessions so restarting Sablier does not put running sandboxes to sleep
+      # (auto-stop-on-startup stops every instance it has no session for).
+      - --storage.file=/data/state.json
+      # Read-only /metrics: p7y shows each sandbox's session expiry (time until sleep).
+      - --server.metrics.enabled
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./sablier-themes:/etc/sablier/themes:ro
+      - sablier_data:/data
+    # Only Traefik talks to Sablier; keep it off traefik-net so sandboxes cannot reach its API.
+    networks:
+      - sablier-net
+    restart: unless-stopped
+
+  registry-cache:
+    image: registry:2.8.3
+    restart: unless-stopped
+    environment:
+      REGISTRY_PROXY_REMOTEURL: https://registry-1.docker.io
+    volumes:
+      - registry_cache_data:/var/lib/registry
+    networks:
+      - traefik-net
+
+  error-pages:
+    image: nginx:1.31.6-alpine
+    volumes:
+      - ./error-pages:/usr/share/nginx/html:ro
+    networks:
+      - traefik-net
+    restart: unless-stopped
+
+volumes:
+  registry_data:
+  sablier_data:
+  registry_cache_data:
+
+networks:
+  traefik-net:
+    name: traefik-net
+  sablier-net:
+    name: sablier-net
+    internal: true

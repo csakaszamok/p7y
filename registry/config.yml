@@ -1,0 +1,27 @@
+# The p7y registry. Auth (token) comes from REGISTRY_AUTH_* in docker-compose.yml; this file adds what
+# environment variables cannot express: push notifications to Purgatory (secret scanning) and deletes.
+# __NOTIFY_SECRET__ is replaced when the container starts with data/registry-notify.secret, which Purgatory generates.
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+  filesystem:
+    rootdirectory: /var/lib/registry
+  delete:
+    enabled: true
+http:
+  addr: :5000
+  headers:
+    X-Content-Type-Options: [nosniff]
+notifications:
+  endpoints:
+    - name: p7y
+      url: http://p7y:3000/registry/notify
+      headers:
+        Authorization: [Bearer __NOTIFY_SECRET__]
+      timeout: 2s
+      threshold: 5
+      backoff: 10s
+      ignoredmediatypes:
+        - application/octet-stream

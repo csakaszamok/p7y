@@ -1,0 +1,19 @@
+name: Feature request
+description: Something Purgatory should do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do, and what stops you today?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+      description: How you imagine it working. Alternatives you considered are welcome too.
+  - type: markdown
+    attributes:
+      value: Check [docs/roadmap.md](https://github.com/csakaszamok/p7y/blob/main/docs/roadmap.md) first; if it is already there, a comment on why you need it helps with the order.

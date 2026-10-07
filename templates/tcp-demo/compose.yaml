@@ -1,0 +1,92 @@
+# Published on all interfaces, so each gets a link and a TLS TCP address (<name>-db-tcp.<domain>:443 …);
+# a port published on 127.0.0.1 would stay private to the sandbox. The password goes only
+# into *PASSWORD* variables, so Starter stack… masks it.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: db
+    environment:
+      POSTGRES_PASSWORD: ${demo_password}
+    entrypoint:
+      - sh
+      - -c
+      - |
+        cat > /docker-entrypoint-initdb.d/demo.sql <<'SQL'
+        CREATE TABLE orders (
+          id serial PRIMARY KEY,
+          customer text NOT NULL,
+          item text NOT NULL,
+          amount numeric(8,2) NOT NULL,
+          created_at timestamptz NOT NULL DEFAULT now()
+        );
+        INSERT INTO orders (customer, item, amount, created_at)
+        SELECT (ARRAY['Alice','Bob','Carol','Dave','Erin'])[1 + g % 5],
+               (ARRAY['coffee','tea','croissant','bagel'])[1 + g % 4],
+               round((2 + random() * 18)::numeric, 2),
+               now() - g * interval '3 hours'
+        FROM generate_series(1, 30) g;
+        SQL
+        exec docker-entrypoint.sh postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    restart: unless-stopped
+    labels:
+      frpc.subdomain: db
+      p7y.connect.user: postgres
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    environment:
+      REDIS_PASSWORD: ${demo_password}
+    entrypoint: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    labels:
+      frpc.subdomain: redis
+
+  ssh:
+    image: lscr.io/linuxserver/openssh-server:latest
+    container_name: ssh
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      USER_NAME: demo
+      PASSWORD_ACCESS: "true"
+      USER_PASSWORD: ${demo_password}
+    ports:
+      - "2222:2222"
+    restart: unless-stopped
+    labels:
+      frpc.subdomain: ssh
+      p7y.connect.user: demo
+
+  pgweb:
+    image: sosedoff/pgweb:latest
+    container_name: pgweb
+    environment:
+      DB_PASSWORD: ${demo_password}
+      AUTH_PASSWORD: ${demo_password}
+    entrypoint: ["sh", "-c", "exec pgweb --bind=0.0.0.0 --listen=8081 --host=db --user=postgres --pass=\"$$DB_PASSWORD\" --db=postgres --ssl=disable --auth-user=demo --auth-pass=\"$$AUTH_PASSWORD\""]
+    ports:
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    labels:
+      frpc.subdomain: pgweb
+
+volumes:
+  pg_data:
+  redis_data:
