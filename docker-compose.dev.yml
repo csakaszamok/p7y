@@ -7,3 +7,4 @@ services:
       - ./routes:/app/routes
       - ./services:/app/services
       - ./ui:/app/ui
+      - ./package.json:/app/p7y/package.json:ro

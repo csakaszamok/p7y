@@ -18,6 +18,7 @@ import { writeWebResponse } from "./services/http";
 import { attachTerminals } from "./services/terminalServer";
 import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
+import { repoInfo } from "./services/repoInfo";
 import { defaultRuntime, runtimeAllowed } from "./services/defaultRuntime";
 import { startRegistryGc } from "./services/registryGc";
 import { resumeScans } from "./services/registryScans";
@@ -262,6 +263,8 @@ startTcpGateway({
 startDeepSleepScheduler();
 startUsageSampler();
 startDiskSampler();
+// The topbar's GitHub star and fork counts: fetched now, so the first page has them
+repoInfo();
 // Say once which runtime new sandboxes get, and why dind when sysbox would be safer
 void defaultRuntime().then(rt => {
   const auto = !process.env.DEFAULT_RUNTIME || process.env.DEFAULT_RUNTIME === "auto";
