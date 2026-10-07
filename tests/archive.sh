@@ -54,7 +54,7 @@ DEL=$(curl -sf -X DELETE -H "Authorization: Bearer $P7Y_TOKEN" "$P7Y_API/sandbox
   || fail "DELETE failed"
 ARCHIVE=$(echo "$DEL" | grep -o '"archive":"[^"]*"' | cut -d'"' -f4)
 [ -n "$ARCHIVE" ] || fail "No archive path in response: $DEL"
-LOCAL="opt/archive/$(basename "$ARCHIVE")"
+LOCAL="opt/archive/${ARCHIVE#/opt/archive/}"   # opt/archive/<owner>/<name>-<date>
 pass "Archived to $ARCHIVE"
 
 # ── 4. Verify archive contents and that the live sandbox is gone ──────────────
@@ -69,7 +69,7 @@ TAR="$LOCAL/volumes/${FULL_NAME}_docker_data.tar.gz"
 pass "Archive has manifest, config, certs and the volume with the marker ($(du -h "$TAR" | cut -f1))"
 
 docker volume inspect "${FULL_NAME}_docker_data" >/dev/null 2>&1 && fail "volume still exists"
-[ -d "opt/users/$FULL_NAME" ] && fail "opt/users/$FULL_NAME still exists"
+ls -d opt/sandboxes/*/"$FULL_NAME" >/dev/null 2>&1 && fail "opt/sandboxes/*/$FULL_NAME still exists"
 [ -n "$(docker ps -aq --filter "label=com.docker.compose.project=$FULL_NAME")" ] && fail "containers still exist"
 CODE=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $P7Y_TOKEN" "$P7Y_API/sandboxes/$FULL_NAME")
 [ "$CODE" = "404" ] || fail "GET after archive returned $CODE, expected 404"

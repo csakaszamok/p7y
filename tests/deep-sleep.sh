@@ -66,7 +66,7 @@ wait_status deep_sleep 300
 [ -z "$(docker ps -aq --filter "label=com.docker.compose.project=$FULL")" ] || fail "containers still exist"
 docker network inspect "${FULL}_default" >/dev/null 2>&1 && fail "network ${FULL}_default still exists"
 docker volume inspect "${FULL}_docker_data" >/dev/null 2>&1 || fail "docker_data volume is gone"
-[ -d "opt/users/$FULL" ] || fail "opt/users/$FULL is gone"
+ls -d opt/sandboxes/*/"$FULL" >/dev/null 2>&1 || fail "opt/sandboxes/*/$FULL is gone"
 pass "Deep sleep: containers and network gone, volume and config kept"
 
 info "[4/6] One request while in deep sleep (and then no more traffic)..."
