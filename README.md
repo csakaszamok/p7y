@@ -84,6 +84,14 @@ First check the machine — without cloning anything; it changes nothing (give i
 curl -fsSL https://raw.githubusercontent.com/csakaszamok/p7y/main/check-host.sh | bash -s -- dev.example.com
 ```
 
+Or download it, read it, then run it:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/csakaszamok/p7y/main/check-host.sh
+less check-host.sh
+bash check-host.sh dev.example.com
+```
+
 Then, on a Linux host with Docker Engine and the compose plugin:
 
 ```bash
