@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-07
+
+The first release from the public repository. The images of 0.1.0 and 0.2.0 are no longer published: use 0.3.0 or later.
+
 ### Added
 
 - `check-host.sh [domain]`: checks a machine before the first install — Linux and kernel, Docker and Compose, whether sysbox is there and works, how many sandbox networks the address pools allow, free ports 80/443/8081, disk, access to Docker Hub and ghcr.io, and with a domain its DNS records (the wildcard too) and the certificate in `certs/`. Changes nothing.
@@ -18,12 +22,9 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 - **Sandbox files per owner:** `opt/sandboxes/<owner>/<name>/` instead of `opt/users/<name>/`, archives under `opt/archive/<owner>/` (the manifest names the owner). Existing sandboxes and archives are moved at startup; a running sandbox restarts once, asleep ones stay asleep, a failed move is retried at the next start. The `./opt/users` mount stays in `docker-compose.yml` for the move and goes in a later version. `HOST_SANDBOXES_DIR` replaces `HOST_USERS_DIR` (still read: its sibling `sandboxes` is used). Runtime files can use `${sandbox_dir}`; `${host_users_dir}/${name}` still names the sandbox's directory.
 - `DEFAULT_RUNTIME` defaults to `auto`: new sandboxes use `sysbox` (no privileged container) where the host has sysbox installed, `dind` otherwise (with a warning at startup). Asking for `sysbox` on a host without it is a 400 that says so.
-
-### Changed
-
 - Exact image versions instead of moving tags, so an updater such as Watchtower does not swap them on its own: `registry:2.8.3`, `traefik:v3.6.25`, `nginx:1.31.6-alpine`, and `alpine/socat:1.8.1.3` for new sandboxes (the same images the old tags point to today). Existing sandboxes keep `alpine/socat:latest`.
 
-## [0.2.0] - 2026-10-06
+## 0.2.0 - 2026-10-06
 
 ### Changed (breaking)
 
@@ -77,7 +78,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 - A sandbox stops in under a second when it falls asleep; its socat container used to be killed after Docker's 10 s grace period (new sandboxes).
 - The sandbox list no longer shows "-1 min" in Created when the browser's clock is behind the server's.
 
-## [0.1.0] - 2026-09-28
+## 0.1.0 - 2026-09-28
 
 The first release.
 
@@ -117,5 +118,5 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[0.2.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.2.0
-[0.1.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.1.0
+[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.0
