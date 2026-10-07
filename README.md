@@ -78,16 +78,21 @@ Sign in at `http://p7y.<HOST_DOMAIN>` to create sandboxes in the browser or mint
 
 ## Running
 
-On a Linux host with Docker Engine and the compose plugin:
+First check the machine — without cloning anything; it changes nothing (give it the `HOST_DOMAIN` you plan to use):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/csakaszamok/p7y/main/check-host.sh | bash -s -- dev.example.com
+```
+
+Then, on a Linux host with Docker Engine and the compose plugin:
 
 ```bash
 git clone https://github.com/csakaszamok/p7y.git && cd p7y
-./check-host.sh dev.example.com   # is this machine ready? (Docker, sysbox, address pools, ports, disk, DNS, certificate)
 ./setup.sh            # creates .env with random ADMIN_TOKEN, SESSION_SECRET and ADMIN_PASSWORD
 docker compose up -d
 ```
 
-`check-host.sh` changes nothing (its sysbox check runs one throw-away `alpine` container); give it the `HOST_DOMAIN` you plan to use and it also checks the DNS records and, if `certs/` has one, the certificate. Lines marked ✘ must be fixed first, ⚠ are worth reading.
+`check-host.sh` (also in the checkout: `./check-host.sh dev.example.com`) checks Docker, sysbox, the address pools, ports, disk and registry access, and changes nothing (its sysbox check runs one throw-away `alpine` container); with the `HOST_DOMAIN` you plan to use it also checks the DNS records and, if `certs/` has one, the certificate. Lines marked ✘ must be fixed first, ⚠ are worth reading.
 
 `setup.sh` prints the admin password and token. It keeps values you already set, so it is safe to run again. Without it: `cp .env.example .env` and set those three by hand.
 
