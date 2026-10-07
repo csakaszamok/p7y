@@ -126,6 +126,7 @@ Main settings in `.env`:
 | `SANDBOX_CPUS`, `SANDBOX_MEMORY` | `2`, `4g` | CPU and memory limit of every new sandbox (see [CPU and memory](#cpu-and-memory)) |
 | `SANDBOX_MAX_CPUS`, `SANDBOX_MAX_MEMORY` | `4`, `8g` | How far a user can raise their sandbox's limits; the admin can go up to the host |
 | `SANDBOX_DISK` | `20g` | Disk use above which a sandbox is flagged; a warning only, see [Disk](#disk) |
+| `GITHUB_STATS` | `on` | The topbar links to the GitHub repo and shows Purgatory's version, stars and forks. The server fetches the counts at most once an hour (users' browsers never contact GitHub); `off` never asks GitHub, and the link and the version stay |
 | `DEFAULT_TEMPLATE` | `starter` | Template for new sandboxes when a request names none. An old value such as `dind-standard` makes every create without a template fail with `Unknown template` |
 | `DEEP_SLEEP_CHECK_INTERVAL` | `1m` | How often Purgatory looks for sandboxes to take into deep sleep |
 | `HOST_SANDBOXES_DIR` | auto-detected | Host path of `opt/sandboxes` (every sandbox's compose file mounts from it). Set it only if auto-detection fails; an old `HOST_USERS_DIR` (the former `opt/users`) still works, its sibling `sandboxes` is used |

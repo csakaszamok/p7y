@@ -29,6 +29,8 @@ services:
       # Runtimes new sandboxes may use (comma list, e.g. sysbox); empty = all
       ALLOWED_RUNTIMES: ${ALLOWED_RUNTIMES:-}
       DEFAULT_TEMPLATE: ${DEFAULT_TEMPLATE:-starter}
+      # off: never ask GitHub for the star and fork counts in the topbar
+      GITHUB_STATS: ${GITHUB_STATS:-on}
       SANDBOX_CPUS: ${SANDBOX_CPUS:-2}
       SANDBOX_MEMORY: ${SANDBOX_MEMORY:-4g}
       SANDBOX_MAX_CPUS: ${SANDBOX_MAX_CPUS:-4}

@@ -22,6 +22,15 @@ label.check input { width: auto }
 .topbar nav a { color: #aaa; text-decoration: none }
 .topbar nav a.active { color: #fff; font-weight: 600 }
 .who { display: flex; gap: 12px; align-items: center; margin: 0; color: #aaa }
+/* the GitHub repo card in the topbar: repo, stars, forks, version */
+.repo-badge { display: inline-flex; align-items: center; gap: 10px; padding: 4px 10px; border-radius: 8px; color: #aaa; text-decoration: none; font-size: 12px; line-height: 1.2 }
+.repo-badge:hover { background: #1f1f1f; color: #fff }
+.repo-badge .gh { width: 22px; height: 22px; fill: currentColor; flex: none }
+.repo-badge .meta { display: grid }
+.repo-badge .name { color: #ddd; font-weight: 600 }
+.repo-badge .stats { display: flex; gap: 10px }
+.repo-badge .stats span { display: inline-flex; align-items: center; gap: 3px }
+.repo-badge .stats svg { width: 12px; height: 12px; fill: currentColor }
 main { padding: 20px }
 .split { display: flex; gap: 20px; align-items: flex-start }
 .list { flex: 3; min-width: 0 }
@@ -218,5 +227,6 @@ a.ov-card:hover { border-color: #ea580c; transform: translateY(-1px) }
   .topbar { flex-wrap: wrap; gap: 8px 16px; padding: 10px 16px }
   .topbar nav { order: 3; flex-basis: 100%; overflow-x: auto; flex-wrap: nowrap; gap: 18px; padding-bottom: 2px }
   .topbar nav a { white-space: nowrap }
+  .repo-badge .name { display: none }
   .who { margin-left: auto }
 }

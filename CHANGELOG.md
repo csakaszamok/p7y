@@ -7,6 +7,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 ### Added
 
 - `ALLOWED_RUNTIMES`: the runtimes new sandboxes may use (comma list, empty = all), e.g. `sysbox` so nobody creates a privileged `dind` sandbox on a shared server. The others are left out of `GET /runtimes` and the create form; asking for one is a 400. Existing sandboxes are not affected.
+- The topbar links to the GitHub repo and shows Purgatory's version and its star and fork counts. The server fetches the counts at most once an hour, so users' browsers never contact GitHub; `GITHUB_STATS=off` turns the fetching off.
 
 ## [0.3.0] - 2026-10-07
 

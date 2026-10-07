@@ -16,5 +16,7 @@ const defaults: Record<string, string> = {
   SANDBOXES_DIR: path.join(dir, 'sandboxes'),
   LEGACY_USERS_DIR: path.join(dir, 'users'),
   ARCHIVE_DIR: path.join(dir, 'archive'),
+  // Rendering a page never asks GitHub for the topbar's counts (tests/services/repoInfo.test.ts turns it on)
+  GITHUB_STATS: 'off',
 }
 for (const [k, v] of Object.entries(defaults)) if (process.env[k] === undefined) process.env[k] = v
