@@ -1,4 +1,5 @@
-FROM docker.io/csakaszamok/rododentron:2
+# 0.3.0: mcp-core.ts (the API routes as MCP tools at /mcp)
+FROM docker.io/csakaszamok/rododentron:0.3.0
 RUN apk add --no-cache python3 make g++ docker-cli docker-cli-compose
 WORKDIR /app
 RUN npm install --no-save dockerode@^4.0.2 better-sqlite3@^9.4.3 node-forge@^1.3.1 js-yaml@^4.1.0 bcryptjs@^3.0.3 openid-client@^6 ws@^8

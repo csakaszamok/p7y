@@ -36,6 +36,8 @@ Give a coding agent (Claude Code, Codex, Cursor…) a personal access token and 
 
 [docs/agent-guide.md](docs/agent-guide.md) is written for the agent: every call it needs, tried against a live Purgatory. A token limited to one sandbox keeps the agent away from your other sandboxes; a token for all your sandboxes (Access tokens → + New token) acts as you.
 
+An agent with MCP can also use Purgatory as an MCP server with the same token: see [MCP](#mcp).
+
 ## Why Purgatory
 
 A self-hosted Vercel or Railway for the whole team: everyone gets their own Docker, every app a URL, and idle apps cost nothing.
@@ -249,6 +251,18 @@ Both runtimes have the same wiring (FRP tunnel, Traefik route, Sablier sleep/wak
 All endpoints require `Authorization: Bearer <ADMIN_TOKEN | personal token>` or a signed-in browser session. Users only see their own sandboxes.
 
 Swagger UI available at `/swagger`.
+
+### MCP
+
+The same API is an MCP server at `/mcp` (Streamable HTTP): each endpoint is a tool, such as `list_sandboxes`, `create_sandbox`, `wake_sandbox`, `sleep_sandbox`, `get_sandbox` (with its app links) and `set_sleep_settings`. A tool call runs the endpoint with the caller's token, so it can do exactly what that token can do on the REST API; a token limited to one sandbox stays limited to it. Only tokens are accepted (not a browser session).
+
+For Claude Code:
+
+```bash
+claude mcp add --transport http p7y https://p7y.example.com/mcp --header "Authorization: Bearer p7y_…"
+```
+
+Other clients take the same URL and header, e.g. `{"mcpServers": {"p7y": {"type": "http", "url": "https://p7y.example.com/mcp", "headers": {"Authorization": "Bearer p7y_…"}}}}`. Left out: the log stream (it never ends) and the zip export (a file a tool result cannot carry).
 
 More reading: [architecture diagrams](docs/architecture.html), [how agents deploy](docs/agent-guide.md), [comparison with other sandbox platforms](docs/comparison.md), [roadmap](docs/roadmap.md).
 

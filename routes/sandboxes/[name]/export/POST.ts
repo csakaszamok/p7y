@@ -8,6 +8,8 @@ import { rawNameOf } from '../../../../services/naming'
 import { portainerAccess } from '../../../../services/portainerToken'
 
 export const openapi = {
+  // Not an MCP tool: a zip file, which an MCP tool result cannot carry
+  mcp: false,
   summary: 'Export access for coding agents (zip: a new token, the Docker client certs, a README)',
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],

@@ -19,6 +19,9 @@ import { attachTerminals } from "./services/terminalServer";
 import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
 import { repoInfo } from "./services/repoInfo";
+import { mcpGate, mcpInclude } from "./services/mcp";
+// From the base image (csakaszamok/rododentron): the API routes as MCP tools
+import { createMcpHandler } from "./mcp-core";
 import { defaultRuntime, runtimeAllowed } from "./services/defaultRuntime";
 import { startRegistryGc } from "./services/registryGc";
 import { resumeScans } from "./services/registryScans";
@@ -193,6 +196,8 @@ ensureKeyPair();
 // The registry reads its notification secret from the data dir when it starts
 notifySecret();
 
+const mcp = createMcpHandler({ name: "p7y", version: repoInfo().version ?? undefined, include: mcpInclude });
+
 const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
   let path = (req.url ?? "/").split("?")[0];
   const method = req.method ?? "GET";
@@ -201,6 +206,16 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
 
   if (path === "/swagger") {
     res.writeHead(200, { "Content-Type": "text/html" }).end(SWAGGER_UI);
+    return;
+  }
+  if (path === "/mcp") {
+    try {
+      const webReq = await toWebRequest(req);
+      await writeWebResponse(mcpGate(webReq) ?? await mcp(webReq), res);
+    } catch (err) {
+      console.error("[mcp]", err);
+      if (!res.headersSent) res.writeHead(500).end(String(err));
+    }
     return;
   }
   if (path === "/swagger.json") {

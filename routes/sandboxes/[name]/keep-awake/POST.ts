@@ -4,6 +4,7 @@ import { primeSablierSession } from '../../../../services/wake'
 import { sleepTimes } from '../../../../services/sleepTimes'
 
 export const openapi = {
+  mcp: { name: 'keep_sandbox_awake' },
   summary: 'Start the sleep countdown over',
   description: 'For a running sandbox: one request through its router, as any visit would, so it sleeps a full idle timeout from now. Does not wake a sleeping sandbox.',
   tags: ['sandboxes'],

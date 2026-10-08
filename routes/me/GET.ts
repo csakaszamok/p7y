@@ -3,7 +3,7 @@ import { quotaStatus, serverLimit, serverUsed, runningStatus } from '../../servi
 import { resourceDefaults } from '../../services/resources'
 import { hostResources } from '../../services/docker'
 
-export const openapi = { summary: 'Who am I', tags: ['auth'], security: [{ bearerAuth: [] }] }
+export const openapi = { mcp: { name: 'who_am_i' }, summary: 'Who am I', tags: ['auth'], security: [{ bearerAuth: [] }] }
 
 export default async (req: Request): Promise<Response> => {
   const p = requirePrincipal(req)

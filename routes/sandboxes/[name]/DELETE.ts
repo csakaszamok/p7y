@@ -3,6 +3,7 @@ import { getOwnedSandbox } from '../../../services/access'
 import { sandboxService } from '../../../services/sandbox'
 
 export const openapi = {
+  mcp: { name: 'archive_sandbox' },
   summary: 'Archive sandbox',
   description: 'Stops the sandbox, saves its volumes (tar.gz) and config under opt/archive/<owner>/, then removes containers, volumes and the sandbox directory. Nothing is removed if archiving fails.',
   tags: ['sandboxes'],
