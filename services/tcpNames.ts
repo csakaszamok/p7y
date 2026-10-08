@@ -1,6 +1,7 @@
 import fs from 'fs'
 import { innerDocker } from './innerDocker'
 import { sandboxParent } from './sandboxPaths'
+import { rememberLastSeen, lastSeen } from './lastSeen'
 
 export interface InnerContainer {
   Names: string[]
@@ -58,5 +59,15 @@ export async function publicTcpPorts(name: string, usersDir = sandboxParent(name
   const instance = fs.readFileSync(`${dir}/instance-name`, 'utf8').trim()
   const inner = innerDocker(name, usersDir)
   const containers = await inner.listContainers() as unknown as InnerContainer[]
-  return tcpPortsOf(instance, containers, (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase())
+  const ports = tcpPortsOf(instance, containers, (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase())
+  // Not an empty answer: right after a wake the inner containers are not up yet
+  if (ports.length) rememberLastSeen(dir, 'tcp', ports)
+  return ports
+}
+
+/** The TCP ports a sandbox published when it last ran (null if never seen running since this was added):
+ * shown while it sleeps, as a connection wakes it. */
+export function rememberedTcpPorts(name: string, usersDir = sandboxParent(name)): TcpPort[] | null {
+  const ports = lastSeen(`${usersDir}/${name}`, 'tcp')
+  return Array.isArray(ports) ? ports.filter((p): p is TcpPort => typeof p?.host === 'string' && typeof p?.privatePort === 'number') : null
 }

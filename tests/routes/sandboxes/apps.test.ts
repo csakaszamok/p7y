@@ -12,7 +12,10 @@ vi.mock('../../../services/sandbox', () => ({
 }))
 vi.mock('../../../services/sleepTimes', () => ({ sleepTimes: vi.fn(async () => ({})) }))
 vi.mock('../../../services/sleepSettings', () => ({ sleepSettingsOf: vi.fn(() => ({})) }))
-vi.mock('../../../services/tcpNames', () => ({ publicTcpPorts: vi.fn(async () => []) }))
+vi.mock('../../../services/tcpNames', () => ({
+  publicTcpPorts: vi.fn(async () => []),
+  rememberedTcpPorts: vi.fn((n: string) => n === 'p7y-down' ? [{ host: 'down-db-tcp.lvh.me', port: 5432, privatePort: 5432, user: 'postgres' }] : null),
+}))
 vi.mock('../../../services/sandboxSsh', () => ({ sshKeyCount: vi.fn(() => 0), hasGeneratedKey: vi.fn(() => false) }))
 vi.mock('../../../services/resourceSettings', () => ({ limitsOf: vi.fn(() => null) }))
 vi.mock('../../../services/usageSampler', () => ({ usageOf: vi.fn(() => null) }))
@@ -38,5 +41,12 @@ describe('GET /sandboxes/:name apps', () => {
     expect(body.apps).toEqual([{ url: 'down-inner-web-port8080.lvh.me', port: null, service: 'web', answers: null }])
     expect(body).not.toHaveProperty('app_services')
     expect(appStatuses).not.toHaveBeenCalled()
+  })
+
+  // A connection wakes it, so its TCP addresses are shown asleep too: those it had when it last ran
+  it('a sandbox that is not running: the TCP addresses it had when it last ran', async () => {
+    const body = await (await get(req('p7y-down'))).json()
+    expect(body.tcp_addresses).toEqual([{ address: 'down-db-tcp.lvh.me:443', port: 5432, user: 'postgres' }])
+    expect(body.tcp_urls).toEqual(['down-db-tcp.lvh.me:443'])
   })
 })

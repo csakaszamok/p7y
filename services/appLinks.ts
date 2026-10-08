@@ -2,7 +2,7 @@ import fs from 'fs'
 import { innerDocker } from './innerDocker'
 import { frpcName, ALL_INTERFACES, type InnerContainer } from './tcpNames'
 import { sandboxParent } from './sandboxPaths'
-import { writeFileAtomic } from './atomicWrite'
+import { rememberLastSeen, lastSeen } from './lastSeen'
 
 export interface AppLink { url: string; port: number; service: string }
 export interface AppLinkDeps {
@@ -42,21 +42,16 @@ export async function frpsDomains(name: string): Promise<string[]> {
   return []
 }
 
-const appsFile = (name: string) => `${sandboxParent(name)}/${name}/apps.json`
-const remembered = new Map<string, string>()
+const dirOf = (name: string) => `${sandboxParent(name)}/${name}`
 
 function rememberApps(name: string, links: AppLink[]): void {
-  const json = JSON.stringify(links)
-  if (remembered.get(name) === json) return
-  try { writeFileAtomic(appsFile(name), json); remembered.set(name, json) } catch { /* the sandbox's directory is gone */ }
+  rememberLastSeen(dirOf(name), 'apps', links)
 }
 
 /** The app links a sandbox had when it last ran (null if never seen running since this was added). */
 export function rememberedApps(name: string): AppLink[] | null {
-  try {
-    const links = JSON.parse(fs.readFileSync(appsFile(name), 'utf8')) as unknown
-    return Array.isArray(links) ? links.filter((l): l is AppLink => typeof l?.url === 'string') : null
-  } catch { return null }
+  const links = lastSeen(dirOf(name), 'apps')
+  return Array.isArray(links) ? links.filter((l): l is AppLink => typeof l?.url === 'string') : null
 }
 
 const defaults: AppLinkDeps = {
