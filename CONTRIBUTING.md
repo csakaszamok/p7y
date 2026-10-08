@@ -26,7 +26,7 @@ npm ci
 
 ## Tests
 
-- **Unit tests:** `npm test` (vitest). They run in CI on every push and pull request.
+- **Unit tests:** `npm test` (vitest). **Types:** `npm run typecheck` (tsc, the app code only; tsx runs the code without checking types). Both run in CI on every push and pull request.
 - **End-to-end tests:** the scripts in `tests/*.sh` run against a live stack; the README lists which settings each one needs (under "Isolation between sandboxes"). Run the ones your change touches.
 
 A pull request should add or update tests for what it changes.

@@ -5,6 +5,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "test": "vitest run",
+    "typecheck": "tsc -p .",
     "test:watch": "vitest"
   },
   "dependencies": {
