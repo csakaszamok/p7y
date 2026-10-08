@@ -31,6 +31,17 @@ npm ci
 
 A pull request should add or update tests for what it changes.
 
+## Branches and releases
+
+Each release series has its own branch, `release/<major>.<minor>` (`release/0.3`, `release/0.4`, …); there is no separate development branch.
+
+- **New features** go to the newest series' branch (now `release/0.4`) through a pull request from a feature branch.
+- **Fixes for a released series** go to its branch (e.g. `release/0.3`), and that branch is then merged into each newer one, so no fix is lost going forward.
+- **A release** is a version bump and a `[x.y.z]` section in `CHANGELOG.md` on the series' branch, then a `vx.y.z` tag on it. The tag builds and publishes the image as `x.y.z` and `x.y`; `latest` only for the highest version, so a fix for an older series does not move it back.
+- **`main`** is the newest release: it is updated when a release of the newest series is made.
+
+A server can follow one series with `P7Y_VERSION=0.3` in `.env` (the newest `0.3.x` image) and a checkout of `release/0.3` (its templates and runtimes).
+
 ## Pull requests
 
 - One topic per pull request, with a short description of what changes for the user and how you tested it.
