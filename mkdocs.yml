@@ -1,0 +1,122 @@
+# The documentation site: MkDocs Material, one version per release series (mike), published to GitHub Pages
+# by .github/workflows/docs.yml. Locally: pip install -r docs/requirements.txt && mkdocs serve
+site_name: Purgatory (p7y)
+site_description: Self-hosted sandboxes for your team and their AI agents
+site_url: https://csakaszamok.github.io/p7y/
+repo_url: https://github.com/csakaszamok/p7y
+repo_name: csakaszamok/p7y
+edit_uri: ""
+copyright: Apache-2.0
+
+exclude_docs: |
+  superpowers/
+  requirements.txt
+
+theme:
+  name: material
+  logo: media/logo.svg
+  favicon: media/logo.svg
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: deep orange
+      toggle: { icon: material/brightness-4, name: Light mode }
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: deep orange
+      toggle: { icon: material/brightness-7, name: Dark mode }
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+
+extra_css:
+  - media/extra.css
+
+extra:
+  version:
+    provider: mike
+    default: latest
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+validation:
+  anchors: warn
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Install: install.md
+      - First sandbox: first-sandbox.md
+      - Configuration: configuration.md
+      - HTTPS: https.md
+  - Using Purgatory:
+      - Web UI and sign-in: web-ui.md
+      - Runtimes and templates: runtimes-templates.md
+      - Sleep and wake: sleep-wake.md
+      - CPU, memory and disk: resources.md
+      - Deep sleep: deep-sleep.md
+      - Delete = archive: archive.md
+      - Isolation and TCP addresses: networking.md
+      - SSH, terminal and logs: shell-and-logs.md
+  - Agents:
+      - Let your agent deploy: agents.md
+      - MCP: mcp.md
+      - Agent guide: agent-guide.md
+  - Reference:
+      - API: api.md
+      - Security: security.md
+      - Upgrading from Leander: upgrading.md
+      - Comparison: comparison.md
+      - Roadmap: roadmap.md
+      - Architecture: architecture.html
+
+plugins:
+  - search
+  - llmstxt:
+      # The version's own address (https://…/p7y/0.4/): docs.yml sets it for each version it publishes
+      base_url: !ENV [LLMSTXT_BASE_URL, 'https://csakaszamok.github.io/p7y/latest/']
+      markdown_description: >-
+        Purgatory (p7y) gives each user of a team their own Docker daemon on demand: a sandbox with Portainer,
+        a public URL for every app, sleep when idle and wake on the next request, archive on delete.
+        A REST API and an MCP server (at /mcp) let coding agents create, wake and deploy to sandboxes.
+      full_output: llms-full.txt
+      sections:
+        Getting started:
+          - install.md
+          - first-sandbox.md
+          - configuration.md
+          - https.md
+        Using Purgatory:
+          - web-ui.md
+          - runtimes-templates.md
+          - sleep-wake.md
+          - resources.md
+          - deep-sleep.md
+          - archive.md
+          - networking.md
+          - shell-and-logs.md
+        Agents:
+          - agents.md
+          - mcp.md
+          - agent-guide.md
+        Reference:
+          - api.md
+          - security.md
+          - upgrading.md
+          - comparison.md
