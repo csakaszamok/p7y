@@ -2,6 +2,7 @@ import fs from 'fs'
 import { innerDocker } from './innerDocker'
 import { frpcName, ALL_INTERFACES, type InnerContainer } from './tcpNames'
 import { sandboxParent } from './sandboxPaths'
+import { writeFileAtomic } from './atomicWrite'
 
 export interface AppLink { url: string; port: number; service: string }
 export interface AppLinkDeps {
@@ -9,6 +10,8 @@ export interface AppLinkDeps {
   containers: (name: string) => Promise<InnerContainer[]>
   instance: (name: string) => string
   now: () => number
+  /** Keeps the links a running sandbox answered with, for showing them while it sleeps. */
+  remember: (name: string, links: AppLink[]) => void
 }
 
 /** Link names (no domain, lowercase) → host port and app name (compose service, else container name),
@@ -39,17 +42,36 @@ export async function frpsDomains(name: string): Promise<string[]> {
   return []
 }
 
+const appsFile = (name: string) => `${sandboxParent(name)}/${name}/apps.json`
+const remembered = new Map<string, string>()
+
+function rememberApps(name: string, links: AppLink[]): void {
+  const json = JSON.stringify(links)
+  if (remembered.get(name) === json) return
+  try { writeFileAtomic(appsFile(name), json); remembered.set(name, json) } catch { /* the sandbox's directory is gone */ }
+}
+
+/** The app links a sandbox had when it last ran (null if never seen running since this was added). */
+export function rememberedApps(name: string): AppLink[] | null {
+  try {
+    const links = JSON.parse(fs.readFileSync(appsFile(name), 'utf8')) as unknown
+    return Array.isArray(links) ? links.filter((l): l is AppLink => typeof l?.url === 'string') : null
+  } catch { return null }
+}
+
 const defaults: AppLinkDeps = {
   domains: frpsDomains,
   containers: async name => (await innerDocker(name).listContainers()) as unknown as InnerContainer[],
   instance: name => fs.readFileSync(`${sandboxParent(name)}/${name}/instance-name`, 'utf8').trim(),
   now: Date.now,
+  remember: rememberApps,
 }
 const TTL_MS = 10_000
 const cache = new Map<string, { at: number; links: AppLink[] }>()
 
 /** A running sandbox's app links: what frps serves (or `seen`), only for ports published on all interfaces.
- * Cached 10 s (the UI polls every 5 s); the inner Docker not answering shows no link (closed). */
+ * Cached 10 s (the UI polls every 5 s); the inner Docker not answering shows no link (closed).
+ * The links found are remembered (rememberedApps): a sleeping sandbox shows the apps it last ran. */
 export async function appLinks(name: string, deps: Partial<AppLinkDeps> = {}, seen?: string[]): Promise<AppLink[]> {
   const d = { ...defaults, ...deps, ...(seen ? { domains: async () => seen } : {}) }
   // `seen` (createSandbox: the domains it gathered itself) is filtered afresh, not answered from the cache
@@ -64,6 +86,8 @@ export async function appLinks(name: string, deps: Partial<AppLinkDeps> = {}, se
       const hit = allowed.get(url.toLowerCase().split('.')[0])
       if (hit) links.push({ url, port: hit.port, service: hit.service })
     }
+    // Not an empty answer: frps has none until frpc registers, right after a wake (or when it cannot be asked)
+    if (links.length) d.remember(name, links)
   } catch { links = [] }
   cache.set(name, { at: d.now(), links })
   return links

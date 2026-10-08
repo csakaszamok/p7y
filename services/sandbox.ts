@@ -9,7 +9,7 @@ import { generateCertBundle } from './tls'
 import { loadTemplate } from './templateLoader'
 import { loadRuntime } from './runtimeLoader'
 import { appEntriesOffline } from './appUrls'
-import { appLinks, frpsDomains } from './appLinks'
+import { appLinks, frpsDomains, rememberedApps } from './appLinks'
 import { primeSablierSession, markWoken } from './wake'
 import { writeAuthorizedKeys, createGeneratedKey } from './sandboxSsh'
 import { sshKeysOf } from './sshKeys'
@@ -331,10 +331,11 @@ export const sandboxService = {
     const certs = readClientCerts(name)
     const hasFrps = fs.existsSync(`${dirOf(name)}/frps.toml`)
     // Only a running sandbox has a tunnel to ask (a stopped one's frps host does not resolve: seconds of
-    // DNS timeout); otherwise the hosts come from the inner compose file — opening one wakes the sandbox.
+    // DNS timeout); otherwise the apps it had when it last ran, or (never seen running) those of the inner
+    // compose file — opening one wakes the sandbox.
     const innerProject = () => { try { return loadTemplate(meta.template).inner_project_name } catch { return undefined } }
     const offline = hasFrps && meta.status !== 'running'
-      ? appEntriesOffline(name, dirOf(name), process.env.HOST_DOMAIN ?? 'lvh.me', innerProject)
+      ? rememberedApps(name)?.map(l => ({ host: l.url, service: l.service })) ?? appEntriesOffline(name, dirOf(name), process.env.HOST_DOMAIN ?? 'lvh.me', innerProject)
       : []
     const tunnel_urls = !hasFrps ? []
       : meta.status === 'running' ? (await appLinks(name)).map(l => l.url)
