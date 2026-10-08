@@ -10,6 +10,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 - The topbar links to the GitHub repo and shows Purgatory's version and its star and fork counts. The server fetches the counts at most once an hour, so users' browsers never contact GitHub; `GITHUB_STATS=off` turns the fetching off.
 - **MCP server** at `/mcp` (Streamable HTTP): every API endpoint is a tool (`list_sandboxes`, `create_sandbox`, `wake_sandbox`, `sleep_sandbox`, …), run with the caller's token, so it can do what that token can do on the REST API; a token limited to one sandbox is offered only the tools it may call. Only tokens are accepted, not a browser session. Built on the base image `csakaszamok/rododentron:0.3.0`.
 
+### Fixed
+
+- A sleeping sandbox's TCP addresses (Postgres, Redis, SSH… on port 443) were missing from its panel and from `GET /sandboxes/:name`, although a connection wakes it. They are now the ones it had when it last ran (kept in `tcp.json` in its directory, like the apps in `apps.json`).
+
 ## [0.3.1] - 2026-10-08
 
 ### Fixed
