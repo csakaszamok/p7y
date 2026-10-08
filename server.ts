@@ -19,7 +19,7 @@ import { attachTerminals } from "./services/terminalServer";
 import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
 import { repoInfo } from "./services/repoInfo";
-import { mcpGate, mcpInclude } from "./services/mcp";
+import { mcpCaller, mcpToolsFor } from "./services/mcp";
 // From the base image (csakaszamok/rododentron): the API routes as MCP tools
 import { createMcpHandler } from "./mcp-core";
 import { defaultRuntime, runtimeAllowed } from "./services/defaultRuntime";
@@ -196,8 +196,6 @@ ensureKeyPair();
 // The registry reads its notification secret from the data dir when it starts
 notifySecret();
 
-const mcp = createMcpHandler({ name: "p7y", version: repoInfo().version ?? undefined, include: mcpInclude });
-
 const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
   let path = (req.url ?? "/").split("?")[0];
   const method = req.method ?? "GET";
@@ -211,7 +209,11 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   if (path === "/mcp") {
     try {
       const webReq = await toWebRequest(req);
-      await writeWebResponse(mcpGate(webReq) ?? await mcp(webReq), res);
+      const caller = mcpCaller(webReq);
+      const out = caller instanceof Response ? caller
+        // Per request: the tools listed depend on the caller's token
+        : await createMcpHandler({ name: "p7y", version: repoInfo().version ?? undefined, include: mcpToolsFor(caller) })(webReq);
+      await writeWebResponse(out, res);
     } catch (err) {
       console.error("[mcp]", err);
       if (!res.headersSent) res.writeHead(500).end(String(err));
