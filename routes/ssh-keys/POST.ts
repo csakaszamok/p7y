@@ -3,6 +3,7 @@ import { addSshKey } from '../../services/sshKeys'
 import { refreshOwnerSandboxes } from '../../services/sandboxSsh'
 
 export const openapi = {
+  mcp: { name: 'add_ssh_key' },
   summary: 'Add an SSH public key: it lets you into all your sandboxes with SSH as root',
   tags: ['ssh-keys'],
   security: [{ bearerAuth: [] }],

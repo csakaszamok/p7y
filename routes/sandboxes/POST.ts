@@ -11,6 +11,7 @@ import { checkLimits, resourceDefaults, clampToHost } from '../../services/resou
 import { hostResources } from '../../services/docker'
 
 export const openapi = {
+  mcp: { name: 'create_sandbox' },
   summary: 'Create sandbox',
   tags: ['sandboxes'],
   requestBody: {

@@ -3,6 +3,7 @@ import { getOwnedSandbox } from '../../../../services/access'
 import { sandboxService } from '../../../../services/sandbox'
 
 export const openapi = {
+  mcp: { name: 'wake_sandbox' },
   summary: 'Start sandbox',
   description: 'Wakes an asleep or deep-sleeping sandbox. At the owner\'s limit (running sandboxes, slots, or a full server) it answers 409 with `reason` and the `running` sandboxes; `{"sleep": "<name>"}` puts one of them to sleep first.',
   tags: ['sandboxes'],

@@ -13,6 +13,7 @@ import { appStatuses } from '../../../services/appProbe'
 import { dockerAccessState, dockerHostName } from '../../../services/dockerAccess'
 
 export const openapi = {
+  mcp: { name: 'get_sandbox' },
   summary: 'Get sandbox details',
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],

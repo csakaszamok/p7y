@@ -3,6 +3,7 @@ import { getOwnedSandbox } from '../../../../services/access'
 import { regenerateCerts, dockerAccessState, dockerHostName } from '../../../../services/dockerAccess'
 
 export const openapi = {
+  mcp: { name: 'rotate_docker_keys' },
   summary: 'New Docker access certificates (enable / rotate)',
   description: "New CA, server and client certificates for the sandbox's Docker API (they carry <raw>-docker.<domain>); earlier exports stop working. Restarts the sandbox.",
   tags: ['sandboxes'],

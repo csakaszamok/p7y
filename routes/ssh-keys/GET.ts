@@ -1,7 +1,7 @@
 import { requirePrincipal } from '../../services/principal'
 import { listSshKeys } from '../../services/sshKeys'
 
-export const openapi = { summary: 'Your SSH public keys (they let you into your sandboxes as root)', tags: ['ssh-keys'], security: [{ bearerAuth: [] }] }
+export const openapi = { mcp: { name: 'list_ssh_keys' }, summary: 'Your SSH public keys (they let you into your sandboxes as root)', tags: ['ssh-keys'], security: [{ bearerAuth: [] }] }
 
 export default async (req: Request): Promise<Response> => {
   const p = requirePrincipal(req)

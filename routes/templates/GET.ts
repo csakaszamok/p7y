@@ -2,6 +2,7 @@ import { requirePrincipal } from '../../services/principal'
 import { listTemplates } from '../../services/templateLoader'
 
 export const openapi = {
+  mcp: { name: 'list_templates' },
   summary: 'List the templates (what runs inside a sandbox)',
   tags: ['templates'],
   security: [{ bearerAuth: [] }],

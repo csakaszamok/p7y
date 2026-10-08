@@ -3,7 +3,7 @@ import { getOwnedSandbox } from '../../../../services/access'
 import { readGeneratedKey } from '../../../../services/sandboxSsh'
 import { rawNameOf } from '../../../../services/naming'
 
-export const openapi = { summary: "The sandbox's generated SSH private key (for ssh -i)", tags: ['sandboxes'], security: [{ bearerAuth: [] }] }
+export const openapi = { mcp: { name: 'get_sandbox_ssh_key' }, summary: "The sandbox's generated SSH private key (for ssh -i)", tags: ['sandboxes'], security: [{ bearerAuth: [] }] }
 
 export default async (req: Request): Promise<Response> => {
   const p = requirePrincipal(req)
