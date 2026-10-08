@@ -1,4 +1,4 @@
-// The base image's /app/mcp-core.ts (csakaszamok/rododentron:0.3.0), for type checking only:
+// The base image's /app/mcp-core.ts (csakaszamok/rododentron:0.3.1), for type checking only:
 // it is not in this repository, server.ts imports it from the image.
 export interface McpRoute { method: string; path: string; openapi: Record<string, unknown> }
 export interface McpOptions {
