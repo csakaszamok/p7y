@@ -1,0 +1,37 @@
+# Purgatory (p7y)
+
+> Self-hosted sandboxes for your team and their AI agents
+
+Purgatory (p7y) gives each user of a team their own Docker daemon on demand: a sandbox with Portainer, a public URL for every app, sleep when idle and wake on the next request, archive on delete. A REST API and an MCP server (at /mcp) let coding agents create, wake and deploy to sandboxes.
+
+## Getting started
+
+- [Install](https://csakaszamok.github.io/p7y/0.4/install/index.md)
+- [First sandbox](https://csakaszamok.github.io/p7y/0.4/first-sandbox/index.md)
+- [Configuration](https://csakaszamok.github.io/p7y/0.4/configuration/index.md)
+- [HTTPS](https://csakaszamok.github.io/p7y/0.4/https/index.md)
+
+## Using Purgatory
+
+- [Web UI and sign-in](https://csakaszamok.github.io/p7y/0.4/web-ui/index.md)
+- [Runtimes and templates](https://csakaszamok.github.io/p7y/0.4/runtimes-templates/index.md)
+- [Sleep and wake](https://csakaszamok.github.io/p7y/0.4/sleep-wake/index.md)
+- [CPU, memory and disk](https://csakaszamok.github.io/p7y/0.4/resources/index.md)
+- [Deep sleep](https://csakaszamok.github.io/p7y/0.4/deep-sleep/index.md)
+- [Delete = archive](https://csakaszamok.github.io/p7y/0.4/archive/index.md)
+- [Isolation and TCP addresses](https://csakaszamok.github.io/p7y/0.4/networking/index.md)
+- [SSH, terminal and logs](https://csakaszamok.github.io/p7y/0.4/shell-and-logs/index.md)
+
+## Agents
+
+- [Let your agent deploy](https://csakaszamok.github.io/p7y/0.4/agents/index.md)
+- [MCP](https://csakaszamok.github.io/p7y/0.4/mcp/index.md)
+- [Agent guide](https://csakaszamok.github.io/p7y/0.4/agent-guide/index.md)
+
+## Reference
+
+- [API](https://csakaszamok.github.io/p7y/0.4/api/index.md)
+- [Security](https://csakaszamok.github.io/p7y/0.4/security/index.md)
+- [Upgrading from Leander](https://csakaszamok.github.io/p7y/0.4/upgrading/index.md)
+- [Comparison](https://csakaszamok.github.io/p7y/0.4/comparison/index.md)
+
