@@ -1,4 +1,4 @@
-import { getPrincipal } from './principal'
+import { getPrincipal, scopedTokenAllows, type Principal } from './principal'
 
 /**
  * Purgatory as an MCP server, at /mcp (Streamable HTTP), from the base image's mcp-core: every API route is a tool.
@@ -13,10 +13,16 @@ export function mcpInclude(r: McpRoute): boolean {
   return typeof r.openapi.summary === 'string' && r.openapi.mcp !== false
 }
 
-/** 401 unless the request carries a token (an access token or ADMIN_TOKEN): the tools get only the Authorization
+/** Who calls /mcp: only a token (an access token or ADMIN_TOKEN), else a 401. The tools get only the Authorization
  * header, not the session cookie, so a browser session could list the tools but not call one. */
-export function mcpGate(req: Request): Response | null {
+export function mcpCaller(req: Request): Principal | Response {
   const p = getPrincipal(req)
-  if (p && p.via !== 'session') return null
+  if (p && p.via !== 'session') return p
   return Response.json({ error: 'Unauthorized: send an access token (Authorization: Bearer p7y_…)' }, { status: 401, headers: { 'WWW-Authenticate': 'Bearer' } })
+}
+
+/** The tools this caller sees: a token limited to one sandbox only those it may call (the REST API's own list,
+ * with that sandbox in the path), so its agent is not offered tools that would answer 403. */
+export function mcpToolsFor(p: Principal): (r: McpRoute) => boolean {
+  return r => mcpInclude(r) && (!p.sandbox || scopedTokenAllows(r.method, r.path.replace(/\{[^}]+\}/g, p.sandbox)))
 }
