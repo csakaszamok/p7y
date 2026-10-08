@@ -32,3 +32,6 @@ data/registry-scans.json
 data/disk-usage.json
 dynamic/tls.yml
 .vscode/
+
+# MkDocs build output (mkdocs build)
+site/

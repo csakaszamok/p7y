@@ -1,0 +1,60 @@
+name: Docs
+
+# The documentation site on GitHub Pages (the gh-pages branch), one version per release series (mike):
+# a push to release/X.Y publishes X.Y, a release tag vX.Y.Z publishes X.Y again (no longer "unreleased").
+# `latest` is the newest series with a release, and the site opens there.
+on:
+  push:
+    branches: ['release/**']
+    tags: ['v*']
+    paths:
+      - docs/**
+      - mkdocs.yml
+      - .github/workflows/docs.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# One publish at a time: each one commits to gh-pages
+concurrency:
+  group: docs
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: docs/requirements.txt
+      - run: pip install -r docs/requirements.txt
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages:gh-pages || true
+      - name: Publish this series
+        run: |
+          case "$GITHUB_REF_NAME" in
+            release/*) series=${GITHUB_REF_NAME#release/} ;;
+            v*) series=$(echo "${GITHUB_REF_NAME#v}" | cut -d. -f1,2) ;;
+            *) echo "Not a release branch or tag: $GITHUB_REF_NAME"; exit 1 ;;
+          esac
+          tags=$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)
+          newest=$(echo "$tags" | sort -V | tail -1 | sed 's/^v//' | cut -d. -f1,2)
+          title="$series"
+          echo "$tags" | grep -q "^v$series\." || title="$series (unreleased)"
+          export LLMSTXT_BASE_URL="https://csakaszamok.github.io/p7y/$series/"
+          if [ "$series" = "$newest" ]; then
+            mike deploy --push --update-aliases --title "$title" "$series" latest
+            mike set-default --push latest
+          else
+            mike deploy --push --title "$title" "$series"
+            # No released series has docs yet: open this one
+            mike list | grep -q '\[latest\]' || mike set-default --push "$series"
+          fi

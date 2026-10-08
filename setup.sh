@@ -72,6 +72,6 @@ if ! grep -qs default-address-pools /etc/docker/daemon.json; then
 
 Note: /etc/docker/daemon.json has no default-address-pools. Docker's default
 pools allow about 30 networks, and every sandbox needs one. See "Give the Docker
-daemon a larger address pool" in the README.
+daemon a larger address pool" in https://csakaszamok.github.io/p7y/latest/install/
 EOF
 fi
