@@ -23,7 +23,7 @@ export const TERMINAL_KEEPALIVE_MS = 20_000
 /** Output waiting to reach the browser above which the shell is paused */
 const MAX_BUFFERED = 1024 * 1024
 const defaults: TerminalDeps = {
-  state: getSandboxState, wake: n => sandboxService.startSandbox(n), openShell, keepAlive: n => primeSablierSession(n),
+  state: getSandboxState, wake: async n => { await sandboxService.startSandbox(n) }, openShell, keepAlive: async n => { await primeSablierSession(n) },
   keepAliveMs: TERMINAL_KEEPALIVE_MS, wakeTimeoutMs: 90_000, pollMs: 1000,
 }
 

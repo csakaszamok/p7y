@@ -50,7 +50,7 @@ export default async (req: Request): Promise<Response> => {
   const files = build(token, portainer)
   const note: Record<string, string> = 'skipped' in portainer ? { 'X-P7y-Portainer': portainer.skipped } : {}
   if (asEnv) return new Response(files.find(f => f.path.endsWith('/p7y.env'))!.data, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', ...note } })
-  return new Response(zip(files), {
+  return new Response(new Uint8Array(zip(files)), {
     headers: { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="p7y-${raw}.zip"`, 'Cache-Control': 'no-store', ...note },
   })
 }

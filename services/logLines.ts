@@ -27,7 +27,7 @@ export function truncate(text: string): string {
 
 /** A container's log bytes → lines: Docker's 8-byte frame headers (non-TTY) or raw text (TTY, all stdout). */
 export function lineSplitter(tty: boolean, onLine: (stream: 'out' | 'err', raw: string) => void) {
-  let frames = Buffer.alloc(0)
+  let frames: Buffer = Buffer.alloc(0)
   const decoders = { out: new StringDecoder('utf8'), err: new StringDecoder('utf8') }
   const partial = { out: '', err: '' }
   const text = (stream: 'out' | 'err', bytes: Buffer) => {

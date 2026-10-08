@@ -38,7 +38,7 @@ export function repoBadge(info: RepoInfo): string {
   return `<a class="repo-badge" href="${info.url}" target="_blank" rel="noopener" title="Purgatory on GitHub">${GITHUB_ICON}<span class="meta"><span class="name">${info.repo}</span>${stats ? `<span class="stats">${stats}</span>` : ''}</span></a>`
 }
 
-export function renderPage(opts: { title: string; view: 'mine' | 'all' | 'tokens' | 'ssh-keys'; session: Session; body: string }): string {
+export function renderPage(opts: { title: string; view: 'overview' | 'mine' | 'all' | 'tokens' | 'ssh-keys'; session: Session; body: string }): string {
   const { title, view, session, body } = opts
   const link = (href: string, label: string, v: string) =>
     `<a href="${href}"${v === view ? ' class="active"' : ''}>${label}</a>`
