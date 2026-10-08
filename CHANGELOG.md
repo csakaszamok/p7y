@@ -4,6 +4,12 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-08
+
+### Fixed
+
+- A sleeping sandbox's **Apps** tab showed only the apps of its template's stack (e.g. Portainer and http-echo), not those deployed later through Portainer or SSH. It now shows the apps the sandbox had when it last ran (kept in `apps.json` in its directory); a sandbox not seen running since this version still shows its template's.
+
 ## [0.3.0] - 2026-10-07
 
 The first release from the public repository. The images of 0.1.0 and 0.2.0 are no longer published: use 0.3.0 or later.
@@ -118,5 +124,6 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.1
 [0.3.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.0

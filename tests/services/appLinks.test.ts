@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { publicAppNames, appLinks, forgetAppLinks } from '../../services/appLinks'
+import fs from 'fs'
+import { publicAppNames, appLinks, forgetAppLinks, rememberedApps } from '../../services/appLinks'
+import { forgetSandboxDir } from '../../services/sandboxPaths'
 import type { InnerContainer } from '../../services/tcpNames'
 
 const ct = (name: string, ports: Array<[string, number]>, labels: Record<string, string> = {}): InnerContainer => ({
@@ -39,6 +41,7 @@ describe('appLinks', () => {
       instance: () => 'shop',
       now: () => t,
       tick: (ms: number) => { t += ms },
+      remember: vi.fn(),
     }
   }
 
@@ -64,5 +67,41 @@ describe('appLinks', () => {
     expect(d.containers).toHaveBeenCalledTimes(1)
     d.tick(1_500); await appLinks('p7y-shop', d)
     expect(d.containers).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('apps remembered for a sleeping sandbox', () => {
+  beforeEach(() => forgetAppLinks())
+  const d = (containers: InnerContainer[] | Error, domains: string[]) => ({
+    domains: async () => domains,
+    containers: async () => { if (containers instanceof Error) throw containers; return containers },
+    instance: () => 'shop', now: () => 0, remember: vi.fn(),
+  })
+
+  it('remembers the links a running sandbox answered with', async () => {
+    const deps = d([ct('web', [['0.0.0.0', 8080]])], ['shop-inner-web-port8080.lvh.me'])
+    await appLinks('p7y-shop', deps)
+    expect(deps.remember).toHaveBeenCalledWith('p7y-shop', [{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web' }])
+  })
+
+  it('keeps what it had when frps has nothing yet (just woken) or the inner Docker does not answer', async () => {
+    const none = d([ct('web', [['0.0.0.0', 8080]])], [])
+    await appLinks('p7y-shop', none)
+    const down = d(new Error('connect ECONNREFUSED'), ['shop-inner-web-port8080.lvh.me'])
+    forgetAppLinks(); await appLinks('p7y-shop', down)
+    expect(none.remember).not.toHaveBeenCalled()
+    expect(down.remember).not.toHaveBeenCalled()
+  })
+
+  it('reads back what was remembered, in the sandbox directory', async () => {
+    const dir = `${process.env.SANDBOXES_DIR}/admin/p7y-rem`
+    fs.mkdirSync(dir, { recursive: true })
+    forgetSandboxDir()
+    try {
+      expect(rememberedApps('p7y-rem')).toBeNull()
+      const { remember: _, ...deps } = d([ct('web', [['0.0.0.0', 8080]]), ct('api', [['0.0.0.0', 3000]])], ['shop-inner-web-port8080.lvh.me', 'shop-inner-api-port3000.lvh.me'])
+      await appLinks('p7y-rem', deps)
+      expect(rememberedApps('p7y-rem')).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web' }, { url: 'shop-inner-api-port3000.lvh.me', port: 3000, service: 'api' }])
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); forgetSandboxDir() }
   })
 })
