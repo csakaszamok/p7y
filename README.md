@@ -2,6 +2,9 @@
 
 [![Docs](https://img.shields.io/badge/docs-csakaszamok.github.io%2Fp7y-ea580c)](https://csakaszamok.github.io/p7y/latest/) [![CI](https://github.com/csakaszamok/p7y/actions/workflows/ci.yml/badge.svg)](https://github.com/csakaszamok/p7y/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
+> [!NOTE]
+> **Purgatory is a proof of concept.** It works, but it is an experiment: expect rough edges and breaking changes before 1.0.
+
 **Self-hosted sandboxes for your team and their AI agents: everyone gets their own Docker, every app gets a URL, idle sandboxes sleep.**
 
 ![Creating a sandbox, opening its app, and waking it after it fell asleep](docs/media/demo.gif)

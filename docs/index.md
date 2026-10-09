@@ -1,5 +1,8 @@
 # Purgatory (p7y)
 
+!!! note "Proof of concept"
+    Purgatory works, but it is an experiment: expect rough edges and breaking changes before 1.0.
+
 **Self-hosted sandboxes for your team and their AI agents: everyone gets their own Docker, every app gets a URL, idle sandboxes sleep.**
 
 ![Creating a sandbox, opening its app, and waking it after it fell asleep](media/demo.gif)
