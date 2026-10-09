@@ -240,7 +240,7 @@ describe('POST /sandboxes', () => {
 
   it('refuses with 409 when the caller reached the quota, creating nothing', async () => {
     const { reserveSandboxSlot } = await import('../../../services/quota')
-    vi.mocked(reserveSandboxSlot).mockResolvedValueOnce({ ok: false, limit: 2 })
+    vi.mocked(reserveSandboxSlot).mockResolvedValueOnce({ ok: false, limit: 2, scope: 'running' })
     vi.mocked(sandboxService.createSandbox).mockClear()
     const res = await handler(jsonReq({ name: 'over' }))
     expect(res.status).toBe(409)

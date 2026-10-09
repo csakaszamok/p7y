@@ -50,7 +50,7 @@ describe('resolveTcpHost', () => {
   it('maps a -tcp name of a running sandbox to its container and port', async () => {
     const l = await listener()
     vi.mocked(getSandboxState).mockResolvedValue(running)
-    vi.mocked(publicTcpPorts).mockResolvedValue([{ host: 'shop-inner-db-port5432-tcp.lvh.me', port: l.port }])
+    vi.mocked(publicTcpPorts).mockResolvedValue([{ host: 'shop-inner-db-port5432-tcp.lvh.me', port: l.port, privatePort: l.port }])
     expect(await resolveTcpHost('shop-inner-db-port5432-tcp.lvh.me', { host: '127.0.0.1' }))
       .toEqual({ host: '127.0.0.1', port: l.port })
     expect(findSandboxDirByHost).toHaveBeenCalledWith('shop-inner-db-port5432.lvh.me')
@@ -69,7 +69,7 @@ describe('resolveTcpHost', () => {
 
   it('answers at once, without waiting, when a running sandbox has no such published port (e.g. 127.0.0.1-only)', async () => {
     vi.mocked(getSandboxState).mockResolvedValue(running)
-    vi.mocked(publicTcpPorts).mockResolvedValue([{ host: 'shop-other-port80-tcp.lvh.me', port: 80 }])
+    vi.mocked(publicTcpPorts).mockResolvedValue([{ host: 'shop-other-port80-tcp.lvh.me', port: 80, privatePort: 80 }])
     const t0 = Date.now()
     expect(await resolveTcpHost('shop-pgpriv-port5433-tcp.lvh.me', { retryMs: 50 })).toBeNull()
     expect(Date.now() - t0).toBeLessThan(1000)
@@ -80,7 +80,7 @@ describe('resolveTcpHost', () => {
     let l: { port: number; close: () => void } | null = null
     vi.mocked(publicTcpPorts).mockImplementation(async () => {
       if (!l) { l = await listener(); throw new Error('inner docker not up yet') }
-      return [{ host: 'shop-inner-db-port5432-tcp.lvh.me', port: l.port }]
+      return [{ host: 'shop-inner-db-port5432-tcp.lvh.me', port: l.port, privatePort: l.port }]
     })
     const target = await resolveTcpHost('shop-inner-db-port5432-tcp.lvh.me', { host: '127.0.0.1', retryMs: 50 })
     expect(sandboxService.startSandbox).toHaveBeenCalledWith('p7y-shop')
@@ -91,7 +91,7 @@ describe('resolveTcpHost', () => {
   it('keeps retrying while the port refuses, until the app listens', async () => {
     vi.mocked(getSandboxState).mockResolvedValue(running)
     const probe = await listener(); const port = probe.port; probe.close()
-    vi.mocked(publicTcpPorts).mockResolvedValue([{ host: 'shop-db-tcp.lvh.me', port }])
+    vi.mocked(publicTcpPorts).mockResolvedValue([{ host: 'shop-db-tcp.lvh.me', port, privatePort: port }])
     let late: net.Server | null = null
     setTimeout(() => { late = net.createServer(s => s.end()).listen(port, '127.0.0.1') }, 300)
     const target = await resolveTcpHost('shop-db-tcp.lvh.me', { host: '127.0.0.1', retryMs: 50, deadlineMs: 5000 })
@@ -108,7 +108,7 @@ describe('resolveTcpHost under load and while waking', () => {
     let up = false
     vi.mocked(getSandboxState).mockImplementation(async () => (up ? { ...running, startedAt: minutesAgo(0) } : { ...running, status: 'exited' }))
     vi.mocked(sandboxService.startSandbox).mockImplementation(async () => { await new Promise(r => setTimeout(r, 100)); up = true })
-    vi.mocked(publicTcpPorts).mockResolvedValue([{ host: 'shop-db-tcp.lvh.me', port: l.port }])
+    vi.mocked(publicTcpPorts).mockResolvedValue([{ host: 'shop-db-tcp.lvh.me', port: l.port, privatePort: l.port }])
     const all = await Promise.all(Array.from({ length: 10 }, () => resolveTcpHost('shop-db-tcp.lvh.me', { host: '127.0.0.1', retryMs: 20 })))
     expect(all.every(t => t?.port === l.port)).toBe(true)
     expect(sandboxService.startSandbox).toHaveBeenCalledTimes(1)
@@ -119,7 +119,7 @@ describe('resolveTcpHost under load and while waking', () => {
     const l = await listener()
     vi.mocked(getSandboxState).mockResolvedValue({ ...running, status: 'deep_sleep' } as never)
     vi.mocked(wakeInProgress).mockReturnValue(true)
-    vi.mocked(publicTcpPorts).mockResolvedValue([{ host: 'shop-db-tcp.lvh.me', port: l.port }])
+    vi.mocked(publicTcpPorts).mockResolvedValue([{ host: 'shop-db-tcp.lvh.me', port: l.port, privatePort: l.port }])
     expect((await resolveTcpHost('shop-db-tcp.lvh.me', { host: '127.0.0.1', retryMs: 20 }))?.port).toBe(l.port)
     expect(sandboxService.startSandbox).not.toHaveBeenCalled()
     l.close()
@@ -128,7 +128,7 @@ describe('resolveTcpHost under load and while waking', () => {
   it('asks the inner Docker once for connections arriving together', async () => {
     const l = await listener()
     vi.mocked(getSandboxState).mockResolvedValue({ ...running, startedAt: minutesAgo(10) })
-    vi.mocked(publicTcpPorts).mockResolvedValue([{ host: 'shop-db-tcp.lvh.me', port: l.port }])
+    vi.mocked(publicTcpPorts).mockResolvedValue([{ host: 'shop-db-tcp.lvh.me', port: l.port, privatePort: l.port }])
     await Promise.all(Array.from({ length: 10 }, () => resolveTcpHost('shop-db-tcp.lvh.me', { host: '127.0.0.1' })))
     expect(vi.mocked(publicTcpPorts).mock.calls.length).toBeLessThanOrEqual(2)
     l.close()
@@ -148,7 +148,7 @@ describe('resolveTcpHost under load and while waking', () => {
     const l = await listener()
     vi.mocked(getSandboxState).mockResolvedValue({ ...running, startedAt: minutesAgo(0.05) })
     let calls = 0
-    vi.mocked(publicTcpPorts).mockImplementation(async () => (++calls < 3 ? [] : [{ host: 'shop-db-tcp.lvh.me', port: l.port }]))
+    vi.mocked(publicTcpPorts).mockImplementation(async () => (++calls < 3 ? [] : [{ host: 'shop-db-tcp.lvh.me', port: l.port, privatePort: l.port }]))
     expect((await resolveTcpHost('shop-db-tcp.lvh.me', { host: '127.0.0.1', retryMs: 20 }))?.port).toBe(l.port)
     l.close()
   })

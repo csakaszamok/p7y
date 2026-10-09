@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { sandboxMeta } from '../helpers/sandboxMeta'
 
 vi.mock('../../services/docker', () => ({ listManagedContainers: vi.fn().mockResolvedValue([]) }))
 vi.mock('../../services/compose', () => ({ composeUp: vi.fn(), composeStart: vi.fn() }))
@@ -178,7 +179,7 @@ describe('wakeByHost', () => {
     expect((await wakeByHost('w3-web.lvh.me')).result).toBe('started')
     await vi.waitFor(() => expect(composeUp).toHaveBeenCalled())
     await new Promise(r => setImmediate(r))
-    vi.mocked(listManagedContainers).mockResolvedValue([{ name: 'leander-w3', template: 't', status: 'running', container_id: 'x', created_at: '' }])
+    vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'leander-w3', template: 't', status: 'running', container_id: 'x', created_at: '' })])
     expect(await wakeByHost('w3-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w3' })
     expect(composeUp).toHaveBeenCalledTimes(1)
   })
@@ -186,7 +187,7 @@ describe('wakeByHost', () => {
   it('reports no_route for existing containers it did not just wake: the request should have hit the sandbox router', async () => {
     // e.g. an https:// request to a sandbox whose router only listens on `web` — waking it would loop forever
     dirs = ['leander-w8']
-    vi.mocked(listManagedContainers).mockResolvedValue([{ name: 'leander-w8', template: 't', status: 'running', container_id: 'x', created_at: '' }])
+    vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'leander-w8', template: 't', status: 'running', container_id: 'x', created_at: '' })])
     expect(await wakeByHost('w8-web.lvh.me')).toEqual({ result: 'no_route', name: 'leander-w8' })
     expect(composeUp).not.toHaveBeenCalled()
   })
@@ -198,7 +199,7 @@ describe('wakeByHost: every wake through p7y', () => {
 
   it('an asleep sandbox (its router is gone while it is stopped): starts it, from asleep', async () => {
     dirs = ['p7y-zz']
-    vi.mocked(listManagedContainers).mockResolvedValue([{ name: 'p7y-zz', owner: 'u@x', template: 't', status: 'exited', container_id: 'x', created_at: '' }] as never)
+    vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'p7y-zz', owner: 'u@x', template: 't', status: 'exited', container_id: 'x', created_at: '' })] as never)
     vi.mocked(composeStart).mockReturnValue(new Promise(() => {}))
     expect(await wakeByHost('zz-web.lvh.me')).toEqual({ result: 'started', name: 'p7y-zz', from: 'asleep' })
     expect(composeStart).toHaveBeenCalledWith('/opt/users/p7y-zz/docker-compose.yml')
@@ -220,7 +221,7 @@ describe('wakeByHost: every wake through p7y', () => {
   it('a sandbox started from the panel a moment ago: waits for its router (in_progress), not no_route', async () => {
     const { markWoken } = await import('../../services/wake')
     dirs = ['p7y-pn']
-    vi.mocked(listManagedContainers).mockResolvedValue([{ name: 'p7y-pn', owner: 'u@x', template: 't', status: 'running', container_id: 'x', created_at: '' }] as never)
+    vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'p7y-pn', owner: 'u@x', template: 't', status: 'running', container_id: 'x', created_at: '' })] as never)
     markWoken('p7y-pn')
     expect(await wakeByHost('pn-web.lvh.me')).toEqual({ result: 'in_progress', name: 'p7y-pn' })
   })
@@ -231,7 +232,7 @@ describe("p7y's own session probe never wakes a sandbox", () => {
     const { reserveWake } = await import('../../services/quota')
     vi.mocked(reserveWake).mockClear()
     dirs = ['p7y-pw']
-    vi.mocked(listManagedContainers).mockResolvedValue([{ name: 'p7y-pw', owner: 'u@x', template: 't', status: 'exited', container_id: 'x', created_at: '' }] as never)
+    vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'p7y-pw', owner: 'u@x', template: 't', status: 'exited', container_id: 'x', created_at: '' })] as never)
     vi.mocked(composeStart).mockReset(); vi.mocked(composeUp).mockReset()
     expect(await wakeByHost('pw-p7y-wake.lvh.me')).toEqual({ result: 'in_progress', name: 'p7y-pw' })
     expect(composeStart).not.toHaveBeenCalled()

@@ -13,12 +13,13 @@ import { withWebsecure, withSocatUrl, withoutAllowNonRunning, migrateRouters } f
 import { composeUpService } from '../../services/compose'
 import { nudgeTraefik } from '../../services/project'
 import { listManagedContainers } from '../../services/docker'
+import { sandboxMeta } from '../helpers/sandboxMeta'
 
 const key = (name: string) => `traefik.http.routers.frps-${name}.entrypoints`
 const compose = (name: string, entrypoints: string) => yaml.dump({
   services: { sandbox: { image: 'dind' }, socat: { image: 'socat', labels: { [key(name)]: entrypoints, 'traefik.enable': 'true' } } }
 })
-const meta = (name: string, status: string) => ({ name, template: 't', status, container_id: 'x', created_at: '' })
+const meta = (name: string, status: string) => sandboxMeta({ name, status })
 
 function usersDir(sandboxes: Record<string, string>): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ldr-users-'))
@@ -47,7 +48,7 @@ describe('withWebsecure', () => {
 })
 
 describe('migrateRouters', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => { vi.clearAllMocks() })
 
   it('rewrites web-only sandboxes; recreates socat started when running, stopped when asleep, not at all in deep sleep', async () => {
     const dir = usersDir({ 'leander-run': 'web', 'leander-sleep': 'web', 'leander-deep': 'web', 'leander-new': 'web,websecure' })
@@ -107,7 +108,7 @@ describe('withSocatUrl', () => {
 })
 
 describe('migrateRouters: socat by name', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => { vi.clearAllMocks() })
   it('rewrites sandboxes on the port label, one recreate per sandbox even when both changes apply', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-users-'))
     for (const [n, text] of [['p7y-sleep', withPort('p7y-sleep')], ['p7y-both', withPort('p7y-both', 'web')]] as const) {

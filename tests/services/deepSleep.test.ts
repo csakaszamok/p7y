@@ -21,12 +21,13 @@ import { isDeepSleepDue, runDeepSleepOnce, deepSleepIntervalMs, deepSleepNow, ty
 import { listManagedContainers, getSandboxState } from '../../services/docker'
 import { composeDown } from '../../services/compose'
 import { nudgeTraefik, removeProjectContainers } from '../../services/project'
+import { sandboxMeta } from '../helpers/sandboxMeta'
 
 const NOW = new Date('2026-10-10T12:00:00Z')
 const state = (over: Partial<SandboxStateLike> = {}): SandboxStateLike => ({
   name: 'leander-a', status: 'exited', finishedAt: '2026-10-03T12:00:00Z', deepSleepAfter: '7d', staleNetwork: false, error: '', ...over
 })
-const meta = (name: string) => ({ name, template: 't', status: 'exited', container_id: 'x', created_at: '' })
+const meta = (name: string) => sandboxMeta({ name, status: 'exited' })
 
 describe('isDeepSleepDue', () => {
   it('is due once deep_sleep_after has elapsed since the stop', () => {
@@ -109,7 +110,7 @@ describe('deepSleepIntervalMs', () => {
 })
 
 describe('deepSleepNow', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => { vi.clearAllMocks() })
 
   it('takes the sandbox down right away, running or not, and tells Traefik', async () => {
     await deepSleepNow('p7y-shop')

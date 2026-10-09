@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { sandboxPrefix, sandboxName, rawNameOf, readLabel, labelKey, managedLabelFilters } from '../../services/naming'
 
-afterEach(() => vi.unstubAllEnvs())
+afterEach(() => { vi.unstubAllEnvs() })
 
 describe('naming', () => {
   it('names new sandboxes p7y-<raw>, or SANDBOX_PREFIX when set', () => {

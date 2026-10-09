@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { sandboxMeta } from '../helpers/sandboxMeta'
 
 vi.mock('../../services/docker', () => ({
   listManagedContainers: vi.fn().mockResolvedValue([]),
@@ -132,28 +133,28 @@ describe('sandbox service', () => {
 
   it('throws if name already exists', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      { name: 'leander-dup', template: 't', status: 'running', container_id: 'abc', created_at: '' }
+      sandboxMeta({ name: 'leander-dup', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     await expect(sandboxService.createSandbox('dup')).rejects.toThrow('already exists')
   }, 60000)
 
   it('rejects a new name that is an existing name plus "-something" (would steal its Traefik routes)', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      { name: 'leander-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' }
+      sandboxMeta({ name: 'leander-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     await expect(sandboxService.createSandbox('alice-inner')).rejects.toThrow('conflicts with an existing sandbox')
   }, 60000)
 
   it('rejects a new name that an existing longer name would shadow (reverse direction)', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      { name: 'leander-alice-inner', template: 't', status: 'running', container_id: 'abc', created_at: '' }
+      sandboxMeta({ name: 'leander-alice-inner', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     await expect(sandboxService.createSandbox('alice')).rejects.toThrow('conflicts with an existing sandbox')
   }, 60000)
 
   it('allows a name that merely starts with an existing name but is not prefix+dash', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      { name: 'leander-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' }
+      sandboxMeta({ name: 'leander-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     const result = await sandboxService.createSandbox('alicex', false)
     expect(result.name).toBe('p7y-alicex')
@@ -420,7 +421,7 @@ describe('archiveSandbox', () => {
     realExists = vi.mocked(fs.existsSync).getMockImplementation()! as (p: fs.PathLike) => boolean
     vi.mocked(fs.existsSync).mockImplementation(p => String(p).startsWith(dir) || realExists(p))
     vi.mocked(listManagedContainers).mockResolvedValue([
-      { name, template: 'dind-standard', status: 'exited', container_id: 'abc', created_at: '1700000000' }
+      sandboxMeta({ name, template: 'dind-standard', status: 'exited', container_id: 'abc', created_at: '1700000000' })
     ])
     vi.mocked(listProjectVolumes).mockResolvedValue([vol])
     vi.mocked(stopProjectContainers).mockImplementation(async () => { steps.push('stop') })
@@ -614,7 +615,7 @@ describe('tunnel URLs only for running sandboxes', () => {
     realExists = vi.mocked(fs.existsSync).getMockImplementation()! as (p: fs.PathLike) => boolean
     vi.mocked(fs.existsSync).mockImplementation(p => String(p) === `/opt/users/${name}/frps.toml` || realExists(p))
     vi.mocked(listManagedContainers).mockResolvedValue([
-      { name, owner: 'admin', template: 't', status: 'exited', container_id: 'x', created_at: '' }
+      sandboxMeta({ name, owner: 'admin', template: 't', status: 'exited', container_id: 'x', created_at: '' })
     ])
   })
 

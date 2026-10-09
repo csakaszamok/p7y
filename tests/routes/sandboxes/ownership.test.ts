@@ -63,7 +63,7 @@ const r = (path: string, method = 'GET', headers: Record<string, string> = alice
   new Request(`http://p7y.lvh.me${path}`, { method, headers })
 
 describe('sandbox ownership', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => { vi.clearAllMocks() })
 
   it('lists only the caller’s sandboxes; the admin sees all', async () => {
     expect((await (await list(r('/sandboxes'))).json()).map((s: { name: string }) => s.name)).toEqual(['leander-a1', 'leander-a2'])
@@ -127,7 +127,7 @@ describe('sandbox ownership', () => {
 })
 
 describe('sandbox-scoped token', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => { vi.clearAllMocks() })
   const a1 = { authorization: 'Bearer p7y_a1', host: 'p7y.lvh.me' }
 
   it('lists and opens only its own sandbox, even though the owner has more', async () => {
@@ -154,7 +154,7 @@ describe('sandbox-scoped token', () => {
 })
 
 describe('POST /sandboxes/:name/deep-sleep', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => { vi.clearAllMocks() })
 
   it('puts the owner’s sandbox into deep sleep', async () => {
     const res = await deepSleep(r('/sandboxes/leander-a1/deep-sleep', 'POST'))

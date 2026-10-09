@@ -38,7 +38,7 @@ const r = (name: string, body: unknown, headers: Record<string, string> = alice)
   new Request(`http://p7y.lvh.me/sandboxes/${name}`, { method: 'PATCH', headers, body: typeof body === 'string' ? body : JSON.stringify(body) })
 
 describe('PATCH /sandboxes/<name>', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => { vi.clearAllMocks() })
 
   it('changes the owner’s sandbox, passing its current status', async () => {
     const res = await patch(r('leander-a1', { idle_timeout: '45m' }))

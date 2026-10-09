@@ -11,7 +11,7 @@ const { sandboxService } = await import('../../../services/sandbox')
 const { default: post } = await import('../../../routes/sandboxes/[name]/start/POST')
 const req = (n: string, body?: unknown) => new Request(`http://localhost/sandboxes/${n}/start`, { method: 'POST', headers: { Authorization: 'Bearer p7y_u', 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) })
 
-beforeEach(() => vi.mocked(sandboxService.startSandbox).mockReset())
+beforeEach(() => { vi.mocked(sandboxService.startSandbox).mockReset() })
 
 describe('POST /sandboxes/:name/start', () => {
   it('at the limit: 409 with the reason and the running sandboxes', async () => {

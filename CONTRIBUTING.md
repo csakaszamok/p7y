@@ -26,7 +26,7 @@ npm ci
 
 ## Tests
 
-- **Unit tests:** `npm test` (vitest). **Types:** `npm run typecheck` (tsc, the app code only; tsx runs the code without checking types). Both run in CI on every push and pull request.
+- **Unit tests:** `npm test` (vitest). **Types:** `npm run typecheck` (tsc, the app code and the tests; tsx runs the code without checking types). Both run in CI on every push and pull request.
 - **End-to-end tests:** the scripts in `tests/*.sh` run against a live stack. Run the ones your change touches: `bash tests/sablier-wake.sh`, `bash tests/archive.sh`, `bash tests/isolation.sh`, `bash tests/deep-sleep.sh` (needs `DEEP_SLEEP_CHECK_INTERVAL=15s`), `bash tests/self-service.sh` (needs the mock OIDC env), `bash tests/https.sh` (self-signed `*.lvh.me`, restores HTTP afterwards), `bash tests/quota.sh` (mock OIDC env + `SANDBOX_QUOTA=1`), `bash tests/sleep-settings.sh`.
 - **Documentation:** the site in `docs/` (MkDocs Material). Preview it with `pip install -r docs/requirements.txt` and `mkdocs serve`; `mkdocs build --strict` must pass.
 
