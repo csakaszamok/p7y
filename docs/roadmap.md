@@ -10,6 +10,12 @@
   - the `docker_data` volume and its performance (virtio-fs), and how the CPU and memory limits map to the VM's size;
   - a foxglove image for it, and the same integration tests as for the other runtimes;
   - still a *sandbox* (same API, lifecycle, quota and UI), with its isolation shown as a badge next to its name and chosen at create time ("Isolation: Container / MicroVM"): `dind` 🟠 **privileged**, `sysbox` 🔵 **container**, `kata` 🟢 **microVM**. "MicroVM" is said only where it is true: `dind` and `sysbox` sandboxes share the host's kernel.
+- **GPUs in sandboxes.** Today no sandbox sees a GPU. A sandbox could ask for one at create time, like CPUs and memory, and the list, the panel and the API would show which have one (a *GPU* column with the model, e.g. `RTX 4090`). It suits the sleep model: a sleeping sandbox could give its GPU back, and the next one to wake take it. To work out:
+  - per runtime: `dind` needs the NVIDIA driver and `nvidia-container-toolkit` on the host, the device passed to the sandbox container and the toolkit in the foxglove image, so the inner Docker hands it on to the apps; whether and how `sysbox` (the production runtime) passes GPUs through, to check first; Kata only through VFIO, typically one GPU per VM;
+  - detecting the host's GPUs at startup and in `check-host.sh` (`nvidia-smi`, Docker's runtimes);
+  - limits and quota (`SANDBOX_MAX_GPUS`, the admin beyond), as for CPU and memory;
+  - a whole GPU per sandbox, or shared (time-slicing, MIG);
+  - what a waking sandbox does when every GPU is taken: wait, refuse, or start without one.
 - **Teams:** a sandbox owned by a group, so several people see and manage it, and other teams do not; optionally a quota per team.
 - **A hard disk quota per sandbox.** Today a sandbox above its disk limit is only flagged (see [Disk](resources.md#disk)). For a hard limit: its `docker_data` as a fixed-size ext4 image, loop-mounted through the local volume driver (`type=ext4`, `o=loop`); to work out: moving existing sandboxes' data, resizing (only while stopped), the archive, Docker Desktop. The Kata runtime gets this from its VM disk.
 - **Kubernetes support:** move the runtime layer behind the Docker-specific code; Sablier's Kubernetes provider helps here.

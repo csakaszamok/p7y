@@ -16,7 +16,7 @@ Handled entirely by [Sablier](https://github.com/sablierapp/sablier). The sandbo
 >     restart: unless-stopped
 > ```
 
-Only HTTP traffic through Traefik counts as activity: working through `DOCKER_HOST` directly does not keep a sandbox awake. Sablier persists its sessions (`--storage.file`), so restarting Sablier does not put running sandboxes to sleep. After a host reboot, sandboxes that were asleep stay asleep.
+Only HTTP traffic through Traefik counts as activity: working through `DOCKER_HOST` directly does not keep a sandbox awake. Sablier persists its sessions (`--storage.file`), so restarting Sablier does not put running sandboxes to sleep. A sandbox started without Purgatory (Docker restarting it, `docker compose start` by hand, or Purgatory restarted while it was starting one) has no session at first; Purgatory notices within two minutes and opens one, so it still sleeps after its `idle_timeout`. After a host reboot, sandboxes that were asleep stay asleep.
 
 The sandbox list (`GET /sandboxes` adds `stops_at`, `deep_sleep_at` and `deep_sleep_after` to each row) and the details panel show **Sleeps in** (time until Sablier stops a running sandbox; every request resets it — read from Sablier's `/metrics`, which Purgatory reaches on `sablier-net`) and **Deep sleep in** (time until an asleep sandbox is taken down).
 
