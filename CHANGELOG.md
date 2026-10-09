@@ -8,6 +8,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 - Documentation: the `sysbox` runtime is used in production; on a shared server the recommended setting is sysbox on the host and `ALLOWED_RUNTIMES=sysbox` ([Security](https://csakaszamok.github.io/p7y/latest/security/)). The README no longer says that the default runtime is the privileged `dind`: with `DEFAULT_RUNTIME=auto` it is `sysbox` wherever sysbox is installed.
 
+### Fixed
+
+- The sandbox list (`GET /sandboxes`, and the MCP tool `list_sandboxes`) gave a sleeping or deep-sleeping sandbox no app addresses, while its details did. It now gives the same: the apps it had when it last ran.
+
 ## [0.4.0] - 2026-10-09
 
 Upgrading from 0.3: `git pull` (or a checkout of `release/0.4`), then `docker compose pull && docker compose up -d`. The new settings are optional. Read **Changed** first if a client of yours creates sandboxes and uses their Portainer.
