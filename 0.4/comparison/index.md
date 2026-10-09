@@ -57,7 +57,7 @@ These also run on your own server, but they are built for **one team running its
 
 On a shared Docker daemon, anyone who may deploy an arbitrary compose file can, for example, bind-mount host paths or attach to another project's network: the separation in the dashboard does not reach the daemon.
 
-**They work well together:** try and build in a Purgatory sandbox, push the image to its registry, run it in production with Coolify or Dokploy. Every Purgatory sandbox also comes with its own Portainer, for that sandbox's daemon alone.
+**They work well together:** try and build in a Purgatory sandbox, push the image to its registry, run it in production with Coolify or Dokploy. A Purgatory sandbox can also have its own Portainer (the `portainer` template), for that sandbox's daemon alone.
 
 ## Looks similar, does a different job
 

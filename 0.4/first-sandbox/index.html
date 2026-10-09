@@ -1171,13 +1171,12 @@ curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </spa
 <span class="w">  </span><span class="s2">"registry_url"</span>:<span class="w"> </span><span class="s2">"registry.lvh.me"</span>,
 <span class="w">  </span><span class="s2">"registry_username"</span>:<span class="w"> </span><span class="s2">"alice"</span>,
 <span class="w">  </span><span class="s2">"registry_password"</span>:<span class="w"> </span><span class="s2">"..."</span>,
-<span class="w">  </span><span class="s2">"extras"</span>:<span class="w"> </span><span class="o">{</span>
-<span class="w">    </span><span class="s2">"portainer_url"</span>:<span class="w"> </span><span class="s2">"http://alice-portainer.lvh.me"</span>,
-<span class="w">    </span><span class="s2">"portainer_password"</span>:<span class="w"> </span><span class="s2">"..."</span>
-<span class="w">  </span><span class="o">}</span>
+<span class="w">  </span><span class="s2">"docker_access"</span>:<span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="s2">"host"</span>:<span class="w"> </span><span class="s2">"alice-docker.lvh.me"</span>,<span class="w"> </span><span class="s2">"state"</span>:<span class="w"> </span><span class="s2">"ready"</span><span class="w"> </span><span class="o">}</span>,
+<span class="w">  </span><span class="s2">"extras"</span>:<span class="w"> </span><span class="o">{}</span>
 <span class="o">}</span>
 </code></pre></div>
 <p>Sign in at <code>http://p7y.&lt;HOST_DOMAIN&gt;</code> to create sandboxes in the browser or mint a personal access token for your agents.</p>
+<p>With <code>"template": "portainer"</code> the sandbox also gets Portainer, and <code>extras</code> has its <code>portainer_url</code> and <code>portainer_password</code>.</p>
 
 
 

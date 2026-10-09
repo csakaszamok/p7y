@@ -1189,8 +1189,12 @@
 </thead>
 <tbody>
 <tr>
-<td><code>starter</code></td>
-<td>Portainer (its address and password in the API and the panel) and a hello app</td>
+<td><code>starter</code> (default)</td>
+<td>a hello app; deploy yours with <code>docker</code>, SSH or an agent</td>
+</tr>
+<tr>
+<td><code>portainer</code></td>
+<td>the same with Portainer, a web UI for the sandbox's Docker (its address and password in the API and the panel; it runs with <code>-H unix:///var/run/docker.sock</code>, so its environment exists from the start)</td>
 </tr>
 <tr>
 <td><code>tcp-demo</code></td>

@@ -1225,13 +1225,13 @@
 
 
 <h1 id="let-your-agent-deploy">Let your agent deploy<a class="headerlink" href="#let-your-agent-deploy" title="Permanent link">&para;</a></h1>
-<p>Give a coding agent (Claude Code, Codex, Cursor…) a personal access token and a sandbox, and it can ship your app there on its own: wake the sandbox, deploy a compose stack through the sandbox's Portainer API, build images inside it, read the logs and roll out new versions. The app gets its public URL from the tunnel.</p>
+<p>Give a coding agent (Claude Code, Codex, Cursor…) a personal access token and a sandbox, and it can ship your app there on its own: wake the sandbox, deploy a compose project to the sandbox's own Docker daemon, build images inside it, read the logs and roll out new versions. The app gets its public URL from the tunnel.</p>
 <ol>
 <li>In the UI: create a sandbox (say <code>shop</code>), then in its panel's <strong>Access</strong> tab <strong>Token for this sandbox…</strong> — a token that works only for that sandbox.</li>
 <li><strong>Download p7y.env</strong> in the token's dialog and save it in your project folder (keep it out of git), then tell the agent: <em>Deploy this app to my Purgatory sandbox — settings in p7y.env.</em> The file holds <code>P7Y_URL</code>, <code>P7Y_TOKEN</code>, <code>P7Y_SANDBOX</code> and <code>P7Y_AGENT_GUIDE</code>. Or tell the agent everything yourself, for example:</li>
 </ol>
 <blockquote>
-<p>Deploy this repo to my Purgatory sandbox <code>p7y-shop</code> at <code>https://p7y.example.com</code> with the token <code>p7y_…</code>. Follow https://github.com/csakaszamok/p7y/blob/main/docs/agent-guide.md.</p>
+<p>Deploy this repo to my Purgatory sandbox <code>p7y-shop</code> at <code>https://p7y.example.com</code> with the token <code>p7y_…</code>. Follow https://csakaszamok.github.io/p7y/latest/agent-guide/index.md.</p>
 </blockquote>
 <p><a href="../agent-guide/">docs/agent-guide.md</a> is written for the agent: every call it needs, tried against a live Purgatory. A token limited to one sandbox keeps the agent away from your other sandboxes; a token for all your sandboxes (Access tokens → + New token) acts as you.</p>
 <p>An agent with MCP can also use Purgatory as an MCP server with the same token: see <a href="../mcp/">MCP</a>.</p>

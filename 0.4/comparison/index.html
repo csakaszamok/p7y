@@ -1541,7 +1541,7 @@
 </tbody>
 </table>
 <p>On a shared Docker daemon, anyone who may deploy an arbitrary compose file can, for example, bind-mount host paths or attach to another project's network: the separation in the dashboard does not reach the daemon.</p>
-<p><strong>They work well together:</strong> try and build in a Purgatory sandbox, push the image to its registry, run it in production with Coolify or Dokploy. Every Purgatory sandbox also comes with its own Portainer, for that sandbox's daemon alone.</p>
+<p><strong>They work well together:</strong> try and build in a Purgatory sandbox, push the image to its registry, run it in production with Coolify or Dokploy. A Purgatory sandbox can also have its own Portainer (the <code>portainer</code> template), for that sandbox's daemon alone.</p>
 <h2 id="looks-similar-does-a-different-job">Looks similar, does a different job<a class="headerlink" href="#looks-similar-does-a-different-job" title="Permanent link">&para;</a></h2>
 <p>These come up in the same searches ("sandbox", "dev environment", "AI agent"), but they solve another problem:</p>
 <ul>

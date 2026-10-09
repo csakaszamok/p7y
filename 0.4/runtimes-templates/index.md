@@ -7,11 +7,12 @@ A sandbox is a **runtime** (how it runs) plus a **template** (what runs inside),
 | `dind`   | `privileged: true`                         | development, any Docker host (incl. Docker Desktop / WSL)                         |
 | `sysbox` | `runtime: sysbox-runc`, no privileged mode | production; requires [sysbox](https://github.com/nestybox/sysbox) on a Linux host |
 
-| Template   | What runs inside                                                                                                                   |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `starter`  | Portainer (its address and password in the API and the panel) and a hello app                                                      |
-| `tcp-demo` | a demo of [TLS TCP addresses](https://csakaszamok.github.io/p7y/0.4/networking/#tls-tcp-addresses): Postgres, Redis, SSH and pgweb |
-| `empty`    | nothing: paste your own compose file in the dialog                                                                                 |
+| Template            | What runs inside                                                                                                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `starter` (default) | a hello app; deploy yours with `docker`, SSH or an agent                                                                                                                                                |
+| `portainer`         | the same with Portainer, a web UI for the sandbox's Docker (its address and password in the API and the panel; it runs with `-H unix:///var/run/docker.sock`, so its environment exists from the start) |
+| `tcp-demo`          | a demo of [TLS TCP addresses](https://csakaszamok.github.io/p7y/0.4/networking/#tls-tcp-addresses): Postgres, Redis, SSH and pgweb                                                                      |
+| `empty`             | nothing: paste your own compose file in the dialog                                                                                                                                                      |
 
 Both runtimes have the same wiring (FRP tunnel, Traefik route, Sablier sleep/wake, `docker_data` volume, archive on delete). The sysbox image runs plain `dockerd`, so its TLS listener is configured through the runtime's `daemon_json` field, which Purgatory merges into the generated `daemon.json`. The sysbox runtime itself has not been exercised yet — only the generated compose/daemon config is covered by unit tests.
 
