@@ -4,6 +4,8 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-10-09
+
 ### Fixed
 
 - A sandbox started without Purgatory opening its Sablier session (e.g. Purgatory restarted or upgraded just as it woke one) never went to sleep and showed "no traffic yet" until someone opened one of its apps. Purgatory now checks every minute: a sandbox running without a session on two checks in a row gets one, and sleeps after its `idle_timeout`. The list and the panel say "not counting yet" / "The idle countdown has not started yet" instead of suggesting there was no traffic.
@@ -161,7 +163,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.2
 [0.4.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.1
 [0.4.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.0
 [0.3.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.1
