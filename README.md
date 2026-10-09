@@ -32,6 +32,6 @@ Then sign in at `http://p7y.<HOST_DOMAIN>` (by default `http://p7y.lvh.me`).
 
 **[csakaszamok.github.io/p7y](https://csakaszamok.github.io/p7y/latest/)**: [install](https://csakaszamok.github.io/p7y/latest/install/), [configuration](https://csakaszamok.github.io/p7y/latest/configuration/), [let your agent deploy](https://csakaszamok.github.io/p7y/latest/agents/), [MCP](https://csakaszamok.github.io/p7y/latest/mcp/), [API](https://csakaszamok.github.io/p7y/latest/api/), and [`llms-full.txt`](https://csakaszamok.github.io/p7y/latest/llms-full.txt) for agents.
 
-> **Security:** the default `dind` runtime is privileged: fine for a team that trusts each other, not for hostile code. On a shared server use `sysbox` ([details](https://csakaszamok.github.io/p7y/latest/security/)).
+> **Security:** where [sysbox](https://github.com/nestybox/sysbox) is installed, sandboxes run without a privileged container; without it they fall back to the privileged `dind`, which suits a team that trusts each other, not hostile code. On a shared server install sysbox and set `ALLOWED_RUNTIMES=sysbox` ([details](https://csakaszamok.github.io/p7y/latest/security/)).
 
 [Contributing](CONTRIBUTING.md) · [Security issues](SECURITY.md) · [Apache-2.0](LICENSE)
