@@ -4,6 +4,11 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- Every sandbox's socat relay ran with `-v`, which wrote every request and answer to its apps (passwords, tokens, cookies included) into the socat container's Docker log. It no longer does; existing sandboxes are switched over when Purgatory starts, and their socat container is recreated, which also drops the old log.
+- `setup.sh` created `.env`, which holds the secrets, readable by every user of the machine. It is now readable by its owner only (`chmod 600`), also when it already existed.
+
 ## [0.5.1] - 2026-10-09
 
 ### Added

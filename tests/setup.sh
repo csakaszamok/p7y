@@ -53,3 +53,11 @@ grep -qx 'PUBLIC_URL=https://purgatory.example.org' .env && grep -qx 'HOST_DOMAI
 mkdir "$tmp/f" && cd "$tmp/f"
 out=$(bash "$repo/setup.sh")
 echo "$out" | grep -q 'HOST_DOMAIN is lvh.me' && pass "no domain: lvh.me warning" || fail "no lvh.me warning"
+
+# .env holds the secrets: only its owner may read it (Linux; Git Bash on Windows has no Unix permissions)
+if [ "$(uname -s)" = Linux ]; then
+  mkdir "$tmp/g" && cd "$tmp/g" && bash "$repo/setup.sh" >/dev/null
+  [ "$(stat -c %a .env)" = 600 ] && pass ".env readable by its owner only" || fail ".env mode $(stat -c %a .env)"
+  chmod 644 .env && bash "$repo/setup.sh" >/dev/null
+  [ "$(stat -c %a .env)" = 600 ] && pass "an existing .env is made private too" || fail ".env mode $(stat -c %a .env)"
+fi
