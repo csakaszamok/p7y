@@ -76,6 +76,9 @@ docker_compose:
       container_name: ${name}-socat
       entrypoint: /bin/sh
       command: -c "trap 'exit 0' TERM; socat -d -d TCP-LISTEN:8080,fork,reuseaddr TCP:${name}-frps:8080 & socat -d -d TCP-LISTEN:7500,fork,reuseaddr TCP:${name}-frps:7500 & wait"
+      # The frps API has a password: other sandboxes reach its port through this socat over traefik-net
+      environment:
+        FRPS_API_AUTH: "${frps_api_auth}"
       networks:
         - default
         - traefik-net
@@ -85,7 +88,7 @@ docker_compose:
       # Healthy only once frpc inside the sandbox has registered its proxies,
       # so Sablier does not redirect the user before the tunnel works.
       healthcheck:
-        test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7500/api/proxy/http | grep -q online"]
+        test: ["CMD-SHELL", "wget -qO- http://$$FRPS_API_AUTH@127.0.0.1:7500/api/proxy/http | grep -q online"]
         interval: 2s
         timeout: 2s
         retries: 60

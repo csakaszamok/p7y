@@ -8,6 +8,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 - The sign-in page shows the sandbox places on the server above the sign-in buttons: taken and free of `SANDBOX_MAX_TOTAL`, with a bar that turns orange from 90% and red when the server is full. The page is public: `LOGIN_CAPACITY=off` hides it. The count is kept for 30 seconds, so reloading the page does not list the sandboxes each time.
 
+### Changed
+
+- **A sandbox's frps API (`:7500`) has a password.** It lists the sandbox's proxies, and other sandboxes reach it over `traefik-net` through socat: without the password they now get 401. Each sandbox gets its own, in its `frps.toml`; Purgatory uses it to list the apps, socat's health check gets it in `FRPS_API_AUTH`. Existing sandboxes get one when Purgatory starts (their frps and socat containers are recreated: a running sandbox's web addresses are gone for a few seconds); one whose socat health check is not the runtime's (an edited runtime) keeps its API open and says so in the log.
+
 ### Fixed
 
 - Every sandbox's socat relay ran with `-v`, which wrote every request and answer to its apps (passwords, tokens, cookies included) into the socat container's Docker log. It no longer does; existing sandboxes are switched over when Purgatory starts, and their socat container is recreated, which also drops the old log.

@@ -5,6 +5,7 @@ import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
 import { insecureConfigWarnings, insecureConfigErrors } from "./services/configWarnings";
 import { syncTlsConfig } from "./services/tlsConfig";
 import { migrateRouters } from "./services/routerMigration";
+import { migrateFrpsApiAuth } from "./services/frpsApi";
 import { migrateDataVolumes } from "./services/dataVolumes";
 import { migrateHostPaths } from "./services/pathMigration";
 import { migrateSandboxDirs, migrateArchives } from "./services/sandboxDirMigration";
@@ -307,6 +308,9 @@ migrateSandboxDirs()
   .catch(err => console.error("[paths] migration failed:", err))
   .then(() => migrateRouters())
   .catch(err => console.error("[routers] migration failed:", err))
+  // Then sandboxes whose frps API has no password: frps.toml and socat's health check get one
+  .then(() => migrateFrpsApiAuth())
+  .catch(err => console.error("[frps] migration failed:", err))
   // Then sandboxes from before the data volumes: /opt, /root, /home, /srv copied into volumes
   .then(() => migrateDataVolumes())
   .catch(err => console.error("[data-volumes] migration failed:", err))

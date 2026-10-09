@@ -79,6 +79,11 @@ OPEN=$(docker exec "$FA" docker run --rm alpine sh -c "sleep 2; wget -qO- -T 5 h
 [ "$OPEN" = "open" ] || fail "a port B published on all interfaces is not reachable from $FA (got: $OPEN)"
 pass "A port B publishes on all interfaces is reachable from $FA (by design)"
 
+B_SOCAT_IP=$(docker inspect -f '{{(index .NetworkSettings.Networks "traefik-net").IPAddress}}' "$FB-socat")
+FRPS=$(docker exec "$FA" docker run --rm alpine sh -c "wget -qO- -T 5 http://$B_SOCAT_IP:7500/api/proxy/http 2>&1 || true" 2>&1 | tail -1)
+echo "$FRPS" | grep -q '401' || fail "B's frps API from $FA without its password: $FRPS"
+pass "B's frps API answers 401 to $FA without its password"
+
 [ "$(curl -s -m 5 -H "Host: $ECHO_HOST" "$TRAEFIK_URL/" | head -c 5)" = "hello" ] || fail "B's tunnel stopped working"
 pass "B's tunnel still serves"
 

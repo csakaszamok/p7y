@@ -268,7 +268,17 @@ describe('sandbox service', () => {
   const written = (name: string, file: string) => vi.mocked(fs.writeFileSync).mock.calls
     .find(c => /^\/opt\/sandboxes\/[^/]+\//.test(String(c[0])) && String(c[0]).endsWith(`/${name}/${file}`))?.[1] as string | undefined
   // ${…} that Purgatory itself fills in; anything else is left for docker compose
-  const OURS = /\$\{(name|raw_name|template_name|runtime_name|compose_source|created_at|host_users_dir|host_domain|frp_token|idle_timeout|deep_sleep_after|owner|demo_password|cpus|memory|portainer_[a-z_]+)\}/
+  const OURS = /\$\{(name|raw_name|template_name|runtime_name|compose_source|created_at|host_users_dir|host_domain|frp_token|frps_api_auth|idle_timeout|deep_sleep_after|owner|demo_password|cpus|memory|portainer_[a-z_]+)\}/
+
+  it("gives a new sandbox's frps API a password, which socat's health check uses", async () => {
+    vi.mocked(fs.writeFileSync).mockClear()
+    await sandboxService.createSandbox('fa1', false)
+    const auth = /\[webServer\][\s\S]*user = "(\w+)"\npassword = "([0-9a-f]{32})"/.exec(written('p7y-fa1', 'frps.toml')!)
+    expect(auth).not.toBeNull()
+    const socat = (yaml.load(written('p7y-fa1', 'docker-compose.yml')!) as { services: { socat: { environment: Record<string, string>; healthcheck: { test: string[] } } } }).services.socat
+    expect(socat.environment.FRPS_API_AUTH).toBe(`${auth![1]}:${auth![2]}`)
+    expect(socat.healthcheck.test[1]).toContain('http://$$FRPS_API_AUTH@127.0.0.1:7500/')
+  }, 60000)
 
   it('opens the Sablier session of a new sandbox, so it counts down and sleeps without a first request', async () => {
     vi.mocked(primeSablierSession).mockClear()
