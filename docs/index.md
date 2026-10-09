@@ -5,6 +5,8 @@
 
 **Self-hosted sandboxes for your team and their AI agents: everyone gets their own Docker, every app gets a URL, idle sandboxes sleep.**
 
+**About 15 seconds** from *New sandbox* to your own Docker with Portainer and a public URL; a sleeping sandbox is back in under 10. (Measured with the images already pulled: the first sandbox on a new server also downloads them.)
+
 ![Creating a sandbox, opening its app, and waking it after it fell asleep](media/demo.gif)
 
 *Where your team's code waits before it goes to heaven (production). Nothing is lost here: idle sandboxes sleep, deleted ones are archived.* `p7y` is the short name, as in k8s: **p**urgator**y**, 7 letters in between. It names the sandboxes (`p7y-<name>`), labels, tokens and the UI address.
