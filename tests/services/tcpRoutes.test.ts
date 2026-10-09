@@ -168,12 +168,23 @@ describe('resolveDockerHost', () => {
     expect(await resolveDockerHost('nope-docker.lvh.me', { deadlineMs: 500 })).toBeNull()
     expect(await resolveDockerHost('shop-tcp.lvh.me', { deadlineMs: 500 })).toBeNull()
   })
-  it('wakes a sleeping sandbox first', async () => {
-    const l = await listener()
+  // Docker Desktop keeps every context connected and reconnects at once: waking on a connection woke the
+  // sandbox again each time it went to sleep. Answered at once, without the wait.
+  it('does not wake a sleeping sandbox', async () => {
     vi.mocked(wakeInProgress).mockReturnValue(false) // an earlier test leaves it true
+    vi.mocked(sandboxService.startSandbox).mockClear()
     vi.mocked(getSandboxState).mockResolvedValue({ name: 'p7y-shop', status: 'exited' } as never)
-    await resolveDockerHost('shop-docker.lvh.me', { host: '127.0.0.1', port: l.port, deadlineMs: 2000 })
-    expect(sandboxService.startSandbox).toHaveBeenCalledWith('p7y-shop')
+    const t0 = Date.now()
+    expect(await resolveDockerHost('shop-docker.lvh.me', { deadlineMs: 5000 })).toBeNull()
+    expect(Date.now() - t0).toBeLessThan(1000)
+    expect(sandboxService.startSandbox).not.toHaveBeenCalled()
+  })
+  it('waits for a wake already under way (Wake in the UI, an app opened)', async () => {
+    const l = await listener()
+    vi.mocked(wakeInProgress).mockReturnValue(true)
+    vi.mocked(getSandboxState).mockResolvedValue({ name: 'p7y-shop', status: 'exited' } as never)
+    expect(await resolveDockerHost('shop-docker.lvh.me', { host: '127.0.0.1', port: l.port, deadlineMs: 2000 })).toEqual({ host: '127.0.0.1', port: l.port })
+    vi.mocked(wakeInProgress).mockReturnValue(false)
     l.close()
   })
 })
@@ -184,8 +195,6 @@ describe('the limit', () => {
     vi.mocked(sandboxService.startSandbox).mockRejectedValueOnce(Object.assign(new Error('Running limit reached'), { code: 'LIMIT' }))
     const t0 = Date.now()
     expect(await resolveTcpHost('shop-db-tcp.lvh.me', { deadlineMs: 5000, retryMs: 10 })).toBeNull()
-    vi.mocked(sandboxService.startSandbox).mockRejectedValueOnce(Object.assign(new Error('Running limit reached'), { code: 'LIMIT' }))
-    expect(await resolveDockerHost('shop-docker.lvh.me', { deadlineMs: 5000 })).toBeNull()
     expect(Date.now() - t0).toBeLessThan(1000)
   })
 })

@@ -4,6 +4,14 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- A sandbox added as a Docker context in Docker Desktop never went to sleep: its Builds view keeps the connection to the sandbox's Docker open, and Purgatory renewed the sleep timer once a minute for as long as a Docker connection was open. It now renews it only while bytes go through the connection (a build, `docker logs -f`, a pull).
+
+### Changed
+
+- **A Docker connection (`<raw>-docker.<domain>:443`) no longer wakes a sleeping sandbox.** Docker Desktop reconnects to every context at once, so it would wake the sandbox each time it fell asleep. Wake it first (**Wake**, `POST /sandboxes/:name/start`, the MCP tool `wake_sandbox`, or open one of its apps); until then `docker` cannot connect. TLS TCP addresses and SSH still wake it.
+
 ## [0.5.0] - 2026-10-09
 
 Upgrading from 0.4: check that Docker Compose is 2.17 or newer **before** `git pull` (`docker compose version`), and read **Changed** first if you edited templates or runtimes in your checkout. Run `docker compose up -d --remove-orphans` right after the pull.
