@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- The sign-in page shows the sandbox places on the server above the sign-in buttons: taken and free of `SANDBOX_MAX_TOTAL`, with a bar that turns orange from 90% and red when the server is full. The page is public: `LOGIN_CAPACITY=off` hides it. The count is kept for 30 seconds, so reloading the page does not list the sandboxes each time.
+
 ## [0.5.1] - 2026-10-09
 
 ### Added
