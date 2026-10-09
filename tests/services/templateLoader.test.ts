@@ -12,8 +12,15 @@ describe('loadTemplate', () => {
   it('loads starter: compose.yaml as the stack, template.yaml for the rest', () => {
     const t = loadTemplate('starter', TEMPLATES_DIR)
     expect(t.name).toBe('starter')
+    expect(t.description).toMatch(/hello app/)
+    expect(Object.keys(servicesOf('starter'))).toEqual(['http-echo'])
+    expect(t.before_script).toBeUndefined()
+  })
+
+  it('loads portainer: the starter with Portainer and its password', () => {
+    const t = loadTemplate('portainer', TEMPLATES_DIR)
     expect(t.description).toMatch(/Portainer/)
-    expect(Object.keys(servicesOf('starter'))).toEqual(['portainer', 'http-echo'])
+    expect(Object.keys(servicesOf('portainer'))).toEqual(['portainer', 'http-echo'])
     expect(t.before_script).toContain('portainer_password')
   })
 
@@ -70,7 +77,7 @@ describe('a template directory without or with an empty template.yaml', () => {
 
 describe('listTemplates', () => {
   it('returns the built-in templates', () => {
-    expect(listTemplates(TEMPLATES_DIR).map(t => t.name)).toEqual(['empty', 'starter', 'tcp-demo'])
+    expect(listTemplates(TEMPLATES_DIR).map(t => t.name)).toEqual(['empty', 'portainer', 'starter', 'tcp-demo'])
   })
 })
 
@@ -94,19 +101,19 @@ describe('loadTemplateText', () => {
   })
 })
 
-describe('starter stack', () => {
+describe('starter and portainer stacks', () => {
   // Published on 127.0.0.1 only: the tunnel still serves them (frpc connects to the
   // container's own IP), but other sandboxes cannot reach them on traefik-net.
   // 127.0.0.1 would make them private (no link): spec 2026-10-02-private-ports
   it('publishes its ports on all interfaces, so each gets a link', () => {
-    const ports = Object.values(servicesOf('starter')).flatMap(s => s.ports ?? [])
-    expect(ports).toEqual(['9000:9000', '5678:5678'])
+    expect(Object.values(servicesOf('starter')).flatMap(s => s.ports ?? [])).toEqual(['5678:5678'])
+    expect(Object.values(servicesOf('portainer')).flatMap(s => s.ports ?? [])).toEqual(['9000:9000', '5678:5678'])
   })
 
   // Without -H the "local" environment only appears after "Get started" in the UI,
   // so an agent using the Portainer API would find no endpoint.
   it("runs Portainer on the sandbox's Docker socket from the start", () => {
-    expect(servicesOf('starter').portainer.command).toEqual(expect.arrayContaining(['-H', 'unix:///var/run/docker.sock']))
+    expect(servicesOf('portainer').portainer.command).toEqual(expect.arrayContaining(['-H', 'unix:///var/run/docker.sock']))
   })
 })
 

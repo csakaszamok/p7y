@@ -4,7 +4,7 @@ A sandbox is **running**, **asleep** (containers stopped, data intact), in **dee
 
 Handled entirely by [Sablier](https://github.com/sablierapp/sablier). The sandbox's outer containers (DinD, frps, socat) form one Sablier group and its Traefik router carries the Sablier middleware. After `idle_timeout` without HTTP traffic the group is stopped — which stops everything inside the sandbox too. The sandbox's router exists only while it runs, so the next request reaches Purgatory's catch-all `/wake`, which wakes it within the owner's limits (see [Web UI and sign-in](web-ui.md)) and shows a waiting page until the router is back; the socat healthcheck only passes once the FRP tunnel is online. Sablier still measures the idle time and puts the sandbox to sleep. **Reset** next to *Sleeps in* in the panel (`POST /sandboxes/:name/keep-awake`) starts the countdown over, as a visit would; it does not wake a sleeping sandbox.
 
-> **Apps must set a restart policy to come back after sleep.** When the sandbox wakes, its inner Docker daemon only restarts containers with `restart: unless-stopped` or `restart: always`. Without one, the app stays stopped and has to be started by hand (e.g. from Portainer):
+> **Apps must set a restart policy to come back after sleep.** When the sandbox wakes, its inner Docker daemon only restarts containers with `restart: unless-stopped` or `restart: always`. Without one, the app stays stopped and has to be started by hand (`docker start`, or from Portainer):
 >
 > ```yaml
 > services:
