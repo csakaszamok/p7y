@@ -9,7 +9,7 @@
 #   docker run --rm --privileged -e DOCKER_TLS_CERTDIR= -e DOCKER_HOST=unix:///var/run/docker.sock \
 #     -v "$PWD:/src:ro" docker:dind sh -c \
 #     'dockerd-entrypoint.sh >/dev/null 2>&1 & until docker info >/dev/null 2>&1; do sleep 1; done; \
-#      apk add -q bash curl && cp -r /src /p7y && bash /p7y/tests/install.sh'
+#      apk add -q bash curl git && cp -r /src /p7y && bash /p7y/tests/install.sh'
 #
 # Usage: bash tests/install.sh
 set -euo pipefail
@@ -26,6 +26,9 @@ fi
 
 repo=$PWD
 TAG=p7y-install-test
+# The release an old checkout runs before the upgrade (needs the repository's tags)
+OLD_REF=${OLD_REF:-v0.4.2}
+git rev-parse -q --verify "$OLD_REF^{commit}" >/dev/null || fail "no $OLD_REF in this repository (fetch the tags)"
 info "building the image"
 docker build -q -t "ghcr.io/csakaszamok/p7y:$TAG" . >/dev/null
 
@@ -59,15 +62,35 @@ for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://loca
 curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q 'VIEW IN FULL SCREEN' && pass "our 404 page" || fail "404 page"
 docker run --rm -q -v "${COMPOSE_PROJECT_NAME}_sablier_themes:/t" alpine ls /t | grep -qx p7y.html && pass "Sablier has the p7y theme" || fail "theme"
 
-info "old checkout upgraded in place: an edited template no longer applies"
-docker compose down >/dev/null 2>&1
-mkdir -p templates/starter && printf 'services:\n  portainer:\n    image: portainer/portainer-ce\n' > templates/starter/compose.yaml
-rm dynamic/errors.yml   # what git pull does to an old checkout
-cp .env env.before; find data opt -type f | sort > files.before
-docker compose up -d >/dev/null 2>&1 || fail "up after upgrade"
+info "old checkout ($OLD_REF) upgraded with git while it runs"
+# A real one: the old release's files in a git repository, running; then the checkout moves to this tree,
+# as `git pull` would (it deletes files that left the repository, and directories that became empty)
+docker compose down -v >/dev/null 2>&1
+old=$base/old/p7y; mkdir -p "$old"; dir=$old; cd "$old"
+git init -q && git config user.email test@example.com && git config user.name test
+git -C "$repo" archive "$OLD_REF" | tar -x && git add -A && git commit -qm old
+git rm -rq . && git -C "$repo" archive HEAD | tar -x   # the committed tree under test
+git add -A && git commit -qm new && new=$(git rev-parse HEAD) && git checkout -q HEAD~1
+# 0.4's setup.sh stops at `hostname -I` on busybox, after it wrote the secrets
+bash setup.sh >/dev/null 2>&1 || true
+[ -f .env ] || fail "the old setup.sh made no .env"
+docker compose up -d --quiet-pull >/dev/null 2>&1 || { docker compose ps -a; fail "the old release did not start"; }
 wait_api
+cp .env "$base/env.before"; find data opt -type f 2>/dev/null | sort > "$base/files.before"
+git checkout -q "$new"   # the pull
+printf 'P7Y_VERSION=%s
+' "$TAG" >> .env   # the new compose file's default would name the new release
+docker compose up -d --remove-orphans --quiet-pull >/dev/null 2>&1 || { docker compose ps -a; docker compose logs p7y-init; fail "up after the pull"; }
+wait_api
+for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q 'VIEW IN FULL SCREEN' && break; sleep 2; done
+curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q 'VIEW IN FULL SCREEN' && pass "after the pull: our 404 page through Traefik" || fail "after the pull: Traefik lost its error pages (dynamic/)"
+code=$(curl -s -m 5 -o /dev/null -w '%{http_code}' -H 'Host: p7y.lvh.me' http://localhost/)
+case $code in 200|302) pass "after the pull: the UI through Traefik ($code)";; *) fail "after the pull: the UI through Traefik answers $code";; esac
+# Traefik must read the dynamic/ that is there now: one bound to a directory the pull deleted keeps its last
+# configuration in memory and never sees a new errors.yml or tls.yml
+docker compose exec -T traefik ls /etc/traefik/dynamic 2>/dev/null | grep -qx errors.yml   && pass "after the pull: Traefik sees dynamic/" || fail "after the pull: Traefik reads a dynamic/ the pull deleted"
 has_portainer && fail "the checkout's starter applies" || pass "the image's starter applies"
-[ -f dynamic/errors.yml ] && pass "dynamic/errors.yml back after up" || fail "errors.yml missing"
-cmp -s .env env.before && pass ".env untouched" || fail ".env changed"
-missing=$(while read -r f; do [ -e "$f" ] || echo "$f"; done < files.before)
+[ -z "$(git status --porcelain)" ] && pass "git status clean" || fail "git status: $(git status --porcelain | head -5)"
+head -n "$(wc -l < "$base/env.before")" .env | cmp -s - "$base/env.before" && pass ".env kept" || fail ".env changed"
+missing=$(while read -r f; do [ -e "$f" ] || echo "$f"; done < "$base/files.before")
 [ -z "$missing" ] && pass "data/ and opt/ kept" || fail "gone after the upgrade: $missing"
