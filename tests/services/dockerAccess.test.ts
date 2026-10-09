@@ -6,7 +6,7 @@ import forge from 'node-forge'
 
 vi.stubEnv('HOST_DOMAIN', 'lvh.me')
 const { generateCertBundle } = await import('../../services/tls')
-const { dockerHostName, dockerAccessState, regenerateCerts } = await import('../../services/dockerAccess')
+const { dockerHostName, dockerAccessState, dockerAccessInfo, regenerateCerts } = await import('../../services/dockerAccess')
 
 const sans = (pem: string) => (forge.pki.certificateFromPem(pem).getExtension('subjectAltName') as { altNames: Array<{ value?: string }> }).altNames.map(a => a.value)
 
@@ -30,6 +30,15 @@ describe('docker access certificates', () => {
   it('adds extra DNS names to the server certificate', () => {
     const b = generateCertBundle('127.0.0.1', 'p7y-shop', 1024, ['shop-docker.lvh.me'])
     expect(sans(b.serverCert)).toEqual(expect.arrayContaining(['p7y-shop', 'shop-docker.lvh.me', 'host.docker.internal']))
+  })
+
+  // A Docker connection does not wake a sleeping sandbox; the client only sees EOF, so the API says what to do
+  it("tells how to reach a sleeping sandbox's Docker: start it first", () => {
+    const asleep = dockerAccessInfo('p7y-shop', 'exited', sandboxDir(true))
+    expect(asleep).toMatchObject({ host: 'shop-docker.lvh.me', state: 'ready' })
+    expect(asleep.hint).toContain('POST /sandboxes/p7y-shop/start')
+    expect(dockerAccessInfo('p7y-shop', 'deep_sleep', sandboxDir(true)).hint).toBeDefined()
+    expect(dockerAccessInfo('p7y-shop', 'running', sandboxDir(true))).toEqual({ host: 'shop-docker.lvh.me', state: 'ready' })
   })
 
   it('is ready only when the server certificate carries the name', () => {

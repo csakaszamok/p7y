@@ -138,6 +138,8 @@
       parts.push(table(['Docker & registry', ''], [
         kv('Address', `<span class="tcp">${esc(da.host)}:443</span> ${copyButton(`${da.host}:443`)}`),
         kv('State', state),
+        // Asleep: docker gets only EOF until the sandbox is woken
+        ...(da.hint ? [kv('', `<span class="muted">${esc(da.hint)}</span>`)] : []),
       ]))
     }
     if ((s.owner || 'admin') === ctx.me) parts.push(table(['API', ''], [kv('Token', '<button data-act="token">Token for this sandbox…</button>')]))
