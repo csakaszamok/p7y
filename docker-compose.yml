@@ -3,7 +3,7 @@ services:
     # A released image; `docker compose build` (or a missing image) builds it from this checkout.
     # To work on the code, mount it instead: COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
     # (and COMPOSE_PATH_SEPARATOR=: on Windows) in .env.
-    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.3.1}
+    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.4.0}
     build: .
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it

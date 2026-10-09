@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-09
+
+Upgrading from 0.3: `git pull` (or a checkout of `release/0.4`), then `docker compose pull && docker compose up -d`. The new settings are optional. Read **Changed** first if a client of yours creates sandboxes and uses their Portainer.
+
 ### Added
 
 - `ALLOWED_RUNTIMES`: the runtimes new sandboxes may use (comma list, empty = all), e.g. `sysbox` so nobody creates a privileged `dind` sandbox on a shared server. The others are left out of `GET /runtimes` and the create form; asking for one is a 400. Existing sandboxes are not affected.
@@ -15,7 +19,8 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 - **The `starter` template no longer has Portainer**, only the hello app: an agent deploys with the `docker` command line (the sandbox's own Docker daemon, with the client certificates `GET /sandboxes/:name` gives), SSH or MCP, and a sandbox no longer exposes a Portainer admin login on the internet unless asked for. The new **`portainer`** template is the former starter. A client that creates sandboxes without a template and reads `extras.portainer_url` / `portainer_password` must now ask for `"template": "portainer"`. Existing sandboxes keep their Portainer.
 - **Creating a sandbox is faster** (about 10 s instead of 15 on a dev machine): Purgatory waits until the tunnel serves every app the inner compose publishes, instead of polling every 3 s until two answers match.
-- The agent guide puts the `docker` command line first; Portainer is a section for sandboxes that have it.
+- The agent guide puts the `docker` command line first; Portainer is a section for sandboxes that have it. `P7Y_AGENT_GUIDE` in `p7y.env` points to its Markdown on the documentation site.
+- Release images: `latest` is the highest version only, so a fix for an older series does not move it back; every release is also tagged `x.y` (e.g. `0.4`), the newest of its series.
 
 ### Fixed
 
@@ -141,6 +146,7 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.0
 [0.3.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.1
 [0.3.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.0
