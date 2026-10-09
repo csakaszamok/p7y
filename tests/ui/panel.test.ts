@@ -178,6 +178,12 @@ describe('agent access in the panel', () => {
     expect(panelOf(P.renderPanel({ ...running, docker_access: { host: 'x', state: 'ready' } }, { ...ctx, me: 'bob', isAdmin: false }), 'access')).not.toContain('data-act="export"')
   })
 
+  it('Access says a sleeping sandbox must be woken before docker connects', () => {
+    const hint = 'Asleep: a Docker connection does not wake it. Start it first (POST /sandboxes/p7y-shop/start).'
+    expect(panelOf(P.renderPanel({ ...running, status: 'exited', docker_access: { host: 'x', state: 'ready', hint } }, ctx), 'access')).toContain('a Docker connection does not wake it')
+    expect(panelOf(P.renderPanel({ ...running, docker_access: { host: 'x', state: 'ready' } }, ctx), 'access')).not.toContain('does not wake it')
+  })
+
   it('a Registry tab: images, scan state, findings, delete', () => {
     expect(P.TABS.map(([id]: [string]) => id)).toEqual(['apps', 'access', 'resources', 'registry', 'settings'])
     expect(panelOf(P.renderPanel(running, ctx), 'registry')).toContain('data-registry')
