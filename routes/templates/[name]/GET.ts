@@ -2,6 +2,7 @@ import { requirePrincipal } from '../../../services/principal'
 import { loadTemplate, loadTemplateText } from '../../../services/templateLoader'
 
 export const openapi = {
+  mcp: { name: 'get_template' },
   summary: "A template's compose.yaml as written (to show or edit before a create)",
   tags: ['templates'],
   security: [{ bearerAuth: [] }],

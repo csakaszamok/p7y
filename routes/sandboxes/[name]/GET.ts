@@ -1,7 +1,7 @@
 import { requirePrincipal } from '../../../services/principal'
 import { getOwnedSandbox } from '../../../services/access'
 import { sleepTimes } from '../../../services/sleepTimes'
-import { publicTcpPorts } from '../../../services/tcpNames'
+import { publicTcpPorts, rememberedTcpPorts } from '../../../services/tcpNames'
 import { sleepSettingsOf } from '../../../services/sleepSettings'
 import { rawNameOf } from '../../../services/naming'
 import { sshKeyCount, hasGeneratedKey } from '../../../services/sandboxSsh'
@@ -13,6 +13,7 @@ import { appStatuses } from '../../../services/appProbe'
 import { dockerAccessState, dockerHostName } from '../../../services/dockerAccess'
 
 export const openapi = {
+  mcp: { name: 'get_sandbox' },
   summary: 'Get sandbox details',
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],
@@ -34,7 +35,8 @@ export default async (req: Request): Promise<Response> => {
     const apps = sandbox.status === 'running'
       ? await appStatuses(name, await appLinks(name))
       : sandbox.tunnel_urls.map(url => ({ url, port: null, service: app_services?.[url] ?? null, answers: null }))
-    const tcp = sandbox.status === 'running' ? await publicTcpPorts(name).catch(() => []) : []
+    // Asleep: the ports it had when it last ran (a connection wakes it)
+    const tcp = sandbox.status === 'running' ? await publicTcpPorts(name).catch(() => []) : rememberedTcpPorts(name) ?? []
     const tcp_urls = tcp.map(p => `${p.host}:443`)
     // port: the container's own port, so a client can tell Postgres from SSH (the name may not say)
     const tcp_addresses = tcp.map(p => ({ address: `${p.host}:443`, port: p.privatePort, ...(p.user ? { user: p.user } : {}) }))

@@ -1,0 +1,20 @@
+# Let your agent deploy
+
+Give a coding agent (Claude Code, Codex, Cursor…) a personal access token and a sandbox, and it can ship your app there on its own: wake the sandbox, deploy a compose project to the sandbox's own Docker daemon, build images inside it, read the logs and roll out new versions. The app gets its public URL from the tunnel.
+
+1. In the UI: create a sandbox (say `shop`), then in its panel's **Access** tab **Token for this sandbox…** — a token that works only for that sandbox.
+2. **Download p7y.env** in the token's dialog and save it in your project folder (keep it out of git), then tell the agent: *Deploy this app to my Purgatory sandbox — settings in p7y.env.* The file holds `P7Y_URL`, `P7Y_TOKEN`, `P7Y_SANDBOX` and `P7Y_AGENT_GUIDE`. Or tell the agent everything yourself, for example:
+
+   > Deploy this repo to my Purgatory sandbox `p7y-shop` at `https://p7y.example.com` with the token `p7y_…`. Follow https://csakaszamok.github.io/p7y/latest/agent-guide/index.md.
+
+[docs/agent-guide.md](agent-guide.md) is written for the agent: every call it needs, tried against a live Purgatory. A token limited to one sandbox keeps the agent away from your other sandboxes; a token for all your sandboxes (Access tokens → + New token) acts as you.
+
+An agent with MCP can also use Purgatory as an MCP server with the same token: see [MCP](mcp.md).
+
+## Docker, registry, export
+A coding agent (Claude Code, Codex…) can work on a sandbox with plain `docker` commands:
+
+- **Docker from outside:** `<raw>-docker.<domain>:443` reaches the sandbox's own Docker daemon. Purgatory does not open that TLS: it only reads the name and passes the connection through, so the Docker command line and the sandbox talk to each other with the sandbox's own certificates (only whoever holds its client key gets in). Connecting wakes the sandbox, and an open connection keeps it awake. Sandboxes created before this need new certificates once: **Access → Enable** (restarts the sandbox).
+- **Export for coding agents…** and **Copy as .env** sit at the top of the panel's **Access** tab. **Copy as .env** puts `p7y.env` (a new token for the sandbox) on the clipboard. **Export for coding agents…** downloads `p7y-<raw>.zip`; before a sandbox has Docker access it offers to enable it, or to export without the Docker keys. When the sandbox's Portainer is public, both also carry `P7Y_PORTAINER_URL` and a Portainer API token (`P7Y_PORTAINER_TOKEN`, sent as `X-API-Key`), made for the export, so the agent never gets the Portainer admin password; making it wakes the sandbox. That token does not expire and revoking the Purgatory token does not revoke it: delete it in the sandbox's Portainer (My account → Access tokens). The zip holds `p7y.env` (with a new token limited to the sandbox, `P7Y_DOCKER_HOST`, `P7Y_REGISTRY`), the Docker client keys and a README with the `docker context create` command for Windows and macOS/Linux. It is a secret; **Rotate Docker keys…** makes the keys of earlier exports useless.
+- **Registry:** `docker login registry.<domain>` with a Purgatory token as the password (a token limited to a sandbox pushes to `<raw>/…`, a personal one to its owner's sandboxes); the password returned at create still works.
+- **Anonymous pull after a secret scan:** every push is scanned (files such as `.env`, private keys, and well-known key formats, in every layer and in the image config, where Dockerfile `ENV` lines end up). Anonymous pull is decided per repository: one whose versions are all clean — and that has nothing in the registry Purgatory has not scanned — can be pulled by anyone without logging in; one flagged, unscanned or failed version keeps the whole repository private until it is deleted. The registry tells Purgatory about pushes with a secret Purgatory generates (`data/registry-notify.secret`). Garbage collection runs weekly; a push at that very moment may fail and needs a retry. The **Registry** tab shows the images, the scan results (masked) and a Delete button. `REGISTRY_PUBLIC_PULL=false` keeps everything private.

@@ -13,6 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # A fix for an older series (v0.3.2 after v0.4.0) must not become `latest`
+      - id: latest
+        run: |
+          newest=$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          if [ "$newest" = "$GITHUB_REF_NAME" ]; then echo "is_latest=true" >> "$GITHUB_OUTPUT"; else echo "is_latest=false" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -30,11 +37,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
-          # v0.1.0 → 0.1.0, 0.1 and latest
+          # v0.1.0 → 0.1.0, 0.1 and (the highest version only) latest
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ steps.latest.outputs.is_latest }}
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -48,6 +55,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
+          LATEST: ${{ steps.latest.outputs.is_latest }}
         run: |
           version=${TAG#v}
           # The section of CHANGELOG.md for this version, without its heading
@@ -55,4 +63,4 @@ jobs:
             /^## / { if (found) exit; if (index($0, "[" v "]")) { found=1; next } }
             found { print }
           ' CHANGELOG.md > notes.md
-          gh release create "$TAG" --title "$TAG" --notes-file notes.md
+          gh release create "$TAG" --title "$TAG" --notes-file notes.md --latest="$LATEST"

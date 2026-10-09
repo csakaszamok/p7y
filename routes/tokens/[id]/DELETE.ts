@@ -1,7 +1,7 @@
 import { requirePrincipal } from '../../../services/principal'
 import { revokeToken } from '../../../services/tokens'
 
-export const openapi = { summary: 'Revoke a personal access token', tags: ['tokens'], security: [{ bearerAuth: [] }] }
+export const openapi = { mcp: { name: 'revoke_token' }, summary: 'Revoke a personal access token', tags: ['tokens'], security: [{ bearerAuth: [] }] }
 
 export default async (req: Request): Promise<Response> => {
   const p = requirePrincipal(req)

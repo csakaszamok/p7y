@@ -1,4 +1,4 @@
-import { defaultRuntime, runtimeMissing } from '../../services/defaultRuntime'
+import { defaultRuntime, runtimeMissing, runtimeAllowed } from '../../services/defaultRuntime'
 import { sandboxService } from '../../services/sandbox'
 import { reserveSandboxSlot } from '../../services/quota'
 import { normalizeIdleTimeout, normalizeDeepSleepAfter } from '../../services/sleepSettings'
@@ -11,6 +11,7 @@ import { checkLimits, resourceDefaults, clampToHost } from '../../services/resou
 import { hostResources } from '../../services/docker'
 
 export const openapi = {
+  mcp: { name: 'create_sandbox' },
   summary: 'Create sandbox',
   tags: ['sandboxes'],
   requestBody: {
@@ -108,6 +109,10 @@ export default async (req: Request): Promise<Response> => {
   const templateName = template ?? (process.env.DEFAULT_TEMPLATE || 'starter')
   if (!listRuntimes().some(r => r.name === runtimeName)) {
     return Response.json({ error: 'Unknown runtime' }, { status: 400 })
+  }
+  if (!runtimeAllowed(runtimeName)) {
+    const why = runtime === undefined ? `the default runtime (${runtimeName}) is not allowed on this server` : `${runtimeName} is not allowed on this server`
+    return Response.json({ error: `${why} (ALLOWED_RUNTIMES): pick one of GET /runtimes` }, { status: 400 })
   }
   const missing = await runtimeMissing(runtimeName)
   if (missing) return Response.json({ error: missing }, { status: 400 })

@@ -4,6 +4,7 @@ import { reposOf, versionsOf } from '../../../../services/registryScans'
 import { rawNameOf } from '../../../../services/naming'
 
 export const openapi = {
+  mcp: { name: 'list_sandbox_images' },
   summary: "The sandbox's images in the p7y registry, with secret-scan results",
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],

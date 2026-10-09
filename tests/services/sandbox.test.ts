@@ -99,9 +99,15 @@ describe('sandbox service', () => {
     expect(result.ca_cert).toMatch(/BEGIN CERTIFICATE/)
     expect(result.client_cert).toMatch(/BEGIN CERTIFICATE/)
     expect(result.client_key).toMatch(/BEGIN.*PRIVATE KEY/)
+    // The starter has no Portainer
+    expect(result.extras).toEqual({})
+    expect(result.tunnel_urls).toEqual(['leander-u1-inner-http-echo-port5678.my.local'])
+  }, 60000)
+
+  it('the portainer template returns its address and password', async () => {
+    const result = await sandboxService.createSandbox('u1p', true, undefined, undefined, 'admin', 'portainer')
     expect(result.extras.portainer_password).toBeTruthy()
     expect(result.extras.portainer_url).toBeTruthy()
-    expect(result.tunnel_urls).toEqual(['leander-u1-inner-http-echo-port5678.my.local'])
   }, 60000)
 
   it('keeps tunnel URLs already seen when a later frps poll fails', async () => {
@@ -310,7 +316,7 @@ describe('sandbox service', () => {
   it('builds the inner stack from a given compose text: comments kept, variables filled, template before_script run', async () => {
     vi.mocked(fs.writeFileSync).mockClear()
     const text = '# my edit\nservices:\n  portainer:\n    image: portainer/portainer-ce:2.21.5\n    command: ["--admin-password", "${portainer_admin_password_hash}"]\n  extra:\n    image: hashicorp/http-echo\n    command: ["-text=hi ${name}"]\n'
-    const result = await sandboxService.createSandbox('ed1', true, undefined, undefined, 'admin', 'starter', 'dind', text)
+    const result = await sandboxService.createSandbox('ed1', true, undefined, undefined, 'admin', 'portainer', 'dind', text)
     const inner = written('p7y-ed1', 'inner/docker-compose.yml')!
     expect(inner.startsWith('# my edit\n')).toBe(true)
     expect(inner).toContain('-text=hi p7y-ed1')
@@ -648,8 +654,8 @@ describe('HTTPS routing in runtimes', () => {
     process.env.PUBLIC_URL = 'https://p7y.example.com'
     try {
       vi.mocked(listManagedContainers).mockResolvedValue([])
-      // the starter's before_script makes the URL; it only runs with the template's stack
-      const r = await sandboxService.createSandbox('sch1')
+      // the portainer template's before_script makes the URL; it only runs with the template's stack
+      const r = await sandboxService.createSandbox('sch1', true, undefined, undefined, 'admin', 'portainer')
       expect(r.extras.portainer_url).toMatch(/^https:\/\/sch1-portainer\./)
     } finally {
       if (prev === undefined) delete process.env.PUBLIC_URL

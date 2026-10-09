@@ -79,10 +79,11 @@ describe('appHostsOffline', () => {
   })
 })
 
-describe('appHostsFromCompose with the starter template', () => {
-  it('gives the starter stack its links (published on all interfaces)', () => {
-    const text = fs.readFileSync(path.join(process.cwd(), 'templates/starter/compose.yaml'), 'utf8')
-    expect(appHostsFromCompose(yaml.dump(yaml.load(text)).replace(/\$\{[a-z_]+\}/g, 'x'), ctx)).toEqual(['shop-portainer.lvh.me', 'shop-inner-http-echo-port5678.lvh.me'])
+describe('appHostsFromCompose with the built-in templates', () => {
+  const hosts = (template: string) => appHostsFromCompose(yaml.dump(yaml.load(fs.readFileSync(path.join(process.cwd(), `templates/${template}/compose.yaml`), 'utf8'))).replace(/\$\{[a-z_]+\}/g, 'x'), ctx)
+  it('gives the starter and portainer stacks their links (published on all interfaces)', () => {
+    expect(hosts('starter')).toEqual(['shop-inner-http-echo-port5678.lvh.me'])
+    expect(hosts('portainer')).toEqual(['shop-portainer.lvh.me', 'shop-inner-http-echo-port5678.lvh.me'])
   })
 })
 

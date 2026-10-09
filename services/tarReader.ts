@@ -14,7 +14,7 @@ export async function readTarEntries(
   opts: { signal?: AbortSignal; maxBytes?: number; gzip?: boolean } = {},
 ): Promise<void> {
   const it = (opts.gzip === false ? stream : stream.pipe(zlib.createGunzip()))[Symbol.asyncIterator]()
-  let buf = Buffer.alloc(0)
+  let buf: Buffer = Buffer.alloc(0)
   let seen = 0
   const fill = async (n: number): Promise<boolean> => {
     while (buf.length < n) {

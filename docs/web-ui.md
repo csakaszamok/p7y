@@ -1,0 +1,18 @@
+# Web UI and sign-in
+
+Purgatory has a small web UI (`http://p7y.<HOST_DOMAIN>`) for creating and managing sandboxes without the API directly, alongside the REST API.
+
+Two ways to sign in:
+
+- **Admin**: a local account, set via `ADMIN_USER` / `ADMIN_PASSWORD`. Signs in with the "Administrator sign-in" form and sees every sandbox (My sandboxes + All sandboxes).
+- **Everyone else**: OIDC (Google or any OpenID Connect provider). Configure `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and register the redirect URI `$PUBLIC_URL/auth/callback` with the provider — character for character (scheme, no trailing slash), under Google's *Authorized redirect URIs*, otherwise sign-in fails with `redirect_uri_mismatch`. Google accepts `http://` redirect URIs only for `localhost`, so with Google use an `https://` `PUBLIC_URL` (locally: a self-signed `*.lvh.me` certificate in `certs/` and `PUBLIC_URL=https://p7y.lvh.me`, see [HTTPS](https.md)). `OIDC_PROVIDER_NAME` labels the sign-in button (default `Google`). Signed-in users only see their own sandboxes.
+
+`SESSION_SECRET` signs the session cookie — set it to a long random string; sessions issued under an old value stop working if it changes.
+
+Anyone with an account can sign in and create sandboxes. Each user may have `SANDBOX_QUOTA` sandboxes running at once (default 3, `0` = unlimited); asleep, deep-sleeping and archived ones are not counted, so letting a sandbox sleep frees its place, and the admin is not limited. At the limit a user can neither create a sandbox nor wake one, from sleep or deep sleep: its address shows *Running limit reached*, its address shows *Running limit reached* with the running sandboxes, and **Wake** in the panel lets the owner put one to sleep instead (`POST /sandboxes/:name/start` with `{"sleep": "<name>"}`). Purgatory never puts a sandbox to sleep on its own. Running sandboxes' web addresses do not go through Purgatory: they keep working while it is down; waking needs it, and so do the TLS TCP addresses and Docker access (they go through Purgatory's TCP gateway). `SANDBOX_MAX_TOTAL` (default 200) caps the users' running and asleep sandboxes on the whole server, since each of them keeps a Docker network: when it is reached nobody but the admin can create one or wake one from deep sleep (*The server is full*). The **Overview** page shows the counts as cards: running of how many allowed, asleep, deep sleep and archived; for the admin the users' sandboxes against the server limit, the host's CPU and memory (used now and reserved by running sandboxes), the disk use and a table per owner.
+
+From **Access tokens** (`/settings/tokens`), a signed-in user can mint a personal access token (`p7y_…`) for their own agents to use as `Authorization: Bearer p7y_…`; the token acts as that user for the API. The full token is shown once, at creation. Tokens can be set to expire in 30 days, 90 days, or never, and can be revoked at any time.
+
+A token can also be limited to one sandbox (**Access** in the dialog, or **Token for this sandbox…** on a sandbox panel's **Access** tab). Such a token lists and opens only that sandbox, and can start, stop and restart it and change its sleep times; it cannot create or delete sandboxes or manage tokens (403), and any other sandbox answers 404. Deleting the sandbox leaves the token in place: if you restore the sandbox, it works again.
+
+With such a token an agent can deploy and update apps in the user's sandbox: the Purgatory API gives it the sandbox's Docker client certificates, and the `docker` command line reaches the sandbox's own Docker daemon (or, in a sandbox from the `portainer` template, the Portainer API). Step by step: [agent guide](agent-guide.md).

@@ -5,6 +5,7 @@ import { issueToken } from '../../../../../../services/registryAuth'
 import { rawNameOf } from '../../../../../../services/naming'
 
 export const openapi = {
+  mcp: { name: 'delete_sandbox_image_version' },
   summary: "Delete a version of one of the sandbox's images from the p7y registry",
   description: 'The app name is URL-encoded when it has slashes (team%2Fapi for <sandbox>/team/api). An index takes its platform manifests with it; the space comes back at the weekly garbage collection.',
   tags: ['sandboxes'],

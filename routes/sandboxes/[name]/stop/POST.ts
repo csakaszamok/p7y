@@ -3,6 +3,7 @@ import { getOwnedSandbox } from '../../../../services/access'
 import { sandboxService } from '../../../../services/sandbox'
 
 export const openapi = {
+  mcp: { name: 'sleep_sandbox' },
   summary: 'Stop sandbox',
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],

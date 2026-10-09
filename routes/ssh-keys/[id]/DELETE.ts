@@ -2,7 +2,7 @@ import { requirePrincipal } from '../../../services/principal'
 import { removeSshKey } from '../../../services/sshKeys'
 import { refreshOwnerSandboxes } from '../../../services/sandboxSsh'
 
-export const openapi = { summary: 'Delete one of your SSH keys (it no longer lets you in, at once)', tags: ['ssh-keys'], security: [{ bearerAuth: [] }] }
+export const openapi = { mcp: { name: 'delete_ssh_key' }, summary: 'Delete one of your SSH keys (it no longer lets you in, at once)', tags: ['ssh-keys'], security: [{ bearerAuth: [] }] }
 
 export default async (req: Request): Promise<Response> => {
   const p = requirePrincipal(req)

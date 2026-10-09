@@ -8,6 +8,8 @@ import { rawNameOf } from '../../../../services/naming'
 import { portainerAccess } from '../../../../services/portainerToken'
 
 export const openapi = {
+  // Not an MCP tool: a zip file, which an MCP tool result cannot carry
+  mcp: false,
   summary: 'Export access for coding agents (zip: a new token, the Docker client certs, a README)',
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],
@@ -48,7 +50,7 @@ export default async (req: Request): Promise<Response> => {
   const files = build(token, portainer)
   const note: Record<string, string> = 'skipped' in portainer ? { 'X-P7y-Portainer': portainer.skipped } : {}
   if (asEnv) return new Response(files.find(f => f.path.endsWith('/p7y.env'))!.data, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', ...note } })
-  return new Response(zip(files), {
+  return new Response(new Uint8Array(zip(files)), {
     headers: { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="p7y-${raw}.zip"`, 'Cache-Control': 'no-store', ...note },
   })
 }

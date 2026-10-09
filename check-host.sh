@@ -82,7 +82,7 @@ if $docker_ok; then
   pools=$(docker info 2>/dev/null | awk '/Default Address Pools:/ {on=1; next} on && /Base:/ {print $2, $4; next} on {exit}' | tr -d ',')
   if [ -z "$pools" ]; then
     warn "Docker's default address pools: about 30 networks, so about 30 sandboxes" \
-         'set "default-address-pools": [{"base": "10.10.0.0/16", "size": 28}] in /etc/docker/daemon.json and restart Docker (see the README)'
+         'set "default-address-pools": [{"base": "10.10.0.0/16", "size": 28}] in /etc/docker/daemon.json and restart Docker (see https://csakaszamok.github.io/p7y/latest/install/)'
   else
     total=0
     while read -r base size; do
@@ -91,7 +91,7 @@ if $docker_ok; then
     done <<< "$pools"
     used=$(docker network ls -q | wc -l)
     if [ "$total" -lt 200 ]; then
-      warn "address pools allow $total networks ($used in use)" "SANDBOX_MAX_TOTAL defaults to 200 sandboxes: use smaller subnets (e.g. size 28, see the README)"
+      warn "address pools allow $total networks ($used in use)" "SANDBOX_MAX_TOTAL defaults to 200 sandboxes: use smaller subnets (e.g. size 28, see https://csakaszamok.github.io/p7y/latest/install/)"
     else
       ok "address pools allow $total networks ($used in use)"
     fi

@@ -7,6 +7,7 @@ import { usageOf } from '../../services/usageSampler'
 import { diskOf } from '../../services/diskUsage'
 
 export const openapi = {
+  mcp: { name: 'list_sandboxes' },
   summary: 'List all sandboxes',
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],

@@ -3,6 +3,7 @@ import { createToken, type TokenExpiry } from '../../services/tokens'
 import { getOwnedSandbox } from '../../services/access'
 
 export const openapi = {
+  mcp: { name: 'create_token' },
   summary: 'Create a personal access token (shown once)',
   tags: ['tokens'],
   security: [{ bearerAuth: [] }],

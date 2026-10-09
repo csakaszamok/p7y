@@ -3,7 +3,7 @@ services:
     # A released image; `docker compose build` (or a missing image) builds it from this checkout.
     # To work on the code, mount it instead: COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
     # (and COMPOSE_PATH_SEPARATOR=: on Windows) in .env.
-    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.3.1}
+    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.4.0}
     build: .
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
@@ -26,7 +26,11 @@ services:
       # Per-route auth is handled by ADMIN_TOKEN in services/auth.ts instead.
       ADMIN_TOKEN: ${ADMIN_TOKEN:-abc123}
       DEFAULT_RUNTIME: ${DEFAULT_RUNTIME:-auto}
+      # Runtimes new sandboxes may use (comma list, e.g. sysbox); empty = all
+      ALLOWED_RUNTIMES: ${ALLOWED_RUNTIMES:-}
       DEFAULT_TEMPLATE: ${DEFAULT_TEMPLATE:-starter}
+      # off: never ask GitHub for the star and fork counts in the topbar
+      GITHUB_STATS: ${GITHUB_STATS:-on}
       SANDBOX_CPUS: ${SANDBOX_CPUS:-2}
       SANDBOX_MEMORY: ${SANDBOX_MEMORY:-4g}
       SANDBOX_MAX_CPUS: ${SANDBOX_MAX_CPUS:-4}

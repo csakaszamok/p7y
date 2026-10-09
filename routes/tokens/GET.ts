@@ -1,7 +1,7 @@
 import { requirePrincipal } from '../../services/principal'
 import { listTokens } from '../../services/tokens'
 
-export const openapi = { summary: 'List personal access tokens (admin: all)', tags: ['tokens'], security: [{ bearerAuth: [] }] }
+export const openapi = { mcp: { name: 'list_tokens' }, summary: 'List personal access tokens (admin: all)', tags: ['tokens'], security: [{ bearerAuth: [] }] }
 
 export default async (req: Request): Promise<Response> => {
   const p = requirePrincipal(req)

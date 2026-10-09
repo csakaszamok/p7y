@@ -3,6 +3,7 @@ import { getOwnedSandbox } from '../../../../services/access'
 import { deepSleepNow } from '../../../../services/deepSleep'
 
 export const openapi = {
+  mcp: { name: 'deep_sleep_sandbox' },
   summary: 'Put a sandbox into deep sleep now (containers and network down, data kept; the next request or start rebuilds it)',
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],

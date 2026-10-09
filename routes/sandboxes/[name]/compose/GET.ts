@@ -3,6 +3,7 @@ import { getOwnedSandbox } from '../../../../services/access'
 import { starterStack } from '../../../../services/composeView'
 
 export const openapi = {
+  mcp: { name: 'get_sandbox_compose' },
   summary: 'The starter stack Purgatory deployed into the sandbox (compose YAML), secrets masked',
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],

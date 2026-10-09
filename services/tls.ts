@@ -19,7 +19,7 @@ export function generateCertBundle(hostAddress: string, containerName?: string, 
     keys: forge.pki.KeyPair,
     subject: forge.pki.CertificateField[],
     issuer: forge.pki.CertificateField[],
-    signingKey: forge.pki.PrivateKey,
+    signingKey: forge.pki.rsa.PrivateKey,
     serial: string,
     extensions: object[]
   ): forge.pki.Certificate {

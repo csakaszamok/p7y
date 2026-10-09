@@ -3,6 +3,8 @@ import { getOwnedSandbox } from '../../../../../services/access'
 import { acquireViewer, innerLogSource, sseLogStream } from '../../../../../services/sandboxLogs'
 
 export const openapi = {
+  // Not an MCP tool: a stream that never ends: a tool call would not return
+  mcp: false,
   summary: "Follow the sandbox's app logs (Server-Sent Events)",
   description: 'The last 100 lines of every container in the sandbox, then new ones as they come. Events: `line` ({t, service, stream, line}), `status` (following | asleep | stopped | error | empty), `stopped` ({service}). Never wakes the sandbox.',
   tags: ['sandboxes'],

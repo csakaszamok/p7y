@@ -26,15 +26,27 @@ npm ci
 
 ## Tests
 
-- **Unit tests:** `npm test` (vitest). They run in CI on every push and pull request.
-- **End-to-end tests:** the scripts in `tests/*.sh` run against a live stack; the README lists which settings each one needs (under "Isolation between sandboxes"). Run the ones your change touches.
+- **Unit tests:** `npm test` (vitest). **Types:** `npm run typecheck` (tsc, the app code only; tsx runs the code without checking types). Both run in CI on every push and pull request.
+- **End-to-end tests:** the scripts in `tests/*.sh` run against a live stack. Run the ones your change touches: `bash tests/sablier-wake.sh`, `bash tests/archive.sh`, `bash tests/isolation.sh`, `bash tests/deep-sleep.sh` (needs `DEEP_SLEEP_CHECK_INTERVAL=15s`), `bash tests/self-service.sh` (needs the mock OIDC env), `bash tests/https.sh` (self-signed `*.lvh.me`, restores HTTP afterwards), `bash tests/quota.sh` (mock OIDC env + `SANDBOX_QUOTA=1`), `bash tests/sleep-settings.sh`.
+- **Documentation:** the site in `docs/` (MkDocs Material). Preview it with `pip install -r docs/requirements.txt` and `mkdocs serve`; `mkdocs build --strict` must pass.
 
 A pull request should add or update tests for what it changes.
+
+## Branches and releases
+
+Each release series has its own branch, `release/<major>.<minor>` (`release/0.3`, `release/0.4`, …); there is no separate development branch.
+
+- **New features** go to the newest series' branch (now `release/0.4`) through a pull request from a feature branch.
+- **Fixes for a released series** go to its branch (e.g. `release/0.3`), and that branch is then merged into each newer one, so no fix is lost going forward.
+- **A release** is a version bump and a `[x.y.z]` section in `CHANGELOG.md` on the series' branch, then a `vx.y.z` tag on it. The tag builds and publishes the image as `x.y.z` and `x.y`; `latest` only for the highest version, so a fix for an older series does not move it back.
+- **`main`** is the newest release: it is updated when a release of the newest series is made.
+
+A server can follow one series with `P7Y_VERSION=0.3` in `.env` (the newest `0.3.x` image) and a checkout of `release/0.3` (its templates and runtimes).
 
 ## Pull requests
 
 - One topic per pull request, with a short description of what changes for the user and how you tested it.
-- Keep documentation in step: the README describes the behaviour users see.
+- Keep documentation in step: the site in `docs/` describes the behaviour users see (the README only introduces it).
 - Commit messages: a short summary line that says what changes (for example "Deep sleep: take down asleep sandboxes whose network is gone"), then the why in the body if it is not obvious.
 
 ## Security issues

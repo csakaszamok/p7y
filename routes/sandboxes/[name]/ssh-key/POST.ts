@@ -2,7 +2,7 @@ import { requirePrincipal } from '../../../../services/principal'
 import { getOwnedSandbox } from '../../../../services/access'
 import { createGeneratedKey, sandboxHasSsh } from '../../../../services/sandboxSsh'
 
-export const openapi = { summary: 'Generate the SSH key of a sandbox that has none yet (created with SSH)', tags: ['sandboxes'], security: [{ bearerAuth: [] }] }
+export const openapi = { mcp: { name: 'generate_sandbox_ssh_key' }, summary: 'Generate the SSH key of a sandbox that has none yet (created with SSH)', tags: ['sandboxes'], security: [{ bearerAuth: [] }] }
 
 export default async (req: Request): Promise<Response> => {
   const p = requirePrincipal(req)

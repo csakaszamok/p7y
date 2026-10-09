@@ -12,4 +12,4 @@ Purgatory has no releases yet. Fixes go to the `main` branch.
 
 ## Scope
 
-Purgatory's default sandbox template runs Docker-in-Docker `privileged`, so code with root inside such a sandbox can reach the host. That is a documented limitation, not a vulnerability (see [Security in the README](README.md#security)). Reports about escaping a `sysbox-sandbox` sandbox, bypassing sign-in or tokens, reaching another user's sandbox, or anything else the README says Purgatory prevents are in scope.
+Purgatory's default sandbox template runs Docker-in-Docker `privileged`, so code with root inside such a sandbox can reach the host. That is a documented limitation, not a vulnerability (see [Security](https://csakaszamok.github.io/p7y/latest/security/) in the documentation). Reports about escaping a `sysbox-sandbox` sandbox, bypassing sign-in or tokens, reaching another user's sandbox, or anything else the documentation says Purgatory prevents are in scope.

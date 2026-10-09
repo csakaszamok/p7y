@@ -8,6 +8,7 @@ import { setDiskLimit, diskOf } from '../../../services/diskUsage'
 import { parseMemory } from '../../../services/resources'
 
 export const openapi = {
+  mcp: { name: 'set_sleep_settings' },
   summary: 'Change sleep settings',
   description: 'Changes idle_timeout and/or deep_sleep_after of an existing sandbox. A new idle_timeout recreates only the socat container (a running sandbox\'s app is unreachable for a few seconds; an asleep one stays asleep) and applies to the next request\'s Sablier session. A new deep_sleep_after applies immediately.',
   tags: ['sandboxes'],

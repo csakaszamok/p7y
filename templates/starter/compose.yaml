@@ -1,21 +1,4 @@
 services:
-  portainer:
-    image: portainer/portainer-ce:2.21.5
-    container_name: portainer
-    command:
-      - --admin-password
-      - ${portainer_admin_password_hash}
-      - -H
-      - unix:///var/run/docker.sock
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
-    ports:
-      - "9000:9000"
-    restart: unless-stopped
-    labels:
-      frpc.subdomain: portainer
-
   http-echo:
     image: hashicorp/http-echo:latest
     container_name: http-echo
@@ -24,6 +7,3 @@ services:
     ports:
       - "5678:5678"
     restart: unless-stopped
-
-volumes:
-  portainer_data:

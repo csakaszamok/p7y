@@ -2,6 +2,7 @@ import { requirePrincipal } from '../../../services/principal'
 import { summaryFor } from '../../../services/summary'
 
 export const openapi = {
+  mcp: { name: 'sandbox_summary' },
   summary: 'How many sandboxes: allowed, running, asleep, in deep sleep, archived',
   description: "A user: their own, against their quota (SANDBOX_QUOTA; free = how many more they may create). The admin: the whole server, and by_owner per owner. Asleep = stopped (also one that failed to start); archived = deleted sandboxes kept in the archive, not counted against the quota.",
   tags: ['sandboxes'],

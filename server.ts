@@ -18,7 +18,11 @@ import { writeWebResponse } from "./services/http";
 import { attachTerminals } from "./services/terminalServer";
 import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
-import { defaultRuntime } from "./services/defaultRuntime";
+import { repoInfo } from "./services/repoInfo";
+import { mcpCaller, mcpToolsFor } from "./services/mcp";
+// From the base image (csakaszamok/rododentron): the API routes as MCP tools
+import { createMcpHandler } from "./mcp-core";
+import { defaultRuntime, runtimeAllowed } from "./services/defaultRuntime";
 import { startRegistryGc } from "./services/registryGc";
 import { resumeScans } from "./services/registryScans";
 import { notifySecret } from "./services/notifySecret";
@@ -202,6 +206,20 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     res.writeHead(200, { "Content-Type": "text/html" }).end(SWAGGER_UI);
     return;
   }
+  if (path === "/mcp") {
+    try {
+      const webReq = await toWebRequest(req);
+      const caller = mcpCaller(webReq);
+      const out = caller instanceof Response ? caller
+        // Per request: the tools listed depend on the caller's token
+        : await createMcpHandler({ name: "p7y", version: repoInfo().version ?? undefined, include: mcpToolsFor(caller) })(webReq);
+      await writeWebResponse(out, res);
+    } catch (err) {
+      console.error("[mcp]", err);
+      if (!res.headersSent) res.writeHead(500).end(String(err));
+    }
+    return;
+  }
   if (path === "/swagger.json") {
     const spec = await buildSpec();
     res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(spec, null, 2));
@@ -262,11 +280,14 @@ startTcpGateway({
 startDeepSleepScheduler();
 startUsageSampler();
 startDiskSampler();
+// The topbar's GitHub star and fork counts: fetched now, so the first page has them
+repoInfo();
 // Say once which runtime new sandboxes get, and why dind when sysbox would be safer
 void defaultRuntime().then(rt => {
   const auto = !process.env.DEFAULT_RUNTIME || process.env.DEFAULT_RUNTIME === "auto";
   if (auto && rt === "dind") console.warn("[runtime] sysbox is not installed: new sandboxes run privileged (dind). Install sysbox on a Linux host for isolation.");
   else console.log(`[runtime] new sandboxes run on ${rt}${auto ? " (auto)" : ""}`);
+  if (!runtimeAllowed(rt)) console.warn(`[runtime] the default runtime ${rt} is not in ALLOWED_RUNTIMES: a create without a runtime is refused; set DEFAULT_RUNTIME to an allowed one`);
 });
 startRegistryGc();
 // Scans interrupted by a restart run again (their repos stay private meanwhile)
