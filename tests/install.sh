@@ -88,7 +88,9 @@ code=$(curl -s -m 5 -o /dev/null -w '%{http_code}' -H 'Host: p7y.lvh.me' http://
 case $code in 200|302) pass "after the pull: the UI through Traefik ($code)";; *) fail "after the pull: the UI through Traefik answers $code";; esac
 # Traefik must read the dynamic/ that is there now: one bound to a directory the pull deleted keeps its last
 # configuration in memory and never sees a new errors.yml or tls.yml
-docker compose exec -T traefik ls /etc/traefik/dynamic 2>/dev/null | grep -qx errors.yml   && pass "after the pull: Traefik sees dynamic/" || fail "after the pull: Traefik reads a dynamic/ the pull deleted"
+seen=$(docker exec "$(docker compose ps -q traefik)" ls -a /etc/traefik/dynamic 2>&1 || true)
+echo "$seen" | grep -qx errors.yml && pass "after the pull: Traefik sees dynamic/"   || fail "after the pull: Traefik reads a dynamic/ the pull deleted (it sees: $(echo $seen); started $(docker compose ps traefik --format '{{.RunningFor}}'); host: $(ls -A dynamic | tr '
+' ' '))"
 has_portainer && fail "the checkout's starter applies" || pass "the image's starter applies"
 [ -z "$(git status --porcelain)" ] && pass "git status clean" || fail "git status: $(git status --porcelain | head -5)"
 head -n "$(wc -l < "$base/env.before")" .env | cmp -s - "$base/env.before" && pass ".env kept" || fail ".env changed"
