@@ -1,5 +1,6 @@
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { startDeepSleepScheduler } from "./services/deepSleep";
+import { startSessionWatch } from "./services/sessionWatch";
 import { insecureConfigWarnings, insecureConfigErrors } from "./services/configWarnings";
 import { syncTlsConfig } from "./services/tlsConfig";
 import { migrateRouters } from "./services/routerMigration";
@@ -278,6 +279,8 @@ startTcpGateway({
   .then(() => console.log(`[tcp] gateway on :${tcpPort} (certificate: ${tcpCreds.source})`))
   .catch(err => console.error("[tcp] gateway failed to start:", err));
 startDeepSleepScheduler();
+// A running sandbox without a Sablier session (started outside p7y) would never sleep: open its session
+startSessionWatch();
 startUsageSampler();
 startDiskSampler();
 // The topbar's GitHub star and fork counts: fetched now, so the first page has them

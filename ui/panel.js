@@ -75,7 +75,7 @@
       : '<button class="primary" data-act="start">Wake</button><button data-act="logs">Logs</button>'
     const reset = '<button class="link" data-act="keep-awake" title="Start the countdown over, as a visit would">Reset</button>'
     const line = st === 'running'
-      ? (s.idle_timeout === 'off' ? 'Never sleeps' : `${s.stops_at ? `Sleeps in ${countdown(s.stops_at, ctx.now)}` : 'Sleeps after the first request and the idle timeout'} · ${reset}`)
+      ? (s.idle_timeout === 'off' ? 'Never sleeps' : `${s.stops_at ? `Sleeps in ${countdown(s.stops_at, ctx.now)}` : 'The idle countdown has not started yet'} · ${reset}`)
       : st === 'deep_sleep' ? 'In deep sleep · opening an app or Wake rebuilds it'
       : st === 'exited' || st === 'created'
         ? [s.deep_sleep_after !== 'off' && s.deep_sleep_at ? `Deep sleep in ${countdown(s.deep_sleep_at, ctx.now)}` : '', s.start_error ? '' : 'opening an app wakes it'].filter(Boolean).join(' · ')
