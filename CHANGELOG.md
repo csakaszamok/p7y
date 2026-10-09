@@ -4,6 +4,8 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-09
+
 Upgrading from 0.4: check that Docker Compose is 2.17 or newer **before** `git pull` (`docker compose version`), and read **Changed** first if you edited templates or runtimes in your checkout. Run `docker compose up -d --remove-orphans` right after the pull.
 
 ### Changed
@@ -178,7 +180,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.0
 [0.4.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.2
 [0.4.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.1
 [0.4.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.0
