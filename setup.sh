@@ -25,6 +25,9 @@ if [ ! -f .env ]; then
   echo "Created .env"
 fi
 
+# It holds the secrets: readable by its owner only
+chmod 600 .env
+
 mkdir -p data opt/sandboxes opt/archive certs dynamic
 
 # random BYTES: that many random bytes as hex

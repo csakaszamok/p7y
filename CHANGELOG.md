@@ -4,6 +4,13 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-10-09
+
+### Fixed
+
+- Every sandbox's socat relay ran with `-v`, which wrote every request and answer to its apps (passwords, tokens, cookies included) into the socat container's Docker log. It no longer does; existing sandboxes are switched over when Purgatory starts, and their socat container is recreated, which also drops the old log.
+- `setup.sh` created `.env`, which holds the secrets, readable by every user of the machine. It is now readable by its owner only (`chmod 600`), also when it already existed.
+
 ## [0.5.1] - 2026-10-09
 
 ### Added
@@ -194,7 +201,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.2
 [0.5.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.1
 [0.5.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.0
 [0.4.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.2
