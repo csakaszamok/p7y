@@ -31,6 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the upgrade case starts from the previous release's tag
       - run: bash tests/install.sh
 
   image:
