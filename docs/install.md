@@ -1,32 +1,37 @@
 # Install
 
-First check the machine — without cloning anything; it changes nothing (give it the `HOST_DOMAIN` you plan to use):
+No git clone is needed: every file comes from a GitHub release, and the image carries the rest.
+
+First check the machine; it changes nothing (give it the `HOST_DOMAIN` you plan to use):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/csakaszamok/p7y/main/check-host.sh | bash -s -- dev.example.com
+curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/check-host.sh | bash -s -- dev.example.com
 ```
 
 Or download it, read it, then run it:
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/csakaszamok/p7y/main/check-host.sh
+curl -fsSLO https://github.com/csakaszamok/p7y/releases/latest/download/check-host.sh
 less check-host.sh
 bash check-host.sh dev.example.com
 ```
 
-Then, on a Linux host with Docker Engine and the compose plugin:
+Then, on a Linux host with Docker Engine and the compose plugin (Compose 2.17 or newer):
 
 ```bash
-git clone https://github.com/csakaszamok/p7y.git && cd p7y
-./setup.sh            # creates .env with random ADMIN_TOKEN, SESSION_SECRET and ADMIN_PASSWORD
+mkdir p7y && cd p7y
+curl -fsSLO https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml
+curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash     # creates .env with random ADMIN_TOKEN, SESSION_SECRET and ADMIN_PASSWORD
 docker compose up -d
 ```
 
-`check-host.sh` (also in the checkout: `./check-host.sh dev.example.com`) checks Docker, sysbox, the address pools, ports, disk and registry access, and changes nothing (its sysbox check runs one throw-away `alpine` container); with the `HOST_DOMAIN` you plan to use it also checks the DNS records and, if `certs/` has one, the certificate. Lines marked ✘ must be fixed first, ⚠ are worth reading.
+The directory must be called `p7y`: the compose project name comes from it. For a given version, use `releases/download/v0.5.0/…` instead of `releases/latest/download/…`.
 
-`setup.sh` prints the admin password and token. It keeps values you already set, so it is safe to run again. Without it: `cp .env.example .env` and set those three by hand.
+`check-host.sh` checks Docker and Docker Compose, sysbox, the address pools, ports, disk and registry access, and changes nothing (its sysbox check runs one throw-away `alpine` container); with the `HOST_DOMAIN` you plan to use it also checks the DNS records and, if `certs/` has one, the certificate. Lines marked ✘ must be fixed first, ⚠ are worth reading.
 
-`docker compose up -d` pulls the released image `ghcr.io/csakaszamok/p7y` (`P7Y_VERSION` in `.env` picks another version); `docker compose up -d --build` builds it from the checkout instead. To work on the code, see [CONTRIBUTING.md](https://github.com/csakaszamok/p7y/blob/main/CONTRIBUTING.md).
+`setup.sh` works in the current directory: it creates `.env` from its release's `env.example`, fills in random secrets, creates `data/`, `opt/`, `certs/` and `dynamic/`, and prints the admin password and token. It keeps values you already set, so it is safe to run again. Without it: download `env.example` of the release as `.env` and set those three by hand.
+
+`docker compose up -d` pulls the released image `ghcr.io/csakaszamok/p7y`. It carries the sandbox templates and runtimes, and the files the other services read: on every `up` the one-shot `p7y-init` service copies the Sablier themes, the error pages, the registry config and `dynamic/errors.yml` from it, so they always match the running version. To work on the code, see [CONTRIBUTING.md](https://github.com/csakaszamok/p7y/blob/main/CONTRIBUTING.md).
 
 The stack runs Traefik v3.6 with the Sablier plugin, Sablier, a registry and the Purgatory API. The UI is at `http://p7y.<HOST_DOMAIN>` (by default `http://p7y.lvh.me`, which resolves to `127.0.0.1`), the API also on port `8081` of the host.
 

@@ -23,4 +23,5 @@ Main settings in `.env`:
 | `DEEP_SLEEP_CHECK_INTERVAL` | `1m` | How often Purgatory looks for sandboxes to take into deep sleep |
 | `HOST_SANDBOXES_DIR` | auto-detected | Host path of `opt/sandboxes` (every sandbox's compose file mounts from it). Set it only if auto-detection fails; an old `HOST_USERS_DIR` (the former `opt/users`) still works, its sibling `sandboxes` is used |
 | `P7Y_API_BIND` | `0.0.0.0` | Interface of the direct API port `8081`; `127.0.0.1` for a public deployment |
+| `P7Y_VERSION` | the release the `docker-compose.yml` came from | The image version to run. Pin it only to stay on a version: an upgrade with a new `docker-compose.yml` then needs it changed too |
 | `REGISTRY_PUBLIC_PULL` | `true` | Images whose versions all passed the secret scan can be pulled without a login; `false`: tokens only |

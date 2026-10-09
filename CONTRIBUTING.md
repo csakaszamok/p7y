@@ -15,7 +15,7 @@ docker compose up -d --build
 npm ci
 ```
 
-`docker-compose.dev.yml` mounts `server.ts`, `routes/`, `services/` and `ui/` into the container, so a code change applies on the next request, without a rebuild. Changes to the `Dockerfile` or the dependencies need `docker compose up -d --build`.
+`docker-compose.dev.yml` builds the image from the checkout and mounts `server.ts`, `routes/`, `services/`, `ui/`, `templates/` and `runtimes/` into the container, so a code, template or runtime change applies on the next request, without a rebuild. It also gives `p7y-init` the checkout's Sablier themes, error pages, registry config and `traefik/errors.yml`: a change to those applies on the next `docker compose up -d`. Changes to the `Dockerfile` or the dependencies need `docker compose up -d --build`.
 
 ## Code layout
 
@@ -28,6 +28,7 @@ npm ci
 
 - **Unit tests:** `npm test` (vitest). **Types:** `npm run typecheck` (tsc, the app code and the tests; tsx runs the code without checking types). Both run in CI on every push and pull request.
 - **End-to-end tests:** the scripts in `tests/*.sh` run against a live stack. Run the ones your change touches: `bash tests/sablier-wake.sh`, `bash tests/archive.sh`, `bash tests/isolation.sh`, `bash tests/deep-sleep.sh` (needs `DEEP_SLEEP_CHECK_INTERVAL=15s`), `bash tests/self-service.sh` (needs the mock OIDC env), `bash tests/https.sh` (self-signed `*.lvh.me`, restores HTTP afterwards), `bash tests/quota.sh` (mock OIDC env + `SANDBOX_QUOTA=1`), `bash tests/sleep-settings.sh`.
+- **Install scripts:** `bash tests/install-assets.sh` and `bash tests/setup.sh` run anywhere (also in CI). `bash tests/install.sh` installs from the release files and upgrades an old checkout; it refuses to run next to a Purgatory, so on a development machine run it in `docker:dind` (the command is at the top of the file); CI runs it on every push.
 - **Documentation:** the site in `docs/` (MkDocs Material). Preview it with `pip install -r docs/requirements.txt` and `mkdocs serve`; `mkdocs build --strict` must pass.
 
 A pull request should add or update tests for what it changes.

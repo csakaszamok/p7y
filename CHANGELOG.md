@@ -4,6 +4,19 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+Upgrading from 0.4: read **Changed** first if you edited templates or runtimes in your checkout.
+
+### Changed
+
+- **Installed without a git clone**: `docker-compose.yml`, `setup.sh`, `check-host.sh` and `env.example` are files of each GitHub release (`releases/latest/download/…`), and the image carries everything else. A new one-shot service, `p7y-init`, copies the image's Sablier themes, error pages, registry config and `dynamic/errors.yml` into place on every `docker compose up`, so they always match the running version. Purgatory reads templates and runtimes from its image: **templates or runtimes edited in a checkout no longer apply**. See [Upgrading](https://csakaszamok.github.io/p7y/latest/upgrading/).
+- `setup.sh` prepares the current directory (it no longer needs to sit in a checkout) and creates `data/`, `opt/`, `certs/`, `dynamic/`.
+- Docker Compose 2.17 or newer is required; `check-host.sh` fails below it.
+- Development: `docker-compose.dev.yml` now also builds the image and mounts the templates, runtimes and assets of the checkout.
+
+### Fixed
+
+- `setup.sh` stopped without a word on a machine whose `hostname` has no `-I` (macOS, busybox); it now falls back to `HOST_ADDRESS=localhost`.
+
 ## [0.4.2] - 2026-10-09
 
 ### Fixed
