@@ -1,18 +1,15 @@
 services:
   p7y:
-    # A released image; `docker compose build` (or a missing image) builds it from this checkout.
-    # To work on the code, mount it instead: COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
-    # (and COMPOSE_PATH_SEPARATOR=: on Windows) in .env.
-    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.4.2}
-    build: .
+    # The released image: it carries the templates, runtimes and the files p7y-init installs.
+    # To work on the code, add docker-compose.dev.yml (COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml,
+    # and COMPOSE_PATH_SEPARATOR=: on Windows, in .env).
+    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.5.0}
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
       # to localhost (P7Y_API_BIND=127.0.0.1) so everything goes through HTTPS.
       # LEANDER_API_BIND is the pre-rename name of the same setting.
       - "${P7Y_API_BIND:-${LEANDER_API_BIND:-0.0.0.0}}:8081:3000"
     volumes:
-      - ./templates:/app/templates
-      - ./runtimes:/app/runtimes
       - ./data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
       - ./opt/sandboxes:/opt/sandboxes
@@ -102,6 +99,19 @@ services:
       retries: 30
       start_period: 5s
 
+  # One-shot, on every up: copies this release's Sablier themes, error pages, registry config and
+  # dynamic/errors.yml from the image, so they always match it (no files from a checkout).
+  p7y-init:
+    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.5.0}
+    entrypoint: ["sh", "/app/assets/install-assets.sh"]
+    volumes:
+      - sablier_themes:/out/sablier-themes
+      - error_pages:/out/error-pages
+      - registry_conf:/out/registry
+      - ./dynamic:/out/dynamic
+    network_mode: none
+    restart: "no"
+
   registry:
     image: registry:2.8.3
     environment:
@@ -112,11 +122,11 @@ services:
       REGISTRY_AUTH_TOKEN_ISSUER: p7y
       REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE: /auth/registry-auth.crt
       REGISTRY_HTTP_SECRET: "${REGISTRY_HTTP_SECRET:-changeme}"
-    # registry/config.yml adds push notifications (to Purgatory, for secret scanning) and deletes
+    # config.yml (from the image, via p7y-init) adds push notifications (to Purgatory, for secret scanning) and deletes
     entrypoint: ["/bin/sh", "-c", "sed \"s|__NOTIFY_SECRET__|$$(cat /auth/registry-notify.secret)|\" /etc/p7y/config.yml > /etc/docker/registry/config.yml && exec registry serve /etc/docker/registry/config.yml"]
     volumes:
       - registry_data:/var/lib/registry
-      - ./registry/config.yml:/etc/p7y/config.yml:ro
+      - registry_conf:/etc/p7y:ro
       - ./data:/auth:ro
     networks:
       - traefik-net
@@ -130,6 +140,9 @@ services:
     depends_on:
       p7y:
         condition: service_healthy
+      p7y-init:
+        condition: service_completed_successfully
+        restart: true
 
   traefik:
     image: traefik:v3.6.25
@@ -163,6 +176,15 @@ services:
           - p7y.${HOST_DOMAIN:-lvh.me}
       sablier-net: {}
     restart: unless-stopped
+    # Its error-page middleware is in dynamic/errors.yml, which p7y-init writes; restarted when a new release
+    # recreates p7y-init. Pulling 0.5 into an old checkout recreates dynamic/ under a running Traefik, which would keep
+    # reading the deleted directory: this label is new in 0.5, so the upgrade's `up` recreates Traefik once.
+    labels:
+      p7y.compose: "0.5"
+    depends_on:
+      p7y-init:
+        condition: service_completed_successfully
+        restart: true
 
   sablier:
     image: sablierapp/sablier:1.18.0
@@ -176,8 +198,13 @@ services:
       - --server.metrics.enabled
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./sablier-themes:/etc/sablier/themes:ro
+      - sablier_themes:/etc/sablier/themes:ro
       - sablier_data:/data
+    # Themes are read at start: a new release's p7y-init run restarts it
+    depends_on:
+      p7y-init:
+        condition: service_completed_successfully
+        restart: true
     # Only Traefik talks to Sablier; keep it off traefik-net so sandboxes cannot reach its API.
     networks:
       - sablier-net
@@ -196,7 +223,11 @@ services:
   error-pages:
     image: nginx:1.31.6-alpine
     volumes:
-      - ./error-pages:/usr/share/nginx/html:ro
+      - error_pages:/usr/share/nginx/html:ro
+    depends_on:
+      p7y-init:
+        condition: service_completed_successfully
+        restart: true
     networks:
       - traefik-net
     restart: unless-stopped
@@ -205,6 +236,9 @@ volumes:
   registry_data:
   sablier_data:
   registry_cache_data:
+  sablier_themes:
+  error_pages:
+  registry_conf:
 
 networks:
   traefik-net:
