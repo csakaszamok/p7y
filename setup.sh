@@ -3,7 +3,9 @@
 # is none, replaces the example secrets with random ones and creates the data directories. Safe to run
 # again: values you already set are kept.
 #
-#   curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash
+#   curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com
+#
+# The domain (optional) becomes HOST_DOMAIN: every address is under it (the UI is p7y.<domain>).
 set -euo pipefail
 
 # Set in the release asset (e.g. v0.5.0); empty in a checkout, which uses its own .env.example
@@ -67,6 +69,18 @@ if [ ${#generated[@]} -gt 0 ]; then
   echo "Generated in .env: ${generated[*]}"
 fi
 
+domain=${1:-}
+if [ -n "$domain" ]; then
+  previous=$(get HOST_DOMAIN)
+  set_value HOST_DOMAIN "$domain"
+  # PUBLIC_URL follows while it is the example's or the one made from the previous domain; one of your own stays
+  case "$(get PUBLIC_URL)" in
+    ""|http://p7y.lvh.me|https://p7y.lvh.me|"http://p7y.$previous"|"https://p7y.$previous")
+      if [ -f certs/tls.crt ] && [ -f certs/tls.key ]; then scheme=https; else scheme=http; fi
+      set_value PUBLIC_URL "$scheme://p7y.$domain" ;;
+  esac
+fi
+
 public_url=$(get PUBLIC_URL)
 cat <<EOF
 
@@ -78,6 +92,16 @@ Then sign in at ${public_url:-http://p7y.lvh.me}
   password: $(get ADMIN_PASSWORD)
 API token (Authorization: Bearer ...): $(get ADMIN_TOKEN)
 EOF
+
+case "$(get HOST_DOMAIN)" in
+  ""|lvh.me) cat <<'EOF'
+
+Note: HOST_DOMAIN is lvh.me, which points to this machine (127.0.0.1): fine for
+trying Purgatory here, not for a server. Run setup.sh again with your domain
+(e.g. `bash setup.sh dev.example.com`); it needs a wildcard DNS record *.<domain>.
+EOF
+  ;;
+esac
 
 if ! grep -qs default-address-pools /etc/docker/daemon.json; then
   cat <<'EOF'

@@ -23,7 +23,7 @@ On a Linux host with Docker Engine and the compose plugin, no clone needed ([che
 ```bash
 mkdir p7y && cd p7y
 curl -fsSLO https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml
-curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash     # creates .env with random secrets
+curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com   # .env with your domain and random secrets
 docker compose up -d
 ```
 

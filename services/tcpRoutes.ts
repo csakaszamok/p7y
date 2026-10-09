@@ -13,12 +13,14 @@ import { dockerAccessState } from './dockerAccess'
 const STARTUP_GRACE_MS = 90_000
 const PORTS_CACHE_MS = 1000
 
+/** When "asleep, not woken" was last logged per sandbox: a client that reconnects in a loop logs once in a while. */
+const asleepLogged = new Map<string, number>()
 /** One wake per sandbox, however many connections ask for it at once. */
 const waking = new Map<string, Promise<void>>()
 /** The inner Docker's answer per sandbox, shared by connections arriving together. */
 const portsCache = new Map<string, { at: number; ports: Promise<TcpPort[]> }>()
 
-export function _resetTcpRoutes(): void { waking.clear(); portsCache.clear() }
+export function _resetTcpRoutes(): void { waking.clear(); portsCache.clear(); asleepLogged.clear() }
 
 function wake(sandbox: string): Promise<void> {
   let p = waking.get(sandbox)
@@ -114,12 +116,15 @@ export async function resolveDockerHost(sni: string, opts: { signal?: AbortSigna
   if (!sandbox || `${rawNameOf(sandbox) ?? sandbox}${suffix}` !== name) return null
   if (dockerAccessState(sandbox) !== 'ready') return null
   const state = await getSandboxState(sandbox)
+  // A Docker connection does not wake a sleeping sandbox: Docker Desktop keeps every context connected and
+  // reconnects at once, which woke the sandbox again each time it fell asleep. Wake it first (UI, API, an app).
   if (state?.status !== 'running' && !wakeInProgress(sandbox)) {
-    try { await wake(sandbox) } catch (err) {
-      // At the owner's limit (or a failed start): nothing to wait for
-      console.log(`[tcp] ${sandbox} not woken: ${err instanceof Error ? err.message : err}`)
-      return null
+    const last = asleepLogged.get(sandbox) ?? 0
+    if (Date.now() - last > 10 * 60_000) {
+      asleepLogged.set(sandbox, Date.now())
+      console.log(`[tcp] ${sandbox} is asleep: a Docker connection does not wake it (wake it first)`)
     }
+    return null
   }
   const host = opts.host ?? sandbox, port = opts.port ?? 2376
   const deadline = Date.now() + (opts.deadlineMs ?? 60_000)
