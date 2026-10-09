@@ -9,7 +9,7 @@ vi.mock('../../services/compose', () => ({ composeUpService: vi.fn().mockResolve
 vi.mock('../../services/project', () => ({ nudgeTraefik: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('../../services/docker', () => ({ listManagedContainers: vi.fn() }))
 
-import { withWebsecure, withSocatUrl, withoutAllowNonRunning, migrateRouters } from '../../services/routerMigration'
+import { withWebsecure, withSocatUrl, withoutAllowNonRunning, withoutSocatDump, migrateRouters } from '../../services/routerMigration'
 import { composeUpService } from '../../services/compose'
 import { nudgeTraefik } from '../../services/project'
 import { listManagedContainers } from '../../services/docker'
@@ -143,6 +143,30 @@ describe('withoutAllowNonRunning', () => {
     expect(labels).toMatchObject({ [key('p7y-old')]: 'web,websecure', 'traefik.http.services.frps-p7y-old.loadbalancer.server.url': 'http://p7y-old-socat:8080' })
     expect(labels['traefik.docker.allownonrunning']).toBeUndefined()
     expect(composeUpService).toHaveBeenCalledTimes(1)
+  })
+})
+
+// socat -v wrote every request and answer (passwords, tokens, cookies) into the socat container's log
+describe('withoutSocatDump', () => {
+  const OLD = "-c \"trap 'exit 0' TERM; socat -d -d -v TCP-LISTEN:8080,fork,reuseaddr TCP:p7y-a-frps:8080 & socat -d -d -v TCP-LISTEN:7500,fork,reuseaddr TCP:p7y-a-frps:7500 & wait\""
+  const withCommand = (command: string) => yaml.dump({ services: { socat: { command, labels: { [key('p7y-a')]: 'web,websecure' } } } })
+  const commandOf = (text: string) => (yaml.load(text) as { services: { socat: { command: string } } }).services.socat.command
+  it('drops -v from both relays, nothing else', () => {
+    expect(commandOf(withoutSocatDump(withCommand(OLD), 'p7y-a')!)).toBe(OLD.replace(/ -v /g, ' '))
+  })
+  it('leaves current or unknown files alone', () => {
+    expect(withoutSocatDump(withCommand(OLD.replace(/ -v /g, ' ')), 'p7y-a')).toBeNull()
+    expect(withoutSocatDump(compose('p7y-a', 'web,websecure'), 'p7y-a')).toBeNull()
+    expect(withoutSocatDump(': not yaml [', 'p7y-a')).toBeNull()
+  })
+  it('migrateRouters recreates socat for it (its old log goes with the old container)', async () => {
+    vi.clearAllMocks()
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-users-'))
+    fs.mkdirSync(`${dir}/p7y-a`); fs.writeFileSync(`${dir}/p7y-a/docker-compose.yml`, withCommand(OLD))
+    vi.mocked(listManagedContainers).mockResolvedValue([meta('p7y-a', 'running')])
+    expect(await migrateRouters(dir)).toEqual(['p7y-a'])
+    expect(commandOf(fs.readFileSync(`${dir}/p7y-a/docker-compose.yml`, 'utf8'))).not.toContain(' -v ')
+    expect(composeUpService).toHaveBeenCalledWith(`${dir}/p7y-a/docker-compose.yml`, 'socat', true)
   })
 })
 

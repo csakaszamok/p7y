@@ -5,7 +5,7 @@ import { nudgeTraefik } from './project'
 import { listManagedContainers } from './docker'
 import { entriesIn } from './sandboxPaths'
 
-type Services = Record<string, { labels?: Record<string, string> } | undefined>
+type Services = Record<string, { labels?: Record<string, string>; command?: unknown } | undefined>
 
 const entrypointsLabel = (name: string) => `traefik.http.routers.frps-${name}.entrypoints`
 
@@ -48,12 +48,25 @@ export function withoutAllowNonRunning(text: string, _name: string): string | nu
 }
 
 /**
+ * The compose file with socat relaying without -v, or null if it needs no change. -v wrote every request and answer
+ * that went through (passwords, tokens, cookies) into the socat container's log, which nothing reads.
+ */
+export function withoutSocatDump(text: string, _name: string): string | null {
+  let doc: { services?: Services } | null
+  try { doc = yaml.load(text) as { services?: Services } | null } catch { return null }
+  const socat = doc?.services?.socat
+  if (typeof socat?.command !== 'string' || !/socat((?: -d)*) -v /.test(socat.command)) return null
+  socat.command = socat.command.replace(/socat((?: -d)*) -v /g, 'socat$1 ')
+  return yaml.dump(doc, { lineWidth: -1 })
+}
+
+/**
  * Sandboxes created before HTTPS support only route `web`; an https:// request
  * then never reaches them. Adds `websecure` to their router and recreates only
  * the socat container that carries it (started if the sandbox runs, left
  * stopped if it sleeps; a deep-sleeping one picks it up on its next wake).
- * It also points the service at socat by name (withSocatUrl) and drops allownonrunning (withoutAllowNonRunning),
- * in the same recreate.
+ * It also points the service at socat by name (withSocatUrl), drops allownonrunning (withoutAllowNonRunning) and
+ * socat's -v (withoutSocatDump), in the same recreate; the recreate also drops the old socat log.
  * Returns the migrated sandbox names.
  */
 export async function migrateRouters(usersDir?: string): Promise<string[]> {
@@ -67,7 +80,7 @@ export async function migrateRouters(usersDir?: string): Promise<string[]> {
     let original: string
     try { original = fs.readFileSync(composePath, 'utf8') } catch { continue }
     let updated: string | null = null
-    for (const step of [withWebsecure, withSocatUrl, withoutAllowNonRunning]) {
+    for (const step of [withWebsecure, withSocatUrl, withoutAllowNonRunning, withoutSocatDump]) {
       const next = step(updated ?? original, name)
       if (next) updated = next
     }
