@@ -21,7 +21,7 @@ Then, on a Linux host with Docker Engine and the compose plugin (Compose 2.17 or
 ```bash
 mkdir p7y && cd p7y
 curl -fsSLO https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml
-curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash     # creates .env with random ADMIN_TOKEN, SESSION_SECRET and ADMIN_PASSWORD
+curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com   # .env with your domain and random secrets
 docker compose up -d
 ```
 
@@ -29,7 +29,7 @@ The directory must be called `p7y`: the compose project name comes from it. For 
 
 `check-host.sh` checks Docker and Docker Compose, sysbox, the address pools, ports, disk and registry access, and changes nothing (its sysbox check runs one throw-away `alpine` container); with the `HOST_DOMAIN` you plan to use it also checks the DNS records and, if `certs/` has one, the certificate. Lines marked ✘ must be fixed first, ⚠ are worth reading.
 
-`setup.sh` works in the current directory: it creates `.env` from its release's `env.example`, fills in random secrets, creates `data/`, `opt/`, `certs/` and `dynamic/`, and prints the admin password and token. It keeps values you already set, so it is safe to run again. Without it: download `env.example` of the release as `.env` and set those three by hand.
+`setup.sh` works in the current directory: it creates `.env` from its release's `env.example`, sets `HOST_DOMAIN` to the domain you give it and `PUBLIC_URL` to `p7y.<domain>` (`https://` if `certs/` already holds a certificate, else `http://`: run it again with the domain after adding one; a `PUBLIC_URL` you set yourself is kept), fills in random secrets, creates `data/`, `opt/`, `certs/` and `dynamic/`, and prints the admin password and token. It keeps values you already set, so it is safe to run again. Without it: download `env.example` of the release as `.env` and set `HOST_DOMAIN`, `PUBLIC_URL` and the three secrets by hand.
 
 `docker compose up -d` pulls the released image `ghcr.io/csakaszamok/p7y`. It carries the sandbox templates and runtimes, and the files the other services read: on every `up` the one-shot `p7y-init` service copies the Sablier themes, the error pages, the registry config and `dynamic/errors.yml` from it, so they always match the running version. To work on the code, see [CONTRIBUTING.md](https://github.com/csakaszamok/p7y/blob/main/CONTRIBUTING.md).
 
