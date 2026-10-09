@@ -29,3 +29,11 @@ cmp -s traefik/errors.yml "$out/dynamic/errors.yml" && pass "dynamic/errors.yml 
 
 rm "$src/registry/config.yml"
 if ASSETS_SRC=$src ASSETS_OUT=$out sh scripts/install-assets.sh >/dev/null 2>&1; then fail "a missing asset must fail"; else pass "a missing asset fails"; fi
+
+# A failing run (a release without one of its files) leaves what is there as it is: nothing emptied half way
+fresh=$tmp/fresh; mkdir -p "$fresh"; cp -R sablier-themes error-pages registry traefik "$fresh/"
+ASSETS_SRC=$fresh ASSETS_OUT=$out sh scripts/install-assets.sh >/dev/null
+rm "$fresh/registry/config.yml"
+ASSETS_SRC=$fresh ASSETS_OUT=$out sh scripts/install-assets.sh >/dev/null 2>&1 || true
+[ -f "$out/sablier-themes/p7y.html" ] && [ -f "$out/error-pages/404.html" ] && [ -f "$out/registry/config.yml" ] \
+  && pass "a failing run leaves every volume as it was" || fail "a failing run emptied something: $(ls "$out"/*)"

@@ -13,6 +13,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 - **A sandbox's frps API (`:7500`) has a password.** It lists the sandbox's proxies, and other sandboxes reach it over `traefik-net` through socat: without the password they now get 401. Each sandbox gets its own, in its `frps.toml`; Purgatory uses it to list the apps, socat's health check gets it in `FRPS_API_AUTH`. Existing sandboxes get one when Purgatory starts (their frps and socat containers are recreated: a running sandbox's web addresses are gone for a few seconds); one whose socat health check is not the runtime's (an edited runtime) keeps its API open and says so in the log.
 
+### Fixed
+
+- `p7y-init` emptied the volumes that Sablier, nginx and the registry read before filling them again, on every `docker compose up`: for a moment the error pages were nginx's own, and a run that failed (a release without one of its files) left them empty. It now checks every file first, puts each one in place under a temporary name, and only then removes what the release no longer has.
+
 ## [0.5.2] - 2026-10-09
 
 ### Fixed
