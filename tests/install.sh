@@ -60,7 +60,7 @@ has_portainer && fail "starter has Portainer" || pass "starter from the image (n
 [ -f dynamic/errors.yml ] && pass "dynamic/errors.yml written" || fail "no dynamic/errors.yml"
 for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q 'VIEW IN FULL SCREEN' && break; sleep 2; done
 curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q 'VIEW IN FULL SCREEN' && pass "our 404 page" || fail "404 page"
-docker run --rm -q -v "${COMPOSE_PROJECT_NAME}_sablier_themes:/t" alpine ls /t | grep -qx p7y.html && pass "Sablier has the p7y theme" || fail "theme"
+docker run --rm --entrypoint ls -v "${COMPOSE_PROJECT_NAME}_sablier_themes:/t" "ghcr.io/csakaszamok/p7y:$TAG" /t | grep -qx p7y.html && pass "Sablier has the p7y theme" || fail "theme"
 
 info "old checkout ($OLD_REF) upgraded with git while it runs"
 # A real one: the old release's files in a git repository, running; then the checkout moves to this tree,
