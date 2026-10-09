@@ -176,6 +176,12 @@ services:
           - p7y.${HOST_DOMAIN:-lvh.me}
       sablier-net: {}
     restart: unless-stopped
+    # Its error-page middleware is in dynamic/errors.yml, which p7y-init writes. Restarted with a new release:
+    # pulling 0.5 into an old checkout recreated dynamic/, and the running Traefik kept the deleted directory.
+    depends_on:
+      p7y-init:
+        condition: service_completed_successfully
+        restart: true
 
   sablier:
     image: sablierapp/sablier:1.18.0
