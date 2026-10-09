@@ -2,6 +2,7 @@ import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { startDeepSleepScheduler } from "./services/deepSleep";
 import { startSessionWatch } from "./services/sessionWatch";
 import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
+import { openSignInWarning } from "./services/allowlist";
 import { insecureConfigWarnings, insecureConfigErrors } from "./services/configWarnings";
 import { syncTlsConfig } from "./services/tlsConfig";
 import { migrateRouters } from "./services/routerMigration";
@@ -287,6 +288,8 @@ startUsageSampler();
 startDiskSampler();
 // The topbar's GitHub star and fork counts: fetched now, so the first page has them
 repoInfo();
+// OIDC with no OIDC_ALLOWED_DOMAINS / OIDC_ALLOWED_EMAILS: anyone with an account at the provider gets in
+{ const open = openSignInWarning(); if (open) console.warn(open); }
 // Say once which runtime new sandboxes get, and why dind when sysbox would be safer
 void defaultRuntime().then(rt => {
   const auto = !process.env.DEFAULT_RUNTIME || process.env.DEFAULT_RUNTIME === "auto";

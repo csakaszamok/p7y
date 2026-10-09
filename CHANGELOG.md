@@ -6,6 +6,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Added
 
+- **Who may sign in:** `OIDC_ALLOWED_DOMAINS` (e.g. `example.com,partner.org`, the exact domain) and `OIDC_ALLOWED_EMAILS` (single addresses). Until now anyone with an account at the OIDC provider could sign in and create sandboxes, with Google any Google account; an account not on the list is now told so on the sign-in page. It is checked on every request too: someone taken off the list (after a restart) is signed out and their tokens stop working at once. The admin is never limited. Without either setting nothing changes, and Purgatory says in its log at startup that anyone can sign in.
 - The sign-in page shows the sandbox places on the server above the sign-in buttons: taken and free of `SANDBOX_MAX_TOTAL`, with a bar that turns orange from 90% and red when the server is full. The page is public: `LOGIN_CAPACITY=off` hides it. The count is kept for 30 seconds, so reloading the page does not list the sandboxes each time.
 
 ### Changed

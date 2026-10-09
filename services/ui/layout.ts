@@ -1,4 +1,5 @@
 import { readSession, getCookie, SESSION_COOKIE, type Session } from '../session'
+import { subAllowed } from '../allowlist'
 import { sandboxPrefix } from '../naming'
 import { repoInfo, type RepoInfo } from '../repoInfo'
 
@@ -7,7 +8,9 @@ export function escapeHtml(s: string): string {
 }
 
 export function pageSession(req: Request): Session | null {
-  return readSession(getCookie(req, SESSION_COOKIE))
+  const session = readSession(getCookie(req, SESSION_COOKIE))
+  // Taken off OIDC_ALLOWED_DOMAINS / OIDC_ALLOWED_EMAILS: signed out at once
+  return session && subAllowed(session.sub, session.role) ? session : null
 }
 
 export function redirect(location: string): Response {
