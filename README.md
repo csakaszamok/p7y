@@ -18,11 +18,12 @@
 
 ## Install
 
-On a Linux host with Docker Engine and the compose plugin:
+On a Linux host with Docker Engine and the compose plugin, no clone needed ([check the host first](https://csakaszamok.github.io/p7y/latest/install/)):
 
 ```bash
-git clone https://github.com/csakaszamok/p7y.git && cd p7y
-./setup.sh            # creates .env with random secrets
+mkdir p7y && cd p7y
+curl -fsSLO https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml
+curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash     # creates .env with random secrets
 docker compose up -d
 ```
 

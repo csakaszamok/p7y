@@ -1,17 +1,29 @@
 #!/usr/bin/env bash
-# Prepares .env for a first start: copies .env.example if there is no .env yet,
-# and replaces the example secrets with random ones. Safe to run again: values
-# you already set are kept.
+# Prepares the current directory for a first start: creates .env (from the release's env.example) if there
+# is none, replaces the example secrets with random ones and creates the data directories. Safe to run
+# again: values you already set are kept.
+#
+#   curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash
 set -euo pipefail
-cd "$(dirname "$0")"
+
+# Set in the release asset (e.g. v0.5.0); empty in a checkout, which uses its own .env.example
+P7Y_RELEASE=
+P7Y_RELEASE_BASE=${P7Y_RELEASE_BASE:-https://github.com/csakaszamok/p7y/releases/download}
 
 command -v docker >/dev/null || { echo "docker is not installed" >&2; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "the docker compose plugin is not installed" >&2; exit 1; }
 
 if [ ! -f .env ]; then
-  cp .env.example .env
-  echo "Created .env from .env.example"
+  if [ -n "$P7Y_RELEASE" ]; then
+    curl -fsSL "$P7Y_RELEASE_BASE/$P7Y_RELEASE/env.example" -o .env.tmp       || { rm -f .env.tmp; echo "could not download env.example of $P7Y_RELEASE" >&2; exit 1; }
+    mv .env.tmp .env
+  else
+    cp "$(dirname "$0")/.env.example" .env
+  fi
+  echo "Created .env"
 fi
+
+mkdir -p data opt/sandboxes opt/archive certs dynamic
 
 # random BYTES: that many random bytes as hex
 random() { head -c "$1" /dev/urandom | od -An -tx1 | tr -d ' \n'; }
@@ -47,7 +59,7 @@ fill_secret SESSION_SECRET 32 change-me-to-a-long-random-string
 fill_secret ADMIN_PASSWORD 12 change-me
 
 if [ "$(get HOST_ADDRESS)" = "192.168.1.100" ]; then
-  address=$(hostname -I 2>/dev/null | awk '{print $1}')
+  address=$(hostname -I 2>/dev/null | awk '{print $1}' || true)  # no -I (macOS, busybox): localhost
   set_value HOST_ADDRESS "${address:-localhost}"
 fi
 

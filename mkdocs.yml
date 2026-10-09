@@ -81,7 +81,7 @@ nav:
   - Reference:
       - API: api.md
       - Security: security.md
-      - Upgrading from Leander: upgrading.md
+      - Upgrading: upgrading.md
       - Comparison: comparison.md
       - Roadmap: roadmap.md
       - Architecture: architecture.html

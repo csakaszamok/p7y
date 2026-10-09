@@ -2,6 +2,7 @@
 # Checks whether this machine is ready for Purgatory, before the first `docker compose up`.
 # Changes nothing on the host; the sysbox check runs one `docker run --rm alpine` (pulls alpine).
 #
+#   curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/check-host.sh | bash -s -- [domain]
 #   ./check-host.sh [domain]     # domain: the HOST_DOMAIN you plan to use, e.g. dev.example.com (UI: p7y.dev.example.com)
 #
 # Exit code 1 if any check failed (✘), 0 otherwise (warnings ⚠ allowed).
@@ -51,7 +52,9 @@ else
   if compose=$(docker compose version --short 2>/dev/null); then
     compose=${compose#v}
     if version_ge "$compose" 2.20; then ok "Docker Compose $compose"
-    else warn "Docker Compose $compose" "Purgatory is tested on Compose 2.20 or newer"; fi
+    # p7y-init: depends_on with restart: true needs 2.17
+    elif version_ge "$compose" 2.17; then warn "Docker Compose $compose" "Purgatory is tested on Compose 2.20 or newer"
+    else fail "Docker Compose $compose" "Purgatory needs Compose 2.17 or newer: update docker-compose-plugin"; fi
   else
     fail "the docker compose plugin is not installed" "install docker-compose-plugin (Compose v2)"
   fi
