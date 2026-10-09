@@ -160,6 +160,21 @@ describe('pages', () => {
     expect(loginPage).toContain('<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">')
   })
 
+  it('the sign-in page shows the sandbox places above the sign-in buttons', async () => {
+    const { loginCapacity } = await import('../../services/loginCapacity')
+    vi.spyOn(loginCapacity, 'get').mockResolvedValueOnce({ used: 143, limit: 200 })
+    const page = await (await login(r('/login'))).text()
+    expect(page).toContain('Sandbox places: 143 taken · 57 free')
+    expect(page.indexOf('class="capacity')).toBeLessThan(page.indexOf('Sign in with Google'))
+  })
+
+  // Counting needs Docker; without it (here: no listSandboxes) the page still comes, without the line
+  it('the sign-in page without the sandbox places when they cannot be counted', async () => {
+    const page = await (await login(r('/login'))).text()
+    expect(page).toContain('Sign in with Google')
+    expect(page).not.toContain('class="capacity')
+  })
+
   it('the sign-in page has the ember background', async () => {
     const loginPage = await (await login(r('/login'))).text()
     expect(loginPage).toContain('<script src="/assets/embers.js" defer></script>')

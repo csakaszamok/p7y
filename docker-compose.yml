@@ -28,6 +28,8 @@ services:
       DEFAULT_TEMPLATE: ${DEFAULT_TEMPLATE:-starter}
       # off: never ask GitHub for the star and fork counts in the topbar
       GITHUB_STATS: ${GITHUB_STATS:-on}
+      # off: the public sign-in page does not show the sandbox places (taken / free)
+      LOGIN_CAPACITY: ${LOGIN_CAPACITY:-on}
       SANDBOX_CPUS: ${SANDBOX_CPUS:-2}
       SANDBOX_MEMORY: ${SANDBOX_MEMORY:-4g}
       SANDBOX_MAX_CPUS: ${SANDBOX_MAX_CPUS:-4}

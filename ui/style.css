@@ -86,6 +86,14 @@ body.login .card { position: relative; z-index: 1; background: rgba(20,15,12,.72
 body.login .logo { display: block; margin-bottom: 12px; filter: drop-shadow(0 0 8px rgba(255,120,30,.45)) }
 body.login h1 { margin: 0 }
 body.login form button { margin-top: 14px }
+body.login .capacity { margin: 14px 0 }
+body.login .capacity p { margin: 0 0 6px; color: #888; font-size: .9em }
+body.login .capacity .bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,.08); overflow: hidden }
+body.login .capacity .bar span { display: block; height: 100%; background: #888 }
+body.login .capacity.warn p { color: #f97316 }
+body.login .capacity.warn .bar span { background: #f97316 }
+body.login .capacity.full p { color: #ef4444 }
+body.login .capacity.full .bar span { background: #ef4444 }
 @media (max-width: 800px) { .split { flex-direction: column } .panel { position: static; width: 100% } }
 
 /* Starter stack viewer */

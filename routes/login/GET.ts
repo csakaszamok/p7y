@@ -1,10 +1,12 @@
 import { escapeHtml, html, pageSession, redirect } from '../../services/ui/layout'
 import { oidcEnabled, providerName } from '../../services/oidc'
+import { capacityHtml, loginCapacity } from '../../services/loginCapacity'
 
 export default async (req: Request): Promise<Response> => {
   if (pageSession(req)) return redirect('/')
   const error = new URL(req.url).searchParams.get('error')
   const adminEnabled = !!(process.env.ADMIN_USER && process.env.ADMIN_PASSWORD)
+  const capacity = capacityHtml(await loginCapacity.get())
   return html(`<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,6 +19,7 @@ export default async (req: Request): Promise<Response> => {
   <h1>Purgatory</h1>
   <p class="muted">Your own Docker sandboxes.</p>
   ${error ? `<p class="error">${escapeHtml(error)}</p>` : ''}
+  ${capacity}
   ${oidcEnabled() ? `<a class="primary wide" href="/auth/oidc">Sign in with ${escapeHtml(providerName())}</a>` : ''}
   ${adminEnabled ? `<details${oidcEnabled() ? '' : ' open'}><summary>Administrator sign-in</summary>
   <form method="post" action="/login">
