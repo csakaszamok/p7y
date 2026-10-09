@@ -37,3 +37,6 @@ dynamic/errors.yml
 
 # MkDocs build output (mkdocs build)
 site/
+
+# CI test report (npm test -- --reporter=junit)
+test-results/
