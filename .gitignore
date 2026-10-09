@@ -31,6 +31,8 @@ data/registry-notify.secret
 data/registry-scans.json
 data/disk-usage.json
 dynamic/tls.yml
+# written by p7y-init from the image
+dynamic/errors.yml
 .vscode/
 
 # MkDocs build output (mkdocs build)

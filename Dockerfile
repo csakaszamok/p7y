@@ -9,6 +9,12 @@ COPY routes ./routes
 COPY services ./services
 COPY templates ./templates
 COPY runtimes ./runtimes
+# Files other services read: p7y-init (assets/install-assets.sh) copies them into their volumes on every up
+COPY sablier-themes ./assets/sablier-themes
+COPY error-pages ./assets/error-pages
+COPY registry ./assets/registry
+COPY traefik ./assets/traefik
+COPY scripts/install-assets.sh ./assets/install-assets.sh
 COPY ui ./ui
 # Purgatory's own package.json (its version for the topbar); /app/package.json is the base image's
 COPY package.json ./p7y/package.json
