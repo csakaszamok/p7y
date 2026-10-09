@@ -4,6 +4,8 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-09
+
 ### Changed
 
 - Documentation: the `sysbox` runtime is used in production; on a shared server the recommended setting is sysbox on the host and `ALLOWED_RUNTIMES=sysbox` ([Security](https://csakaszamok.github.io/p7y/latest/security/)). The README no longer says that the default runtime is the privileged `dind`: with `DEFAULT_RUNTIME=auto` it is `sysbox` wherever sysbox is installed.
@@ -154,7 +156,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.1
 [0.4.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.0
 [0.3.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.1
 [0.3.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.0
