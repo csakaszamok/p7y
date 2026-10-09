@@ -1206,7 +1206,7 @@
 </tr>
 </tbody>
 </table>
-<p>Both runtimes have the same wiring (FRP tunnel, Traefik route, Sablier sleep/wake, <code>docker_data</code> volume, archive on delete). The sysbox image runs plain <code>dockerd</code>, so its TLS listener is configured through the runtime's <code>daemon_json</code> field, which Purgatory merges into the generated <code>daemon.json</code>. The sysbox runtime itself has not been exercised yet — only the generated compose/daemon config is covered by unit tests.</p>
+<p>Both runtimes have the same wiring (FRP tunnel, Traefik route, Sablier sleep/wake, <code>docker_data</code> volume, archive on delete). The sysbox image runs plain <code>dockerd</code>, so its TLS listener is configured through the runtime's <code>daemon_json</code> field, which Purgatory merges into the generated <code>daemon.json</code>. Both run in production. On a shared server use <code>sysbox</code> only: install it on the host and set <code>ALLOWED_RUNTIMES=sysbox</code> (see <a href="../security/">Security</a>).</p>
 <p><strong>Runtimes</strong> are <code>runtimes/&lt;name&gt;.yaml</code>: a <code>description</code>, the sandbox's own <code>docker_compose</code> (the DinD container, frps, socat, and their Traefik and Sablier labels) and an optional <code>daemon_json</code>. <strong>Templates</strong> are directories, <code>templates/&lt;name&gt;/</code>:</p>
 <ul>
 <li><code>compose.yaml</code> (required): the stack deployed into the sandbox's own Docker on creation, a plain compose file.</li>

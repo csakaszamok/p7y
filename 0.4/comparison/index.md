@@ -68,7 +68,7 @@ These come up in the same searches ("sandbox", "dev environment", "AI agent"), b
 
 ## Where Purgatory is weaker
 
-1. **Isolation is not yet a boundary against hostile code.** The default `dind-standard` template runs the sandbox `privileged`: root inside a sandbox can escape to the host. That is fine for colleagues and their own agents, not for strangers. The `sysbox` runtime removes `privileged` (not yet run in production); a **Kata Containers** runtime, a lightweight VM with its own kernel per sandbox, is on the [roadmap](https://csakaszamok.github.io/p7y/0.4/roadmap/index.md).
+1. **Isolation is not yet a boundary against hostile code.** The `dind` runtime runs the sandbox `privileged`: root inside a sandbox can escape to the host. That is fine for colleagues and their own agents, not for strangers. The `sysbox` runtime removes `privileged` and is used in production, but still shares the host's kernel; a **Kata Containers** runtime, a lightweight VM with its own kernel per sandbox, is on the [roadmap](https://csakaszamok.github.io/p7y/0.4/roadmap/index.md).
 1. **One host for now.** No multi-host scheduling and no warm pool; a new sandbox takes 20–60 seconds, a wake from deep sleep about 30. **Kubernetes support** is on the roadmap.
 1. **Sleep stops the containers.** On wake the stack restarts by its restart policies; what was only in memory is gone.
 1. **Missing pieces:** no teams yet (a sandbox has one owner), no hard disk quota (only a warning above a disk limit; CPU and memory limits exist), no egress rules, no SDK (a REST API, the Docker CLI and [agent-guide.md](https://csakaszamok.github.io/p7y/0.4/agent-guide/index.md)).

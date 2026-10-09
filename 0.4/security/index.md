@@ -9,10 +9,12 @@ What it does:
 - users see and change only their own sandboxes, through the UI, the API or a personal access token; the admin sees all;
 - with an `https://` `PUBLIC_URL`, Purgatory refuses to start with default secrets.
 
+**On a shared server** (several people, or agents running code you have not read): install [sysbox](https://github.com/nestybox/sysbox) on the host and set `ALLOWED_RUNTIMES=sysbox` in `.env`. New sandboxes then always run under sysbox, nobody can create a privileged `dind` one, and `check-host.sh` tells whether sysbox works on the machine. Sandboxes created before keep their runtime: recreate the `dind` ones.
+
 What it does not do:
 
 - **Without sysbox, sandboxes run `privileged` (the `dind` runtime).** Code with root inside such a sandbox can escape to the host. By default (`DEFAULT_RUNTIME=auto`) new sandboxes use the `sysbox` runtime wherever [sysbox](https://github.com/nestybox/sysbox) is installed on the (Linux) host, which runs Docker in an unprivileged container; Docker Desktop cannot run sysbox, so there they fall back to `dind`, and Purgatory says so at startup. Only let people and agents you would give a shell on the host run code in `dind` sandboxes.
-- The `sysbox` runtime has not been run in production yet (only its generated configuration is tested).
+- **`sysbox` is not a VM:** its sandboxes run unprivileged, in their own user namespace, but share the host's kernel, so a kernel exploit would still reach the host.
 - There is no network policy between a sandbox and the internet, and no hard disk quota per sandbox: only a warning above its disk limit (see [Disk](https://csakaszamok.github.io/p7y/0.4/resources/#disk)); CPU and memory limits exist (see [CPU and memory](https://csakaszamok.github.io/p7y/0.4/resources/#cpu-and-memory)).
 - The Purgatory container mounts the host's Docker socket, so whoever controls Purgatory controls the host.
 

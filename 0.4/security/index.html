@@ -1166,10 +1166,11 @@
 <li>users see and change only their own sandboxes, through the UI, the API or a personal access token; the admin sees all;</li>
 <li>with an <code>https://</code> <code>PUBLIC_URL</code>, Purgatory refuses to start with default secrets.</li>
 </ul>
+<p><strong>On a shared server</strong> (several people, or agents running code you have not read): install <a href="https://github.com/nestybox/sysbox">sysbox</a> on the host and set <code>ALLOWED_RUNTIMES=sysbox</code> in <code>.env</code>. New sandboxes then always run under sysbox, nobody can create a privileged <code>dind</code> one, and <code>check-host.sh</code> tells whether sysbox works on the machine. Sandboxes created before keep their runtime: recreate the <code>dind</code> ones.</p>
 <p>What it does not do:</p>
 <ul>
 <li><strong>Without sysbox, sandboxes run <code>privileged</code> (the <code>dind</code> runtime).</strong> Code with root inside such a sandbox can escape to the host. By default (<code>DEFAULT_RUNTIME=auto</code>) new sandboxes use the <code>sysbox</code> runtime wherever <a href="https://github.com/nestybox/sysbox">sysbox</a> is installed on the (Linux) host, which runs Docker in an unprivileged container; Docker Desktop cannot run sysbox, so there they fall back to <code>dind</code>, and Purgatory says so at startup. Only let people and agents you would give a shell on the host run code in <code>dind</code> sandboxes.</li>
-<li>The <code>sysbox</code> runtime has not been run in production yet (only its generated configuration is tested).</li>
+<li><strong><code>sysbox</code> is not a VM:</strong> its sandboxes run unprivileged, in their own user namespace, but share the host's kernel, so a kernel exploit would still reach the host.</li>
 <li>There is no network policy between a sandbox and the internet, and no hard disk quota per sandbox: only a warning above its disk limit (see <a href="../resources/#disk">Disk</a>); CPU and memory limits exist (see <a href="../resources/#cpu-and-memory">CPU and memory</a>).</li>
 <li>The Purgatory container mounts the host's Docker socket, so whoever controls Purgatory controls the host.</li>
 </ul>

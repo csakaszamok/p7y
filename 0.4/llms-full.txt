@@ -171,7 +171,7 @@ A sandbox is a **runtime** (how it runs) plus a **template** (what runs inside),
 | `tcp-demo`          | a demo of [TLS TCP addresses](https://csakaszamok.github.io/p7y/0.4/networking/#tls-tcp-addresses): Postgres, Redis, SSH and pgweb                                                                      |
 | `empty`             | nothing: paste your own compose file in the dialog                                                                                                                                                      |
 
-Both runtimes have the same wiring (FRP tunnel, Traefik route, Sablier sleep/wake, `docker_data` volume, archive on delete). The sysbox image runs plain `dockerd`, so its TLS listener is configured through the runtime's `daemon_json` field, which Purgatory merges into the generated `daemon.json`. The sysbox runtime itself has not been exercised yet — only the generated compose/daemon config is covered by unit tests.
+Both runtimes have the same wiring (FRP tunnel, Traefik route, Sablier sleep/wake, `docker_data` volume, archive on delete). The sysbox image runs plain `dockerd`, so its TLS listener is configured through the runtime's `daemon_json` field, which Purgatory merges into the generated `daemon.json`. Both run in production. On a shared server use `sysbox` only: install it on the host and set `ALLOWED_RUNTIMES=sysbox` (see [Security](https://csakaszamok.github.io/p7y/0.4/security/index.md)).
 
 **Runtimes** are `runtimes/<name>.yaml`: a `description`, the sandbox's own `docker_compose` (the DinD container, frps, socat, and their Traefik and Sablier labels) and an optional `daemon_json`. **Templates** are directories, `templates/<name>/`:
 
@@ -626,10 +626,12 @@ What it does:
 - users see and change only their own sandboxes, through the UI, the API or a personal access token; the admin sees all;
 - with an `https://` `PUBLIC_URL`, Purgatory refuses to start with default secrets.
 
+**On a shared server** (several people, or agents running code you have not read): install [sysbox](https://github.com/nestybox/sysbox) on the host and set `ALLOWED_RUNTIMES=sysbox` in `.env`. New sandboxes then always run under sysbox, nobody can create a privileged `dind` one, and `check-host.sh` tells whether sysbox works on the machine. Sandboxes created before keep their runtime: recreate the `dind` ones.
+
 What it does not do:
 
 - **Without sysbox, sandboxes run `privileged` (the `dind` runtime).** Code with root inside such a sandbox can escape to the host. By default (`DEFAULT_RUNTIME=auto`) new sandboxes use the `sysbox` runtime wherever [sysbox](https://github.com/nestybox/sysbox) is installed on the (Linux) host, which runs Docker in an unprivileged container; Docker Desktop cannot run sysbox, so there they fall back to `dind`, and Purgatory says so at startup. Only let people and agents you would give a shell on the host run code in `dind` sandboxes.
-- The `sysbox` runtime has not been run in production yet (only its generated configuration is tested).
+- **`sysbox` is not a VM:** its sandboxes run unprivileged, in their own user namespace, but share the host's kernel, so a kernel exploit would still reach the host.
 - There is no network policy between a sandbox and the internet, and no hard disk quota per sandbox: only a warning above its disk limit (see [Disk](https://csakaszamok.github.io/p7y/0.4/resources/#disk)); CPU and memory limits exist (see [CPU and memory](https://csakaszamok.github.io/p7y/0.4/resources/#cpu-and-memory)).
 - The Purgatory container mounts the host's Docker socket, so whoever controls Purgatory controls the host.
 
@@ -718,7 +720,7 @@ These come up in the same searches ("sandbox", "dev environment", "AI agent"), b
 
 ## Where Purgatory is weaker
 
-1. **Isolation is not yet a boundary against hostile code.** The default `dind-standard` template runs the sandbox `privileged`: root inside a sandbox can escape to the host. That is fine for colleagues and their own agents, not for strangers. The `sysbox` runtime removes `privileged` (not yet run in production); a **Kata Containers** runtime, a lightweight VM with its own kernel per sandbox, is on the [roadmap](https://csakaszamok.github.io/p7y/0.4/roadmap/index.md).
+1. **Isolation is not yet a boundary against hostile code.** The `dind` runtime runs the sandbox `privileged`: root inside a sandbox can escape to the host. That is fine for colleagues and their own agents, not for strangers. The `sysbox` runtime removes `privileged` and is used in production, but still shares the host's kernel; a **Kata Containers** runtime, a lightweight VM with its own kernel per sandbox, is on the [roadmap](https://csakaszamok.github.io/p7y/0.4/roadmap/index.md).
 1. **One host for now.** No multi-host scheduling and no warm pool; a new sandbox takes 20–60 seconds, a wake from deep sleep about 30. **Kubernetes support** is on the roadmap.
 1. **Sleep stops the containers.** On wake the stack restarts by its restart policies; what was only in memory is gone.
 1. **Missing pieces:** no teams yet (a sandbox has one owner), no hard disk quota (only a warning above a disk limit; CPU and memory limits exist), no egress rules, no SDK (a REST API, the Docker CLI and [agent-guide.md](https://csakaszamok.github.io/p7y/0.4/agent-guide/index.md)).
