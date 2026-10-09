@@ -39,8 +39,10 @@ jobs:
           HOST_ADDRESS=localhost
           SESSION_SECRET=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
           ADMIN_PASSWORD=$(head -c 12 /dev/urandom | od -An -tx1 | tr -d ' \n')
+          # The image from this checkout (p7y and p7y-init), not the released one: the release compose file has no build
+          COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
           EOF
-          docker compose build p7y
+          docker compose build
           docker compose up -d --wait
 
       - name: A sandbox runs on sysbox-runc, not privileged
