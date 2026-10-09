@@ -35,3 +35,21 @@ sed 's/^P7Y_RELEASE=.*/P7Y_RELEASE=v9.9.9/' "$repo/setup.sh" | P7Y_RELEASE_BASE=
 mkdir "$tmp/c" && cd "$tmp/c"
 if sed 's/^P7Y_RELEASE=.*/P7Y_RELEASE=v0.0.0/' "$repo/setup.sh" | P7Y_RELEASE_BASE="$rel" bash >/dev/null 2>&1; then fail "missing env.example must fail"; fi
 [ ! -f .env ] && pass "missing env.example: fails, no .env" || fail ".env left behind"
+
+# The domain as an argument (as check-host.sh takes it): HOST_DOMAIN, and PUBLIC_URL while it is the example's
+mkdir "$tmp/d" && cd "$tmp/d"
+out=$(bash "$repo/setup.sh" dev.example.com)
+grep -qx 'HOST_DOMAIN=dev.example.com' .env && pass "domain: HOST_DOMAIN set" || fail "HOST_DOMAIN: $(grep HOST_DOMAIN .env)"
+grep -qx 'PUBLIC_URL=http://p7y.dev.example.com' .env && pass "domain: PUBLIC_URL from it (no certificate: http)" || fail "PUBLIC_URL: $(grep PUBLIC_URL .env)"
+echo "$out" | grep -q 'HOST_DOMAIN is lvh.me' && fail "warned about lvh.me with a domain given" || pass "no lvh.me warning with a domain"
+mkdir "$tmp/e" && cd "$tmp/e" && mkdir certs && touch certs/tls.crt certs/tls.key
+bash "$repo/setup.sh" dev.example.com >/dev/null
+grep -qx 'PUBLIC_URL=https://p7y.dev.example.com' .env && pass "domain + certificate: https" || fail "PUBLIC_URL: $(grep PUBLIC_URL .env)"
+sed -i 's|^PUBLIC_URL=.*|PUBLIC_URL=https://purgatory.example.org|' .env
+bash "$repo/setup.sh" other.example.com >/dev/null
+grep -qx 'PUBLIC_URL=https://purgatory.example.org' .env && grep -qx 'HOST_DOMAIN=other.example.com' .env \
+  && pass "a PUBLIC_URL of the user's own is kept" || fail "PUBLIC_URL: $(grep PUBLIC_URL .env)"
+# Without a domain on a fresh directory: it says lvh.me only works on this machine
+mkdir "$tmp/f" && cd "$tmp/f"
+out=$(bash "$repo/setup.sh")
+echo "$out" | grep -q 'HOST_DOMAIN is lvh.me' && pass "no domain: lvh.me warning" || fail "no lvh.me warning"

@@ -4,13 +4,17 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
-### Fixed
+### Added
 
-- A sandbox added as a Docker context in Docker Desktop never went to sleep: its Builds view keeps the connection to the sandbox's Docker open, and Purgatory renewed the sleep timer once a minute for as long as a Docker connection was open. It now renews it only while bytes go through the connection (a build, `docker logs -f`, a pull).
+- `setup.sh <domain>` (piped: `| bash -s -- dev.example.com`) sets `HOST_DOMAIN` and `PUBLIC_URL` (`https://p7y.<domain>` if `certs/` holds a certificate, else `http://`; a `PUBLIC_URL` of your own is kept). Without a domain it warns that `lvh.me` only works on the machine itself: a new install used to answer 404 on its real address until `HOST_DOMAIN` was added to `.env` by hand, which no step mentioned. `env.example` has a `HOST_DOMAIN` line now.
 
 ### Changed
 
 - **A Docker connection (`<raw>-docker.<domain>:443`) no longer wakes a sleeping sandbox.** Docker Desktop reconnects to every context at once, so it would wake the sandbox each time it fell asleep. Wake it first (**Wake**, `POST /sandboxes/:name/start`, the MCP tool `wake_sandbox`, or open one of its apps); until then `docker` cannot connect. TLS TCP addresses and SSH still wake it.
+
+### Fixed
+
+- A sandbox added as a Docker context in Docker Desktop never went to sleep: its Builds view keeps the connection to the sandbox's Docker open, and Purgatory renewed the sleep timer once a minute for as long as a Docker connection was open. It now renews it only while bytes go through the connection (a build, `docker logs -f`, a pull).
 
 ## [0.5.0] - 2026-10-09
 
