@@ -29,7 +29,7 @@ Then, on a Linux host with Docker Engine and the compose plugin (Compose 2.17 or
 ```
 mkdir p7y && cd p7y
 curl -fsSLO https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml
-curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash     # creates .env with random ADMIN_TOKEN, SESSION_SECRET and ADMIN_PASSWORD
+curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com   # .env with your domain and random secrets
 docker compose up -d
 ```
 
@@ -37,7 +37,7 @@ The directory must be called `p7y`: the compose project name comes from it. For 
 
 `check-host.sh` checks Docker and Docker Compose, sysbox, the address pools, ports, disk and registry access, and changes nothing (its sysbox check runs one throw-away `alpine` container); with the `HOST_DOMAIN` you plan to use it also checks the DNS records and, if `certs/` has one, the certificate. Lines marked ✘ must be fixed first, ⚠ are worth reading.
 
-`setup.sh` works in the current directory: it creates `.env` from its release's `env.example`, fills in random secrets, creates `data/`, `opt/`, `certs/` and `dynamic/`, and prints the admin password and token. It keeps values you already set, so it is safe to run again. Without it: download `env.example` of the release as `.env` and set those three by hand.
+`setup.sh` works in the current directory: it creates `.env` from its release's `env.example`, sets `HOST_DOMAIN` to the domain you give it and `PUBLIC_URL` to `p7y.<domain>` (`https://` if `certs/` already holds a certificate, else `http://`: run it again with the domain after adding one; a `PUBLIC_URL` you set yourself is kept), fills in random secrets, creates `data/`, `opt/`, `certs/` and `dynamic/`, and prints the admin password and token. It keeps values you already set, so it is safe to run again. Without it: download `env.example` of the release as `.env` and set `HOST_DOMAIN`, `PUBLIC_URL` and the three secrets by hand.
 
 `docker compose up -d` pulls the released image `ghcr.io/csakaszamok/p7y`. It carries the sandbox templates and runtimes, and the files the other services read: on every `up` the one-shot `p7y-init` service copies the Sablier themes, the error pages, the registry config and `dynamic/errors.yml` from it, so they always match the running version. To work on the code, see [CONTRIBUTING.md](https://github.com/csakaszamok/p7y/blob/main/CONTRIBUTING.md).
 
@@ -208,7 +208,7 @@ Handled entirely by [Sablier](https://github.com/sablierapp/sablier). The sandbo
 >     restart: unless-stopped
 > ```
 
-Only HTTP traffic through Traefik counts as activity: working through `DOCKER_HOST` directly does not keep a sandbox awake. Sablier persists its sessions (`--storage.file`), so restarting Sablier does not put running sandboxes to sleep. A sandbox started without Purgatory (Docker restarting it, `docker compose start` by hand, or Purgatory restarted while it was starting one) has no session at first; Purgatory notices within two minutes and opens one, so it still sleeps after its `idle_timeout`. After a host reboot, sandboxes that were asleep stay asleep.
+HTTP traffic through Traefik counts as activity, and so does traffic on a Docker connection (`DOCKER_HOST=tcp://<raw>-docker.<domain>:443`): Purgatory renews the session once a minute while bytes go through it. A Docker connection that is only open does not count, and a Docker connection never wakes a sleeping sandbox: Docker Desktop keeps every context connected for its Builds view and reconnects at once, so it would wake the sandbox each time it fell asleep. Wake it first (**Wake**, `POST /sandboxes/:name/start`, or open one of its apps); until then `docker` cannot connect. Sablier persists its sessions (`--storage.file`), so restarting Sablier does not put running sandboxes to sleep. A sandbox started without Purgatory (Docker restarting it, `docker compose start` by hand, or Purgatory restarted while it was starting one) has no session at first; Purgatory notices within two minutes and opens one, so it still sleeps after its `idle_timeout`. After a host reboot, sandboxes that were asleep stay asleep.
 
 The sandbox list (`GET /sandboxes` adds `stops_at`, `deep_sleep_at` and `deep_sleep_after` to each row) and the details panel show **Sleeps in** (time until Sablier stops a running sandbox; every request resets it — read from Sablier's `/metrics`, which Purgatory reaches on `sablier-net`) and **Deep sleep in** (time until an asleep sandbox is taken down).
 
@@ -335,7 +335,7 @@ An agent with MCP can also use Purgatory as an MCP server with the same token: s
 
 A coding agent (Claude Code, Codex…) can work on a sandbox with plain `docker` commands:
 
-- **Docker from outside:** `<raw>-docker.<domain>:443` reaches the sandbox's own Docker daemon. Purgatory does not open that TLS: it only reads the name and passes the connection through, so the Docker command line and the sandbox talk to each other with the sandbox's own certificates (only whoever holds its client key gets in). Connecting wakes the sandbox, and an open connection keeps it awake. Sandboxes created before this need new certificates once: **Access → Enable** (restarts the sandbox).
+- **Docker from outside:** `<raw>-docker.<domain>:443` reaches the sandbox's own Docker daemon. Purgatory does not open that TLS: it only reads the name and passes the connection through, so the Docker command line and the sandbox talk to each other with the sandbox's own certificates (only whoever holds its client key gets in). It does not wake a sleeping sandbox (wake it first: **Wake**, `POST /sandboxes/:name/start`, or the MCP tool `wake_sandbox`); traffic on the connection keeps a running one awake, a connection that is only open (e.g. Docker Desktop keeping a context connected) does not. Sandboxes created before this need new certificates once: **Access → Enable** (restarts the sandbox).
 - **Export for coding agents…** and **Copy as .env** sit at the top of the panel's **Access** tab. **Copy as .env** puts `p7y.env` (a new token for the sandbox) on the clipboard. **Export for coding agents…** downloads `p7y-<raw>.zip`; before a sandbox has Docker access it offers to enable it, or to export without the Docker keys. When the sandbox's Portainer is public, both also carry `P7Y_PORTAINER_URL` and a Portainer API token (`P7Y_PORTAINER_TOKEN`, sent as `X-API-Key`), made for the export, so the agent never gets the Portainer admin password; making it wakes the sandbox. That token does not expire and revoking the Purgatory token does not revoke it: delete it in the sandbox's Portainer (My account → Access tokens). The zip holds `p7y.env` (with a new token limited to the sandbox, `P7Y_DOCKER_HOST`, `P7Y_REGISTRY`), the Docker client keys and a README with the `docker context create` command for Windows and macOS/Linux. It is a secret; **Rotate Docker keys…** makes the keys of earlier exports useless.
 - **Registry:** `docker login registry.<domain>` with a Purgatory token as the password (a token limited to a sandbox pushes to `<raw>/…`, a personal one to its owner's sandboxes); the password returned at create still works.
 - **Anonymous pull after a secret scan:** every push is scanned (files such as `.env`, private keys, and well-known key formats, in every layer and in the image config, where Dockerfile `ENV` lines end up). Anonymous pull is decided per repository: one whose versions are all clean — and that has nothing in the registry Purgatory has not scanned — can be pulled by anyone without logging in; one flagged, unscanned or failed version keeps the whole repository private until it is deleted. The registry tells Purgatory about pushes with a secret Purgatory generates (`data/registry-notify.secret`). Garbage collection runs weekly; a push at that very moment may fail and needs a retry. The **Registry** tab shows the images, the scan results (masked) and a Delete button. `REGISTRY_PUBLIC_PULL=false` keeps everything private.
@@ -397,7 +397,7 @@ POST /sandboxes/p7y-shop/start
 GET  /sandboxes/p7y-shop        → repeat until "status": "running"
 ```
 
-Waking from `exited` takes a few seconds; from `deep_sleep` about 30 seconds. Connecting to the Docker daemon also wakes it.
+Waking from `exited` takes a few seconds; from `deep_sleep` about 30 seconds. Connecting to the Docker daemon does **not** wake it: while the sandbox sleeps, `docker` fails to connect (connection reset or EOF), so wake it first.
 
 A request to an app address while the sandbox is not ready returns an HTML **waiting page** ("Sandbox is waking up") with status 200, instead of the real answer: treat it as "not ready yet" and retry after a few seconds.
 
@@ -574,7 +574,7 @@ The stack Purgatory deployed when it created the sandbox (Portainer + `http-echo
 
 ## Things to keep in mind
 
-- **Sleep:** the sandbox sleeps after its idle timeout without HTTP traffic, 30 minutes by default. The user can change this or turn it off in the UI (**Sleep settings…**) or with `PATCH /sandboxes/<name>` `{"idle_timeout": "2h"}`, where `0` or `off` means never. An open Docker connection keeps it awake; plain HTTP traffic to its apps (or to Portainer) counts too.
+- **Sleep:** the sandbox sleeps after its idle timeout without HTTP traffic, 30 minutes by default. The user can change this or turn it off in the UI (**Sleep settings…**) or with `PATCH /sandboxes/<name>` `{"idle_timeout": "2h"}`, where `0` or `off` means never. Docker traffic keeps a running sandbox awake (a build, `docker logs -f`, a pull), but a connection that is only open does not; plain HTTP traffic to its apps (or to Portainer) counts too.
 - **Archive** (`DELETE /sandboxes/<name>`, **Archive…** in the UI) archives the sandbox: its configuration and data are kept in the archive, and it is removed from the list.
 - **The Purgatory API reference** is at `<Purgatory URL>/swagger`.
 # Reference

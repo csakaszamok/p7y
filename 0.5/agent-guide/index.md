@@ -43,7 +43,7 @@ POST /sandboxes/p7y-shop/start
 GET  /sandboxes/p7y-shop        → repeat until "status": "running"
 ```
 
-Waking from `exited` takes a few seconds; from `deep_sleep` about 30 seconds. Connecting to the Docker daemon also wakes it.
+Waking from `exited` takes a few seconds; from `deep_sleep` about 30 seconds. Connecting to the Docker daemon does **not** wake it: while the sandbox sleeps, `docker` fails to connect (connection reset or EOF), so wake it first.
 
 A request to an app address while the sandbox is not ready returns an HTML **waiting page** ("Sandbox is waking up") with status 200, instead of the real answer: treat it as "not ready yet" and retry after a few seconds.
 
@@ -220,6 +220,6 @@ The stack Purgatory deployed when it created the sandbox (Portainer + `http-echo
 
 ## Things to keep in mind
 
-- **Sleep:** the sandbox sleeps after its idle timeout without HTTP traffic, 30 minutes by default. The user can change this or turn it off in the UI (**Sleep settings…**) or with `PATCH /sandboxes/<name>` `{"idle_timeout": "2h"}`, where `0` or `off` means never. An open Docker connection keeps it awake; plain HTTP traffic to its apps (or to Portainer) counts too.
+- **Sleep:** the sandbox sleeps after its idle timeout without HTTP traffic, 30 minutes by default. The user can change this or turn it off in the UI (**Sleep settings…**) or with `PATCH /sandboxes/<name>` `{"idle_timeout": "2h"}`, where `0` or `off` means never. Docker traffic keeps a running sandbox awake (a build, `docker logs -f`, a pull), but a connection that is only open does not; plain HTTP traffic to its apps (or to Portainer) counts too.
 - **Archive** (`DELETE /sandboxes/<name>`, **Archive…** in the UI) archives the sandbox: its configuration and data are kept in the archive, and it is removed from the list.
 - **The Purgatory API reference** is at `<Purgatory URL>/swagger`.

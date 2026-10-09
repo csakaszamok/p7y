@@ -1598,7 +1598,7 @@
 <div class="highlight"><pre><span></span><code><span class="err">POST /sandboxes/p7y-shop/start</span>
 <span class="err">GET  /sandboxes/p7y-shop        → repeat until "status": "running"</span>
 </code></pre></div>
-<p>Waking from <code>exited</code> takes a few seconds; from <code>deep_sleep</code> about 30 seconds. Connecting to the Docker daemon also wakes it.</p>
+<p>Waking from <code>exited</code> takes a few seconds; from <code>deep_sleep</code> about 30 seconds. Connecting to the Docker daemon does <strong>not</strong> wake it: while the sandbox sleeps, <code>docker</code> fails to connect (connection reset or EOF), so wake it first.</p>
 <p>A request to an app address while the sandbox is not ready returns an HTML <strong>waiting page</strong> ("Sandbox is waking up") with status 200, instead of the real answer: treat it as "not ready yet" and retry after a few seconds.</p>
 <h2 id="2-connect-the-docker-command-line">2. Connect the docker command line<a class="headerlink" href="#2-connect-the-docker-command-line" title="Permanent link">&para;</a></h2>
 <p>Save the three certificates as files exactly as they are (they end their lines with <code></code>; write them unchanged), then make a Docker context for the sandbox:</p>
@@ -1742,7 +1742,7 @@ docker<span class="w"> </span>--context<span class="w"> </span>p7y-shop<span cla
 <p>The stack Purgatory deployed when it created the sandbox (Portainer + <code>http-echo</code>) was deployed with <code>docker compose</code> outside Portainer: Portainer shows it but cannot edit it as a stack.</p>
 <h2 id="things-to-keep-in-mind">Things to keep in mind<a class="headerlink" href="#things-to-keep-in-mind" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Sleep:</strong> the sandbox sleeps after its idle timeout without HTTP traffic, 30 minutes by default. The user can change this or turn it off in the UI (<strong>Sleep settings…</strong>) or with <code>PATCH /sandboxes/&lt;name&gt;</code> <code>{"idle_timeout": "2h"}</code>, where <code>0</code> or <code>off</code> means never. An open Docker connection keeps it awake; plain HTTP traffic to its apps (or to Portainer) counts too.</li>
+<li><strong>Sleep:</strong> the sandbox sleeps after its idle timeout without HTTP traffic, 30 minutes by default. The user can change this or turn it off in the UI (<strong>Sleep settings…</strong>) or with <code>PATCH /sandboxes/&lt;name&gt;</code> <code>{"idle_timeout": "2h"}</code>, where <code>0</code> or <code>off</code> means never. Docker traffic keeps a running sandbox awake (a build, <code>docker logs -f</code>, a pull), but a connection that is only open does not; plain HTTP traffic to its apps (or to Portainer) counts too.</li>
 <li><strong>Archive</strong> (<code>DELETE /sandboxes/&lt;name&gt;</code>, <strong>Archive…</strong> in the UI) archives the sandbox: its configuration and data are kept in the archive, and it is removed from the list.</li>
 <li><strong>The Purgatory API reference</strong> is at <code>&lt;Purgatory URL&gt;/swagger</code>.</li>
 </ul>
