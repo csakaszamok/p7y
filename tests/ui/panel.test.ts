@@ -147,8 +147,8 @@ describe('review fixes', () => {
     expect(failed).not.toContain('wakes it')
   })
 
-  it('reads well before the first request', () => {
-    expect(P.renderPanel({ ...running, stops_at: null }, ctx)).toContain('Sleeps after the first request and the idle timeout')
+  it('reads well before the idle countdown starts', () => {
+    expect(P.renderPanel({ ...running, stops_at: null }, ctx)).toContain('The idle countdown has not started yet')
   })
 })
 

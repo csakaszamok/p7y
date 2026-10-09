@@ -92,9 +92,10 @@ export async function primeSablierSession(name: string, attempts = 30, delayMs =
       const { status, body } = await getViaTraefik(host)
       if (!body.includes(WAKE_PAGE_MARKER) && status !== 502 && status !== 503 && (status < 300 || status >= 400)) return true
     } catch { /* traefik briefly unreachable: retry */ }
-    await new Promise<void>(r => setTimeout(r, delayMs))
+    if (i + 1 < attempts) await new Promise<void>(r => setTimeout(r, delayMs))
   }
-  console.error(`[wake] ${name}: could not open a Sablier session; it will not sleep until its next request`)
+  // A single try is a keep-alive ping, repeated soon: one miss is not worth a line
+  if (attempts > 1) console.error(`[wake] ${name}: could not open a Sablier session; it will not sleep until its next request`)
   return false
 }
 

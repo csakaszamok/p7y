@@ -4,6 +4,11 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- A sandbox started without Purgatory opening its Sablier session (e.g. Purgatory restarted or upgraded just as it woke one) never went to sleep and showed "no traffic yet" until someone opened one of its apps. Purgatory now checks every minute: a sandbox running without a session on two checks in a row gets one, and sleeps after its `idle_timeout`. The list and the panel say "not counting yet" / "The idle countdown has not started yet" instead of suggesting there was no traffic.
+- A single missed keep-alive of a Docker API connection (`*-docker`) no longer logs "could not open a Sablier session".
+
 ## [0.4.1] - 2026-10-09
 
 ### Changed

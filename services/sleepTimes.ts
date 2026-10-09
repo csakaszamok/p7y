@@ -32,16 +32,20 @@ export function parseSessionExpiries(text: string): Map<string, number> {
   return out
 }
 
-/** Read-only: scraping /metrics never renews a session. Unreachable Sablier → no data. */
-async function sessionExpiries(): Promise<Map<string, number>> {
+/** Read-only: scraping /metrics never renews a session. Unreachable Sablier → null (unknown, not "no sessions"). */
+export async function readSessionExpiries(): Promise<Map<string, number> | null> {
   const base = process.env.SABLIER_URL ?? 'http://sablier:10000'
   try {
     const res = await fetch(`${base}/metrics`, { signal: AbortSignal.timeout(2_000) })
-    if (!res.ok) return new Map()
+    if (!res.ok) return null
     return parseSessionExpiries(await res.text())
   } catch {
-    return new Map()
+    return null
   }
+}
+
+async function sessionExpiries(): Promise<Map<string, number>> {
+  return (await readSessionExpiries()) ?? new Map()
 }
 
 export function sleepTimes(name: string, now = new Date()): Promise<SleepTimes> {
