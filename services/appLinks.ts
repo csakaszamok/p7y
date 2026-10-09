@@ -3,6 +3,7 @@ import { innerDocker } from './innerDocker'
 import { frpcName, ALL_INTERFACES, type InnerContainer } from './tcpNames'
 import { sandboxParent } from './sandboxPaths'
 import { rememberLastSeen, lastSeen } from './lastSeen'
+import { frpsApiAuth } from './frpsApi'
 
 export interface AppLink { url: string; port: number; service: string }
 export interface AppLinkDeps {
@@ -31,9 +32,13 @@ export function publicAppNames(instance: string, containers: InnerContainer[]): 
 
 /** The domains frps has HTTP proxies for (what frpc in the sandbox registered); [] if it cannot be asked. */
 export async function frpsDomains(name: string): Promise<string[]> {
+  // Its API has a password (a sandbox from before 0.6 may have none until Purgatory restarts)
+  let auth: string | null = null
+  try { auth = frpsApiAuth(fs.readFileSync(`${dirOf(name)}/frps.toml`, 'utf8')) } catch { /* no frps.toml: ask without */ }
+  const headers: Record<string, string> = auth ? { authorization: `Basic ${Buffer.from(auth).toString('base64')}` } : {}
   for (const host of [`${name}-socat`, `${name}-frps`]) {
     try {
-      const res = await fetch(`http://${host}:7500/api/proxy/http`)
+      const res = await fetch(`http://${host}:7500/api/proxy/http`, { headers })
       if (!res.ok) continue
       const data = await res.json() as { proxies?: Array<{ conf?: { customDomains?: string[] } }> }
       return (data.proxies ?? []).flatMap(p => p.conf?.customDomains ?? [])

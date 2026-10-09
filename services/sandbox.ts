@@ -1,4 +1,5 @@
 import { publicUrl } from './session'
+import { frpsToml, newFrpsApiPassword } from './frpsApi'
 import fs from 'fs'
 import path from 'path'
 import yaml from 'js-yaml'
@@ -228,12 +229,8 @@ export const sandboxService = {
     fs.writeFileSync(`${dir}/daemon.json`, daemonJson(hostDomain, runtime.daemon_json))
 
     const frpToken = crypto.randomBytes(16).toString('hex')
-    if (hasFrps) {
-      fs.writeFileSync(
-        `${dir}/frps.toml`,
-        `bindPort = 7000\nvhostHTTPPort = 8080\n[auth]\ntoken = "${frpToken}"\n[webServer]\naddr = "0.0.0.0"\nport = 7500\n`
-      )
-    }
+    const frpsApiPassword = newFrpsApiPassword()
+    if (hasFrps) fs.writeFileSync(`${dir}/frps.toml`, frpsToml(frpToken, frpsApiPassword))
 
     const vars: Record<string, string> = {
       name,
@@ -247,6 +244,7 @@ export const sandboxService = {
       sandbox_dir: `${hostSandboxesDir}/${ownerDirName(owner)}/${name}`,
       host_domain: hostDomain,
       frp_token: frpToken,
+      frps_api_auth: `p7y:${frpsApiPassword}`,
       idle_timeout: sessionDurationOf(idleTimeout ?? template.idle_timeout ?? '30m'),
       deep_sleep_after: deepSleepAfter ?? template.deep_sleep_after ?? '7d',
       owner: JSON.stringify(owner),
