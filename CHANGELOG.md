@@ -4,6 +4,8 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-09
+
 ### Added
 
 - `setup.sh <domain>` (piped: `| bash -s -- dev.example.com`) sets `HOST_DOMAIN` and `PUBLIC_URL` (`https://p7y.<domain>` if `certs/` holds a certificate, else `http://`; a `PUBLIC_URL` of your own is kept). Without a domain it warns that `lvh.me` only works on the machine itself: a new install used to answer 404 on its real address until `HOST_DOMAIN` was added to `.env` by hand, which no step mentioned. `env.example` has a `HOST_DOMAIN` line now.
@@ -192,7 +194,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.1
 [0.5.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.0
 [0.4.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.2
 [0.4.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.1
