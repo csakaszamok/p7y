@@ -16,7 +16,7 @@ describe('migrateResourceLimits', () => {
   it('gives sandboxes without limits the default, applies it to existing containers, skips a running one already over it', async () => {
     mk('p7y-old'); mk('p7y-big'); mk('p7y-asleep'); mk('p7y-deep')
     mk('p7y-new', '    cpus: 1\n    mem_limit: 1024m\n    memswap_limit: 1024m\n')
-    const update = vi.fn(async () => {})
+    const update = vi.fn(async (_name: string) => {})
     const log = vi.fn()
     await migrateResourceLimits({
       usersDir: users, defaults: { cpus: 2, memory: 4 * G }, update, log,

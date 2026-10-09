@@ -12,7 +12,7 @@ afterAll(() => fs.rmSync(dir, { recursive: true, force: true }))
 describe('applyLimits', () => {
   beforeEach(() => fs.writeFileSync(file, 'services:\n  sandbox:\n    image: x\n    cpus: 2\n    mem_limit: 4096m\n    memswap_limit: 4096m\n'))
   // freshUsage: what the sandbox uses right now (null: could not be read)
-  const deps = (usage: number | null, update = vi.fn(async () => {})) => ({
+  const deps = (usage: number | null, update: () => Promise<void> = vi.fn(async () => {})) => ({
     composePath: () => file, update, freshUsage: vi.fn(async () => usage),
   })
 

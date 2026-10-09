@@ -25,7 +25,7 @@ function fakeShell() {
   const written: string[] = []
   const stream = Object.assign(out, { write: (d: string) => { written.push(d); return true } })
   const resize = vi.fn(async () => {})
-  return { shell: { stream: stream as never, resize, exitCode: async () => 0 }, written, resize, out }
+  return { shell: { stream: stream as never, resize, exitCode: async () => 0, kill: async () => {} }, written, resize, out }
 }
 
 describe('runTerminal', () => {

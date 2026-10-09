@@ -117,7 +117,7 @@ describe('review fixes: the gate', () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => {
       const key = String(url).replace(/^.*\/v2\/[^/]+\/[^/]+\//, '')
       const b = blobs[key]
-      return b === undefined ? new Response('no', { status: 404 }) : new Response(b)
+      return b === undefined ? new Response('no', { status: 404 }) : new Response(typeof b === 'string' ? b : new Uint8Array(b))
     }))
     S.markPushed('shop/real', 'sha256:m', '1')
     await S.scanImage('shop/real', 'sha256:m')
@@ -153,7 +153,7 @@ describe('review fixes: BuildKit indexes (found live)', () => {
     }
     vi.stubGlobal('fetch', vi.fn(async (url: string) => {
       const b = blobs[String(url).replace(/^.*\/v2\/[^/]+\/[^/]+\//, '')]
-      return b === undefined ? new Response('no', { status: 404 }) : new Response(b)
+      return b === undefined ? new Response('no', { status: 404 }) : new Response(typeof b === 'string' ? b : new Uint8Array(b))
     }))
     // BuildKit pushes the platform and attestation manifests (untagged) before the tagged index
     S.markPushed('shop/bk', 'sha256:img'); S.markPushed('shop/bk', 'sha256:att'); S.markPushed('shop/bk', 'sha256:idx', '1')

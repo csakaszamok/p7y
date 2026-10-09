@@ -62,7 +62,7 @@ describe('validateSleepSettings', () => {
 })
 
 describe('updateSleepSettings', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => { vi.clearAllMocks() })
 
   it('a running sandbox: recreates and starts only socat when the sleep time changes', async () => {
     const file = tempCompose()
