@@ -35,7 +35,15 @@ docker build -q -t "ghcr.io/csakaszamok/p7y:$TAG" . >/dev/null
 # Its own compose project, so `down -v` removes only the test's volumes
 export COMPOSE_PROJECT_NAME=p7y-install-test
 base=$(mktemp -d); dir=$base/p7y; mkdir "$dir"
-cleanup() { (cd "$dir" && docker compose down -v --remove-orphans >/dev/null 2>&1) || true; rm -rf "$base"; }
+# Keeps the test's exit code (under set -e a failing command here would replace it); the containers leave
+# root-owned files behind, which a non-root runner removes through a container
+cleanup() {
+  local rc=$?
+  (cd "$dir" && docker compose down -v --remove-orphans >/dev/null 2>&1) || true
+  docker run --rm -v "$base:/b" --entrypoint sh "ghcr.io/csakaszamok/p7y:$TAG" -c 'rm -rf /b/*' >/dev/null 2>&1 || true
+  rm -rf "$base" 2>/dev/null || true
+  exit $rc
+}
 trap cleanup EXIT
 
 api() { curl -fsS -m 10 -H "Authorization: Bearer $(sed -n 's/^ADMIN_TOKEN=//p' "$dir/.env")" "http://localhost:8081$1"; }
