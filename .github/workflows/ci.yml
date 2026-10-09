@@ -18,6 +18,14 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
+  scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash -n setup.sh check-host.sh scripts/install-assets.sh
+      - run: bash tests/install-assets.sh
+      - run: bash tests/setup.sh
+
   image:
     # The image must still build; it is only pushed on a release tag (release.yml).
     runs-on: ubuntu-latest
