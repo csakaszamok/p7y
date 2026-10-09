@@ -32,11 +32,19 @@ export function startTcpGateway(opts: {
   passthrough?: {
     match: (sni: string) => boolean
     resolve: (sni: string, signal: AbortSignal) => Promise<Target | null>
-    /** While the connection is open (e.g. renewing the sandbox's sleep timer); returns its stop. */
-    keepAlive?: (sni: string) => () => void
+    /** While the connection is open (e.g. renewing the sandbox's sleep timer); `lastTraffic` is when bytes last
+     * went through, either way (ms since the epoch). Returns its stop. */
+    keepAlive?: (sni: string, lastTraffic: () => number) => () => void
   }
 }): Promise<net.Server> {
   const log = opts.log ?? (line => console.log(`[tcp] ${line}`))
+  // A client that reconnects in a loop (Docker Desktop to a sleeping sandbox's context) logs once in a while
+  const noTargetLogged = new Map<string, number>()
+  const logNoTarget = (sni: string) => {
+    if (Date.now() - (noTargetLogged.get(sni) ?? 0) < 10 * 60_000) return
+    noTargetLogged.set(sni, Date.now())
+    log(`${sni}: no such address`)
+  }
   const maxPending = opts.maxPending ?? 256
   let pending = 0
 
@@ -99,10 +107,14 @@ export function startTcpGateway(opts: {
     let target: Target | null = null
     try { target = await opts.passthrough!.resolve(sni, gone.signal) } catch (err) { log(`${sni}: ${err instanceof Error ? err.message : err}`) }
     finally { pending-- }
-    if (!target) { log(`${sni}: no such address`); client.destroy(); return }
+    if (!target) { logNoTarget(sni); client.destroy(); return }
     if (client.destroyed) return
     const upstream = net.connect(target.port, target.host)
-    const stopKeepAlive = opts.passthrough!.keepAlive?.(sni) ?? (() => {})
+    let lastTraffic = Date.now()
+    const touch = () => { lastTraffic = Date.now() }
+    client.on('data', touch)
+    upstream.on('data', touch)
+    const stopKeepAlive = opts.passthrough!.keepAlive?.(sni, () => lastTraffic) ?? (() => {})
     upstream.on('error', err => { log(`${sni} → ${target!.host}:${target!.port}: ${err.message}`); client.destroy() })
     client.on('close', () => { stopKeepAlive(); upstream.destroy() })
     upstream.on('close', () => client.destroy())

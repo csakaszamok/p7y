@@ -178,6 +178,44 @@ describe('passthrough (-docker names)', () => {
     expect(await closes(s => s.write(Buffer.from([0x16, 0x03])))).toBe(true)
   })
 
+  it('tells keepAlive when bytes last went through, in either direction', async () => {
+    const s = tls.createServer({ key: upstreamCreds.key, cert: upstreamCreds.cert }, sock => sock.on('data', d => sock.write(d)))
+    await new Promise<void>(r => s.listen(0, '127.0.0.1', r)); closers.push(() => s.close())
+    const up = (s.address() as net.AddressInfo).port
+    let lastTraffic: (() => number) | undefined
+    const g = await startTcpGateway({ port: 0, host: '127.0.0.1', ...creds, resolve: async () => null, log: () => {},
+      passthrough: { match: sni => sni.endsWith('-docker.lvh.me'), resolve: async () => ({ host: '127.0.0.1', port: up }),
+        keepAlive: (_sni, last) => { lastTraffic = last; return () => {} } } })
+    closers.push(() => g.close())
+    const c = await new Promise<tls.TLSSocket>((resolve, reject) => {
+      const t = tls.connect({ port: (g.address() as net.AddressInfo).port, host: '127.0.0.1', servername: 'shop-docker.lvh.me', rejectUnauthorized: false }, () => resolve(t))
+      t.on('error', reject)
+    })
+    await new Promise(r => setTimeout(r, 50))
+    const afterHandshake = lastTraffic!()
+    await new Promise(r => setTimeout(r, 120))
+    expect(lastTraffic!()).toBe(afterHandshake)   // open, nothing sent: no traffic
+    expect(await roundTrip(c, 'docker ps')).toBe('docker ps')
+    expect(lastTraffic!()).toBeGreaterThanOrEqual(afterHandshake + 100)
+    c.destroy()
+  })
+
+  // Docker Desktop reconnects in a loop to a sleeping sandbox's context: one line, not one per attempt
+  it('says a -docker name has no target once in a while, not on every connection', async () => {
+    const lines: string[] = []
+    const g = await startTcpGateway({ port: 0, host: '127.0.0.1', ...creds, resolve: async () => null, log: l => lines.push(l),
+      passthrough: { match: sni => sni.endsWith('-docker.lvh.me'), resolve: async () => null } })
+    closers.push(() => g.close())
+    const port = (g.address() as net.AddressInfo).port
+    for (let i = 0; i < 3; i++) {
+      await new Promise<void>(resolve => {
+        const c = tls.connect({ port, host: '127.0.0.1', servername: 'shop-docker.lvh.me', rejectUnauthorized: false })
+        c.on('error', () => {}); c.on('close', () => resolve())
+      })
+    }
+    expect(lines.filter(l => l.includes('shop-docker.lvh.me')).length).toBe(1)
+  })
+
   it('other names still go the terminating way', async () => {
     const target = await echo()
     const port = await (async () => {

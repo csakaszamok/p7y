@@ -1,6 +1,7 @@
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { startDeepSleepScheduler } from "./services/deepSleep";
 import { startSessionWatch } from "./services/sessionWatch";
+import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
 import { insecureConfigWarnings, insecureConfigErrors } from "./services/configWarnings";
 import { syncTlsConfig } from "./services/tlsConfig";
 import { migrateRouters } from "./services/routerMigration";
@@ -268,11 +269,11 @@ startTcpGateway({
   passthrough: {
     match: sni => sni.endsWith(`-docker.${(process.env.HOST_DOMAIN ?? "lvh.me").toLowerCase()}`),
     resolve: (sni, signal) => resolveDockerHost(sni, { signal }),
-    // A long build is one quiet connection: renew the Sablier session meanwhile, as the browser terminal does
-    keepAlive: sni => {
+    // Docker access does not pass Sablier: renew its session while bytes go through (a build, `docker logs -f`),
+    // not for a connection that is only open (Docker Desktop keeps a context connected for its Builds view)
+    keepAlive: (sni, lastTraffic) => {
       const sandbox = findSandboxDirByHost(sni);
-      const t = sandbox ? setInterval(() => { void primeSablierSession(sandbox, 1); }, 60_000) : undefined;
-      return () => clearInterval(t);
+      return sandbox ? startTrafficKeepAlive(lastTraffic, () => { void primeSablierSession(sandbox, 1); }) : () => {};
     },
   },
 })
