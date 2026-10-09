@@ -15,7 +15,7 @@ docker compose up -d --build
 npm ci
 ```
 
-`docker-compose.dev.yml` builds the image from the checkout and mounts `server.ts`, `routes/`, `services/`, `ui/`, `templates/` and `runtimes/` into the container, so a code, template or runtime change applies on the next request, without a rebuild. It also gives `p7y-init` the checkout's Sablier themes, error pages, registry config and `traefik/errors.yml`: a change to those applies on the next `docker compose up -d`. Changes to the `Dockerfile` or the dependencies need `docker compose up -d --build`.
+`docker-compose.dev.yml` builds the image from the checkout and mounts `server.ts`, `routes/`, `services/`, `ui/`, `templates/` and `runtimes/` into the container, so a code, template or runtime change applies on the next request, without a rebuild. It also gives `p7y-init` the checkout's Sablier themes, error pages, registry config and `traefik/errors.yml`: a change to the error pages or `traefik/errors.yml` applies on the next `docker compose up -d`, one to the Sablier themes or the registry config after that and `docker compose restart sablier registry` (they read them at start). Changes to the `Dockerfile` or the dependencies need `docker compose up -d --build`.
 
 ## Code layout
 

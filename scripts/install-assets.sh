@@ -5,17 +5,33 @@
 set -eu
 SRC=${ASSETS_SRC:-/app/assets}
 OUT=${ASSETS_OUT:-/out}
+DIRS="sablier-themes error-pages registry"
 
-for d in sablier-themes error-pages registry; do
+# Everything there first: a failing run must leave what the services read as it is
+for d in $DIRS; do
   [ -d "$SRC/$d" ] || { echo "[p7y-init] missing $SRC/$d" >&2; exit 1; }
-  mkdir -p "$OUT/$d"
-  find "$OUT/$d" -mindepth 1 -delete
-  cp -R "$SRC/$d/." "$OUT/$d/"
 done
-[ -f "$SRC/registry/config.yml" ] || { echo "[p7y-init] missing $SRC/registry/config.yml" >&2; exit 1; }
+for f in registry/config.yml traefik/errors.yml; do
+  [ -f "$SRC/$f" ] || { echo "[p7y-init] missing $SRC/$f" >&2; exit 1; }
+done
 
-# Traefik watches dynamic/: write under a name it ignores, then rename, so it never reads half a file.
-# Only errors.yml: tls.yml and the sandboxes' files there are Purgatory's.
+# Each file under a temporary name, then renamed over the old one: nginx and the others never see a file
+# missing or half written. Then whatever this release no longer has goes.
+for d in $DIRS; do
+  mkdir -p "$OUT/$d"
+  for f in "$SRC/$d"/*; do
+    [ -f "$f" ] || continue
+    name=${f##*/}
+    cp "$f" "$OUT/$d/.$name.tmp"
+    mv "$OUT/$d/.$name.tmp" "$OUT/$d/$name"
+  done
+  for f in "$OUT/$d"/* "$OUT/$d"/.[!.]*; do
+    [ -e "$f" ] || continue
+    [ -e "$SRC/$d/${f##*/}" ] || rm -rf "$f"
+  done
+done
+
+# Traefik watches dynamic/: same rename. Only errors.yml: tls.yml and the sandboxes' files there are Purgatory's.
 mkdir -p "$OUT/dynamic"
 cp "$SRC/traefik/errors.yml" "$OUT/dynamic/.errors.yml.tmp"
 mv "$OUT/dynamic/.errors.yml.tmp" "$OUT/dynamic/errors.yml"
