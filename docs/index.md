@@ -5,23 +5,23 @@
 
 **Self-hosted sandboxes for your team and their AI agents: everyone gets their own Docker, every app gets a URL, idle sandboxes sleep.**
 
-**About 15 seconds** from *New sandbox* to your own Docker with Portainer and a public URL; a sleeping sandbox is back in under 10. (Measured with the images already pulled: the first sandbox on a new server also downloads them.)
+**About 10 seconds** from *New sandbox* to your own Docker and a public URL for your app; a sleeping sandbox is back in under 10. (Measured with the images already pulled: the first sandbox on a new server also downloads them.)
 
 ![Creating a sandbox, opening its app, and waking it after it fell asleep](media/demo.gif)
 
 *Where your team's code waits before it goes to heaven (production). Nothing is lost here: idle sandboxes sleep, deleted ones are archived.* `p7y` is the short name, as in k8s: **p**urgator**y**, 7 letters in between. It names the sandboxes (`p7y-<name>`), labels, tokens and the UI address.
 
-**Purgatory gives each user their own Docker daemon on demand** — not a shared platform where you deploy apps, but a full Docker engine they own, with a Portainer UI and a public URL for every app, provisioned in seconds from the web UI or a REST API.
+**Purgatory gives each user their own Docker daemon on demand** — not a shared platform where you deploy apps, but a full Docker engine they own, with a public URL for every app (and a Portainer UI if they want one), provisioned in seconds from the web UI or a REST API.
 
 ## Who is this for
 
-Teams where people need to spin up arbitrary Docker workloads without touching shared infrastructure. Designed for vibe-coded apps: your colleague runs an AI agent, gets a `docker-compose.yml`, pastes it into Portainer, done.
+Teams where people need to spin up arbitrary Docker workloads without touching shared infrastructure. Designed for vibe-coded apps: your colleague runs an AI agent, gets a `docker-compose.yml`, and the agent deploys it into their sandbox (or they paste it into Portainer), done.
 
 ## What each sandbox gets
 
 - **Its own Docker daemon** (Docker-in-Docker; see [Security](security.md) for what that does and does not isolate)
-- **Portainer UI** with generated credentials — deploy stacks from a browser
-- **Agent access through the Portainer API** — a personal access token is enough for an agent to deploy, build and update ([docs/agent-guide.md](agent-guide.md))
+- **Access for agents and people** — the `docker` command line straight to the sandbox's daemon, SSH, a browser terminal, an [MCP server](mcp.md); a token limited to the sandbox is enough for an agent to deploy, build and update ([agent guide](agent-guide.md))
+- **Portainer UI** if you want one — the `portainer` template adds it, with generated credentials
 - **FRP tunnel** — public URLs for services running inside the sandbox
 - **Sleeps when idle** — after `idle_timeout` without HTTP traffic the sandbox is stopped; the next request wakes it ([Sablier](https://github.com/sablierapp/sablier))
 - **Nothing is ever destroyed automatically** — an explicit delete archives the sandbox (config + data) instead of discarding it

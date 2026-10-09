@@ -11,6 +11,12 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 - **MCP server** at `/mcp` (Streamable HTTP): every API endpoint is a tool (`list_sandboxes`, `create_sandbox`, `wake_sandbox`, `sleep_sandbox`, …), run with the caller's token, so it can do what that token can do on the REST API; a token limited to one sandbox is offered only the tools it may call. Only tokens are accepted, not a browser session. Built on the base image `csakaszamok/rododentron:0.3.1`.
 - **Documentation site** (MkDocs Material, GitHub Pages): the README's sections are now pages in `docs/`, one version per release series, with search and `llms.txt` / `llms-full.txt` for agents. The README is a short introduction.
 
+### Changed
+
+- **The `starter` template no longer has Portainer**, only the hello app: an agent deploys with the `docker` command line (the sandbox's own Docker daemon, with the client certificates `GET /sandboxes/:name` gives), SSH or MCP, and a sandbox no longer exposes a Portainer admin login on the internet unless asked for. The new **`portainer`** template is the former starter. A client that creates sandboxes without a template and reads `extras.portainer_url` / `portainer_password` must now ask for `"template": "portainer"`. Existing sandboxes keep their Portainer.
+- **Creating a sandbox is faster** (about 10 s instead of 15 on a dev machine): Purgatory waits until the tunnel serves every app the inner compose publishes, instead of polling every 3 s until two answers match.
+- The agent guide puts the `docker` command line first; Portainer is a section for sandboxes that have it.
+
 ### Fixed
 
 - A sleeping sandbox's TCP addresses (Postgres, Redis, SSH… on port 443) were missing from its panel and from `GET /sandboxes/:name`, although a connection wakes it. They are now the ones it had when it last ran (kept in `tcp.json` in its directory, like the apps in `apps.json`).

@@ -8,7 +8,8 @@ import bcrypt from 'bcryptjs'
 import { generateCertBundle } from './tls'
 import { loadTemplate } from './templateLoader'
 import { loadRuntime } from './runtimeLoader'
-import { appEntriesOffline } from './appUrls'
+import { appEntriesOffline, appHostsFromCompose } from './appUrls'
+import { waitForTunnels } from './tunnelWait'
 import { appLinks, frpsDomains, rememberedApps } from './appLinks'
 import { primeSablierSession, markWoken } from './wake'
 import { writeAuthorizedKeys, createGeneratedKey } from './sandboxSsh'
@@ -251,6 +252,7 @@ export const sandboxService = {
     }
 
     fs.writeFileSync(`${dir}/docker-compose.yml`, applyVars(runtime.docker_compose, vars))
+    let innerText: string | undefined
     if (createInnerStack) {
       // A given compose text keeps its own comments and layout; the template's goes through yaml.dump as before
       const inner = customCompose === undefined ? applyVars(template.compose, vars) : applyVarsText(customCompose, vars)
@@ -265,6 +267,7 @@ export const sandboxService = {
         }
       }
       fs.writeFileSync(`${dir}/inner/docker-compose.yml`, inner)
+      innerText = inner
     }
 
     // SSH (foxglove sshd reads these): host keys survive re-creation; authorized_keys must exist as a
@@ -283,14 +286,9 @@ export const sandboxService = {
 
     let tunnelUrls: string[] = []
     if (hasFrps && createInnerStack) {
-      for (let i = 0; i < 10; i++) {
-        await new Promise<void>(r => setTimeout(r, 3000))
-        const fresh = await frpsDomains(name)
-        // A failed poll returns []; keep what we already saw instead of losing it.
-        if (fresh.length === 0) continue
-        if (fresh.length === tunnelUrls.length) break
-        tunnelUrls = fresh
-      }
+      // Done as soon as frps serves every app the inner compose publishes (not on fixed 3 s polls)
+      const expected = innerText === undefined ? [] : appHostsFromCompose(innerText, { instance: rawName, project: template.inner_project_name ?? 'inner', domain: hostDomain })
+      tunnelUrls = await waitForTunnels(() => frpsDomains(name), expected)
       // What frpc registered, minus ports bound to 127.0.0.1 (private to the sandbox)
       if (tunnelUrls.length) { const seen = tunnelUrls; tunnelUrls = (await appLinks(name, {}, seen)).map(l => l.url) }
     }

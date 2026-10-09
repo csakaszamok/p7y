@@ -1,6 +1,1 @@
-description: "Portainer (with its admin password) and a hello app"
-
-before_script: |
-  const password = `Lndr!${crypto.randomBytes(10).toString('hex')}`
-  const hash = await bcrypt.hash(password, 10)
-  return { portainer_admin_password_hash: hash, portainer_password: password, portainer_url: `${scheme}://${rawName}-portainer.${hostDomain}` }
+description: "A hello app: deploy yours with docker, SSH or an agent (the portainer template adds a web UI)"

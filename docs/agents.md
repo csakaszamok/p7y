@@ -1,6 +1,6 @@
 # Let your agent deploy
 
-Give a coding agent (Claude Code, Codex, Cursor…) a personal access token and a sandbox, and it can ship your app there on its own: wake the sandbox, deploy a compose stack through the sandbox's Portainer API, build images inside it, read the logs and roll out new versions. The app gets its public URL from the tunnel.
+Give a coding agent (Claude Code, Codex, Cursor…) a personal access token and a sandbox, and it can ship your app there on its own: wake the sandbox, deploy a compose project to the sandbox's own Docker daemon, build images inside it, read the logs and roll out new versions. The app gets its public URL from the tunnel.
 
 1. In the UI: create a sandbox (say `shop`), then in its panel's **Access** tab **Token for this sandbox…** — a token that works only for that sandbox.
 2. **Download p7y.env** in the token's dialog and save it in your project folder (keep it out of git), then tell the agent: *Deploy this app to my Purgatory sandbox — settings in p7y.env.* The file holds `P7Y_URL`, `P7Y_TOKEN`, `P7Y_SANDBOX` and `P7Y_AGENT_GUIDE`. Or tell the agent everything yourself, for example:

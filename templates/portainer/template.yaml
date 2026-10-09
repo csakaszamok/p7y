@@ -1,0 +1,6 @@
+description: "Portainer (a web UI for the sandbox's Docker, with its admin password) and a hello app"
+
+before_script: |
+  const password = `Lndr!${crypto.randomBytes(10).toString('hex')}`
+  const hash = await bcrypt.hash(password, 10)
+  return { portainer_admin_password_hash: hash, portainer_password: password, portainer_url: `${scheme}://${rawName}-portainer.${hostDomain}` }

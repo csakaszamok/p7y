@@ -14,11 +14,11 @@ curl -X POST http://localhost:8081/sandboxes \
   "registry_url": "registry.lvh.me",
   "registry_username": "alice",
   "registry_password": "...",
-  "extras": {
-    "portainer_url": "http://alice-portainer.lvh.me",
-    "portainer_password": "..."
-  }
+  "docker_access": { "host": "alice-docker.lvh.me", "state": "ready" },
+  "extras": {}
 }
 ```
 
 Sign in at `http://p7y.<HOST_DOMAIN>` to create sandboxes in the browser or mint a personal access token for your agents.
+
+With `"template": "portainer"` the sandbox also gets Portainer, and `extras` has its `portainer_url` and `portainer_password`.
