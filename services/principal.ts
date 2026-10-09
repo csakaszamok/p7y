@@ -4,6 +4,7 @@ import path from 'node:path'
 import bcrypt from 'bcryptjs'
 import { readSession, getCookie, SESSION_COOKIE, publicUrl } from './session'
 import { resolveToken } from './tokens'
+import { subAllowed } from './allowlist'
 
 export interface Principal {
   sub: string
@@ -60,13 +61,14 @@ export function getPrincipal(req: Request): Principal | null {
     const adminToken = process.env.ADMIN_TOKEN
     if (adminToken && isAdminToken(token, adminToken)) return { sub: 'admin', role: 'admin', via: 'admin-token' }
     const resolved = resolveToken(token)
-    if (!resolved) return null
+    // Taken off OIDC_ALLOWED_DOMAINS / OIDC_ALLOWED_EMAILS: their tokens stop working at once
+    if (!resolved || !subAllowed(resolved.owner, 'user')) return null
     return resolved.sandbox
       ? { sub: resolved.owner, role: 'user', via: 'token', sandbox: resolved.sandbox }
       : { sub: resolved.owner, role: 'user', via: 'token' }
   }
   const session = readSession(getCookie(req, SESSION_COOKIE))
-  return session ? { sub: session.sub, role: session.role, via: 'session' } : null
+  return session && subAllowed(session.sub, session.role) ? { sub: session.sub, role: session.role, via: 'session' } : null
 }
 
 /** Timing-safe admin token comparison using SHA256 hashes. */

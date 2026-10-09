@@ -97,6 +97,19 @@ describe('OIDC login', () => {
     }
   })
 
+  it('refuses an account that is not on OIDC_ALLOWED_DOMAINS / OIDC_ALLOWED_EMAILS, and says why', async () => {
+    vi.stubEnv('OIDC_ALLOWED_DOMAINS', 'example.com')
+    try {
+      claims = { email: 'mallory@gmail.com', email_verified: true }
+      const res = await cb(await start())
+      expect(res.status).toBe(303)
+      expect(decodeURIComponent(res.headers.get('location')!)).toContain('mallory@gmail.com) may not sign in here')
+      expect(cookieValue(res, 'p7y_session')).toBeUndefined()
+      claims = { email: 'Alice@Example.com', email_verified: true }
+      expect(readSession(cookieValue(await cb(await start()), 'p7y_session'))).toMatchObject({ sub: 'alice@example.com' })
+    } finally { vi.stubEnv('OIDC_ALLOWED_DOMAINS', '') }
+  })
+
   it('rejects a claims email with no "@" (a lax provider could otherwise hand out sub "admin")', async () => {
     claims = { email: 'admin', email_verified: true }
     const res = await cb(await start())
