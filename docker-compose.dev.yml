@@ -1,10 +1,22 @@
-# Development: run Purgatory from this checkout's code instead of the code in the image.
-# Enable with COMPOSE_PATH_SEPARATOR=: and COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml in .env; edits apply on the next request.
+# Development: run Purgatory from this checkout instead of the released image's code and files.
+# Enable with COMPOSE_PATH_SEPARATOR=: and COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml in .env;
+# code, template and runtime edits apply on the next request, the other assets on the next `docker compose up -d`.
 services:
   p7y:
+    build: .
     volumes:
       - ./server.ts:/app/server.ts
       - ./routes:/app/routes
       - ./services:/app/services
       - ./ui:/app/ui
+      - ./templates:/app/templates
+      - ./runtimes:/app/runtimes
       - ./package.json:/app/p7y/package.json:ro
+  p7y-init:
+    build: .
+    volumes:
+      - ./sablier-themes:/app/assets/sablier-themes:ro
+      - ./error-pages:/app/assets/error-pages:ro
+      - ./registry:/app/assets/registry:ro
+      - ./traefik:/app/assets/traefik:ro
+      - ./scripts/install-assets.sh:/app/assets/install-assets.sh:ro
