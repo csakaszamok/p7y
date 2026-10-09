@@ -26,6 +26,13 @@ jobs:
       - run: bash tests/install-assets.sh
       - run: bash tests/setup.sh
 
+  install:
+    # A fresh install from the release files, and an old checkout upgraded in place
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash tests/install.sh
+
   image:
     # The image must still build; it is only pushed on a release tag (release.yml).
     runs-on: ubuntu-latest
