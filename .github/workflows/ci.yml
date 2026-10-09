@@ -16,7 +16,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      - run: npm test
+      # Also as a file: a test that fails only now and then is named, with its error, in the artifact
+      - run: npm test -- --reporter=default --reporter=junit --outputFile.junit=test-results/junit.xml
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: test-results/
 
   scripts:
     runs-on: ubuntu-latest
