@@ -59,7 +59,7 @@ describe('mountedUsersDir / withUsersDir', () => {
 })
 
 describe('migrateHostPaths', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => { vi.clearAllMocks() })
 
   it('rewrites moved sandboxes; starts running and failed ones, recreates asleep ones stopped, only rewrites deep-sleeping ones', async () => {
     const dir = usersDir({ 'leander-run': OLD, 'leander-failed': OLD, 'leander-sleep': OLD, 'leander-deep': OLD, 'p7y-new': NEW })

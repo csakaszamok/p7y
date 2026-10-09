@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { SandboxState } from '../../services/docker'
 
 vi.mock('../../services/docker', () => ({ getSandboxState: vi.fn() }))
 
@@ -20,7 +21,7 @@ garbage line
 `
 
 const NOW = new Date('2026-09-27T13:00:00Z')
-const running = { name: 'leander-cd656a', status: 'running', finishedAt: '0001-01-01T00:00:00Z', deepSleepAfter: '7d' }
+const running: SandboxState = { name: 'leander-cd656a', status: 'running', finishedAt: '0001-01-01T00:00:00Z', deepSleepAfter: '7d', staleNetwork: false, error: '' }
 
 describe('parseSessionExpiries', () => {
   it('maps each group to its earliest session expiry and ignores other lines', () => {

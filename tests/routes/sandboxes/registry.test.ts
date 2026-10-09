@@ -12,7 +12,7 @@ vi.mock('../../../services/registryScans', () => ({
   versionsOf: vi.fn(() => [{ digest: 'sha256:a', state: 'flagged', tags: ['2'], pushed_at: 'x', findings: [{ file: 'app/.env', rule: 'env-file', sample: '' }] }]),
   forgetVersion: vi.fn(),
 }))
-const fetchMock = vi.fn(async () => new Response(null, { status: 202 }))
+const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 202 }))
 vi.stubGlobal('fetch', fetchMock)
 const S = await import('../../../services/registryScans')
 const { default: get } = await import('../../../routes/sandboxes/[name]/registry/GET')

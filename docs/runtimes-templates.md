@@ -14,7 +14,7 @@ A sandbox is a **runtime** (how it runs) plus a **template** (what runs inside),
 | `tcp-demo` | a demo of [TLS TCP addresses](networking.md#tls-tcp-addresses): Postgres, Redis, SSH and pgweb |
 | `empty` | nothing: paste your own compose file in the dialog |
 
-Both runtimes have the same wiring (FRP tunnel, Traefik route, Sablier sleep/wake, `docker_data` volume, archive on delete). The sysbox image runs plain `dockerd`, so its TLS listener is configured through the runtime's `daemon_json` field, which Purgatory merges into the generated `daemon.json`. The sysbox runtime itself has not been exercised yet — only the generated compose/daemon config is covered by unit tests.
+Both runtimes have the same wiring (FRP tunnel, Traefik route, Sablier sleep/wake, `docker_data` volume, archive on delete). The sysbox image runs plain `dockerd`, so its TLS listener is configured through the runtime's `daemon_json` field, which Purgatory merges into the generated `daemon.json`. Both run in production. On a shared server use `sysbox` only: install it on the host and set `ALLOWED_RUNTIMES=sysbox` (see [Security](security.md)).
 
 **Runtimes** are `runtimes/<name>.yaml`: a `description`, the sandbox's own `docker_compose` (the DinD container, frps, socat, and their Traefik and Sablier labels) and an optional `daemon_json`. **Templates** are directories, `templates/<name>/`:
 

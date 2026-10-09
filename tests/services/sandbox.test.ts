@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { sandboxMeta } from '../helpers/sandboxMeta'
 
 vi.mock('../../services/docker', () => ({
   listManagedContainers: vi.fn().mockResolvedValue([]),
@@ -132,28 +133,28 @@ describe('sandbox service', () => {
 
   it('throws if name already exists', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      { name: 'leander-dup', template: 't', status: 'running', container_id: 'abc', created_at: '' }
+      sandboxMeta({ name: 'leander-dup', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     await expect(sandboxService.createSandbox('dup')).rejects.toThrow('already exists')
   }, 60000)
 
   it('rejects a new name that is an existing name plus "-something" (would steal its Traefik routes)', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      { name: 'leander-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' }
+      sandboxMeta({ name: 'leander-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     await expect(sandboxService.createSandbox('alice-inner')).rejects.toThrow('conflicts with an existing sandbox')
   }, 60000)
 
   it('rejects a new name that an existing longer name would shadow (reverse direction)', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      { name: 'leander-alice-inner', template: 't', status: 'running', container_id: 'abc', created_at: '' }
+      sandboxMeta({ name: 'leander-alice-inner', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     await expect(sandboxService.createSandbox('alice')).rejects.toThrow('conflicts with an existing sandbox')
   }, 60000)
 
   it('allows a name that merely starts with an existing name but is not prefix+dash', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      { name: 'leander-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' }
+      sandboxMeta({ name: 'leander-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     const result = await sandboxService.createSandbox('alicex', false)
     expect(result.name).toBe('p7y-alicex')
@@ -420,7 +421,7 @@ describe('archiveSandbox', () => {
     realExists = vi.mocked(fs.existsSync).getMockImplementation()! as (p: fs.PathLike) => boolean
     vi.mocked(fs.existsSync).mockImplementation(p => String(p).startsWith(dir) || realExists(p))
     vi.mocked(listManagedContainers).mockResolvedValue([
-      { name, template: 'dind-standard', status: 'exited', container_id: 'abc', created_at: '1700000000' }
+      sandboxMeta({ name, template: 'dind-standard', status: 'exited', container_id: 'abc', created_at: '1700000000' })
     ])
     vi.mocked(listProjectVolumes).mockResolvedValue([vol])
     vi.mocked(stopProjectContainers).mockImplementation(async () => { steps.push('stop') })
@@ -614,7 +615,7 @@ describe('tunnel URLs only for running sandboxes', () => {
     realExists = vi.mocked(fs.existsSync).getMockImplementation()! as (p: fs.PathLike) => boolean
     vi.mocked(fs.existsSync).mockImplementation(p => String(p) === `/opt/users/${name}/frps.toml` || realExists(p))
     vi.mocked(listManagedContainers).mockResolvedValue([
-      { name, owner: 'admin', template: 't', status: 'exited', container_id: 'x', created_at: '' }
+      sandboxMeta({ name, owner: 'admin', template: 't', status: 'exited', container_id: 'x', created_at: '' })
     ])
   })
 
@@ -627,7 +628,7 @@ describe('tunnel URLs only for running sandboxes', () => {
   })
 
   // The inner compose file has only the template's stack; apps deployed later (Portainer, ssh) are remembered
-  it('an asleep sandbox shows the apps it had when it last ran', async () => {
+  it('an asleep sandbox shows the apps it had when it last ran, in its details and the list', async () => {
     const realRead = vi.mocked(fs.readFileSync).getMockImplementation()!
     const apps = [{ url: 'asleep1-inner-web-port8080.lvh.me', port: 8080, service: 'web' }, { url: 'asleep1-portainer.lvh.me', port: 9000, service: 'portainer' }]
     vi.mocked(fs.readFileSync).mockImplementation(((p: fs.PathOrFileDescriptor, o?: unknown) =>
@@ -636,6 +637,8 @@ describe('tunnel URLs only for running sandboxes', () => {
       const info = await sandboxService.getSandbox(name)
       expect(info.tunnel_urls).toEqual(['asleep1-inner-web-port8080.lvh.me', 'asleep1-portainer.lvh.me'])
       expect(info.app_services).toEqual({ 'asleep1-inner-web-port8080.lvh.me': 'web', 'asleep1-portainer.lvh.me': 'portainer' })
+      // The list too (list_sandboxes for an agent): the same apps, not none
+      expect((await sandboxService.listSandboxes()).find(s => s.name === name)?.tunnel_urls).toEqual(['asleep1-inner-web-port8080.lvh.me', 'asleep1-portainer.lvh.me'])
       expect(mockFetch).not.toHaveBeenCalled()
     } finally { vi.mocked(fs.readFileSync).mockImplementation(realRead) }
   })
