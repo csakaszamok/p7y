@@ -12,6 +12,8 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 - **A sandbox's frps API (`:7500`) has a password.** It lists the sandbox's proxies, and other sandboxes reach it over `traefik-net` through socat: without the password they now get 401. Each sandbox gets its own, in its `frps.toml`; Purgatory uses it to list the apps, socat's health check gets it in `FRPS_API_AUTH`. Existing sandboxes get one when Purgatory starts (their frps and socat containers are recreated: a running sandbox's web addresses are gone for a few seconds); one whose socat health check is not the runtime's (an edited runtime) keeps its API open and says so in the log.
 
+## [0.5.2] - 2026-10-09
+
 ### Fixed
 
 - Every sandbox's socat relay ran with `-v`, which wrote every request and answer to its apps (passwords, tokens, cookies included) into the socat container's Docker log. It no longer does; existing sandboxes are switched over when Purgatory starts, and their socat container is recreated, which also drops the old log.
@@ -207,7 +209,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.2
 [0.5.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.1
 [0.5.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.0
 [0.4.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.2
