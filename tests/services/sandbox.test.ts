@@ -628,7 +628,7 @@ describe('tunnel URLs only for running sandboxes', () => {
   })
 
   // The inner compose file has only the template's stack; apps deployed later (Portainer, ssh) are remembered
-  it('an asleep sandbox shows the apps it had when it last ran', async () => {
+  it('an asleep sandbox shows the apps it had when it last ran, in its details and the list', async () => {
     const realRead = vi.mocked(fs.readFileSync).getMockImplementation()!
     const apps = [{ url: 'asleep1-inner-web-port8080.lvh.me', port: 8080, service: 'web' }, { url: 'asleep1-portainer.lvh.me', port: 9000, service: 'portainer' }]
     vi.mocked(fs.readFileSync).mockImplementation(((p: fs.PathOrFileDescriptor, o?: unknown) =>
@@ -637,6 +637,8 @@ describe('tunnel URLs only for running sandboxes', () => {
       const info = await sandboxService.getSandbox(name)
       expect(info.tunnel_urls).toEqual(['asleep1-inner-web-port8080.lvh.me', 'asleep1-portainer.lvh.me'])
       expect(info.app_services).toEqual({ 'asleep1-inner-web-port8080.lvh.me': 'web', 'asleep1-portainer.lvh.me': 'portainer' })
+      // The list too (list_sandboxes for an agent): the same apps, not none
+      expect((await sandboxService.listSandboxes()).find(s => s.name === name)?.tunnel_urls).toEqual(['asleep1-inner-web-port8080.lvh.me', 'asleep1-portainer.lvh.me'])
       expect(mockFetch).not.toHaveBeenCalled()
     } finally { vi.mocked(fs.readFileSync).mockImplementation(realRead) }
   })

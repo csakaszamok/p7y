@@ -162,6 +162,17 @@ function conflictingRawName(rawName: string, existingNames: Set<string>): string
   return null
 }
 
+/**
+ * The apps of a sandbox that is not running, for its details and the list: only a running sandbox has a tunnel
+ * to ask (a stopped one's frps host does not resolve: seconds of DNS timeout). The apps it had when it last ran,
+ * or (never seen running) those of the inner compose file; opening one wakes the sandbox.
+ */
+function offlineApps(meta: SandboxMeta): Array<{ host: string; service: string }> {
+  const innerProject = () => { try { return loadTemplate(meta.template).inner_project_name } catch { return undefined } }
+  return rememberedApps(meta.name)?.map(l => ({ host: l.url, service: l.service }))
+    ?? appEntriesOffline(meta.name, dirOf(meta.name), process.env.HOST_DOMAIN ?? 'lvh.me', innerProject)
+}
+
 export const sandboxService = {
   async createSandbox(rawName: string, createInnerStack = true, idleTimeout?: string, deepSleepAfter?: string, owner = 'admin', templateName?: string, runtimeName?: string, customCompose?: string, sshKeys?: string[], limits?: Limits): Promise<CreateSandboxResult> {
     // || : an empty variable (DEFAULT_TEMPLATE= in .env) means unset, as in POST /sandboxes
@@ -316,10 +327,12 @@ export const sandboxService = {
     const running = await Promise.all(
       live.map(async meta => ({
         ...meta,
-        tunnel_urls: meta.status === 'running' && fs.existsSync(`${dirOf(meta.name)}/frps.toml`) ? (await appLinks(meta.name)).map(l => l.url) : []
+        tunnel_urls: !fs.existsSync(`${dirOf(meta.name)}/frps.toml`) ? []
+          : meta.status === 'running' ? (await appLinks(meta.name)).map(l => l.url)
+          : offlineApps(meta).map(e => e.host)
       }))
     )
-    return [...running, ...deepSleepingSandboxes(live).map(meta => ({ ...meta, tunnel_urls: [] }))]
+    return [...running, ...deepSleepingSandboxes(live).map(meta => ({ ...meta, tunnel_urls: fs.existsSync(`${dirOf(meta.name)}/frps.toml`) ? offlineApps(meta).map(e => e.host) : [] }))]
   },
 
   async getSandbox(name: string): Promise<SandboxInfo> {
@@ -328,13 +341,7 @@ export const sandboxService = {
     if (!meta) throw new Error(`Sandbox not found: ${name}`)
     const certs = readClientCerts(name)
     const hasFrps = fs.existsSync(`${dirOf(name)}/frps.toml`)
-    // Only a running sandbox has a tunnel to ask (a stopped one's frps host does not resolve: seconds of
-    // DNS timeout); otherwise the apps it had when it last ran, or (never seen running) those of the inner
-    // compose file — opening one wakes the sandbox.
-    const innerProject = () => { try { return loadTemplate(meta.template).inner_project_name } catch { return undefined } }
-    const offline = hasFrps && meta.status !== 'running'
-      ? rememberedApps(name)?.map(l => ({ host: l.url, service: l.service })) ?? appEntriesOffline(name, dirOf(name), process.env.HOST_DOMAIN ?? 'lvh.me', innerProject)
-      : []
+    const offline = hasFrps && meta.status !== 'running' ? offlineApps(meta) : []
     const tunnel_urls = !hasFrps ? []
       : meta.status === 'running' ? (await appLinks(name)).map(l => l.url)
       : offline.map(e => e.host)
