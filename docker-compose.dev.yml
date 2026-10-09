@@ -1,6 +1,7 @@
 # Development: run Purgatory from this checkout instead of the released image's code and files.
 # Enable with COMPOSE_PATH_SEPARATOR=: and COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml in .env;
-# code, template and runtime edits apply on the next request, the other assets on the next `docker compose up -d`.
+# code, template and runtime edits apply on the next request; error pages and errors.yml on the next `docker compose up -d`;
+# Sablier themes and the registry config also need `docker compose restart sablier registry` (they read them at start).
 services:
   p7y:
     build: .

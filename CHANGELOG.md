@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- `p7y-init` emptied the volumes that Sablier, nginx and the registry read before filling them again, on every `docker compose up`: for a moment the error pages were nginx's own, and a run that failed (a release without one of its files) left them empty. It now checks every file first, puts each one in place under a temporary name, and only then removes what the release no longer has.
+
 ## [0.5.2] - 2026-10-09
 
 ### Fixed
