@@ -6,7 +6,7 @@
   - Purgatory's TCP gateway connects over `traefik-net` too: the rule would cut the `-tcp` addresses, SSH and Docker access unless Purgatory's address is let through (it changes when Purgatory is recreated; a fixed address on `traefik-net`, or a mark the rule can match);
   - sandboxes that are meant to talk to each other (one's app using another's database): opt in per sandbox, or through the TLS TCP addresses;
   - a new foxglove release for both runtimes, and existing sandboxes on it;
-  - the "by design" check in `tests/isolation.sh` reversed (that test also still expects the starter to publish on `127.0.0.1`, which it no longer does).
+  - the "by design" check in `tests/isolation.sh` reversed.
 - **A Kata Containers runtime, for untrusted code.** Each sandbox in its own lightweight VM with its own kernel, so root inside a sandbox no longer means root on the host (today's `dind` runtime is `privileged`). Docker supports Kata through its containerd shim (`"runtimes": {"kata": {"runtimeType": "io.containerd.kata.v2"}}` in the host's `daemon.json`, then `runtime: kata` in the sandbox's compose service), so it fits next to `dind` and `sysbox` as a third runtime with the same wiring (FRP tunnel, Traefik route, Sablier, `docker_data` volume, archive). To work out:
   - the host needs hardware virtualization (KVM): bare metal, or a cloud VM with nested virtualization;
   - dockerd inside the Kata VM: `privileged` there applies to the VM only, not the host, but must not pass the host's devices through;
