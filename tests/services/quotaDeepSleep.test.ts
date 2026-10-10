@@ -12,8 +12,8 @@ const reset = () => {
     ...Array.from({ length: 5 }, (_, i) => ({ name: `p7y-a${i}`, owner: 'admin', status: 'running' })),
   ]
 }
-vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxes: vi.fn(async () => all) } }))
-vi.mock('../../services/access', () => ({ visibleSandboxes: vi.fn(async (p: { sub: string; role: string }) => all.filter(s => p.role === 'admin' || s.owner === p.sub)) }))
+vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxStates: vi.fn(async () => all) } }))
+vi.mock('../../services/access', () => ({ visibleSandboxStates: vi.fn(async (p: { sub: string; role: string }) => all.filter(s => p.role === 'admin' || s.owner === p.sub)) }))
 
 const { quotaStatus, reserveSandboxSlot, serverUsed, wakeRefusal } = await import('../../services/quota')
 const dora = { sub: 'dora@x', role: 'user' as const, via: 'session' as const }

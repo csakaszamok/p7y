@@ -14,6 +14,11 @@ export async function getOwnedSandbox(p: Principal, name: string) {
   return sandbox
 }
 
+/** States and owners only (no app links): for counting. */
+export async function visibleSandboxStates(p: Principal) {
+  return (await sandboxService.listSandboxStates()).filter(s => canAccess(p, s.owner, s.name))
+}
+
 export async function visibleSandboxes(p: Principal) {
   const all = await sandboxService.listSandboxes()
   return all.filter(s => canAccess(p, s.owner, s.name))
