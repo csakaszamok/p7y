@@ -303,7 +303,7 @@ describe('overview: only running sandboxes count', () => {
   it('the admin: the bar is scaled to the server limit, with the free places in the legend', () => {
     const list = [{ name: 'p7y-r', owner: 'admin', status: 'running' }, { name: 'p7y-s', owner: 'u@x', status: 'exited' }, { name: 'p7y-d', owner: 'u@x', status: 'deep_sleep' }]
     const html = P.overviewHtml({ archived: 0, server_limit: 200, server_used: 2, by_owner: [], resources: null }, list, { isAdmin: true })
-    const stack = /<div class="ov-stack">[\s\S]*?<\/div>/.exec(html)[0]
+    const stack = /<div class="ov-stack">[\s\S]*?<\/div>/.exec(html)?.[0] ?? ''
     expect(stack).toContain('class="r" style="width:0.5%"')
     expect(stack).toContain('class="a" style="width:0.5%"')
     expect(stack).not.toContain('class="d"') // deep sleep holds no place
