@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-10-10
+
+Upgrading from 0.6.1: as usual (`docker compose pull && docker compose up -d`).
+
 ### Fixed
 
 - The bar under the admin's Overview cards was scaled to the sandboxes there are, not to the server's places: with one running and one asleep of 200 places it was half full. It now shows the awake sandboxes against `SANDBOX_MAX_TOTAL` (deep sleep holds no place), and its legend says how many places are free.
