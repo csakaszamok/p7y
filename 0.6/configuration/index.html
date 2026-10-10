@@ -1216,7 +1216,7 @@
 <tr>
 <td><code>SANDBOX_MAX_TOTAL</code></td>
 <td><code>200</code></td>
-<td>Users' running and asleep sandboxes on the whole server (each holds a Docker network and its subnet); the admin's are not counted and the admin is not limited; <code>0</code> = no limit</td>
+<td>Running and asleep sandboxes on the whole server, the admin's included (each holds a Docker network and its subnet); deep-sleeping and archived ones hold none. When it is reached nobody but the admin can create one or wake one from deep sleep: the admin is never refused, but its sandboxes take places too; <code>0</code> = no limit</td>
 </tr>
 <tr>
 <td><code>DEFAULT_RUNTIME</code></td>

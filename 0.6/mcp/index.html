@@ -1158,11 +1158,14 @@
 
 
 <h1 id="mcp">MCP<a class="headerlink" href="#mcp" title="Permanent link">&para;</a></h1>
+<p><img alt="Claude Code creates a sandbox through the MCP server and checks its app, in real time" src="../media/mcp-agent.gif" /></p>
 <p>The same API is an MCP server at <code>/mcp</code> (Streamable HTTP): each endpoint is a tool, such as <code>list_sandboxes</code>, <code>create_sandbox</code>, <code>wake_sandbox</code>, <code>sleep_sandbox</code>, <code>get_sandbox</code> (with its app links) and <code>set_sleep_settings</code>. A tool call runs the endpoint with the caller's token, so it can do exactly what that token can do on the REST API; a token limited to one sandbox stays limited to it, and is offered only the tools it may call (no <code>create_sandbox</code>, no token or SSH key management). Only tokens are accepted (not a browser session).</p>
 <p>For Claude Code:</p>
 <div class="highlight"><pre><span></span><code>claude<span class="w"> </span>mcp<span class="w"> </span>add<span class="w"> </span>--transport<span class="w"> </span>http<span class="w"> </span>p7y<span class="w"> </span>https://p7y.example.com/mcp<span class="w"> </span>--header<span class="w"> </span><span class="s2">"Authorization: Bearer p7y_…"</span>
 </code></pre></div>
 <p>Other clients take the same URL and header, e.g. <code>{"mcpServers": {"p7y": {"type": "http", "url": "https://p7y.example.com/mcp", "headers": {"Authorization": "Bearer p7y_…"}}}}</code>. Left out: the log stream (it never ends) and the zip export (a file a tool result cannot carry).</p>
+<p>Under the hood it is JSON-RPC over HTTP: one <code>POST /mcp</code> per call, no session to open first, so even <code>curl</code> can call a tool (<code>tools/list</code>, then <code>tools/call</code> with the tool's <code>name</code> and <code>arguments</code>):</p>
+<p><img alt="The MCP server called with curl: tools/list, then create_sandbox, in real time" src="../media/mcp-rpc.gif" /></p>
 
 
 
