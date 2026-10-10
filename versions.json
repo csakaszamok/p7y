@@ -1,15 +1,15 @@
 [
   {
     "version": "0.6",
-    "title": "0.6 (unreleased)",
-    "aliases": []
+    "title": "0.6",
+    "aliases": [
+      "latest"
+    ]
   },
   {
     "version": "0.5",
     "title": "0.5",
-    "aliases": [
-      "latest"
-    ]
+    "aliases": []
   },
   {
     "version": "0.4",
