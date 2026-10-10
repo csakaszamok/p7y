@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-10
+
+Upgrading from 0.5: as usual (`docker compose pull && docker compose up -d`). At its first start Purgatory gives every sandbox's frps API a password, which recreates their frps and socat containers: running sandboxes' web addresses are gone for a few seconds. If you sign in with Google (or any provider anyone can get an account at), set `OIDC_ALLOWED_DOMAINS` or `OIDC_ALLOWED_EMAILS`: until you do, anyone can sign in, as before.
+
 ### Added
 
 - While a sandbox is not running, `docker_access` in `GET /sandboxes/:name` (and the MCP tool `get_sandbox`, and the **Access** tab) carries a `hint`: a Docker connection does not wake it, so start it first. The `docker` command line only gets EOF then, which said nothing to an agent.
@@ -215,7 +219,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.6.0
 [0.5.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.2
 [0.5.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.1
 [0.5.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.0
