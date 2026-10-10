@@ -1,6 +1,6 @@
 # API
 
-![Creating a sandbox with curl and calling its app, in real time: about 7 seconds](media/api-curl.gif)
+<video controls preload="none" playsinline poster="../media/api-curl-poster.webp" src="../media/api-curl.mp4" aria-label="Creating a sandbox with curl and calling its app, in real time: about 7 seconds" style="width:100%;max-width:960px;border-radius:8px"></video>
 
 | Method | Path | Description |
 |--------|------|-------------|
