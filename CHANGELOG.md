@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- The bar under the admin's Overview cards was scaled to the sandboxes there are, not to the server's places: with one running and one asleep of 200 places it was half full. It now shows the awake sandboxes against `SANDBOX_MAX_TOTAL` (deep sleep holds no place), and its legend says how many places are free.
+
 ## [0.6.1] - 2026-10-10
 
 Upgrading from 0.6.0: as usual, with the new `docker-compose.yml` (it tells Traefik to apply new routes after 0.5 s); then `docker compose pull && docker compose up -d`. Sandboxes created before keep their socat health check as it was.

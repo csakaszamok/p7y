@@ -268,9 +268,13 @@
       card('archived', 'Archived', dot('archived'), c.archived, 'deleted, kept, not counted'),
       ...(over.length ? [card('warn', 'Disk', '⚠', over.length, `${over.length} over its disk limit`, listHref(''))] : []),
     ]
-    const pct = n => c.total ? (n / c.total * 100).toFixed(1) : 0
-    const stack = `<div class="ov-stack"><span class="r" style="width:${pct(c.running)}%"></span><span class="a" style="width:${pct(c.asleep)}%"></span><span class="d" style="width:${pct(c.deep_sleep)}%"></span></div>
-      <div class="ov-legend"><span>${dot('running small')}${c.running} running</span><span>${dot('asleep small')}${c.asleep} asleep</span><span>${dot('deep small')}${c.deep_sleep} deep sleep</span></div>`
+    // The admin's bar is the server's places: awake sandboxes against the limit (deep sleep holds none); otherwise the split of the list
+    const lim = ctx.isAdmin ? sum.server_limit : null
+    const awake = list.filter(s => s.status !== 'deep_sleep').length
+    const whole = lim ? Math.max(lim, awake) : c.total
+    const pct = n => whole ? (n / whole * 100).toFixed(1) : 0
+    const stack = `<div class="ov-stack"><span class="r" style="width:${pct(c.running)}%"></span><span class="a" style="width:${pct(c.asleep)}%"></span>${lim ? '' : `<span class="d" style="width:${pct(c.deep_sleep)}%"></span>`}</div>
+      <div class="ov-legend"><span>${dot('running small')}${c.running} running</span><span>${dot('asleep small')}${c.asleep} asleep</span><span>${dot('deep small')}${c.deep_sleep} deep sleep</span>${lim ? `<span>${Math.max(0, lim - awake)} free of ${lim} places</span>` : ''}</div>`
     let out = `<div class="ov-cards">${cards.join('')}</div>${stack}`
 
     if (ctx.isAdmin) {
