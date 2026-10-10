@@ -8,6 +8,9 @@ permissions:
   contents: write
   packages: write
 
+env:
+  HAS_DOCKERHUB: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+
 jobs:
   image:
     runs-on: ubuntu-latest
@@ -29,6 +32,14 @@ jobs:
       # Before anything is pushed: the compose file attached to the release must run this tag's image
       - run: bash scripts/check-release-version.sh "${{ github.ref_name }}"
 
+      # Docker Hub's pull limit for anonymous pulls is shared by GitHub's runners (429 on the base image);
+      # logged in it is far higher. Skipped without the secret (e.g. a pull request from a fork).
+      - name: Log in to Docker Hub
+        if: env.HAS_DOCKERHUB == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
