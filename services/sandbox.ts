@@ -314,7 +314,9 @@ export const sandboxService = {
     }
 
     fs.writeFileSync(`${dir}/extras.json`, JSON.stringify(extras))
-    openSleepSession(name)
+    // Answer once its router is there (the request that opens the Sablier session goes through it): its app links
+    // work then, instead of landing on the waiting page. Not there within ~10 s: the session is opened in the background.
+    if (!await primeSablierSession(name, 40, 250).catch(() => false)) openSleepSession(name)
 
     return {
       name,

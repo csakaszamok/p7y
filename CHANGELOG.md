@@ -7,7 +7,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 ### Fixed
 
 - A request to a sandbox's address while it was being created (an agent polling it, a browser tab opened early) read as a sandbox in deep sleep and started a second compose up next to the create's. It now gets the waiting page until the create is done; TLS TCP addresses wait too.
-- The panel shows a new sandbox's apps as soon as its create returns, not at the next refresh (up to 5 s later).
+- A new sandbox's app links work when the create answers: it now waits for the sandbox's router (up to ~10 s) instead of answering as soon as the tunnel was up, so opening an app at once no longer lands on the waiting page. The panel shows the new sandbox's details before reloading the whole list, which takes seconds on a server with many sandboxes; the waiting page of a sandbox woken from sleep reloads every second instead of every 3 s.
 - The waiting page of a sandbox woken from sleep said "rebuilding after a long sleep" from its first reload on, as if it had been in deep sleep. It now keeps saying "waking up"; only a deep-sleeping sandbox is rebuilt.
 
 ## [0.6.0] - 2026-10-10
