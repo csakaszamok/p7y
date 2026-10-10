@@ -271,7 +271,9 @@
     // The admin's bar is the server's places: awake sandboxes against the limit (deep sleep holds none); otherwise the split of the list
     const lim = ctx.isAdmin ? sum.server_limit : null
     const awake = list.filter(s => s.status !== 'deep_sleep').length
-    const whole = lim ? Math.max(lim, awake) : c.total
+    // A user's: against their running limit while they have fewer sandboxes than that (two of two is not full)
+    const runMax = ctx.isAdmin ? null : sum.max_running ?? c.quota
+    const whole = lim ? Math.max(lim, awake) : runMax ? Math.max(runMax, c.total) : c.total
     const pct = n => whole ? (n / whole * 100).toFixed(1) : 0
     const stack = `<div class="ov-stack"><span class="r" style="width:${pct(c.running)}%"></span><span class="a" style="width:${pct(c.asleep)}%"></span>${lim ? '' : `<span class="d" style="width:${pct(c.deep_sleep)}%"></span>`}</div>
       <div class="ov-legend"><span>${dot('running small')}${c.running} running</span><span>${dot('asleep small')}${c.asleep} asleep</span><span>${dot('deep small')}${c.deep_sleep} deep sleep</span>${lim ? `<span>${Math.max(0, lim - awake)} free of ${lim} places</span>` : ''}</div>`
