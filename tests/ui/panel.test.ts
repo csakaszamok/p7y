@@ -185,7 +185,7 @@ describe('agent access in the panel', () => {
   })
 
   it('a Registry tab: images, scan state, findings, delete', () => {
-    expect(P.TABS.map(([id]: [string]) => id)).toEqual(['apps', 'access', 'resources', 'registry', 'settings'])
+    expect(P.TABS.map(([id]: [string]) => id)).toEqual(['apps', 'access', 'files', 'resources', 'registry', 'settings'])
     expect(panelOf(P.renderPanel(running, ctx), 'registry')).toContain('data-registry')
     const html = P.registryTable({ registry: 'registry.lvh.me', public_pull: true, repos: [{ repo: 'shop/todo', versions: [
       { digest: 'sha256:aaaaaaaaaaaaaaaa', state: 'clean', tags: ['1'], pushed_at: '2026-10-04T10:00:00Z', findings: [] },
@@ -381,5 +381,37 @@ describe("overview: a user's bar", () => {
     const list = [{ name: 'p7y-a', owner: 'u@x', status: 'running' }, { name: 'p7y-b', owner: 'u@x', status: 'exited' }, { name: 'p7y-c', owner: 'u@x', status: 'exited' }]
     expect(P.overviewHtml({ quota: 2, max_running: 2, archived: 0, server_full: false }, list, { isAdmin: false })).toContain('class="r" style="width:33.3%"')
     expect(P.overviewHtml({ quota: null, max_running: null, archived: 0, server_full: false }, list, { isAdmin: false })).toContain('class="r" style="width:33.3%"')
+  })
+})
+
+describe('the Files tab', () => {
+  const listing = { path: '/root/app', roots: ['/root', '/home', '/srv', '/opt'], max_upload: 100 * 1024 ** 2, entries: [
+    { name: 'src', type: 'dir', size: 4096, mtime: '2026-10-04T14:00:00.000Z' },
+    { name: 'notes <b>.md', type: 'file', size: 2048, mtime: '2026-10-04T14:58:00.000Z' },
+    { name: 'latest', type: 'link', size: 7, mtime: '2026-10-04T14:00:00.000Z' },
+  ] }
+  it('is a tab; a running sandbox loads its files, a sleeping one offers to wake it', () => {
+    expect(P.TABS.map(([id]: string[]) => id)).toEqual(['apps', 'access', 'files', 'resources', 'registry', 'settings'])
+    expect(P.renderPanel(running, { ...ctx, tab: 'files' })).toContain('data-files')
+    const asleep = P.renderPanel({ ...running, status: 'exited' }, { ...ctx, tab: 'files' })
+    expect(asleep).toContain('wake it to see its files')
+    expect(asleep).toContain('data-act="start"')
+  })
+  it('the four folders, the path to click back along, folders to open, files to download', () => {
+    const html = P.filesView(listing, { ...ctx, name: 'p7y-shop' })
+    expect(html).toContain('data-files-path="/srv"')
+    expect(html).toContain('data-files-path="/root"') // the crumb back to /root
+    expect(html).toContain('data-files-path="/root/app/src"')
+    expect(html).toContain('href="/sandboxes/p7y-shop/files/content?path=%2Froot%2Fapp%2Fnotes%20%3Cb%3E.md"')
+    expect(html).toContain('notes &lt;b&gt;.md')
+    expect(html).not.toContain('notes <b>')
+    expect(html).toContain('2 KB')
+    expect(html).toContain('data-files-delete="/root/app/notes &lt;b&gt;.md"')
+    expect(html).toContain('data-files-input')
+    expect(html).toContain('up to 100 MB a file')
+    expect(html).toContain('href="/sandboxes/p7y-shop/files/content?path=%2Froot%2Fapp"') // the folder as a tar
+  })
+  it('an empty folder says where files can go', () => {
+    expect(P.filesView({ ...listing, entries: [] }, { ...ctx, name: 'p7y-shop' })).toContain('Empty: drop files here')
   })
 })

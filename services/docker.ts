@@ -204,3 +204,27 @@ export async function hostResources(): Promise<Limits> {
   }
   return hostSize
 }
+
+/** Runs a command in a sandbox container (no TTY) and returns its exit code and output: for the Files tab. */
+export async function execRun(name: string, cmd: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
+  const exec = await docker.getContainer(name).exec({ Cmd: cmd, AttachStdout: true, AttachStderr: true })
+  const stream = await exec.start({ hijack: true, stdin: false }) as unknown as NodeJS.ReadableStream
+  const out: Buffer[] = [], err: Buffer[] = []
+  const sink = (into: Buffer[]) => ({ write: (c: Buffer) => { into.push(Buffer.from(c)); return true } }) as unknown as NodeJS.WritableStream
+  await new Promise<void>((resolve, reject) => {
+    docker.modem.demuxStream(stream, sink(out), sink(err))
+    stream.on('end', () => resolve())
+    stream.on('error', reject)
+  })
+  return { code: (await exec.inspect()).ExitCode ?? -1, stdout: Buffer.concat(out).toString('utf8'), stderr: Buffer.concat(err).toString('utf8') }
+}
+
+/** A path in a sandbox container as a tar stream (Docker's archive API). */
+export async function archiveOf(name: string, path: string): Promise<AsyncIterable<Uint8Array>> {
+  return await docker.getContainer(name).getArchive({ path }) as unknown as AsyncIterable<Uint8Array>
+}
+
+/** Unpacks a tar into a folder of a sandbox container. */
+export async function putArchiveTo(name: string, dir: string, tar: Buffer): Promise<void> {
+  await docker.getContainer(name).putArchive(tar, { path: dir })
+}

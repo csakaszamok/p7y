@@ -74,6 +74,7 @@ nav:
       - Delete = archive: archive.md
       - Isolation and TCP addresses: networking.md
       - SSH, terminal and logs: shell-and-logs.md
+      - Files: files.md
   - Agents:
       - Let your agent deploy: agents.md
       - MCP: mcp.md
@@ -111,6 +112,7 @@ plugins:
           - archive.md
           - networking.md
           - shell-and-logs.md
+          - files.md
         Agents:
           - agents.md
           - mcp.md
