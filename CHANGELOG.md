@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **Creating a sandbox is faster: about 7.5 s instead of 9.3 s** until its app answers at its address (measured on a development machine). The inner stack tries again every 0.5 s instead of 3 s while the sandbox's own dockerd starts; Traefik applies new routes after 0.5 s instead of its default 2 s (`--providers.providersThrottleDuration=500ms` in `docker-compose.yml`); socat's health check runs every 0.5 s while it starts (`start_interval`, Docker Engine 25 or newer; left out on an older engine). Each create logs where its time went, e.g. `[create] p7y-shop ready in 7.5 s: … inner stack 3.1 s (3 tries), tunnel 0.5 s, router 2.1 s`.
+
 ### Fixed
 
 - The server's sandbox places (`SANDBOX_MAX_TOTAL`) did not count the admin's sandboxes, although each holds a Docker network like any other: with one of the admin's running, the sign-in page said "0 taken · 200 free". They count now (the sign-in page, the Overview's "Sandbox places used", the server-full check); the admin is still never refused. A user was also told the server was full while some of the places counted were sandboxes in deep sleep, which hold none.

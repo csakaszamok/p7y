@@ -1,6 +1,7 @@
 import { publicUrl } from './session'
 import { frpsToml, newFrpsApiPassword } from './frpsApi'
 import { createStepTimer } from './stepTimer'
+import { startIntervalSupported, withoutStartInterval } from './healthcheckCompat'
 import fs from 'fs'
 import path from 'path'
 import yaml from 'js-yaml'
@@ -277,7 +278,9 @@ export const sandboxService = {
       Object.assign(vars, extras)
     }
 
-    fs.writeFileSync(`${dir}/docker-compose.yml`, applyVars(runtime.docker_compose, vars))
+    // start_interval (a router sooner) needs Docker Engine 25: taken out below it, or compose refuses the file
+    const runtimeCompose = (await startIntervalSupported()) ? runtime.docker_compose : withoutStartInterval(runtime.docker_compose)
+    fs.writeFileSync(`${dir}/docker-compose.yml`, applyVars(runtimeCompose, vars))
     let innerText: string | undefined
     if (createInnerStack) {
       // A given compose text keeps its own comments and layout; the template's goes through yaml.dump as before
