@@ -5,7 +5,8 @@ vi.mock('../../services/docker', () => ({
   listManagedContainers: vi.fn().mockResolvedValue([]),
   resolveHostSandboxesDir: vi.fn().mockResolvedValue('/host/opt/sandboxes'),
   getContainerIdByName: vi.fn().mockResolvedValue('cnt-abc'),
-  getContainerStatus: vi.fn().mockResolvedValue('running')
+  getContainerStatus: vi.fn().mockResolvedValue('running'),
+  engineApiVersion: vi.fn().mockResolvedValue('1.48')
 }))
 
 vi.mock('../../services/compose', () => ({
@@ -278,6 +279,14 @@ describe('sandbox service', () => {
     const socat = (yaml.load(written('p7y-fa1', 'docker-compose.yml')!) as { services: { socat: { environment: Record<string, string>; healthcheck: { test: string[] } } } }).services.socat
     expect(socat.environment.FRPS_API_AUTH).toBe(`${auth![1]}:${auth![2]}`)
     expect(socat.healthcheck.test[1]).toContain('http://$$FRPS_API_AUTH@127.0.0.1:7500/')
+  }, 60000)
+
+  // Docker Engine 25+: socat is checked every 0.5 s while it starts, so the router shows up sooner
+  it("keeps socat's start_interval on an engine that takes it", async () => {
+    vi.mocked(fs.writeFileSync).mockClear()
+    await sandboxService.createSandbox('si1', false)
+    const socat = (yaml.load(written('p7y-si1', 'docker-compose.yml')!) as { services: { socat: { healthcheck: Record<string, unknown> } } }).services.socat
+    expect(socat.healthcheck.start_interval).toBe('500ms')
   }, 60000)
 
   // A request to its address while it is being created must not start it a second time (see wake.ts)

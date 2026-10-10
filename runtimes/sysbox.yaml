@@ -92,6 +92,10 @@ docker_compose:
         interval: 2s
         timeout: 2s
         retries: 60
+        # Every 0.5 s while it starts, so its router (and its app address) shows up as soon as the tunnel does;
+        # needs Docker Engine 25, below which Purgatory leaves start_interval out
+        start_period: 60s
+        start_interval: 500ms
       labels:
         sablier.enable: "true"
         sablier.group: ${name}

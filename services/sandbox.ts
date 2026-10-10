@@ -1,5 +1,7 @@
 import { publicUrl } from './session'
 import { frpsToml, newFrpsApiPassword } from './frpsApi'
+import { createStepTimer } from './stepTimer'
+import { startIntervalSupported, withoutStartInterval } from './healthcheckCompat'
 import fs from 'fs'
 import path from 'path'
 import yaml from 'js-yaml'
@@ -194,6 +196,8 @@ export const sandboxService = {
     const hostDomain = process.env.HOST_DOMAIN ?? 'lvh.me'
     const registryUrl = `registry.${hostDomain}`
     const name = sandboxName(rawName)
+    // One line at the end says where the time went
+    const timer = createStepTimer()
 
     if (sandboxDir(name) !== null) throw new Error(`Sandbox already exists: ${name}`)
     if (!sandboxesMounted()) throw new Error('opt/sandboxes is not mounted from the host (see docker-compose.yml): a sandbox created now would be lost')
@@ -220,7 +224,9 @@ export const sandboxService = {
     const hasFrps = 'frps' in services
 
     // <raw>-docker.<domain>: where a Docker CLI reaches this dockerd through the gateway (TLS passed through)
+    timer.lap('checks')
     const certs = generateCertBundle(hostAddress, name, 2048, [`${rawName}-docker.${hostDomain}`])
+    timer.lap('certificates')
     const createdAt = new Date().toISOString()
     const hostSandboxesDir = await resolveHostSandboxesDir()
 
@@ -264,6 +270,7 @@ export const sandboxService = {
     }
     const registryPassword = crypto.randomBytes(16).toString('hex')
     fs.writeFileSync(`${dir}/registry.hash`, await hashPassword(registryPassword))
+    timer.lap('files')
 
     let extras: Record<string, string> = {}
     if (createInnerStack && template.before_script) {
@@ -271,7 +278,9 @@ export const sandboxService = {
       Object.assign(vars, extras)
     }
 
-    fs.writeFileSync(`${dir}/docker-compose.yml`, applyVars(runtime.docker_compose, vars))
+    // start_interval (a router sooner) needs Docker Engine 25: taken out below it, or compose refuses the file
+    const runtimeCompose = (await startIntervalSupported()) ? runtime.docker_compose : withoutStartInterval(runtime.docker_compose)
+    fs.writeFileSync(`${dir}/docker-compose.yml`, applyVars(runtimeCompose, vars))
     let innerText: string | undefined
     if (createInnerStack) {
       // A given compose text keeps its own comments and layout; the template's goes through yaml.dump as before
@@ -298,10 +307,13 @@ export const sandboxService = {
     const runtimeLabels = ((runtime.docker_compose.services as Record<string, { labels?: Record<string, string> }> | undefined)?.sandbox?.labels) ?? {}
     const sshPrivateKey = String(runtimeLabels['p7y.ssh']) === 'true' ? createGeneratedKey(name, owner) : undefined
 
+    timer.lap('prepare')
     await composeUp(`${dir}/docker-compose.yml`)
+    timer.lap('compose up')
 
     if (createInnerStack) {
-      await composeUpInner(`${dir}/inner/docker-compose.yml`, `tcp://${name}:2376`, clientCertsDir, template.inner_project_name ?? 'inner')
+      const tries = await composeUpInner(`${dir}/inner/docker-compose.yml`, `tcp://${name}:2376`, clientCertsDir, template.inner_project_name ?? 'inner')
+      timer.lap('inner stack', tries > 1 ? `${tries} tries` : undefined)
     }
 
     let tunnelUrls: string[] = []
@@ -311,12 +323,15 @@ export const sandboxService = {
       tunnelUrls = await waitForTunnels(() => frpsDomains(name), expected)
       // What frpc registered, minus ports bound to 127.0.0.1 (private to the sandbox)
       if (tunnelUrls.length) { const seen = tunnelUrls; tunnelUrls = (await appLinks(name, {}, seen)).map(l => l.url) }
+      timer.lap('tunnel')
     }
 
     fs.writeFileSync(`${dir}/extras.json`, JSON.stringify(extras))
     // Answer once its router is there (the request that opens the Sablier session goes through it): its app links
     // work then, instead of landing on the waiting page. Not there within ~10 s: the session is opened in the background.
     if (!await primeSablierSession(name, 40, 250).catch(() => false)) openSleepSession(name)
+    timer.lap('router')
+    console.log(`[create] ${name} ready in ${timer.summary()}`)
 
     return {
       name,

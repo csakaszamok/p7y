@@ -7,6 +7,11 @@ import Dockerode from 'dockerode'
 
 const docker = new Dockerode({ socketPath: '/var/run/docker.sock' })
 
+/** The engine's API version (e.g. "1.48"; 1.44 is Docker Engine 25). */
+export async function engineApiVersion(): Promise<string> {
+  return (await docker.version()).ApiVersion
+}
+
 let _hostUsersDir: string | undefined
 let _hostSandboxesDir: string | undefined
 
