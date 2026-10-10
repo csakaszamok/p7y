@@ -64,6 +64,7 @@ export function renderPage(opts: { title: string; view: 'overview' | 'mine' | 'a
     ${link('/settings/tokens', 'Access tokens', 'tokens')}
     ${link('/settings/ssh-keys', 'SSH keys', 'ssh-keys')}
   </nav>
+  <span class="places" data-places hidden></span>
   ${repoBadge(repoInfo())}
   <form method="post" action="/logout" class="who"><span>${escapeHtml(session.sub)}</span><button class="link">Sign out</button></form>
 </header>

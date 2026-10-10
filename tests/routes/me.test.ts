@@ -33,3 +33,14 @@ describe('GET /me running', () => {
     expect((await (await me(req('admin-secret'))).json()).max_running).toBeNull()
   })
 })
+
+// The topbar shows them to everyone: the sign-in page does already, publicly
+describe('GET /me server_places', () => {
+  it("the server's places, taken and the limit, for a user and the admin; null without a limit", async () => {
+    limit = 200
+    expect((await (await me(req('p7y_u'))).json()).server_places).toEqual({ used: 5, limit: 200 })
+    expect((await (await me(req('admin-secret'))).json()).server_places).toEqual({ used: 5, limit: 200 })
+    limit = null
+    expect((await (await me(req('p7y_u'))).json()).server_places).toBeNull()
+  })
+})

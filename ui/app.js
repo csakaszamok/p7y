@@ -848,6 +848,18 @@ function initTokens() {
   loadTokens()
 }
 
+// ---------- topbar: the server's places, on every page ----------
+async function loadPlaces() {
+  try {
+    const b = P7yPanel.placesBadge((await api('/me')).server_places)
+    const el = $('[data-places]')
+    el.hidden = !b
+    if (b) { el.textContent = b.text; el.title = b.title; el.className = `places ${b.state}` }
+  } catch (e) { if (e.message !== 'signed out') console.error(e) }
+}
+loadPlaces()
+setInterval(() => { if (!document.hidden) loadPlaces() }, 10_000)
+
 if (view === 'mine' || view === 'all') initSandboxes()
 if (view === 'overview') initOverview()
 if (view === 'tokens') initTokens()

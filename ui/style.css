@@ -22,6 +22,10 @@ label.check input { width: auto }
 .topbar nav a { color: #aaa; text-decoration: none }
 .topbar nav a.active { color: #fff; font-weight: 600 }
 .who { display: flex; gap: 12px; align-items: center; margin: 0; color: #aaa }
+/* the server's places in the topbar: taken / limit, orange from 90%, red when full */
+.places { padding: 3px 10px; border-radius: 999px; border: 1px solid #2c2c2c; color: #aaa; font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums }
+.places.warn { color: #f97316; border-color: rgba(249,115,22,.45) }
+.places.full { color: #ef4444; border-color: rgba(239,68,68,.5) }
 /* the GitHub repo card in the topbar: repo, stars, forks, version */
 .repo-badge { display: inline-flex; align-items: center; gap: 10px; padding: 4px 10px; border-radius: 8px; color: #aaa; text-decoration: none; font-size: 12px; line-height: 1.2 }
 .repo-badge:hover { background: #1f1f1f; color: #fff }
