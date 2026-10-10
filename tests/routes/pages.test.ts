@@ -180,6 +180,12 @@ describe('pages', () => {
     expect(loginPage).toContain('<script src="/assets/embers.js" defer></script>')
   })
 
+  it('the topbar has a place for the server places, filled by app.js on every page', async () => {
+    for (const res of [await index(r('/', as('alice@example.com', 'user'))), await tokens(r('/settings/tokens', as('alice@example.com', 'user')))]) {
+      expect(/<header class="topbar">[\s\S]*?<\/header>/.exec(await res.text())?.[0]).toContain('data-places hidden')
+    }
+  })
+
   it('the sandbox page has the compose viewer', async () => {
     const home = await (await index(r('/', as('alice@example.com', 'user')))).text()
     expect(home).toContain('data-compose-dialog')

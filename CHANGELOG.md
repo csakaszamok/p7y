@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- The top bar shows the server's sandbox places on every page, to everyone signed in: e.g. *142 / 200 places*, the free ones on hover, orange from 90% and red when the server is full. `GET /me` (and the MCP tool `who_am_i`) gives them as `server_places`.
+
 ### Fixed
 
 - The bar under the admin's Overview cards was scaled to the sandboxes there are, not to the server's places: with one running and one asleep of 200 places it was half full. It now shows the awake sandboxes against `SANDBOX_MAX_TOTAL` (deep sleep holds no place), and its legend says how many places are free.

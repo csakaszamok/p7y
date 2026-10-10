@@ -329,3 +329,16 @@ describe('overview: the running limit', () => {
     expect(html).not.toContain('slots used')
   })
 })
+
+describe('placesBadge: the server places in the topbar', () => {
+  it('taken / limit, the free ones in the title; orange from 90%, red when full; nothing without a limit', () => {
+    const b = P.placesBadge({ used: 142, limit: 200 })
+    expect(b.text).toBe('142 / 200 places')
+    expect(b.title).toBe('Sandbox places on the server: 142 taken, 58 free (running and asleep sandboxes; deep sleep holds none)')
+    expect(b.state).toBe('')
+    expect(P.placesBadge({ used: 180, limit: 200 }).state).toBe('warn')
+    expect(P.placesBadge({ used: 200, limit: 200 }).state).toBe('full')
+    expect(P.placesBadge({ used: 203, limit: 200 }).title).toContain('0 free')
+    expect(P.placesBadge(null)).toBeNull()
+  })
+})

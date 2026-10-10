@@ -26,6 +26,15 @@
     return `<span class="meter ${pct >= 95 ? 'hot' : pct >= 80 ? 'warm' : ''}"><span style="width:${pct}%"></span></span>`
   }
 
+  // The server's places in the topbar (GET /me server_places): like the sign-in page, orange from 90%, red when full
+  function placesBadge(sp) {
+    if (!sp) return null
+    const free = Math.max(0, sp.limit - sp.used)
+    const state = free === 0 ? 'full' : sp.used / sp.limit >= 0.9 ? 'warn' : ''
+    return { text: `${sp.used} / ${sp.limit} places`, state,
+      title: `Sandbox places on the server: ${sp.used} taken, ${free} free (running and asleep sandboxes; deep sleep holds none)` }
+  }
+
   // Portainer's address only while it is one of the links: published on 127.0.0.1 it is private to the sandbox
   function portainerShown(s, extras) {
     if (!extras.portainer_url) return false
@@ -302,7 +311,7 @@
     return out
   }
 
-  const api = { overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  const api = { placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

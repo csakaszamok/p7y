@@ -13,6 +13,9 @@ export default async (req: Request): Promise<Response> => {
   const resources = { defaults: def.limits, ceiling: def.ceiling, host: p.role === 'admin' ? await hostResources().catch(() => null) : null }
   // A user under their own quota may still be stopped by the server limit (SANDBOX_MAX_TOTAL); never the admin
   const server = serverLimit()
-  const server_full = p.role !== 'admin' && server !== null && (await serverUsed()) >= server
-  return Response.json({ ...p, ...(await quotaStatus(p)), ...(await runningStatus(p)), server_full, resources })
+  const used = server === null ? 0 : await serverUsed()
+  const server_full = p.role !== 'admin' && server !== null && used >= server
+  // The server's places for the topbar, for everyone: the sign-in page shows them publicly already
+  const server_places = server === null ? null : { used, limit: server }
+  return Response.json({ ...p, ...(await quotaStatus(p)), ...(await runningStatus(p)), server_full, server_places, resources })
 }
