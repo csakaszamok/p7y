@@ -7,6 +7,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 ### Fixed
 
 - The bar under the admin's Overview cards was scaled to the sandboxes there are, not to the server's places: with one running and one asleep of 200 places it was half full. It now shows the awake sandboxes against `SANDBOX_MAX_TOTAL` (deep sleep holds no place), and its legend says how many places are free.
+- A user's Overview bar was full with two sandboxes running of two, though a third could run: it is now scaled to their running limit while they have fewer sandboxes than that.
 
 ## [0.6.1] - 2026-10-10
 
