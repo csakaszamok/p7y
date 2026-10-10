@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-10
+
+Upgrading from 0.6.0: as usual, with the new `docker-compose.yml` (it tells Traefik to apply new routes after 0.5 s); then `docker compose pull && docker compose up -d`. Sandboxes created before keep their socat health check as it was.
+
 ### Changed
 
 - **New sandbox**: the compose is in a section that starts closed, so the dialog fits without scrolling when the template's stack is used as it is. It opens by itself for the `empty` template, for a compose of your own kept from a failed create, and when the create fails on the compose.
