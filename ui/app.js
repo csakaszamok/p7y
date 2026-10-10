@@ -255,7 +255,7 @@ async function showPanel(name) {
   selected = name
   renderRows()
   const panel = $('[data-panel]')
-  if (pending.has(name)) { panel.innerHTML = `<h2>${esc(shortName(name))}</h2><p class="muted">Creating… this takes 20–60 s.</p>`; renderedName = name; renderedJSON = null; return }
+  if (pending.has(name)) { panel.innerHTML = `<h2>${esc(shortName(name))}</h2><p class="muted">Creating… usually 10–30 s.</p>`; renderedName = name; renderedJSON = null; return }
   let s
   try { s = await api(`/sandboxes/${encodeURIComponent(name)}`) } catch (e) { panel.innerHTML = `<p class="error">${esc(e.message)}</p>`; renderedJSON = null; return }
   if (selected !== name) return
@@ -637,10 +637,17 @@ async function submitNew(ev) {
     dlg.showModal()
     return
   }
+  // Its apps answer by now (the create waits for its router): its own details first, then the whole list, which can
+  // take a few seconds on a server with many sandboxes
+  try {
+    const s = onLocalClock(await api(`/sandboxes/${encodeURIComponent(full)}`))
+    sandboxes = [...sandboxes.filter(x => x.name !== full), s]
+    pending.delete(full)
+    renderRows()
+    if (selected === full) showPanel(full)
+  } catch { /* the list below brings it */ }
   await loadList()
-  // Its apps answer by now (the create waits for the tunnel): show them at once, not at the next 5 s refresh
   if (selected === full) showPanel(full)
-  showPanel(full)
 }
 
 function initSandboxes() {

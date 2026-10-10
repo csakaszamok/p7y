@@ -292,10 +292,22 @@ describe('sandbox service', () => {
     expect(creatingDone).toHaveBeenCalledWith('p7y-mc2')
   }, 60000)
 
-  it('opens the Sablier session of a new sandbox, so it counts down and sleeps without a first request', async () => {
+  // Its app links must work when the create answers: the request that opens the Sablier session goes through the
+  // sandbox's router, so once it passes the address answers too (and nobody lands on the waiting page)
+  it('waits for the router (opening the Sablier session) before it answers, on short tries', async () => {
     vi.mocked(primeSablierSession).mockClear()
+    vi.mocked(primeSablierSession).mockResolvedValueOnce(true as never)
     await sandboxService.createSandbox('ps1', false)
-    expect(primeSablierSession).toHaveBeenCalledWith('p7y-ps1', 150)
+    expect(primeSablierSession).toHaveBeenCalledTimes(1)
+    expect(primeSablierSession).toHaveBeenCalledWith('p7y-ps1', 40, 250)
+  }, 60000)
+
+  it('a router not there within those tries: the session keeps being opened in the background', async () => {
+    vi.mocked(primeSablierSession).mockClear()
+    vi.mocked(primeSablierSession).mockResolvedValueOnce(false as never)
+    await sandboxService.createSandbox('ps2', false)
+    expect(primeSablierSession).toHaveBeenCalledWith('p7y-ps2', 40, 250)
+    await vi.waitFor(() => expect(primeSablierSession).toHaveBeenCalledWith('p7y-ps2', 150))
   }, 60000)
 
   it('skips the inner stack and the before_script when createInnerStack is false', async () => {

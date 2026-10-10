@@ -30,7 +30,8 @@ function wakingPage(name: string, from?: 'asleep' | 'deep_sleep'): string {
   return waitingPage({
     title: 'Sandbox is waking up',
     name: escapeHtml(name),
-    refreshSeconds: 3,
+    // From sleep it takes seconds; deep sleep rebuilds, which takes longer
+    refreshSeconds: asleep ? 1 : 3,
     body: `<div class="status" data-status><span class="dot starting"></span>${asleep ? 'waking up' : 'rebuilding after a long sleep'}</div>
   <div class="hint">${asleep ? 'This page updates by itself, in a few seconds.' : 'This page updates by itself. This can take up to a minute.'}</div>`,
   })

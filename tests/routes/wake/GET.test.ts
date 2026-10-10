@@ -93,6 +93,11 @@ describe('GET /wake', () => {
     expect(html).not.toContain('rebuilding')
     expect(await (await handler(req('ds-web.lvh.me'))).text()).toContain('rebuilding after a long sleep')
   })
+  // A wake from sleep takes seconds: a reload every 3 s added up to 3 s; deep sleep rebuilds, every 3 s is plenty
+  it('reloads every second while waking from sleep, every 3 s from deep sleep', async () => {
+    expect(await (await handler(req('as-web.lvh.me'))).text()).toContain('<meta http-equiv="refresh" content="1">')
+    expect(await (await handler(req('ds-web.lvh.me'))).text()).toContain('<meta http-equiv="refresh" content="3">')
+  })
   it('waking from asleep: the waiting page says waking up, and carries the marker p7y waits on', async () => {
     const html = await (await handler(req('as-web.lvh.me'))).text()
     expect(html).toContain('waking up')
