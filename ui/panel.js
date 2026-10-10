@@ -26,6 +26,14 @@
     return `<span class="meter ${pct >= 95 ? 'hot' : pct >= 80 ? 'warm' : ''}"><span style="width:${pct}%"></span></span>`
   }
 
+  // My sandboxes' running line (GET /me): the guarantee, and how far above it while the server has room
+  function quotaLine(me) {
+    const max = me.max_running === undefined ? me.quota : me.max_running
+    if (max === me.quota) return { text: `Running ${me.sandbox_count} / ${me.quota}`, title: '' }
+    const more = max === null ? 'more' : `up to ${max}`
+    return { text: `Running ${me.sandbox_count} / ${me.quota} · ${more}`, title: `${me.quota} running sandbox${me.quota === 1 ? '' : 'es'} guaranteed; ${more} while the server has room` }
+  }
+
   // The server's places in the topbar (GET /me server_places): like the sign-in page, orange from 90%, red when full
   function placesBadge(sp) {
     if (!sp) return null
@@ -263,8 +271,13 @@
     }
     // A user's quota counts running sandboxes only: asleep and deep-sleeping ones are free
     const q = ctx.isAdmin ? null : c.quota
+    // SANDBOX_QUOTA_MAX: above the guarantee while the server has room (max_running null: no maximum)
+    const max = ctx.isAdmin || q === null ? q : sum.max_running === undefined ? q : sum.max_running
+    const room = max === null ? 'more while the server has room' : `up to ${max} while the server has room`
     const runningSub = q === null ? (c.running ? 'awake, serving' : 'nothing awake')
-      : c.running >= q ? 'limit reached: Wake lets you choose one to put to sleep' : `${q - c.running} more can run`
+      : max !== null && c.running >= max ? 'limit reached: Wake lets you choose one to put to sleep'
+      : max === q ? `${q - c.running} more can run`
+      : c.running >= q ? `above the ${q} guaranteed · ${room}` : `${q - c.running} more guaranteed · ${room}`
     const over = list.filter(s => s.disk && s.disk.over)
     const cards = [
       ...(first ? [first] : []),
@@ -300,7 +313,7 @@
       const owners = (sum.by_owner || []).map(o => ({ ...o, ...countsOf(list.filter(s => (s.owner || 'admin') === o.owner), o.quota, o.archived) }))
       const ownerRows = owners.map(o => {
         const qb = o.quota === null ? '' : `<span class="ov-qbar${o.running >= o.quota ? ' full' : ''}"><span style="width:${Math.min(100, o.running / o.quota * 100).toFixed(1)}%"></span></span>`
-        return `<tr><td><a href="/admin?owner=${encodeURIComponent(o.owner)}">${esc(o.owner === 'admin' ? 'admin API' : o.owner)}</a></td><td>${o.total}</td><td>${qb}${dot('running small')}${o.running} / ${o.quota === null ? '∞' : o.quota}</td><td>${dot('asleep small')}${o.asleep}</td><td class="ov-hide">${dot('deep small')}${o.deep_sleep}</td><td class="ov-hide">${o.archived}</td></tr>`
+        return `<tr><td><a href="/admin?owner=${encodeURIComponent(o.owner)}">${esc(o.owner === 'admin' ? 'admin API' : o.owner)}</a></td><td>${o.total}</td><td>${qb}${dot('running small')}${o.running} / ${o.quota === null ? '∞' : o.quota}${o.quota !== null && o.max_running !== undefined && o.max_running !== o.quota ? ` (+${o.max_running === null ? '∞' : o.max_running - o.quota})` : ''}</td><td>${dot('asleep small')}${o.asleep}</td><td class="ov-hide">${dot('deep small')}${o.deep_sleep}</td><td class="ov-hide">${o.archived}</td></tr>`
       }).join('')
       out += `<section class="ov-box"><h2>Per owner</h2><div class="ov-tablewrap"><table class="ov-table"><thead><tr><th>Owner</th><th>Sandboxes</th><th>Running</th><th>Asleep</th><th class="ov-hide">Deep sleep</th><th class="ov-hide">Archived</th></tr></thead><tbody>${ownerRows}</tbody></table></div><p class="ov-note">An owner opens All sandboxes, filtered to them.</p></section>`
     } else if (list.length) {
@@ -311,7 +324,7 @@
     return out
   }
 
-  const api = { placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  const api = { quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

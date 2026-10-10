@@ -342,3 +342,30 @@ describe('placesBadge: the server places in the topbar', () => {
     expect(P.placesBadge(null)).toBeNull()
   })
 })
+
+// SANDBOX_QUOTA is guaranteed, SANDBOX_QUOTA_MAX (max_running) the most while the server has room
+describe('the guarantee and the maximum', () => {
+  const mine = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `p7y-${i}`, owner: 'u@x', status: 'running' }))
+  it('a user under the guarantee: how many more are guaranteed, and how far they may go', () => {
+    const html = P.overviewHtml({ quota: 3, max_running: 10, archived: 0, server_full: false }, mine(1), { isAdmin: false })
+    expect(html).toMatch(/Running[\s\S]*?class="ov-num">1<small> \/ 3<\/small>/)
+    expect(html).toContain('2 more guaranteed · up to 10 while the server has room')
+  })
+  it('a user above the guarantee, and at the maximum', () => {
+    expect(P.overviewHtml({ quota: 3, max_running: 10, archived: 0, server_full: false }, mine(4), { isAdmin: false })).toContain('above the 3 guaranteed · up to 10 while the server has room')
+    expect(P.overviewHtml({ quota: 3, max_running: 10, archived: 0, server_full: false }, mine(10), { isAdmin: false })).toContain('limit reached')
+  })
+  it('without a maximum above the guarantee nothing changes', () => {
+    expect(P.overviewHtml({ quota: 3, max_running: 3, archived: 0, server_full: false }, mine(1), { isAdmin: false })).toContain('2 more can run')
+  })
+  it("the admin's owner table: running / guarantee (+ the extra)", () => {
+    const html = P.overviewHtml({ archived: 0, server_limit: 200, server_used: 4, by_owner: [{ owner: 'u@x', quota: 3, max_running: 10, total: 4, archived: 0 }], resources: null }, mine(4), { isAdmin: true })
+    expect(html).toContain('4 / 3 (+7)</td>')
+  })
+  it('quotaLine: the line on My sandboxes', () => {
+    // short, beside the New sandbox button; the rest on hover
+    expect(P.quotaLine({ quota: 3, max_running: 3, sandbox_count: 1 })).toEqual({ text: 'Running 1 / 3', title: '' })
+    expect(P.quotaLine({ quota: 3, max_running: 10, sandbox_count: 4 })).toEqual({ text: 'Running 4 / 3 · up to 10', title: '3 running sandboxes guaranteed; up to 10 while the server has room' })
+    expect(P.quotaLine({ quota: 3, max_running: null, sandbox_count: 4 })).toEqual({ text: 'Running 4 / 3 · more', title: '3 running sandboxes guaranteed; more while the server has room' })
+  })
+})
