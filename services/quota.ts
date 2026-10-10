@@ -1,4 +1,4 @@
-import { visibleSandboxes } from './access'
+import { visibleSandboxStates } from './access'
 import { sandboxService } from './sandbox'
 import type { Principal } from './principal'
 import { rawNameOf } from './naming'
@@ -20,8 +20,9 @@ export function quotaLimit(env: NodeJS.ProcessEnv = process.env): number | null 
 const DEFAULT_SERVER_LIMIT = 200
 
 /**
- * SANDBOX_MAX_TOTAL: users' running and asleep sandboxes on the whole server (each holds a Docker network and
- * its subnet); 200 by default, 0 = none (null), invalid → default. The admin's are not counted.
+ * SANDBOX_MAX_TOTAL: running and asleep sandboxes on the whole server (each holds a Docker network and
+ * its subnet); 200 by default, 0 = none (null), invalid → default. The admin's count too (they hold networks as well),
+ * but the admin is never refused.
  */
 export function serverLimit(env: NodeJS.ProcessEnv = process.env): number | null {
   const raw = env.SANDBOX_MAX_TOTAL
@@ -36,9 +37,9 @@ export function serverLimit(env: NodeJS.ProcessEnv = process.env): number | null
 /** A sandbox in deep sleep holds no slot: its containers are gone, only its data is kept. */
 const awake = (s: { status: string }) => s.status !== 'deep_sleep'
 
-/** The users' awake sandboxes on the server (the admin's do not count against SANDBOX_MAX_TOTAL). */
+/** The places taken on the server (SANDBOX_MAX_TOTAL): every awake sandbox, the admin's too. */
 export async function serverUsed(): Promise<number> {
-  return (await sandboxService.listSandboxes()).filter(s => (s.owner ?? 'admin') !== 'admin' && awake(s)).length
+  return (await sandboxService.listSandboxStates()).filter(awake).length
 }
 
 /** SANDBOX_QUOTA counts running sandboxes: asleep and deep-sleeping ones are free (the reward for letting them sleep). */
@@ -58,7 +59,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : word.e
  */
 export async function wakeRefusal(owner: string, from: string, pending: string[] = [], opts: { freeing?: string; creates?: number } = {}): Promise<WakeRefusal | null> {
   if (owner === 'admin') return null
-  const all = await sandboxService.listSandboxes()
+  const all = await sandboxService.listSandboxStates()
   const mine = all.filter(s => s.owner === owner)
   if (from === 'deep_sleep') {
     // Out of deep sleep it gets a Docker network again: within the server limit
@@ -100,13 +101,13 @@ export async function reserveWake(owner: string, name: string, from: string, fre
 
 /** The caller's running sandboxes and their running limit (none for the admin). */
 export async function runningStatus(p: Principal): Promise<{ max_running: number | null; running: number }> {
-  const running = (await visibleSandboxes(p)).filter(s => s.owner === p.sub && s.status === 'running').length
+  const running = (await visibleSandboxStates(p)).filter(s => s.owner === p.sub && s.status === 'running').length
   return { max_running: p.role === 'admin' ? null : runningLimit(), running }
 }
 
 export async function quotaStatus(p: Principal): Promise<{ quota: number | null; sandbox_count: number }> {
   // Only running sandboxes count against the quota
-  const count = (await visibleSandboxes(p)).filter(s => s.status === 'running').length
+  const count = (await visibleSandboxStates(p)).filter(s => s.status === 'running').length
   return { quota: p.role === 'admin' ? null : quotaLimit(), sandbox_count: count }
 }
 
@@ -147,7 +148,7 @@ export async function reserveSandboxSlot(p: Principal): Promise<SlotReservation>
   if (max !== null) {
     // A new sandbox starts running: it needs a running slot too
     // A sandbox still finishing its wake may already run: counted once
-    const running = new Set([...(await visibleSandboxes(p)).filter(s => s.status === 'running').map(s => s.name), ...wakesBefore]).size
+    const running = new Set([...(await visibleSandboxStates(p)).filter(s => s.status === 'running').map(s => s.name), ...wakesBefore]).size
     if (running + (inFlight.get(p.sub) ?? 0) > max) {
       release()
       return { ok: false, limit: max, scope: 'running' }

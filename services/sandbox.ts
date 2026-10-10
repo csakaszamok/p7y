@@ -1,5 +1,7 @@
 import { publicUrl } from './session'
 import { frpsToml, newFrpsApiPassword } from './frpsApi'
+import { createStepTimer } from './stepTimer'
+import { startIntervalSupported, withoutStartInterval } from './healthcheckCompat'
 import fs from 'fs'
 import path from 'path'
 import yaml from 'js-yaml'
@@ -12,7 +14,7 @@ import { loadRuntime } from './runtimeLoader'
 import { appEntriesOffline, appHostsFromCompose } from './appUrls'
 import { waitForTunnels } from './tunnelWait'
 import { appLinks, frpsDomains, rememberedApps } from './appLinks'
-import { primeSablierSession, markWoken } from './wake'
+import { primeSablierSession, markWoken, markCreating, creatingDone } from './wake'
 import { writeAuthorizedKeys, createGeneratedKey } from './sandboxSsh'
 import { sshKeysOf } from './sshKeys'
 import { resourceDefaults, memoryForCompose, type Limits } from './resources'
@@ -175,7 +177,18 @@ function offlineApps(meta: SandboxMeta): Array<{ host: string; service: string }
 }
 
 export const sandboxService = {
+  /** Creates a sandbox; while it does, a request to its address waits instead of starting it (wake.ts). */
   async createSandbox(rawName: string, createInnerStack = true, idleTimeout?: string, deepSleepAfter?: string, owner = 'admin', templateName?: string, runtimeName?: string, customCompose?: string, sshKeys?: string[], limits?: Limits): Promise<CreateSandboxResult> {
+    const name = sandboxName(rawName)
+    const marked = markCreating(name)
+    try {
+      return await this.createSandboxUnmarked(rawName, createInnerStack, idleTimeout, deepSleepAfter, owner, templateName, runtimeName, customCompose, sshKeys, limits)
+    } finally {
+      if (marked) creatingDone(name)
+    }
+  },
+
+  async createSandboxUnmarked(rawName: string, createInnerStack = true, idleTimeout?: string, deepSleepAfter?: string, owner = 'admin', templateName?: string, runtimeName?: string, customCompose?: string, sshKeys?: string[], limits?: Limits): Promise<CreateSandboxResult> {
     // || : an empty variable (DEFAULT_TEMPLATE= in .env) means unset, as in POST /sandboxes
     const resolvedTemplateName = templateName ?? (process.env.DEFAULT_TEMPLATE || 'starter')
     const resolvedRuntimeName = runtimeName ?? await (await import('./defaultRuntime')).defaultRuntime()
@@ -183,6 +196,8 @@ export const sandboxService = {
     const hostDomain = process.env.HOST_DOMAIN ?? 'lvh.me'
     const registryUrl = `registry.${hostDomain}`
     const name = sandboxName(rawName)
+    // One line at the end says where the time went
+    const timer = createStepTimer()
 
     if (sandboxDir(name) !== null) throw new Error(`Sandbox already exists: ${name}`)
     if (!sandboxesMounted()) throw new Error('opt/sandboxes is not mounted from the host (see docker-compose.yml): a sandbox created now would be lost')
@@ -209,7 +224,9 @@ export const sandboxService = {
     const hasFrps = 'frps' in services
 
     // <raw>-docker.<domain>: where a Docker CLI reaches this dockerd through the gateway (TLS passed through)
+    timer.lap('checks')
     const certs = generateCertBundle(hostAddress, name, 2048, [`${rawName}-docker.${hostDomain}`])
+    timer.lap('certificates')
     const createdAt = new Date().toISOString()
     const hostSandboxesDir = await resolveHostSandboxesDir()
 
@@ -253,6 +270,7 @@ export const sandboxService = {
     }
     const registryPassword = crypto.randomBytes(16).toString('hex')
     fs.writeFileSync(`${dir}/registry.hash`, await hashPassword(registryPassword))
+    timer.lap('files')
 
     let extras: Record<string, string> = {}
     if (createInnerStack && template.before_script) {
@@ -260,7 +278,9 @@ export const sandboxService = {
       Object.assign(vars, extras)
     }
 
-    fs.writeFileSync(`${dir}/docker-compose.yml`, applyVars(runtime.docker_compose, vars))
+    // start_interval (a router sooner) needs Docker Engine 25: taken out below it, or compose refuses the file
+    const runtimeCompose = (await startIntervalSupported()) ? runtime.docker_compose : withoutStartInterval(runtime.docker_compose)
+    fs.writeFileSync(`${dir}/docker-compose.yml`, applyVars(runtimeCompose, vars))
     let innerText: string | undefined
     if (createInnerStack) {
       // A given compose text keeps its own comments and layout; the template's goes through yaml.dump as before
@@ -287,10 +307,13 @@ export const sandboxService = {
     const runtimeLabels = ((runtime.docker_compose.services as Record<string, { labels?: Record<string, string> }> | undefined)?.sandbox?.labels) ?? {}
     const sshPrivateKey = String(runtimeLabels['p7y.ssh']) === 'true' ? createGeneratedKey(name, owner) : undefined
 
+    timer.lap('prepare')
     await composeUp(`${dir}/docker-compose.yml`)
+    timer.lap('compose up')
 
     if (createInnerStack) {
-      await composeUpInner(`${dir}/inner/docker-compose.yml`, `tcp://${name}:2376`, clientCertsDir, template.inner_project_name ?? 'inner')
+      const tries = await composeUpInner(`${dir}/inner/docker-compose.yml`, `tcp://${name}:2376`, clientCertsDir, template.inner_project_name ?? 'inner')
+      timer.lap('inner stack', tries > 1 ? `${tries} tries` : undefined)
     }
 
     let tunnelUrls: string[] = []
@@ -300,10 +323,15 @@ export const sandboxService = {
       tunnelUrls = await waitForTunnels(() => frpsDomains(name), expected)
       // What frpc registered, minus ports bound to 127.0.0.1 (private to the sandbox)
       if (tunnelUrls.length) { const seen = tunnelUrls; tunnelUrls = (await appLinks(name, {}, seen)).map(l => l.url) }
+      timer.lap('tunnel')
     }
 
     fs.writeFileSync(`${dir}/extras.json`, JSON.stringify(extras))
-    openSleepSession(name)
+    // Answer once its router is there (the request that opens the Sablier session goes through it): its app links
+    // work then, instead of landing on the waiting page. Not there within ~10 s: the session is opened in the background.
+    if (!await primeSablierSession(name, 40, 250).catch(() => false)) openSleepSession(name)
+    timer.lap('router')
+    console.log(`[create] ${name} ready in ${timer.summary()}`)
 
     return {
       name,
@@ -331,6 +359,13 @@ export const sandboxService = {
       }))
     )
     return [...running, ...deepSleepingSandboxes(live).map(meta => ({ ...meta, tunnel_urls: fs.existsSync(`${dirOf(meta.name)}/frps.toml`) ? offlineApps(meta).map(e => e.host) : [] }))]
+  },
+
+  /** Every sandbox with its state and owner, without asking the running ones for their apps (as listSandboxes does):
+   * what counting for the quota needs, cheap however many sandboxes run. */
+  async listSandboxStates(): Promise<SandboxMeta[]> {
+    const live = await listManagedContainers()
+    return [...live, ...deepSleepingSandboxes(live)]
   },
 
   async getSandbox(name: string): Promise<SandboxInfo> {

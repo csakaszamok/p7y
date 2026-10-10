@@ -9,12 +9,28 @@
 
 **About 10 seconds** from *New sandbox* to your own Docker and a public URL for your app; a sleeping sandbox is back in under 10. (Measured with the images already pulled: the first sandbox on a new server also downloads them.)
 
-![Creating a sandbox, opening its app, and waking it after it fell asleep](docs/media/demo.gif)
+![Creating a sandbox and opening its app, in real time: about 10 seconds](docs/media/demo.gif)
 
 - **Its own Docker daemon** for every sandbox (with a Portainer UI if you want one)
 - **A public URL for every app**, and TLS addresses for Postgres, Redis and SSH
 - **Sleeps when idle, wakes on the next request**; a delete archives, nothing is lost
 - **Made for agents:** tokens limited to one sandbox, an [agent guide](docs/agent-guide.md) and an MCP server
+
+### The same from a script or an agent
+
+All three are real runs, in real time.
+
+**With curl**, through the [API](https://csakaszamok.github.io/p7y/latest/api/):
+
+![Creating a sandbox with curl and calling its app, in real time: about 7 seconds](docs/media/api-curl.gif)
+
+**By an agent**: Claude Code with the [MCP server](https://csakaszamok.github.io/p7y/latest/mcp/):
+
+![Claude Code creates a sandbox through the MCP server and checks its app, in real time](docs/media/mcp-agent.gif)
+
+**The MCP server by hand**: JSON-RPC over HTTP, so even curl can call its tools:
+
+![The MCP server called with curl: tools/list, then create_sandbox, in real time](docs/media/mcp-rpc.gif)
 
 ## Install
 

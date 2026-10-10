@@ -3,7 +3,7 @@ services:
     # The released image: it carries the templates, runtimes and the files p7y-init installs.
     # To work on the code, add docker-compose.dev.yml (COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml,
     # and COMPOSE_PATH_SEPARATOR=: on Windows, in .env).
-    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.6.0}
+    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.6.1}
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
       # to localhost (P7Y_API_BIND=127.0.0.1) so everything goes through HTTPS.
@@ -107,7 +107,7 @@ services:
   # One-shot, on every up: copies this release's Sablier themes, error pages, registry config and
   # dynamic/errors.yml from the image, so they always match it (no files from a checkout).
   p7y-init:
-    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.6.0}
+    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.6.1}
     entrypoint: ["sh", "/app/assets/install-assets.sh"]
     volumes:
       - sablier_themes:/out/sablier-themes
@@ -155,6 +155,8 @@ services:
       - --experimental.plugins.sablier.moduleName=github.com/sablierapp/sablier-traefik-plugin
       - --experimental.plugins.sablier.version=v1.3.0
       - --providers.docker=true
+      # A new sandbox's router within half a second of its socat turning healthy (the default waits 2 s)
+      - --providers.providersThrottleDuration=500ms
       - --providers.docker.exposedByDefault=false
       - --providers.docker.network=traefik-net
       - --entrypoints.web.address=:80

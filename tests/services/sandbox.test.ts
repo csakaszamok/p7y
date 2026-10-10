@@ -5,7 +5,8 @@ vi.mock('../../services/docker', () => ({
   listManagedContainers: vi.fn().mockResolvedValue([]),
   resolveHostSandboxesDir: vi.fn().mockResolvedValue('/host/opt/sandboxes'),
   getContainerIdByName: vi.fn().mockResolvedValue('cnt-abc'),
-  getContainerStatus: vi.fn().mockResolvedValue('running')
+  getContainerStatus: vi.fn().mockResolvedValue('running'),
+  engineApiVersion: vi.fn().mockResolvedValue('1.48')
 }))
 
 vi.mock('../../services/compose', () => ({
@@ -18,7 +19,7 @@ vi.mock('../../services/compose', () => ({
 }))
 
 // Opening the Sablier session needs Traefik; here only that it is asked for
-vi.mock('../../services/wake', () => ({ primeSablierSession: vi.fn(async () => {}), markWoken: vi.fn() }))
+vi.mock('../../services/wake', () => ({ primeSablierSession: vi.fn(async () => {}), markWoken: vi.fn(), markCreating: vi.fn(() => true), creatingDone: vi.fn() }))
 let slot: unknown = { ok: true, release: () => {} }
 vi.mock('../../services/quota', () => ({ reserveWake: vi.fn(async () => slot) }))
 // The 127.0.0.1 filter is tested in appLinks.test; here frps' answer passes through
@@ -280,10 +281,42 @@ describe('sandbox service', () => {
     expect(socat.healthcheck.test[1]).toContain('http://$$FRPS_API_AUTH@127.0.0.1:7500/')
   }, 60000)
 
-  it('opens the Sablier session of a new sandbox, so it counts down and sleeps without a first request', async () => {
+  // Docker Engine 25+: socat is checked every 0.5 s while it starts, so the router shows up sooner
+  it("keeps socat's start_interval on an engine that takes it", async () => {
+    vi.mocked(fs.writeFileSync).mockClear()
+    await sandboxService.createSandbox('si1', false)
+    const socat = (yaml.load(written('p7y-si1', 'docker-compose.yml')!) as { services: { socat: { healthcheck: Record<string, unknown> } } }).services.socat
+    expect(socat.healthcheck.start_interval).toBe('500ms')
+  }, 60000)
+
+  // A request to its address while it is being created must not start it a second time (see wake.ts)
+  it('marks a sandbox as being created for the whole create, also when it fails', async () => {
+    const { markCreating, creatingDone } = await import('../../services/wake')
+    vi.mocked(markCreating).mockClear(); vi.mocked(creatingDone).mockClear()
+    await sandboxService.createSandbox('mc1', false)
+    expect(markCreating).toHaveBeenCalledWith('p7y-mc1')
+    expect(creatingDone).toHaveBeenCalledWith('p7y-mc1')
+    vi.mocked(markCreating).mockClear(); vi.mocked(creatingDone).mockClear()
+    await expect(sandboxService.createSandbox('mc2', false, undefined, undefined, 'admin', 'no-such-template')).rejects.toThrow()
+    expect(creatingDone).toHaveBeenCalledWith('p7y-mc2')
+  }, 60000)
+
+  // Its app links must work when the create answers: the request that opens the Sablier session goes through the
+  // sandbox's router, so once it passes the address answers too (and nobody lands on the waiting page)
+  it('waits for the router (opening the Sablier session) before it answers, on short tries', async () => {
     vi.mocked(primeSablierSession).mockClear()
+    vi.mocked(primeSablierSession).mockResolvedValueOnce(true as never)
     await sandboxService.createSandbox('ps1', false)
-    expect(primeSablierSession).toHaveBeenCalledWith('p7y-ps1', 150)
+    expect(primeSablierSession).toHaveBeenCalledTimes(1)
+    expect(primeSablierSession).toHaveBeenCalledWith('p7y-ps1', 40, 250)
+  }, 60000)
+
+  it('a router not there within those tries: the session keeps being opened in the background', async () => {
+    vi.mocked(primeSablierSession).mockClear()
+    vi.mocked(primeSablierSession).mockResolvedValueOnce(false as never)
+    await sandboxService.createSandbox('ps2', false)
+    expect(primeSablierSession).toHaveBeenCalledWith('p7y-ps2', 40, 250)
+    await vi.waitFor(() => expect(primeSablierSession).toHaveBeenCalledWith('p7y-ps2', 150))
   }, 60000)
 
   it('skips the inner stack and the before_script when createInnerStack is false', async () => {
@@ -587,6 +620,18 @@ describe('deep-sleeping sandboxes in the API', () => {
   it('lists a container-less sandbox dir as deep_sleep', async () => {
     const list = await sandboxService.listSandboxes()
     expect(list).toEqual([expect.objectContaining({ name, status: 'deep_sleep', template: 'dind-standard', owner: 'alice@example.com', tunnel_urls: [] })])
+  })
+
+  // Counting for the quota needs states and owners only: the full list asks every running sandbox's inner Docker
+  // for its apps, which took seconds per create on a server with many sandboxes
+  it('lists states and owners without asking any sandbox for its apps', async () => {
+    const { appLinks } = await import('../../services/appLinks')
+    const { listManagedContainers } = await import('../../services/docker')
+    vi.mocked(listManagedContainers).mockResolvedValueOnce([{ name: 'p7y-run', status: 'running', owner: 'bob@x', template: 't', runtime: 'dind', compose: 'template', ssh: false, container_id: 'c', created_at: '' }] as never)
+    vi.mocked(appLinks).mockClear()
+    const states = await sandboxService.listSandboxStates()
+    expect(states.map(s => [s.name, s.status, s.owner])).toEqual([['p7y-run', 'running', 'bob@x'], [name, 'deep_sleep', 'alice@example.com']])
+    expect(appLinks).not.toHaveBeenCalled()
   })
 
   it('returns deep_sleep details for such a sandbox', async () => {

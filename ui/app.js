@@ -255,7 +255,7 @@ async function showPanel(name) {
   selected = name
   renderRows()
   const panel = $('[data-panel]')
-  if (pending.has(name)) { panel.innerHTML = `<h2>${esc(shortName(name))}</h2><p class="muted">Creating… this takes 20–60 s.</p>`; renderedName = name; renderedJSON = null; return }
+  if (pending.has(name)) { panel.innerHTML = `<h2>${esc(shortName(name))}</h2><p class="muted">Creating… usually 10–30 s.</p>`; renderedName = name; renderedJSON = null; return }
   let s
   try { s = await api(`/sandboxes/${encodeURIComponent(name)}`) } catch (e) { panel.innerHTML = `<p class="error">${esc(e.message)}</p>`; renderedJSON = null; return }
   if (selected !== name) return
@@ -572,6 +572,8 @@ async function loadComposeEditor(name) {
     loadedCompose = { template: name, text }
     box.value = text
     box.placeholder = 'Paste your docker compose file here'
+    // empty: the compose is the user's to paste, so show it
+    if (name === 'empty') $('[data-compose-section]').open = true
   } catch (e) {
     loadedCompose = { template: name, text: '' }
     box.value = ''
@@ -586,6 +588,8 @@ async function openNewDialog() {
   const tpl = $('[data-templates]').value
   // A failed create keeps the user's text; otherwise show the selected template's
   if (!$('[data-compose-editor]').value || loadedCompose.template !== tpl) await loadComposeEditor(tpl)
+  // Closed for a template's stack as it is; open for empty, or for a compose of the user's own (kept from a failed create)
+  $('[data-compose-section]').open = tpl === 'empty' || $('[data-compose-editor]').value !== loadedCompose.text
   $('[data-new-error]').hidden = true
   dlg.showModal()
 }
@@ -634,11 +638,22 @@ async function submitNew(ev) {
     $('[data-compose-editor]').disabled = !draft.inner
     loadedCompose = draft.loaded
     err.textContent = e.message; err.hidden = false
+    // A compose error: show the compose it is about
+    if (/compose/i.test(e.message)) $('[data-compose-section]').open = true
     dlg.showModal()
     return
   }
+  // Its apps answer by now (the create waits for its router): its own details first, then the whole list, which can
+  // take a few seconds on a server with many sandboxes
+  try {
+    const s = onLocalClock(await api(`/sandboxes/${encodeURIComponent(full)}`))
+    sandboxes = [...sandboxes.filter(x => x.name !== full), s]
+    pending.delete(full)
+    renderRows()
+    if (selected === full) showPanel(full)
+  } catch { /* the list below brings it */ }
   await loadList()
-  showPanel(full)
+  if (selected === full) showPanel(full)
 }
 
 function initSandboxes() {

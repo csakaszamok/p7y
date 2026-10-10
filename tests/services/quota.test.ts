@@ -2,12 +2,12 @@ import { describe, it, expect, vi } from 'vitest'
 
 const owned: Record<string, number> = { 'alice@x.com': 2, 'bob@x.com': 3 }
 vi.mock('../../services/access', () => ({
-  visibleSandboxes: vi.fn(async (p: { sub: string }) => Array.from({ length: owned[p.sub] ?? 0 }, (_, i) => ({ name: `s${i}`, owner: p.sub, status: 'running' })))
+  visibleSandboxStates: vi.fn(async (p: { sub: string }) => Array.from({ length: owned[p.sub] ?? 0 }, (_, i) => ({ name: `s${i}`, owner: p.sub, status: 'running' })))
 }))
 
-// The whole server: alice 2, bob 3, and the admin's 10 (not counted against the server limit)
+// The whole server: alice 2, bob 3, and the admin's 10, all asleep: each holds a Docker network, the admin's too
 let server = [...Array(2).fill('alice@x.com'), ...Array(3).fill('bob@x.com'), ...Array(10).fill('admin')]
-vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxes: vi.fn(async () => server.map((owner, i) => ({ name: `p${i}`, owner, status: 'exited' }))) } }))
+vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxStates: vi.fn(async () => server.map((owner, i) => ({ name: `p${i}`, owner, status: 'exited' }))) } }))
 
 import { quotaLimit, quotaStatus, quotaExceeded, serverLimit, serverUsed } from '../../services/quota'
 const user = (sub: string) => ({ sub, role: 'user' as const, via: 'session' as const })
@@ -71,8 +71,9 @@ describe('server limit (SANDBOX_MAX_TOTAL)', () => {
     expect(serverLimit({ SANDBOX_MAX_TOTAL: '30' })).toBe(30)
     expect(serverLimit({ SANDBOX_MAX_TOTAL: 'many' })).toBe(200)
   })
-  it("counts the users' sandboxes, not the admin's", async () => {
-    expect(await serverUsed()).toBe(5)
+  // A running sandbox of the admin's leaves one place less for everyone (the limit is about Docker networks)
+  it("counts every sandbox that holds a network, the admin's too", async () => {
+    expect(await serverUsed()).toBe(15)
   })
   it('refuses a user under their own quota when the server is full; never the admin', async () => {
     const { reserveSandboxSlot } = await import('../../services/quota')
@@ -82,12 +83,12 @@ describe('server limit (SANDBOX_MAX_TOTAL)', () => {
     expect(r).toEqual({ ok: false, limit: 5, scope: 'server' })
     const a = await reserveSandboxSlot(admin)
     expect(a.ok).toBe(true)
-    vi.stubEnv('SANDBOX_MAX_TOTAL', '6')
+    vi.stubEnv('SANDBOX_MAX_TOTAL', '16')
     const ok = await reserveSandboxSlot(user('alice@x.com'))
     expect(ok.ok).toBe(true)
     // one place left on the server: a parallel create by someone else must not take it too
     const other = await reserveSandboxSlot(user('carol@x.com'))
-    expect(other).toEqual({ ok: false, limit: 6, scope: 'server' })
+    expect(other).toEqual({ ok: false, limit: 16, scope: 'server' })
     if (ok.ok) ok.release()
     vi.stubEnv('SANDBOX_MAX_TOTAL', '')
   })

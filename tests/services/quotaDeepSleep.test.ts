@@ -12,8 +12,8 @@ const reset = () => {
     ...Array.from({ length: 5 }, (_, i) => ({ name: `p7y-a${i}`, owner: 'admin', status: 'running' })),
   ]
 }
-vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxes: vi.fn(async () => all) } }))
-vi.mock('../../services/access', () => ({ visibleSandboxes: vi.fn(async (p: { sub: string; role: string }) => all.filter(s => p.role === 'admin' || s.owner === p.sub)) }))
+vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxStates: vi.fn(async () => all) } }))
+vi.mock('../../services/access', () => ({ visibleSandboxStates: vi.fn(async (p: { sub: string; role: string }) => all.filter(s => p.role === 'admin' || s.owner === p.sub)) }))
 
 const { quotaStatus, reserveSandboxSlot, serverUsed, wakeRefusal } = await import('../../services/quota')
 const dora = { sub: 'dora@x', role: 'user' as const, via: 'session' as const }
@@ -23,7 +23,7 @@ describe('only running sandboxes count against the quota', () => {
 
   it('asleep and deep-sleeping ones count nowhere for the user; the server limit counts running and asleep', async () => {
     expect(await quotaStatus(dora)).toEqual({ quota: 3, sandbox_count: 1 })
-    expect(await serverUsed()).toBe(3) // dora running + asleep, erin running; the admin's are not counted
+    expect(await serverUsed()).toBe(8) // dora running + asleep, erin running, the admin's 5; deep sleep holds none
   })
 
   it('a user with 1 running of 3 may create one, however many sleep', async () => {

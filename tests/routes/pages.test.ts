@@ -186,6 +186,14 @@ describe('pages', () => {
     expect(home).not.toContain('data-compose-tab')
   })
 
+  // Most creates use the template's stack as it is: its compose is one click away, not a 24-line box to scroll past
+  it('New sandbox: the compose is in a section that starts closed', async () => {
+    const home = await (await index(r('/', as('alice@example.com', 'user')))).text()
+    const section = /<details data-compose-section>[\s\S]*?<\/details>/.exec(home)?.[0] ?? ''
+    expect(section).toContain('data-compose-editor')
+    expect(section).not.toMatch(/<details data-compose-section open/)
+  })
+
   it('the sandbox page has the TCP connect dialog', async () => {
     const home = await (await index(r('/', as('alice@example.com', 'user')))).text()
     expect(home).toContain('data-connect-dialog')

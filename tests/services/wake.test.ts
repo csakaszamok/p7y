@@ -103,7 +103,8 @@ describe('wakeByHost', () => {
     dirs = ['leander-w1']
     vi.mocked(composeUp).mockReturnValue(new Promise(() => {}))
     expect(await wakeByHost('w1-web.lvh.me')).toEqual({ result: 'started', name: 'leander-w1', from: 'deep_sleep' })
-    expect(await wakeByHost('w1-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w1' })
+    // The waiting page reloads every 3 s: it keeps saying where the sandbox wakes from
+    expect(await wakeByHost('w1-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w1', from: 'deep_sleep' })
     expect(composeUp).toHaveBeenCalledTimes(1)
     expect(composeUp).toHaveBeenCalledWith('/opt/users/leander-w1/docker-compose.yml')
   })
@@ -180,7 +181,7 @@ describe('wakeByHost', () => {
     await vi.waitFor(() => expect(composeUp).toHaveBeenCalled())
     await new Promise(r => setImmediate(r))
     vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'leander-w3', template: 't', status: 'running', container_id: 'x', created_at: '' })])
-    expect(await wakeByHost('w3-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w3' })
+    expect(await wakeByHost('w3-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w3', from: 'deep_sleep' })
     expect(composeUp).toHaveBeenCalledTimes(1)
   })
 
@@ -224,6 +225,25 @@ describe('wakeByHost: every wake through p7y', () => {
     vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'p7y-pn', owner: 'u@x', template: 't', status: 'running', container_id: 'x', created_at: '' })] as never)
     markWoken('p7y-pn')
     expect(await wakeByHost('pn-web.lvh.me')).toEqual({ result: 'in_progress', name: 'p7y-pn' })
+  })
+})
+
+// A request to a sandbox's address while it is being created (its directory exists, its containers not yet)
+// read as deep sleep and started a second compose up next to the create's
+describe('a sandbox being created', () => {
+  it('is not woken: its address waits (in_progress), and the TCP gateway sees a wake under way', async () => {
+    const { markCreating, creatingDone, wakeInProgress } = await import('../../services/wake')
+    dirs = ['p7y-cr']
+    vi.mocked(listManagedContainers).mockResolvedValue([])
+    vi.mocked(composeUp).mockReset(); vi.mocked(composeStart).mockReset()
+    markCreating('p7y-cr')
+    try {
+      expect(await wakeByHost('cr-web.lvh.me')).toMatchObject({ result: 'in_progress', name: 'p7y-cr' })
+      expect(wakeInProgress('p7y-cr')).toBe(true)
+      expect(composeUp).not.toHaveBeenCalled()
+      expect(composeStart).not.toHaveBeenCalled()
+    } finally { creatingDone('p7y-cr') }
+    expect(wakeInProgress('p7y-cr')).toBe(false)
   })
 })
 

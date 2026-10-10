@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 let all: Array<{ name: string; owner: string; status: string }> = []
-vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxes: vi.fn(async () => all) } }))
-vi.mock('../../services/access', () => ({ visibleSandboxes: vi.fn(async (p: { sub: string }) => all.filter(s => s.owner === p.sub)) }))
+vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxStates: vi.fn(async () => all) } }))
+vi.mock('../../services/access', () => ({ visibleSandboxStates: vi.fn(async (p: { sub: string }) => all.filter(s => s.owner === p.sub)) }))
 
 const { runningLimit, wakeRefusal, reserveWake, runningStatus } = await import('../../services/quota')
 const u = (status: string, name: string, owner = 'u@x') => ({ name, owner, status })

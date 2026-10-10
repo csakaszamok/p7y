@@ -171,8 +171,9 @@ export const SANDBOX_VIEW_BODY = `
     <small class="muted" data-name-hint>lowercase letters, digits, - and _</small>
     <label>Runtime<select name="runtime" data-runtimes></select></label>
     <label>Template<select name="template" data-templates></select></label>
-    <label>Compose<br><small class="muted">the stack inside the sandbox: edit the template's, or pick <b>empty</b> and paste your own</small>
-      <textarea name="compose" data-compose-editor rows="24" spellcheck="false" autocomplete="off" placeholder="Paste your docker compose file here"></textarea></label>
+    <details data-compose-section><summary>Compose <small class="muted">the stack inside the sandbox: edit the template's, or pick <b>empty</b> and paste your own</small></summary>
+      <textarea name="compose" data-compose-editor rows="24" spellcheck="false" autocomplete="off" aria-label="Compose" placeholder="Paste your docker compose file here"></textarea>
+    </details>
     <details><summary>Advanced</summary>
       <label>Sleep after no traffic for<input name="idle_timeout" value="30m" pattern="([1-9][0-9]*(s|m|h)|0|off)"></label>
       <label>Deep sleep after asleep for<input name="deep_sleep_after" value="7d" pattern="([1-9][0-9]*(m|h|d)|0|off)"></label>

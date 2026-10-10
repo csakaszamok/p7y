@@ -1,5 +1,7 @@
 # API
 
+![Creating a sandbox with curl and calling its app, in real time: about 7 seconds](media/api-curl.gif)
+
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/sandboxes` | Create a sandbox (`name`; optional `runtime` like `dind`, `template` like `starter`, `compose` (your own compose text instead of the template's; its `before_script` and defaults still apply), `idle_timeout` like `30m`, `deep_sleep_after` like `7d` or `off`, `ssh_keys` (extra SSH public keys for this sandbox only), `cpus` like `2`, `memory` like `4g`, `create_inner_stack: false` for no template stack) |
