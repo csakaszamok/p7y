@@ -265,9 +265,10 @@ describe('overview', () => {
     const sum = { archived: 9, server_limit: 30, server_used: 2, by_owner: [{ owner: 'u@x', quota: 3, total: 2, archived: 1 }, { owner: 'admin', quota: null, total: 1, archived: 8 }],
       resources: { cpu: { used: 0.5, reserved: 2, host: 20 }, memory: { used: G, reserved: 4 * G, host: 16 * G }, disk: { used: 31 * G, over: 1 } } }
     const html = P.overviewHtml(sum, list, { isAdmin: true })
-    expect(html).toContain("Users' slots used")
-    expect(html).toContain('2<small> / 30</small>')
-    expect(html).toContain('+ 0 of the admin, not counted') // its one sandbox sleeps deeply
+    expect(html).toContain('Sandbox places used')
+    expect(html).toContain('2<small> / 30</small>') // the admin's one sleeps deeply: it holds no place
+    expect(html).toContain('28 free')
+    expect(html).not.toContain('of the admin, not counted')
     expect(html).toContain('href="/admin?status=running"')
     expect(html).toContain('Host resources')
     expect(html).toContain('0.5 of 20 cores')
@@ -290,6 +291,13 @@ describe('overview: only running sandboxes count', () => {
     expect(html).toContain('limit reached: Wake lets you choose one to put to sleep')
     expect(html).toMatch(/Asleep[\s\S]*?class="ov-num">1</)
     expect(html).not.toContain('slots used')
+  })
+  it("the admin's running sandbox takes a place too: 1 / 200", () => {
+    const list = [{ name: 'p7y-r', owner: 'admin', status: 'running' }]
+    const html = P.overviewHtml({ archived: 0, server_limit: 200, server_used: 1, by_owner: [], resources: null }, list, { isAdmin: true })
+    expect(html).toContain('1<small> / 200</small>')
+    expect(html).toContain('199 free')
+    expect(html).toContain("1 of them the admin's")
   })
   it("the admin: users' sandboxes in deep sleep are not counted against the server limit", () => {
     const list = [{ name: 'p7y-a', owner: 'u@x', status: 'running' }, { name: 'p7y-b', owner: 'u@x', status: 'deep_sleep' }]

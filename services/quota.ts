@@ -20,8 +20,9 @@ export function quotaLimit(env: NodeJS.ProcessEnv = process.env): number | null 
 const DEFAULT_SERVER_LIMIT = 200
 
 /**
- * SANDBOX_MAX_TOTAL: users' running and asleep sandboxes on the whole server (each holds a Docker network and
- * its subnet); 200 by default, 0 = none (null), invalid → default. The admin's are not counted.
+ * SANDBOX_MAX_TOTAL: running and asleep sandboxes on the whole server (each holds a Docker network and
+ * its subnet); 200 by default, 0 = none (null), invalid → default. The admin's count too (they hold networks as well),
+ * but the admin is never refused.
  */
 export function serverLimit(env: NodeJS.ProcessEnv = process.env): number | null {
   const raw = env.SANDBOX_MAX_TOTAL
@@ -36,9 +37,9 @@ export function serverLimit(env: NodeJS.ProcessEnv = process.env): number | null
 /** A sandbox in deep sleep holds no slot: its containers are gone, only its data is kept. */
 const awake = (s: { status: string }) => s.status !== 'deep_sleep'
 
-/** The users' awake sandboxes on the server (the admin's do not count against SANDBOX_MAX_TOTAL). */
+/** The places taken on the server (SANDBOX_MAX_TOTAL): every awake sandbox, the admin's too. */
 export async function serverUsed(): Promise<number> {
-  return (await sandboxService.listSandboxes()).filter(s => (s.owner ?? 'admin') !== 'admin' && awake(s)).length
+  return (await sandboxService.listSandboxes()).filter(awake).length
 }
 
 /** SANDBOX_QUOTA counts running sandboxes: asleep and deep-sleeping ones are free (the reward for letting them sleep). */
