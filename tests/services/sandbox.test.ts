@@ -18,7 +18,7 @@ vi.mock('../../services/compose', () => ({
 }))
 
 // Opening the Sablier session needs Traefik; here only that it is asked for
-vi.mock('../../services/wake', () => ({ primeSablierSession: vi.fn(async () => {}), markWoken: vi.fn() }))
+vi.mock('../../services/wake', () => ({ primeSablierSession: vi.fn(async () => {}), markWoken: vi.fn(), markCreating: vi.fn(() => true), creatingDone: vi.fn() }))
 let slot: unknown = { ok: true, release: () => {} }
 vi.mock('../../services/quota', () => ({ reserveWake: vi.fn(async () => slot) }))
 // The 127.0.0.1 filter is tested in appLinks.test; here frps' answer passes through
@@ -278,6 +278,18 @@ describe('sandbox service', () => {
     const socat = (yaml.load(written('p7y-fa1', 'docker-compose.yml')!) as { services: { socat: { environment: Record<string, string>; healthcheck: { test: string[] } } } }).services.socat
     expect(socat.environment.FRPS_API_AUTH).toBe(`${auth![1]}:${auth![2]}`)
     expect(socat.healthcheck.test[1]).toContain('http://$$FRPS_API_AUTH@127.0.0.1:7500/')
+  }, 60000)
+
+  // A request to its address while it is being created must not start it a second time (see wake.ts)
+  it('marks a sandbox as being created for the whole create, also when it fails', async () => {
+    const { markCreating, creatingDone } = await import('../../services/wake')
+    vi.mocked(markCreating).mockClear(); vi.mocked(creatingDone).mockClear()
+    await sandboxService.createSandbox('mc1', false)
+    expect(markCreating).toHaveBeenCalledWith('p7y-mc1')
+    expect(creatingDone).toHaveBeenCalledWith('p7y-mc1')
+    vi.mocked(markCreating).mockClear(); vi.mocked(creatingDone).mockClear()
+    await expect(sandboxService.createSandbox('mc2', false, undefined, undefined, 'admin', 'no-such-template')).rejects.toThrow()
+    expect(creatingDone).toHaveBeenCalledWith('p7y-mc2')
   }, 60000)
 
   it('opens the Sablier session of a new sandbox, so it counts down and sleeps without a first request', async () => {

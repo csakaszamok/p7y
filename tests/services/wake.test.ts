@@ -228,6 +228,25 @@ describe('wakeByHost: every wake through p7y', () => {
   })
 })
 
+// A request to a sandbox's address while it is being created (its directory exists, its containers not yet)
+// read as deep sleep and started a second compose up next to the create's
+describe('a sandbox being created', () => {
+  it('is not woken: its address waits (in_progress), and the TCP gateway sees a wake under way', async () => {
+    const { markCreating, creatingDone, wakeInProgress } = await import('../../services/wake')
+    dirs = ['p7y-cr']
+    vi.mocked(listManagedContainers).mockResolvedValue([])
+    vi.mocked(composeUp).mockReset(); vi.mocked(composeStart).mockReset()
+    markCreating('p7y-cr')
+    try {
+      expect(await wakeByHost('cr-web.lvh.me')).toMatchObject({ result: 'in_progress', name: 'p7y-cr' })
+      expect(wakeInProgress('p7y-cr')).toBe(true)
+      expect(composeUp).not.toHaveBeenCalled()
+      expect(composeStart).not.toHaveBeenCalled()
+    } finally { creatingDone('p7y-cr') }
+    expect(wakeInProgress('p7y-cr')).toBe(false)
+  })
+})
+
 describe("p7y's own session probe never wakes a sandbox", () => {
   it('<raw>-p7y-wake.<domain> of a stopped sandbox: in progress, nothing started', async () => {
     const { reserveWake } = await import('../../services/quota')

@@ -12,7 +12,7 @@ import { loadRuntime } from './runtimeLoader'
 import { appEntriesOffline, appHostsFromCompose } from './appUrls'
 import { waitForTunnels } from './tunnelWait'
 import { appLinks, frpsDomains, rememberedApps } from './appLinks'
-import { primeSablierSession, markWoken } from './wake'
+import { primeSablierSession, markWoken, markCreating, creatingDone } from './wake'
 import { writeAuthorizedKeys, createGeneratedKey } from './sandboxSsh'
 import { sshKeysOf } from './sshKeys'
 import { resourceDefaults, memoryForCompose, type Limits } from './resources'
@@ -175,7 +175,18 @@ function offlineApps(meta: SandboxMeta): Array<{ host: string; service: string }
 }
 
 export const sandboxService = {
+  /** Creates a sandbox; while it does, a request to its address waits instead of starting it (wake.ts). */
   async createSandbox(rawName: string, createInnerStack = true, idleTimeout?: string, deepSleepAfter?: string, owner = 'admin', templateName?: string, runtimeName?: string, customCompose?: string, sshKeys?: string[], limits?: Limits): Promise<CreateSandboxResult> {
+    const name = sandboxName(rawName)
+    const marked = markCreating(name)
+    try {
+      return await this.createSandboxUnmarked(rawName, createInnerStack, idleTimeout, deepSleepAfter, owner, templateName, runtimeName, customCompose, sshKeys, limits)
+    } finally {
+      if (marked) creatingDone(name)
+    }
+  },
+
+  async createSandboxUnmarked(rawName: string, createInnerStack = true, idleTimeout?: string, deepSleepAfter?: string, owner = 'admin', templateName?: string, runtimeName?: string, customCompose?: string, sshKeys?: string[], limits?: Limits): Promise<CreateSandboxResult> {
     // || : an empty variable (DEFAULT_TEMPLATE= in .env) means unset, as in POST /sandboxes
     const resolvedTemplateName = templateName ?? (process.env.DEFAULT_TEMPLATE || 'starter')
     const resolvedRuntimeName = runtimeName ?? await (await import('./defaultRuntime')).defaultRuntime()

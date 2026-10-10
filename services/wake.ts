@@ -12,8 +12,14 @@ import { listSandboxDirs, sandboxParent } from './sandboxPaths'
 const starting = new Map<string, 'asleep' | 'deep_sleep'>()
 
 /** Whether a deep-sleep wake (compose up) of this sandbox is running right now. */
+/** Sandboxes being created: their directory exists before their containers, which reads as deep sleep */
+const creating = new Set<string>()
+/** False if it was marked already (another create of the same name, which will fail): that one clears it */
+export function markCreating(name: string): boolean { if (creating.has(name)) return false; creating.add(name); return true }
+export function creatingDone(name: string): void { creating.delete(name) }
+
 export function wakeInProgress(name: string): boolean {
-  return starting.has(name)
+  return starting.has(name) || creating.has(name)
 }
 
 function hostDomain(): string {
@@ -118,6 +124,8 @@ export async function wakeByHost(host: string): Promise<{ result: 'not_found' | 
     return { result: 'outdated', name }
   }
   if (starting.has(name)) return { result: 'in_progress', name, from: starting.get(name) }
+  // Being created: the create starts it, a request meanwhile must not start it a second time
+  if (creating.has(name)) return { result: 'in_progress', name, from: 'asleep' }
   const live = (await listManagedContainers()).find(c => c.name === name)
   // p7y's own Sablier session probe (primeSablierSession) must never wake a sandbox someone has just put to sleep
   if (host.toLowerCase().startsWith(`${rawNameOf(name) ?? name}-p7y-wake.`) && live?.status !== 'running') return { result: 'in_progress', name }
