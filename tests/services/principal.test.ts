@@ -18,6 +18,20 @@ import { createSession } from '../../services/session'
 const req = (headers: Record<string, string> = {}, method = 'GET') =>
   new Request('http://p7y.lvh.me/sandboxes', { method, headers: { host: 'p7y.lvh.me', ...headers } })
 
+describe('getPrincipal with OIDC_ALLOWED_DOMAINS', () => {
+  // Taken off the list: their session and tokens stop at once, not in 7 days or never
+  it('drops the session and the tokens of someone no longer allowed; the admin stays', () => {
+    vi.stubEnv('OIDC_ALLOWED_DOMAINS', 'partner.org')
+    try {
+      expect(getPrincipal(req({ authorization: 'Bearer ldr_good' }))).toBeNull()
+      expect(getPrincipal(req({ cookie: `p7y_session=${createSession('bob@example.com', 'user')}` }))).toBeNull()
+      expect(getPrincipal(req({ cookie: `p7y_session=${createSession('carol@partner.org', 'user')}` }))).toMatchObject({ sub: 'carol@partner.org' })
+      expect(getPrincipal(req({ authorization: 'Bearer admin-secret' }))).toMatchObject({ role: 'admin' })
+      expect(getPrincipal(req({ cookie: `p7y_session=${createSession('admin', 'admin')}` }))).toMatchObject({ role: 'admin' })
+    } finally { vi.stubEnv('OIDC_ALLOWED_DOMAINS', '') }
+  })
+})
+
 describe('getPrincipal', () => {
   it('resolves admin token, personal token and session cookie', () => {
     expect(getPrincipal(req({ authorization: 'Bearer admin-secret' }))).toEqual({ sub: 'admin', role: 'admin', via: 'admin-token' })

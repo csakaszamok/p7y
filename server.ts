@@ -2,9 +2,11 @@ import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { startDeepSleepScheduler } from "./services/deepSleep";
 import { startSessionWatch } from "./services/sessionWatch";
 import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
+import { openSignInWarning } from "./services/allowlist";
 import { insecureConfigWarnings, insecureConfigErrors } from "./services/configWarnings";
 import { syncTlsConfig } from "./services/tlsConfig";
 import { migrateRouters } from "./services/routerMigration";
+import { migrateFrpsApiAuth } from "./services/frpsApi";
 import { migrateDataVolumes } from "./services/dataVolumes";
 import { migrateHostPaths } from "./services/pathMigration";
 import { migrateSandboxDirs, migrateArchives } from "./services/sandboxDirMigration";
@@ -286,6 +288,8 @@ startUsageSampler();
 startDiskSampler();
 // The topbar's GitHub star and fork counts: fetched now, so the first page has them
 repoInfo();
+// OIDC with no OIDC_ALLOWED_DOMAINS / OIDC_ALLOWED_EMAILS: anyone with an account at the provider gets in
+{ const open = openSignInWarning(); if (open) console.warn(open); }
 // Say once which runtime new sandboxes get, and why dind when sysbox would be safer
 void defaultRuntime().then(rt => {
   const auto = !process.env.DEFAULT_RUNTIME || process.env.DEFAULT_RUNTIME === "auto";
@@ -307,6 +311,9 @@ migrateSandboxDirs()
   .catch(err => console.error("[paths] migration failed:", err))
   .then(() => migrateRouters())
   .catch(err => console.error("[routers] migration failed:", err))
+  // Then sandboxes whose frps API has no password: frps.toml and socat's health check get one
+  .then(() => migrateFrpsApiAuth())
+  .catch(err => console.error("[frps] migration failed:", err))
   // Then sandboxes from before the data volumes: /opt, /root, /home, /srv copied into volumes
   .then(() => migrateDataVolumes())
   .catch(err => console.error("[data-volumes] migration failed:", err))

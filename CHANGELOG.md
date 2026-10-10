@@ -4,6 +4,24 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-10
+
+Upgrading from 0.5: as usual (`docker compose pull && docker compose up -d`). At its first start Purgatory gives every sandbox's frps API a password, which recreates their frps and socat containers: running sandboxes' web addresses are gone for a few seconds. If you sign in with Google (or any provider anyone can get an account at), set `OIDC_ALLOWED_DOMAINS` or `OIDC_ALLOWED_EMAILS`: until you do, anyone can sign in, as before.
+
+### Added
+
+- While a sandbox is not running, `docker_access` in `GET /sandboxes/:name` (and the MCP tool `get_sandbox`, and the **Access** tab) carries a `hint`: a Docker connection does not wake it, so start it first. The `docker` command line only gets EOF then, which said nothing to an agent.
+- **Who may sign in:** `OIDC_ALLOWED_DOMAINS` (e.g. `example.com,partner.org`, the exact domain) and `OIDC_ALLOWED_EMAILS` (single addresses). Until now anyone with an account at the OIDC provider could sign in and create sandboxes, with Google any Google account; an account not on the list is now told so on the sign-in page. It is checked on every request too: someone taken off the list (after a restart) is signed out and their tokens stop working at once. The admin is never limited. Without either setting nothing changes, and Purgatory says in its log at startup that anyone can sign in.
+- The sign-in page shows the sandbox places on the server above the sign-in buttons: taken and free of `SANDBOX_MAX_TOTAL`, with a bar that turns orange from 90% and red when the server is full. The page is public: `LOGIN_CAPACITY=off` hides it. The count is kept for 30 seconds, so reloading the page does not list the sandboxes each time.
+
+### Changed
+
+- **A sandbox's frps API (`:7500`) has a password.** It lists the sandbox's proxies, and other sandboxes reach it over `traefik-net` through socat: without the password they now get 401. Each sandbox gets its own, in its `frps.toml`; Purgatory uses it to list the apps, socat's health check gets it in `FRPS_API_AUTH`. Existing sandboxes get one when Purgatory starts (their frps and socat containers are recreated: a running sandbox's web addresses are gone for a few seconds); one whose socat health check is not the runtime's (an edited runtime) keeps its API open and says so in the log.
+
+### Fixed
+
+- `p7y-init` emptied the volumes that Sablier, nginx and the registry read before filling them again, on every `docker compose up`: for a moment the error pages were nginx's own, and a run that failed (a release without one of its files) left them empty. It now checks every file first, puts each one in place under a temporary name, and only then removes what the release no longer has.
+
 ## [0.5.2] - 2026-10-09
 
 ### Fixed
@@ -201,7 +219,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.6.0
 [0.5.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.2
 [0.5.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.1
 [0.5.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.0

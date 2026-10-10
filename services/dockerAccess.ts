@@ -21,6 +21,18 @@ export function dockerAccessState(name: string, usersDir = sandboxParent(name)):
   } catch { return 'needs-certs' }
 }
 
+export interface DockerAccess { host: string; state: 'ready' | 'needs-certs'; hint?: string }
+
+/**
+ * What the API says about a sandbox's Docker access. While it does not run, a Docker connection does not wake it
+ * (Docker Desktop reconnects to every context at once) and the client sees only EOF: the hint says what to do.
+ */
+export function dockerAccessInfo(name: string, status: string, usersDir = sandboxParent(name)): DockerAccess {
+  const info: DockerAccess = { host: dockerHostName(name), state: dockerAccessState(name, usersDir) }
+  if (status !== 'running') info.hint = `Asleep: a Docker connection does not wake it. Start it first (POST /sandboxes/${name}/start).`
+  return info
+}
+
 /** The sandbox's daemon.json with the p7y registry among its insecure registries; everything else
  * (a sysbox runtime's TLS settings) stays as it is. */
 function withOwnRegistry(file: string): string {

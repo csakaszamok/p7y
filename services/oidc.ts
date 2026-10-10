@@ -1,5 +1,6 @@
 import * as client from 'openid-client'
 import { signValue, verifyValue, publicUrl } from './session'
+import { signInAllowed } from './allowlist'
 
 export const OIDC_FLOW_COOKIE = 'p7y_oidc'
 const FLOW_TTL_SEC = 600
@@ -69,6 +70,7 @@ export async function finishLogin(callbackUrl: URL, flowValue: string | undefine
   if (!email) throw new LoginError('Your account has no e-mail address')
   if (!hasValidEmailShape(email)) throw new LoginError('Your account has no valid e-mail address')
   if (claims?.email_verified === false) throw new LoginError('Your e-mail address is not verified')
+  if (!signInAllowed(email)) throw new LoginError(`Your account (${email}) may not sign in here. Ask the administrator.`)
   return email
 }
 

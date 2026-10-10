@@ -3,7 +3,7 @@ services:
     # The released image: it carries the templates, runtimes and the files p7y-init installs.
     # To work on the code, add docker-compose.dev.yml (COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml,
     # and COMPOSE_PATH_SEPARATOR=: on Windows, in .env).
-    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.5.2}
+    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.6.0}
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
       # to localhost (P7Y_API_BIND=127.0.0.1) so everything goes through HTTPS.
@@ -28,6 +28,8 @@ services:
       DEFAULT_TEMPLATE: ${DEFAULT_TEMPLATE:-starter}
       # off: never ask GitHub for the star and fork counts in the topbar
       GITHUB_STATS: ${GITHUB_STATS:-on}
+      # off: the public sign-in page does not show the sandbox places (taken / free)
+      LOGIN_CAPACITY: ${LOGIN_CAPACITY:-on}
       SANDBOX_CPUS: ${SANDBOX_CPUS:-2}
       SANDBOX_MEMORY: ${SANDBOX_MEMORY:-4g}
       SANDBOX_MAX_CPUS: ${SANDBOX_MAX_CPUS:-4}
@@ -57,6 +59,9 @@ services:
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
       OIDC_PROVIDER_NAME: ${OIDC_PROVIDER_NAME:-Google}
+      # Who may sign in with OIDC (comma lists); without either, anyone with an account at the provider
+      OIDC_ALLOWED_DOMAINS: ${OIDC_ALLOWED_DOMAINS:-}
+      OIDC_ALLOWED_EMAILS: ${OIDC_ALLOWED_EMAILS:-}
     networks:
       - default
       - traefik-net
@@ -102,7 +107,7 @@ services:
   # One-shot, on every up: copies this release's Sablier themes, error pages, registry config and
   # dynamic/errors.yml from the image, so they always match it (no files from a checkout).
   p7y-init:
-    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.5.2}
+    image: ghcr.io/csakaszamok/p7y:${P7Y_VERSION:-0.6.0}
     entrypoint: ["sh", "/app/assets/install-assets.sh"]
     volumes:
       - sablier_themes:/out/sablier-themes

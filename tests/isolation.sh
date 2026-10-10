@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Integration test: one sandbox's apps cannot reach another sandbox's apps.
-# Creates sandbox A (no inner stack) and B (starter stack: ports 9000/5678
-# published on 127.0.0.1 only), then from a throwaway container inside A tries
-# to reach B's starter ports, B's inner containers and Sablier — all must fail,
-# while B's tunnel keeps working. A port B publishes on all interfaces
-# (-p 5680:5678) is reachable from A by design: that is what publishing means.
+# Creates sandbox A (no inner stack) and B (starter stack), then from a throwaway
+# container inside A tries to reach a port B publishes on 127.0.0.1 only, B's
+# inner containers, Sablier and B's frps API without its password — all must fail,
+# while B's tunnel keeps working. A port B publishes on all interfaces (the
+# starter's 5678) is reachable from A by design: that is what publishing means.
 #
 # Usage: bash tests/isolation.sh   (stack running)
 #
@@ -12,7 +12,7 @@
 #   P7Y_API    - default http://localhost:8081
 #   P7Y_TOKEN  - default abc123
 #   HOST_DOMAIN    - default lvh.me
-#   TRAEFIK_URL    - default http://localhost
+#   TRAEFIK_URL    - default http://localhost (https://localhost with HTTPS on; its certificate is not checked)
 
 set -euo pipefail
 export MSYS_NO_PATHCONV=1
@@ -49,9 +49,9 @@ curl -sf -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $
   "$P7Y_API/sandboxes" >/dev/null || fail "create $FB failed"
 ECHO_HOST="$B-inner-http-echo-port5678.$HOST_DOMAIN"
 for i in $(seq 1 40); do
-  [ "$(curl -s -m 5 -H "Host: $ECHO_HOST" "$TRAEFIK_URL/" | head -c 5)" = "hello" ] && break; sleep 3
+  [ "$(curl -sk -m 5 -H "Host: $ECHO_HOST" "$TRAEFIK_URL/" | head -c 5)" = "hello" ] && break; sleep 3
 done
-[ "$(curl -s -m 5 -H "Host: $ECHO_HOST" "$TRAEFIK_URL/" | head -c 5)" = "hello" ] || fail "B's tunnel never served"
+[ "$(curl -sk -m 5 -H "Host: $ECHO_HOST" "$TRAEFIK_URL/" | head -c 5)" = "hello" ] || fail "B's tunnel never served"
 pass "Both created; B's app serves through its tunnel"
 
 info "[2/3] Collecting B's addresses..."
@@ -61,9 +61,11 @@ SABLIER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}
 echo "  B DinD (traefik-net): $B_IP   B http-echo (inside B): $B_ECHO_IP   Sablier: $SABLIER_IP"
 
 info "[3/3] Probing B and Sablier from an app inside $FA..."
+# A port published on 127.0.0.1 only is the sandbox's own
+docker exec "$FB" docker run -d --name iso-private -p 127.0.0.1:5681:5678 hashicorp/http-echo -text=private >/dev/null
 OUT=$(docker exec "$FA" docker run --rm alpine sh -c "
-  nc -z -w3 $B_IP 5678       && echo LEAK:starter-5678
-  nc -z -w3 $B_IP 9000       && echo LEAK:starter-9000
+  sleep 2
+  nc -z -w3 $B_IP 5681       && echo LEAK:private-5681
   nc -z -w3 $B_ECHO_IP 5678  && echo LEAK:inner-private-ip
   nc -z -w3 $SABLIER_IP 10000 && echo LEAK:sablier
   nc -z -w3 sablier 10000    && echo LEAK:sablier-by-name
@@ -74,12 +76,16 @@ LEAKS=$(echo "$OUT" | grep LEAK || true)
 [ -z "$LEAKS" ] || fail "reachable from $FA: $(echo "$LEAKS" | tr '\n' ' ')"
 pass "B's 127.0.0.1-published ports, inner containers (private IPs) and Sablier are unreachable from $FA"
 
-docker exec "$FB" docker run -d --name iso-open -p 5680:5678 hashicorp/http-echo -text=open >/dev/null
-OPEN=$(docker exec "$FA" docker run --rm alpine sh -c "sleep 2; wget -qO- -T 5 http://$B_IP:5680/ || echo closed" 2>&1 | tail -1)
-[ "$OPEN" = "open" ] || fail "a port B published on all interfaces is not reachable from $FA (got: $OPEN)"
+OPEN=$(docker exec "$FA" docker run --rm alpine sh -c "wget -qO- -T 5 http://$B_IP:5678/ || echo closed" 2>&1 | tail -1)
+[ "$OPEN" = "hello $FB" ] || fail "the port B's starter publishes on all interfaces is not reachable from $FA (got: $OPEN)"
 pass "A port B publishes on all interfaces is reachable from $FA (by design)"
 
-[ "$(curl -s -m 5 -H "Host: $ECHO_HOST" "$TRAEFIK_URL/" | head -c 5)" = "hello" ] || fail "B's tunnel stopped working"
+B_SOCAT_IP=$(docker inspect -f '{{(index .NetworkSettings.Networks "traefik-net").IPAddress}}' "$FB-socat")
+FRPS=$(docker exec "$FA" docker run --rm alpine sh -c "wget -qO- -T 5 http://$B_SOCAT_IP:7500/api/proxy/http 2>&1 || true" 2>&1 | tail -1)
+echo "$FRPS" | grep -q '401' || fail "B's frps API from $FA without its password: $FRPS"
+pass "B's frps API answers 401 to $FA without its password"
+
+[ "$(curl -sk -m 5 -H "Host: $ECHO_HOST" "$TRAEFIK_URL/" | head -c 5)" = "hello" ] || fail "B's tunnel stopped working"
 pass "B's tunnel still serves"
 
 echo ""

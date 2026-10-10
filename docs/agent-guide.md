@@ -32,7 +32,7 @@ GET /sandboxes/p7y-shop
 The answer includes:
 
 - `status`: `running`, `exited` (asleep) or `deep_sleep`;
-- `docker_access`: `host`, the address of the sandbox's Docker daemon (for example `shop-docker.example.com`), and `state`: `ready`, or `needs-certs` for a sandbox created before Docker access existed (the user enables it once: **Access → Enable**, which restarts the sandbox);
+- `docker_access`: `host`, the address of the sandbox's Docker daemon (for example `shop-docker.example.com`), and `state`: `ready`, or `needs-certs` for a sandbox created before Docker access existed (the user enables it once: **Access → Enable**, which restarts the sandbox); and, while the sandbox is not running, `hint`: a Docker connection does not wake it, so start it first (`docker` would only get EOF);
 - `ca_cert`, `client_cert`, `client_key`: the Docker client certificates (PEM);
 - `tunnel_urls`: the app addresses.
 
