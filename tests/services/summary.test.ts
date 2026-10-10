@@ -35,6 +35,16 @@ describe('summaryFor', () => {
   })
 })
 
+describe('summaryFor, server places', () => {
+  it("every sandbox that holds a network counts, the admin's too; one in deep sleep does not", async () => {
+    const d = { ...deps, server: () => 2, list: async () => [
+      { name: 'p7y-x', owner: 'admin', status: 'running' }, { name: 'p7y-y', owner: 'admin', status: 'exited' }, { name: 'p7y-z', owner: 'alice@x', status: 'deep_sleep' },
+    ] }
+    expect(await summaryFor(admin, d)).toMatchObject({ server_limit: 2, server_used: 2 })
+    expect((await summaryFor(alice, d)).server_full).toBe(true)
+  })
+})
+
 describe('summaryFor, server limit', () => {
   it("the admin sees the users' sandboxes against SANDBOX_MAX_TOTAL; a user only whether it is full", async () => {
     const d = { ...deps, server: () => 4 }
