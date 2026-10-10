@@ -6,6 +6,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Changed
 
+- **New sandbox**: the compose is in a section that starts closed, so the dialog fits without scrolling when the template's stack is used as it is. It opens by itself for the `empty` template, for a compose of your own kept from a failed create, and when the create fails on the compose.
 - **Creating a sandbox is faster: about 7.5 s instead of 9.3 s** until its app answers at its address (measured on a development machine). The inner stack tries again every 0.5 s instead of 3 s while the sandbox's own dockerd starts; Traefik applies new routes after 0.5 s instead of its default 2 s (`--providers.providersThrottleDuration=500ms` in `docker-compose.yml`); socat's health check runs every 0.5 s while it starts (`start_interval`, Docker Engine 25 or newer; left out on an older engine). Each create logs where its time went, e.g. `[create] p7y-shop ready in 7.5 s: … inner stack 3.1 s (3 tries), tunnel 0.5 s, router 2.1 s`.
 
 ### Fixed

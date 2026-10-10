@@ -572,6 +572,8 @@ async function loadComposeEditor(name) {
     loadedCompose = { template: name, text }
     box.value = text
     box.placeholder = 'Paste your docker compose file here'
+    // empty: the compose is the user's to paste, so show it
+    if (name === 'empty') $('[data-compose-section]').open = true
   } catch (e) {
     loadedCompose = { template: name, text: '' }
     box.value = ''
@@ -586,6 +588,8 @@ async function openNewDialog() {
   const tpl = $('[data-templates]').value
   // A failed create keeps the user's text; otherwise show the selected template's
   if (!$('[data-compose-editor]').value || loadedCompose.template !== tpl) await loadComposeEditor(tpl)
+  // Closed for a template's stack as it is; open for empty, or for a compose of the user's own (kept from a failed create)
+  $('[data-compose-section]').open = tpl === 'empty' || $('[data-compose-editor]').value !== loadedCompose.text
   $('[data-new-error]').hidden = true
   dlg.showModal()
 }
@@ -634,6 +638,8 @@ async function submitNew(ev) {
     $('[data-compose-editor]').disabled = !draft.inner
     loadedCompose = draft.loaded
     err.textContent = e.message; err.hidden = false
+    // A compose error: show the compose it is about
+    if (/compose/i.test(e.message)) $('[data-compose-section]').open = true
     dlg.showModal()
     return
   }
