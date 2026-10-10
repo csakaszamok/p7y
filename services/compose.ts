@@ -72,20 +72,27 @@ export function composeDown(composePath: string): Promise<void> {
   return run(`docker compose -f "${composePath}" down`)
 }
 
-export async function composeUpInner(composePath: string, dockerHost: string, certDir: string, projectName?: string): Promise<void> {
+/** compose up against the sandbox's own dockerd, retried while it starts; returns how many tries it took. */
+export async function composeUpInner(composePath: string, dockerHost: string, certDir: string, projectName?: string,
+  opts: { run?: (cmd: string, env: NodeJS.ProcessEnv) => Promise<{ stderr: string }>; sleep?: (ms: number) => Promise<void> } = {}): Promise<number> {
+  const run = opts.run ?? ((cmd: string, env: NodeJS.ProcessEnv) => execAsync(cmd, { env }))
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>(r => setTimeout(r, ms)))
   const env = innerCliEnv(process.env, { DOCKER_HOST: dockerHost, DOCKER_TLS_VERIFY: '1', DOCKER_CERT_PATH: certDir })
   const projectFlag = projectName ? `--project-name "${projectName}"` : ''
   const deadline = Date.now() + 90000
+  let tries = 0
   while (Date.now() < deadline) {
+    tries++
     try {
-      const { stderr } = await execAsync(`docker compose -f "${composePath}" ${projectFlag} up -d --pull missing`, { env })
+      const { stderr } = await run(`docker compose -f "${composePath}" ${projectFlag} up -d --pull missing`, env)
       if (stderr) process.stderr.write(stderr)
-      return
+      return tries
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       const transient = msg.includes('Cannot connect') || msg.includes('connection refused') || msg.includes('EOF') || msg.includes('no such host') || msg.includes('lookup ')
       if (!transient) throw err
-      await new Promise<void>(r => setTimeout(r, 3000))
+      // The sandbox's dockerd answers ~1.5 s after its container starts: try again soon, not after 3 s
+      await sleep(500)
     }
   }
   throw new Error('Timed out waiting for dind TLS API to accept inner docker compose')
