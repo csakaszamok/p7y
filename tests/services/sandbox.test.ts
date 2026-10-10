@@ -622,6 +622,18 @@ describe('deep-sleeping sandboxes in the API', () => {
     expect(list).toEqual([expect.objectContaining({ name, status: 'deep_sleep', template: 'dind-standard', owner: 'alice@example.com', tunnel_urls: [] })])
   })
 
+  // Counting for the quota needs states and owners only: the full list asks every running sandbox's inner Docker
+  // for its apps, which took seconds per create on a server with many sandboxes
+  it('lists states and owners without asking any sandbox for its apps', async () => {
+    const { appLinks } = await import('../../services/appLinks')
+    const { listManagedContainers } = await import('../../services/docker')
+    vi.mocked(listManagedContainers).mockResolvedValueOnce([{ name: 'p7y-run', status: 'running', owner: 'bob@x', template: 't', runtime: 'dind', compose: 'template', ssh: false, container_id: 'c', created_at: '' }] as never)
+    vi.mocked(appLinks).mockClear()
+    const states = await sandboxService.listSandboxStates()
+    expect(states.map(s => [s.name, s.status, s.owner])).toEqual([['p7y-run', 'running', 'bob@x'], [name, 'deep_sleep', 'alice@example.com']])
+    expect(appLinks).not.toHaveBeenCalled()
+  })
+
   it('returns deep_sleep details for such a sandbox', async () => {
     const info = await sandboxService.getSandbox(name)
     expect(info.status).toBe('deep_sleep')

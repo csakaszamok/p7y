@@ -2,12 +2,12 @@ import { describe, it, expect, vi } from 'vitest'
 
 const owned: Record<string, number> = { 'alice@x.com': 2, 'bob@x.com': 3 }
 vi.mock('../../services/access', () => ({
-  visibleSandboxes: vi.fn(async (p: { sub: string }) => Array.from({ length: owned[p.sub] ?? 0 }, (_, i) => ({ name: `s${i}`, owner: p.sub, status: 'running' })))
+  visibleSandboxStates: vi.fn(async (p: { sub: string }) => Array.from({ length: owned[p.sub] ?? 0 }, (_, i) => ({ name: `s${i}`, owner: p.sub, status: 'running' })))
 }))
 
 // The whole server: alice 2, bob 3, and the admin's 10, all asleep: each holds a Docker network, the admin's too
 let server = [...Array(2).fill('alice@x.com'), ...Array(3).fill('bob@x.com'), ...Array(10).fill('admin')]
-vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxes: vi.fn(async () => server.map((owner, i) => ({ name: `p${i}`, owner, status: 'exited' }))) } }))
+vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxStates: vi.fn(async () => server.map((owner, i) => ({ name: `p${i}`, owner, status: 'exited' }))) } }))
 
 import { quotaLimit, quotaStatus, quotaExceeded, serverLimit, serverUsed } from '../../services/quota'
 const user = (sub: string) => ({ sub, role: 'user' as const, via: 'session' as const })

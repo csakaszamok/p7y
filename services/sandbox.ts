@@ -361,6 +361,13 @@ export const sandboxService = {
     return [...running, ...deepSleepingSandboxes(live).map(meta => ({ ...meta, tunnel_urls: fs.existsSync(`${dirOf(meta.name)}/frps.toml`) ? offlineApps(meta).map(e => e.host) : [] }))]
   },
 
+  /** Every sandbox with its state and owner, without asking the running ones for their apps (as listSandboxes does):
+   * what counting for the quota needs, cheap however many sandboxes run. */
+  async listSandboxStates(): Promise<SandboxMeta[]> {
+    const live = await listManagedContainers()
+    return [...live, ...deepSleepingSandboxes(live)]
+  },
+
   async getSandbox(name: string): Promise<SandboxInfo> {
     const containers = await listManagedContainers()
     const meta = containers.find(c => c.name === name) ?? deepSleepMeta(name)
