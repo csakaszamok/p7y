@@ -161,6 +161,7 @@ function selectTab(tab, focus = false) {
   }
   for (const p of panel.querySelectorAll('[role="tabpanel"]')) p.hidden = p.dataset.tabpanel !== tab
   if (tab === 'registry' && selected) void loadRegistry(selected)
+  if (tab === 'files' && selected) void loadFiles(selected)
 }
 
 // The Registry tab: the sandbox's images and their secret-scan results
@@ -178,6 +179,57 @@ async function deleteVersion(b) {
   if (!name || !await confirmDialog(`Delete ${app} (${digest.slice(7, 19)}) from the registry?`, 'Delete')) return
   try { await api(`/sandboxes/${encodeURIComponent(name)}/registry/${encodeURIComponent(app)}/${encodeURIComponent(digest)}`, { method: 'DELETE' }); await loadRegistry(name) }
   catch (e) { const err = $('[data-act-error]'); err.textContent = e.message; err.hidden = false }
+}
+
+// ---------- the Files tab: the sandbox's own files (/root, /home, /srv, /opt) ----------
+const filesAt = new Map() // sandbox → the folder open in its Files tab, kept over the panel's re-renders
+let filesListing = null
+const filesBase = name => `/sandboxes/${encodeURIComponent(name)}/files`
+async function loadFiles(name, path = filesAt.get(name) || '/root') {
+  const box = $('[data-panel] [data-files]')
+  if (!box) return
+  try {
+    const d = await api(`${filesBase(name)}?path=${encodeURIComponent(path)}`)
+    if (selected !== name || !box.isConnected) return
+    filesAt.set(name, d.path); filesListing = d
+    box.innerHTML = P7yPanel.filesView(d, { name, now: Date.now() })
+  } catch (e) {
+    // A folder removed meanwhile (or in a terminal): back to /root
+    if (path !== '/root' && /^No such|^Not a folder/.test(e.message)) { filesAt.delete(name); return loadFiles(name, '/root') }
+    if (box.isConnected) box.innerHTML = `<p class="error">${esc(e.message)}</p>`
+  }
+}
+function filesStatus(text, error = false) {
+  const el = $('[data-panel] [data-files-status]'); if (!el) return
+  el.hidden = !text; el.textContent = text || ''; el.className = error ? 'error' : 'muted'
+}
+async function uploadFiles(fileList) {
+  const name = selected, dir = filesAt.get(name) || '/root', files = [...fileList]
+  if (!name || !files.length) return
+  const max = filesListing?.max_upload ?? Infinity, failed = []
+  for (const [i, f] of files.entries()) {
+    if (f.size > max) { failed.push(`${f.name}: larger than ${P7yPanel.fmtBytes(max)}`); continue }
+    filesStatus(`Uploading ${f.name} (${i + 1} of ${files.length})…`)
+    try {
+      const res = await fetch(`${filesBase(name)}/content?path=${encodeURIComponent(`${dir}/${f.name}`)}`, { method: 'PUT', body: f, headers: { 'Content-Type': 'application/octet-stream' }, credentials: 'same-origin' })
+      if (!res.ok) failed.push(`${f.name}: ${(await res.json().catch(() => ({}))).error || `HTTP ${res.status}`}`)
+    } catch { failed.push(`${f.name}: the upload broke off (too large?)`) }
+  }
+  await loadFiles(name, dir)
+  filesStatus(failed.length ? `Not uploaded: ${failed.join('; ')}` : `Uploaded ${files.length === 1 ? files[0].name : `${files.length} files`}.`, failed.length > 0)
+}
+async function deleteFile(path) {
+  const name = selected
+  if (!name || !await confirmDialog(`Delete ${path}? A folder goes with everything in it.`, 'Delete')) return
+  try { await api(`${filesBase(name)}?path=${encodeURIComponent(path)}`, { method: 'DELETE' }); await loadFiles(name) }
+  catch (e) { filesStatus(e.message, true) }
+}
+async function makeFolder(form) {
+  const name = selected, folder = form.folder.value.trim().replace(/^\/+|\/+$/g, '')
+  if (!name || !folder) return
+  const path = `${filesAt.get(name) || '/root'}/${folder}`
+  try { await api(`${filesBase(name)}/mkdir`, { method: 'POST', body: JSON.stringify({ path }) }); await loadFiles(name, path) }
+  catch (e) { filesStatus(e.message, true) }
 }
 
 // ---------- export for coding agents ----------
@@ -275,6 +327,7 @@ async function showPanel(name) {
   renderedJSON = sJSON
   panel.innerHTML = P7yPanel.renderPanel(s, { isAdmin, me, shortName, tab: panelTab, protocol: location.protocol })
   if (panelTab === 'registry') void loadRegistry(name)
+  if (panelTab === 'files') void loadFiles(name)
   if (busy.has(name)) markBusy(panel, busy.get(name))
 }
 
@@ -683,6 +736,8 @@ function initSandboxes() {
     if (b.dataset.tab) return selectTab(b.dataset.tab)
     if (b.dataset.copyText !== undefined) return void copyText(b)
     if (b.dataset.deleteDigest) return void deleteVersion(b)
+    if (b.dataset.filesPath) return void loadFiles(selected, b.dataset.filesPath)
+    if (b.dataset.filesDelete) return void deleteFile(b.dataset.filesDelete)
     if (b.dataset.show !== undefined) {
       const s = b.parentElement.querySelector('[data-secret]'); s.hidden = !s.hidden; b.textContent = s.hidden ? 'show' : 'hide'
       const mask = b.parentElement.querySelector('[data-secret-mask]'); if (mask) mask.hidden = !s.hidden
@@ -690,6 +745,12 @@ function initSandboxes() {
     if (b.dataset.connect) { if ($('[data-connect-dialog]')) openConnectDialog(b.dataset.connect, { port: Number(b.dataset.port), user: b.dataset.user, demoPassword: b.dataset.demoPassword, keyFile: b.dataset.keyFile }); else location.reload(); return }
     if (b.dataset.act) act(b.dataset.act)
   })
+  // The Files tab: a new folder, files picked or dropped
+  $('[data-panel]').addEventListener('submit', e => { if (e.target.matches('[data-files-mkdir]')) { e.preventDefault(); void makeFolder(e.target) } })
+  $('[data-panel]').addEventListener('change', e => { if (e.target.matches('[data-files-input]')) { void uploadFiles(e.target.files); e.target.value = '' } })
+  $('[data-panel]').addEventListener('dragover', e => { const z = e.target.closest('[data-files]'); if (z && e.dataTransfer?.types.includes('Files')) { e.preventDefault(); z.classList.add('drop') } })
+  $('[data-panel]').addEventListener('dragleave', e => { const z = e.target.closest('[data-files]'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('drop') })
+  $('[data-panel]').addEventListener('drop', e => { const z = e.target.closest('[data-files]'); if (!z) return; e.preventDefault(); z.classList.remove('drop'); void uploadFiles(e.dataTransfer.files) })
   $('[data-panel]').addEventListener('keydown', e => {
     const t = e.target.closest('[role="tab"]'); if (!t) return
     const ids = P7yPanel.TABS.map(([id]) => id), i = ids.indexOf(t.dataset.tab)

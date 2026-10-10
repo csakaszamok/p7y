@@ -19,6 +19,12 @@
 | `GET` | `/sandboxes/:name/registry` | The sandbox's images in the registry, with secret-scan results |
 | `DELETE` | `/sandboxes/:name/registry/:app/:digest` | Delete one version of an image |
 | `POST` | `/sandboxes/:name/restart` | Restart a sandbox |
+| `GET` | `/sandboxes/:name/files` | List a folder of the sandbox's files (`path`, default `/root`): only `/root`, `/home`, `/srv` and `/opt`, the folders kept over a deep sleep; the sandbox must be running (409 `not_running` otherwise). See [Files](files.md) |
+| `GET` | `/sandboxes/:name/files/content` | Download a file (`path`), or a folder as a tar |
+| `PUT` | `/sandboxes/:name/files/content` | Upload a file to `path` (the body is the file; its folder must exist), up to `FILES_MAX_UPLOAD` |
+| `GET` | `/sandboxes/:name/files/text` | A text file's content as JSON (UTF-8, up to 1 MB): for agents |
+| `POST` | `/sandboxes/:name/files/mkdir` | Create a folder (`{"path": "/srv/data"}`) |
+| `DELETE` | `/sandboxes/:name/files` | Delete a file or a folder (`path`), not the four folders themselves |
 | `DELETE` | `/sandboxes/:name` | Archive the sandbox, then remove it (**Archive…** in the UI; see [Delete = archive](archive.md)) |
 | `GET` | `/runtimes` | List the runtimes new sandboxes may use (`name`, `description`, `default`; only those in `ALLOWED_RUNTIMES` when it is set) |
 | `GET` | `/templates` | List the templates (`name`, `description`, `default`) |

@@ -85,3 +85,34 @@ describe('writeWebResponse, the client gone or slow', () => {
     s.close()
   })
 })
+
+import { readBody } from '../../services/http'
+
+// Every request body is read into memory before a route sees it: a size limit keeps a huge one out
+describe('readBody', () => {
+  const post = (port: number, body: Buffer) => new Promise<number>((resolve, reject) => {
+    const r = http.request({ port, method: 'PUT', path: '/' }, res => { res.resume(); resolve(res.statusCode ?? 0) })
+    r.on('error', () => resolve(-1)) // the server may close the connection while the client still writes
+    r.end(body)
+    void reject
+  })
+  const server = (max: number) => new Promise<{ port: number; close: () => void; got: number[] }>(resolve => {
+    const got: number[] = []
+    const s = http.createServer(async (req, res) => {
+      try { got.push((await readBody(req, max)).length); res.writeHead(200).end() } catch (e) { res.writeHead((e as { status?: number }).status ?? 500, { Connection: 'close' }).end() }
+    })
+    s.listen(0, () => resolve({ port: (s.address() as { port: number }).port, close: () => s.close(), got }))
+  })
+  it('the whole body up to the limit', async () => {
+    const s = await server(1000)
+    expect(await post(s.port, Buffer.alloc(1000, 1))).toBe(200)
+    expect(s.got).toEqual([1000])
+    s.close()
+  })
+  it('a larger one: 413, without keeping it', async () => {
+    const s = await server(1000)
+    expect([413, -1]).toContain(await post(s.port, Buffer.alloc(200_000, 1)))
+    expect(s.got).toEqual([])
+    s.close()
+  })
+})

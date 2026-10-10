@@ -2,7 +2,7 @@
 // module.exports in Node for the tests. ui/app.js renders it and handles the clicks.
 ;(function (root) {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
-  const TABS = [['apps', 'Apps'], ['access', 'Access'], ['resources', 'Resources'], ['registry', 'Registry'], ['settings', 'Settings']]
+  const TABS = [['apps', 'Apps'], ['access', 'Access'], ['files', 'Files'], ['resources', 'Resources'], ['registry', 'Registry'], ['settings', 'Settings']]
 
   const statusLabel = s => ({ exited: 'asleep', created: 'asleep', deep_sleep: 'deep sleep', starting: 'creating…' }[s] || s)
   // A stopped sandbox whose last start failed is not asleep; "created" (recreated, never started) is asleep
@@ -216,6 +216,32 @@
     }).join('')
   }
 
+  // ---------- the Files tab (GET /sandboxes/:name/files) ----------
+  const fileSize = b => b < 1024 ? `${b} B` : b < 1024 ** 2 ? `${Math.round(b / 1024)} KB` : fmtBytes(b)
+  function filesView(d, ctx) {
+    const href = p => `/sandboxes/${encodeURIComponent(ctx.name)}/files/content?path=${encodeURIComponent(p)}`
+    const root = d.roots.find(r => d.path === r || d.path.startsWith(`${r}/`)) || d.roots[0]
+    const roots = d.roots.map(r => `<button class="files-root${r === root ? ' on' : ''}" data-files-path="${esc(r)}">${esc(r)}</button>`).join('')
+    let at = root
+    const crumbs = [`<button class="link" data-files-path="${esc(root)}">${esc(root)}</button>`,
+      ...d.path.slice(root.length).split('/').filter(Boolean).map(seg => { at += `/${seg}`; return `<button class="link" data-files-path="${esc(at)}">${esc(seg)}</button>` })].join(' / ')
+    const rows = d.entries.map(e => {
+      const p = `${d.path}/${e.name}`
+      const name = e.type === 'dir' ? `<button class="link" data-files-path="${esc(p)}">${esc(e.name)}/</button>`
+        : e.type === 'file' ? `<a href="${href(p)}" download>${esc(e.name)}</a>`
+        : `<span class="muted" title="${e.type === 'link' ? 'a link' : 'not a regular file'}">${esc(e.name)}${e.type === 'link' ? ' →' : ''}</span>`
+      return `<tr><td class="files-name">${name}</td><td>${e.type === 'dir' ? '<span class="muted">—</span>' : fileSize(e.size)}</td><td class="muted">${relativeAge(new Date(e.mtime), ctx.now)}</td><td><button class="link danger-link" data-files-delete="${esc(p)}">Delete</button></td></tr>`
+    })
+    return `<div class="files-roots">${roots}</div>
+      <div class="files-bar"><span class="files-crumbs">${crumbs}</span>
+        <span class="files-tools"><label class="button-like">Upload…<input type="file" multiple data-files-input hidden></label>
+        <form data-files-mkdir><input name="folder" placeholder="new folder" aria-label="New folder name" required><button>New folder</button></form>
+        <a href="${href(d.path)}" download title="This folder as a .tar">Download folder</a></span></div>
+      ${rows.length ? table(['Name', 'Size', 'Modified', ''], rows, 'files-table') : '<p class="muted files-empty">Empty: drop files here, or Upload…</p>'}
+      <p class="muted files-note">Drop files here to upload them, up to ${fmtBytes(d.max_upload)} a file. Only /root, /home, /srv and /opt are shown: they are kept over a deep sleep.</p>
+      <p class="muted" data-files-status hidden></p>`
+  }
+
   function renderPanel(s, ctx) {
     const tab = TABS.some(([id]) => id === ctx.tab) ? ctx.tab : 'apps'
     const tabs = TABS.map(([id, label]) => `<button role="tab" id="tab-${id}" aria-selected="${id === tab}" aria-controls="tabpanel-${id}" tabindex="${id === tab ? 0 : -1}" data-tab="${id}">${label}</button>`).join('')
@@ -224,6 +250,8 @@
       access: accessTab(s, ctx),
       resources: `<div data-resources>${resourcesTable(s)}</div><div class="actions"><button data-act="resources">Change limits…</button></div>`,
       registry: '<div data-registry><p class="muted">Loading…</p></div>',
+      files: s.status === 'running' ? '<div data-files><p class="muted">Loading…</p></div>'
+        : `<p class="muted">The sandbox is ${esc(statusLabel(s.status))}: wake it to see its files.</p><div class="actions"><button data-act="start">Wake</button></div>`,
       settings: settingsTab(s, ctx),
     }
     return `${header(s, ctx)}
@@ -326,7 +354,7 @@
     return out
   }
 
-  const api = { quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  const api = { filesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)
