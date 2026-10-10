@@ -638,6 +638,8 @@ async function submitNew(ev) {
     return
   }
   await loadList()
+  // Its apps answer by now (the create waits for the tunnel): show them at once, not at the next 5 s refresh
+  if (selected === full) showPanel(full)
   showPanel(full)
 }
 
