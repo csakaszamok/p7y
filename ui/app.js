@@ -111,11 +111,15 @@ async function loadQuota() {
     if (me.quota === null) { el.textContent = ''; $('[data-new]').disabled = false; return }
     // Running and asleep sandboxes hold a slot; deep sleep frees it
     // The quota counts running sandboxes; asleep and deep-sleeping ones are free
-    el.textContent = `Running ${me.sandbox_count} / ${me.quota}`
+    const line = P7yPanel.quotaLine(me)
+    el.textContent = line.text
+    el.title = line.title
     // The server limit (SANDBOX_MAX_TOTAL) can stop a user under their own quota
     if (me.server_full) { $('[data-new]').disabled = true; $('[data-new]').title = 'The server is full: ask the administrator'; return }
-    $('[data-new]').disabled = me.sandbox_count >= me.quota
-    $('[data-new]').title = me.sandbox_count >= me.quota ? 'Running limit reached: put a sandbox to sleep first' : ''
+    // Above the guarantee the server decides whether there is room; the button stops only at the maximum (SANDBOX_QUOTA_MAX)
+    const atMax = me.max_running !== null && me.sandbox_count >= me.max_running
+    $('[data-new]').disabled = atMax
+    $('[data-new]').title = atMax ? 'Running limit reached: put a sandbox to sleep first' : ''
   } catch (e) { if (e.message !== 'signed out') console.error(e) }
 }
 
@@ -366,7 +370,7 @@ async function act(action) {
     if (selected === name) { renderedJSON = null; await showPanel(name) }
   } catch (e) {
     // At the running limit: let the owner choose which running sandbox sleeps instead
-    if (action === 'start' && e.body?.reason === 'running') { busy.delete(name); renderRows(); if (selected === name) { renderedJSON = null; await showPanel(name) } return openSwapDialog(name, e.body.running, e.body.limit) }
+    if (action === 'start' && (e.body?.reason === 'running' || e.body?.reason === 'room')) { busy.delete(name); renderRows(); if (selected === name) { renderedJSON = null; await showPanel(name) } return openSwapDialog(name, e.body.running, e.body.limit) }
     busy.delete(name)
     renderRows()
     if (selected !== name) {
@@ -750,7 +754,7 @@ async function wakeFromLink() {
   if (!name) return
   history.replaceState(null, '', location.pathname)
   try { await api(`/sandboxes/${encodeURIComponent(name)}/start`, { method: 'POST' }); await loadList(); await showPanel(name) }
-  catch (e) { if (e.body?.reason === 'running') openSwapDialog(name, e.body.running, e.body.limit); else alert(e.message) }
+  catch (e) { if (e.body?.reason === 'running' || e.body?.reason === 'room') openSwapDialog(name, e.body.running, e.body.limit); else alert(e.message) }
 }
 
 // ---------- tokens ----------

@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 vi.mock('../../../services/wake', () => ({
   wakeByHost: vi.fn(async (host: string) =>
     host.startsWith('lim-') ? { result: 'limit', name: 'p7y-lim', refusal: { reason: 'running', title: 'Running limit reached', message: 'x', limit: 1, running: ['p7y-shop'] } }
+      : host.startsWith('room-') ? { result: 'limit', name: 'p7y-room', refusal: { reason: 'room', title: 'No room above your guarantee', message: 'x', limit: 3, running: ['p7y-shop'] } }
       : host.startsWith('as-') ? { result: 'started', name: 'p7y-as', from: 'asleep' }
       : host.startsWith('ds-') ? { result: 'started', name: 'leander-ds', from: 'deep_sleep' }
       : host.startsWith('ip-') ? { result: 'in_progress', name: 'p7y-ip' }
@@ -84,6 +85,15 @@ describe('GET /wake', () => {
     // a public page: the owner's other sandboxes (their addresses) are not named here, only in the signed-in panel
     expect(html).not.toContain('shop')
     expect(html).toContain('href="https://p7y.lvh.me/?wake=p7y-lim"')
+    expect(html).toContain('<meta http-equiv="refresh" content="30">')
+  })
+  it('above the guarantee with no room to spare: says so, links the owner to Purgatory, retries every 30 s', async () => {
+    const res = await handler(req('room-web.lvh.me'))
+    expect(res.status).toBe(409)
+    const html = await res.text()
+    expect(html).toContain('<title>No room above your guarantee — p7y-room</title>')
+    expect(html).toContain("This sandbox cannot wake up now: its owner has more than the 3 running sandboxes guaranteed to them, and the server has no room to spare for others' guarantees.")
+    expect(html).not.toContain('shop')
     expect(html).toContain('<meta http-equiv="refresh" content="30">')
   })
   // Its reloads used to say "rebuilding after a long sleep" for a sandbox that had only been asleep

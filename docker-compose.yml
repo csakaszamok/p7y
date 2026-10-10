@@ -48,8 +48,10 @@ services:
       HOST_USERS_DIR: ${HOST_USERS_DIR:-}
       # How often to look for sandboxes to put into deep sleep (e.g. 30s, 1m, 1h)
       DEEP_SLEEP_CHECK_INTERVAL: ${DEEP_SLEEP_CHECK_INTERVAL:-1m}
-      # Max sandboxes per signed-in user (0 = unlimited); the admin is not limited
+      # Running sandboxes guaranteed per signed-in user (0 = unlimited); the admin is not limited
       SANDBOX_QUOTA: ${SANDBOX_QUOTA:-3}
+      # More while the server has room, up to this many (empty: none above SANDBOX_QUOTA; 0 = no maximum)
+      SANDBOX_QUOTA_MAX: ${SANDBOX_QUOTA_MAX:-}
       # UI sign-in. Admin: local account. Everyone else: OIDC (Google or any OpenID Connect provider).
       PUBLIC_URL: ${PUBLIC_URL:-http://p7y.${HOST_DOMAIN:-lvh.me}}
       SESSION_SECRET: ${SESSION_SECRET:-}
