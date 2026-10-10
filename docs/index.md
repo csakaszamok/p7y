@@ -7,7 +7,13 @@
 
 **About 10 seconds** from *New sandbox* to your own Docker and a public URL for your app; a sleeping sandbox is back in under 10. (Measured with the images already pulled: the first sandbox on a new server also downloads them.)
 
-![Creating a sandbox and opening its app, in real time: about 10 seconds](media/demo.gif)
+<video controls preload="none" playsinline poster="media/demo-poster.webp" src="media/demo.mp4" aria-label="Creating a sandbox and opening its app, in real time: about 10 seconds" style="width:100%;max-width:960px;border-radius:8px"></video>
+
+The same from a script or an agent, all real runs:
+
+| With curl, through the [API](api.md) | By an agent, over the [MCP server](mcp.md) | The MCP server by hand (JSON-RPC) |
+|---|---|---|
+| <video controls preload="none" playsinline poster="media/api-curl-poster.webp" src="media/api-curl.mp4" aria-label="Creating a sandbox with curl and calling its app, in real time: about 7 seconds" style="width:100%;max-width:960px;border-radius:8px"></video> | <video controls preload="none" playsinline poster="media/mcp-agent-poster.webp" src="media/mcp-agent.mp4" aria-label="Claude Code creates a sandbox through the MCP server and checks its app, in real time" style="width:100%;max-width:960px;border-radius:8px"></video> | <video controls preload="none" playsinline poster="media/mcp-rpc-poster.webp" src="media/mcp-rpc.mp4" aria-label="The MCP server called with curl: tools/list, then create_sandbox, in real time" style="width:100%;max-width:960px;border-radius:8px"></video> |
 
 *Where your team's code waits before it goes to heaven (production). Nothing is lost here: idle sandboxes sleep, deleted ones are archived.* `p7y` is the short name, as in k8s: **p**urgator**y**, 7 letters in between. It names the sandboxes (`p7y-<name>`), labels, tokens and the UI address.
 
