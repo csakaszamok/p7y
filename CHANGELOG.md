@@ -6,6 +6,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Fixed
 
+- The server's sandbox places (`SANDBOX_MAX_TOTAL`) did not count the admin's sandboxes, although each holds a Docker network like any other: with one of the admin's running, the sign-in page said "0 taken · 200 free". They count now (the sign-in page, the Overview's "Sandbox places used", the server-full check); the admin is still never refused. A user was also told the server was full while some of the places counted were sandboxes in deep sleep, which hold none.
 - A request to a sandbox's address while it was being created (an agent polling it, a browser tab opened early) read as a sandbox in deep sleep and started a second compose up next to the create's. It now gets the waiting page until the create is done; TLS TCP addresses wait too.
 - A new sandbox's app links work when the create answers: it now waits for the sandbox's router (up to ~10 s) instead of answering as soon as the tunnel was up, so opening an app at once no longer lands on the waiting page. The panel shows the new sandbox's details before reloading the whole list, which takes seconds on a server with many sandboxes; the waiting page of a sandbox woken from sleep reloads every second instead of every 3 s.
 - The waiting page of a sandbox woken from sleep said "rebuilding after a long sleep" from its first reload on, as if it had been in deep sleep. It now keeps saying "waking up"; only a deep-sleeping sandbox is rebuilt.

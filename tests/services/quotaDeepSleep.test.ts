@@ -23,7 +23,7 @@ describe('only running sandboxes count against the quota', () => {
 
   it('asleep and deep-sleeping ones count nowhere for the user; the server limit counts running and asleep', async () => {
     expect(await quotaStatus(dora)).toEqual({ quota: 3, sandbox_count: 1 })
-    expect(await serverUsed()).toBe(3) // dora running + asleep, erin running; the admin's are not counted
+    expect(await serverUsed()).toBe(8) // dora running + asleep, erin running, the admin's 5; deep sleep holds none
   })
 
   it('a user with 1 running of 3 may create one, however many sleep', async () => {

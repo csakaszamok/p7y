@@ -243,11 +243,12 @@
     if (ctx.isAdmin) {
       // Only awake sandboxes hold a slot: one in deep sleep is not counted
       const awake = list.filter(s => s.status !== 'deep_sleep')
-      const users = awake.filter(s => (s.owner || 'admin') !== 'admin').length, adm = awake.length - users
+      const used = awake.length, adm = awake.filter(s => (s.owner || 'admin') === 'admin').length
+      const ofAdmin = adm ? ` · ${adm} of them the admin's` : ''
       const lim = sum.server_limit
       first = lim
-        ? card('allowed', "Users' slots used", ring(users, lim), `${users}<small> / ${lim}</small>`, `server limit · ${Math.max(0, lim - users)} free · + ${adm} of the admin, not counted`, listHref(''))
-        : card('allowed', "Users' slots used", ring(0, 1), `${users}`, `no server limit · + ${adm} of the admin`, listHref(''))
+        ? card('allowed', 'Sandbox places used', ring(used, lim), `${used}<small> / ${lim}</small>`, `server limit · ${Math.max(0, lim - used)} free${ofAdmin}`, listHref(''))
+        : card('allowed', 'Sandbox places used', ring(0, 1), `${used}`, `no server limit${ofAdmin}`, listHref(''))
     } else if (sum.server_full) {
       first = card('allowed warn', 'Server', '⚠', 'full', 'the server is full: ask the administrator', '/')
     }
