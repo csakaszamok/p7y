@@ -299,6 +299,16 @@ describe('overview: only running sandboxes count', () => {
     expect(html).toContain('199 free')
     expect(html).toContain("1 of them the admin's")
   })
+  // The bar under the cards read as "half the places taken" with 1 running and 1 asleep of 200
+  it('the admin: the bar is scaled to the server limit, with the free places in the legend', () => {
+    const list = [{ name: 'p7y-r', owner: 'admin', status: 'running' }, { name: 'p7y-s', owner: 'u@x', status: 'exited' }, { name: 'p7y-d', owner: 'u@x', status: 'deep_sleep' }]
+    const html = P.overviewHtml({ archived: 0, server_limit: 200, server_used: 2, by_owner: [], resources: null }, list, { isAdmin: true })
+    const stack = /<div class="ov-stack">[\s\S]*?<\/div>/.exec(html)[0]
+    expect(stack).toContain('class="r" style="width:0.5%"')
+    expect(stack).toContain('class="a" style="width:0.5%"')
+    expect(stack).not.toContain('class="d"') // deep sleep holds no place
+    expect(html).toContain('198 free')
+  })
   it("the admin: users' sandboxes in deep sleep are not counted against the server limit", () => {
     const list = [{ name: 'p7y-a', owner: 'u@x', status: 'running' }, { name: 'p7y-b', owner: 'u@x', status: 'deep_sleep' }]
     expect(P.overviewHtml({ archived: 0, server_limit: 5, server_used: 1, by_owner: [], resources: null }, list, { isAdmin: true })).toContain('1<small> / 5</small>')
