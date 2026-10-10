@@ -8,7 +8,8 @@ import type { WakeRefusal } from './quota'
 import { rawNameOf } from './naming'
 import { listSandboxDirs, sandboxParent } from './sandboxPaths'
 
-const starting = new Set<string>()
+/** Sandboxes being woken, and where from: the waiting page reloads and keeps saying it */
+const starting = new Map<string, 'asleep' | 'deep_sleep'>()
 
 /** Whether a deep-sleep wake (compose up) of this sandbox is running right now. */
 export function wakeInProgress(name: string): boolean {
@@ -116,7 +117,7 @@ export async function wakeByHost(host: string): Promise<{ result: 'not_found' | 
   if (certsPresent() && !fs.readFileSync(`${sandboxParent(name)}/${name}/docker-compose.yml`, 'utf8').includes('websecure')) {
     return { result: 'outdated', name }
   }
-  if (starting.has(name)) return { result: 'in_progress', name }
+  if (starting.has(name)) return { result: 'in_progress', name, from: starting.get(name) }
   const live = (await listManagedContainers()).find(c => c.name === name)
   // p7y's own Sablier session probe (primeSablierSession) must never wake a sandbox someone has just put to sleep
   if (host.toLowerCase().startsWith(`${rawNameOf(name) ?? name}-p7y-wake.`) && live?.status !== 'running') return { result: 'in_progress', name }
@@ -133,7 +134,7 @@ export async function wakeByHost(host: string): Promise<{ result: 'not_found' | 
   const { reserveWake } = await import('./quota')
   const slot = await reserveWake(owner, name, live ? live.status : 'deep_sleep')
   if (!slot.ok) return { result: 'limit', name, refusal: slot.refusal }
-  starting.add(name)
+  starting.set(name, from)
   markWoken(name)
   ;(live ? composeStart(composePath) : composeUp(composePath))
     .then(async () => {

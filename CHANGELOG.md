@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- The waiting page of a sandbox woken from sleep said "rebuilding after a long sleep" from its first reload on, as if it had been in deep sleep. It now keeps saying "waking up"; only a deep-sleeping sandbox is rebuilt.
+
 ## [0.6.0] - 2026-10-10
 
 Upgrading from 0.5: as usual (`docker compose pull && docker compose up -d`). At its first start Purgatory gives every sandbox's frps API a password, which recreates their frps and socat containers: running sandboxes' web addresses are gone for a few seconds. If you sign in with Google (or any provider anyone can get an account at), set `OIDC_ALLOWED_DOMAINS` or `OIDC_ALLOWED_EMAILS`: until you do, anyone can sign in, as before.

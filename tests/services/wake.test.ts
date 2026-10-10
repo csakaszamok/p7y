@@ -103,7 +103,8 @@ describe('wakeByHost', () => {
     dirs = ['leander-w1']
     vi.mocked(composeUp).mockReturnValue(new Promise(() => {}))
     expect(await wakeByHost('w1-web.lvh.me')).toEqual({ result: 'started', name: 'leander-w1', from: 'deep_sleep' })
-    expect(await wakeByHost('w1-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w1' })
+    // The waiting page reloads every 3 s: it keeps saying where the sandbox wakes from
+    expect(await wakeByHost('w1-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w1', from: 'deep_sleep' })
     expect(composeUp).toHaveBeenCalledTimes(1)
     expect(composeUp).toHaveBeenCalledWith('/opt/users/leander-w1/docker-compose.yml')
   })
@@ -180,7 +181,7 @@ describe('wakeByHost', () => {
     await vi.waitFor(() => expect(composeUp).toHaveBeenCalled())
     await new Promise(r => setImmediate(r))
     vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'leander-w3', template: 't', status: 'running', container_id: 'x', created_at: '' })])
-    expect(await wakeByHost('w3-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w3' })
+    expect(await wakeByHost('w3-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w3', from: 'deep_sleep' })
     expect(composeUp).toHaveBeenCalledTimes(1)
   })
 
