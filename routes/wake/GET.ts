@@ -25,7 +25,8 @@ function escapeHtml(s: string): string {
 }
 
 function wakingPage(name: string, from?: 'asleep' | 'deep_sleep'): string {
-  const asleep = from === 'asleep'
+  // Only deep sleep rebuilds; a wake whose start is not known (a reload while it runs) is a plain wake
+  const asleep = from !== 'deep_sleep'
   return waitingPage({
     title: 'Sandbox is waking up',
     name: escapeHtml(name),
