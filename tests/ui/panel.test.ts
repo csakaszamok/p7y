@@ -266,8 +266,8 @@ describe('overview', () => {
       resources: { cpu: { used: 0.5, reserved: 2, host: 20 }, memory: { used: G, reserved: 4 * G, host: 16 * G }, disk: { used: 31 * G, over: 1 } } }
     const html = P.overviewHtml(sum, list, { isAdmin: true })
     expect(html).toContain('Sandbox places used')
-    expect(html).toContain('2<small> / 30</small>') // the admin's one sleeps deeply: it holds no place
-    expect(html).toContain('28 free')
+    expect(html).toContain('1<small> / 30</small>') // only the running one: asleep and deep sleep take no place
+    expect(html).toContain('29 free')
     expect(html).not.toContain('of the admin, not counted')
     expect(html).toContain('href="/admin?status=running"')
     expect(html).toContain('Host resources')
@@ -300,14 +300,21 @@ describe('overview: only running sandboxes count', () => {
     expect(html).toContain("1 of them the admin's")
   })
   // The bar under the cards read as "half the places taken" with 1 running and 1 asleep of 200
-  it('the admin: the bar is scaled to the server limit, with the free places in the legend', () => {
+  it('the admin: the bar is the running sandboxes against the server limit, with the free places in the legend', () => {
     const list = [{ name: 'p7y-r', owner: 'admin', status: 'running' }, { name: 'p7y-s', owner: 'u@x', status: 'exited' }, { name: 'p7y-d', owner: 'u@x', status: 'deep_sleep' }]
-    const html = P.overviewHtml({ archived: 0, server_limit: 200, server_used: 2, by_owner: [], resources: null }, list, { isAdmin: true })
+    const html = P.overviewHtml({ archived: 0, server_limit: 200, server_used: 1, by_owner: [], resources: null }, list, { isAdmin: true })
     const stack = /<div class="ov-stack">[\s\S]*?<\/div>/.exec(html)?.[0] ?? ''
     expect(stack).toContain('class="r" style="width:0.5%"')
-    expect(stack).toContain('class="a" style="width:0.5%"')
-    expect(stack).not.toContain('class="d"') // deep sleep holds no place
-    expect(html).toContain('198 free')
+    expect(stack).not.toContain('class="a"') // asleep takes no place
+    expect(stack).not.toContain('class="d"')
+    expect(html).toContain('199 free of 200 places')
+    expect(html).toContain('1 asleep')
+  })
+  it('the admin: asleep sandboxes take no place (letting them sleep frees it): 1 running of 19 is 1 / 200', () => {
+    const list = [{ name: 'p7y-r', owner: 'admin', status: 'running' }, ...Array.from({ length: 18 }, (_, i) => ({ name: `p7y-s${i}`, owner: 'u@x', status: 'exited' }))]
+    const html = P.overviewHtml({ archived: 0, server_limit: 200, server_used: 1, by_owner: [], resources: null }, list, { isAdmin: true })
+    expect(html).toMatch(/Sandbox places used[\s\S]*?1<small> \/ 200<\/small>/)
+    expect(html).toContain('199 free')
   })
   it("the admin: users' sandboxes in deep sleep are not counted against the server limit", () => {
     const list = [{ name: 'p7y-a', owner: 'u@x', status: 'running' }, { name: 'p7y-b', owner: 'u@x', status: 'deep_sleep' }]

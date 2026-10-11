@@ -34,11 +34,11 @@ describe('SANDBOX_QUOTA_MAX', () => {
 })
 
 describe('reservedFor', () => {
-  it("what every other owner lacks of their guarantee (asleep ones hold their place), and one newcomer's guarantee; not the admin's", () => {
+  it("what every other owner lacks of their guarantee (only running ones hold a place), and one newcomer's guarantee; not the admin's", () => {
     const states = [...make('alice', 'running', 4), ...make('bob', 'running', 1), ...make('carol', 'running', 1), ...make('carol', 'exited', 2), ...make('dave', 'deep_sleep', 3), ...make('admin', 'running', 5)]
-    // bob lacks 2, carol none (3 awake), dave 3 (deep sleep holds no place), a newcomer 3
-    expect(reservedFor('alice', states, 3)).toBe(2 + 0 + 3 + 3)
-    expect(reservedFor('bob', states, 3)).toBe(0 + 0 + 3 + 3)
+    // bob lacks 2, carol 2 (1 running; asleep ones hold no place), dave 3 (deep sleep neither), a newcomer 3
+    expect(reservedFor('alice', states, 3)).toBe(2 + 2 + 3 + 3)
+    expect(reservedFor('bob', states, 3)).toBe(2 + 3 + 3)
   })
 })
 
@@ -71,10 +71,12 @@ describe('a create above the guarantee', () => {
 })
 
 describe('a wake above the guarantee', () => {
-  it('from sleep takes no new place: only the maximum counts', async () => {
+  it('from sleep takes a place too (an asleep one holds none): refused when the others need it', async () => {
     server = [...make('alice', 'running', 3), ...make('alice', 'exited', 1), ...make('bob', 'running', 1)]
-    vi.stubEnv('SANDBOX_MAX_TOTAL', '5') // full
+    vi.stubEnv('SANDBOX_MAX_TOTAL', '10') // 4 + 1 + bob's 2 + a newcomer's 3 = 10: fits
     expect(await wakeRefusal('alice', 'exited')).toBeNull()
+    vi.stubEnv('SANDBOX_MAX_TOTAL', '9')
+    expect(await wakeRefusal('alice', 'exited')).toMatchObject({ reason: 'room', limit: 3 })
   })
   it('from deep sleep takes a place: refused when the others need it, with its own reason', async () => {
     server = [...make('alice', 'running', 3), ...make('alice', 'deep_sleep', 1), ...make('bob', 'running', 1)]

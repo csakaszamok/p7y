@@ -21,6 +21,11 @@ describe('GET /wake', () => {
     expect((await handler(req('nope.lvh.me'))).status).toBe(404)
   })
 
+  it("the waiting page asks Purgatory whether the address's app answers before opening it", async () => {
+    const html = await (await handler(req('ds-web.lvh.me'))).text()
+    expect(html).toContain('data-ready="https://p7y.lvh.me/wake/ready?host=ds-web.lvh.me"')
+  })
+
   it('serves an auto-refreshing waiting page for a deep-sleeping sandbox', async () => {
     const res = await handler(req('ds-web.lvh.me'))
     expect(res.status).toBe(200)
