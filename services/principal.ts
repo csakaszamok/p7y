@@ -37,6 +37,7 @@ const SCOPED_ALLOWED: Array<[string, RegExp]> = [
   ['DELETE', /^\/sandboxes\/[^/]+\/files$/],
   ['POST', /^\/sandboxes\/[^/]+\/files\/mkdir$/],
   ['PUT', /^\/sandboxes\/[^/]+\/files\/content$/],
+  ['GET', /^\/sandboxes\/[^/]+\/volumes$/],
 ]
 
 // The router prefers a static directory under routes/sandboxes/ over [name], so such a

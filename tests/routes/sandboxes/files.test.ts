@@ -19,6 +19,9 @@ const files = {
   remove: vi.fn(async (_n: string, p: string) => { if (p === '/root') throw new Error('/root itself cannot be removed') }),
 }
 vi.mock('../../../services/sandboxFiles', async (orig) => ({ ...(await orig<object>()), sandboxFiles: files }))
+const vols = [{ name: 'shop_db', path: '/var/lib/docker/volumes/shop_db/_data', project: 'shop', containers: [{ name: 'shop-db-1', service: 'db', running: true, mount: '/var/lib/postgresql/data' }] }]
+const sandboxVolumes = vi.fn(async () => vols)
+vi.mock('../../../services/sandboxVolumes', () => ({ sandboxVolumes }))
 
 const list = (await import('../../../routes/sandboxes/[name]/files/GET')).default
 const del = (await import('../../../routes/sandboxes/[name]/files/DELETE')).default
@@ -26,6 +29,7 @@ const mkdir = (await import('../../../routes/sandboxes/[name]/files/mkdir/POST')
 const download = (await import('../../../routes/sandboxes/[name]/files/content/GET')).default
 const upload = (await import('../../../routes/sandboxes/[name]/files/content/PUT')).default
 const text = (await import('../../../routes/sandboxes/[name]/files/text/GET')).default
+const volumes = (await import('../../../routes/sandboxes/[name]/volumes/GET')).default
 
 const req = (url: string, init: RequestInit = {}, token = 'p7y_user') => new Request(`http://localhost${url}`, { ...init, headers: { Authorization: `Bearer ${token}`, ...(init.headers ?? {}) } })
 
@@ -94,5 +98,24 @@ describe('changes', () => {
     expect((await del(req('/sandboxes/p7y-mine/files?path=/root/a.txt', { method: 'DELETE' }))).status).toBe(200)
     expect((await del(req('/sandboxes/p7y-mine/files?path=/root', { method: 'DELETE' }))).status).toBe(400)
     expect((await del(req('/sandboxes/p7y-mine/files', { method: 'DELETE' }))).status).toBe(400) // no path: nothing is removed by default
+  })
+})
+
+describe('GET /sandboxes/:name/volumes', () => {
+  it("the volumes of the sandbox's own Docker, with the containers that use them", async () => {
+    const res = await volumes(req('/sandboxes/p7y-mine/volumes'))
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ volumes: vols })
+    expect(sandboxVolumes).toHaveBeenCalledWith('p7y-mine')
+  })
+  it('another owner (404), a sandbox that is not running (409)', async () => {
+    expect((await volumes(req('/sandboxes/p7y-other/volumes'))).status).toBe(404)
+    expect((await volumes(req('/sandboxes/p7y-sleepy/volumes'))).status).toBe(409)
+  })
+  it("a volume's files go through the Files routes", async () => {
+    const res = await list(req('/sandboxes/p7y-mine/files?path=/var/lib/docker/volumes/shop_db/_data'))
+    expect(res.status).toBe(200)
+    expect(files.list).toHaveBeenCalledWith('p7y-mine', '/var/lib/docker/volumes/shop_db/_data')
+    expect((await list(req('/sandboxes/p7y-mine/files?path=/var/lib/docker/image'))).status).toBe(400)
   })
 })

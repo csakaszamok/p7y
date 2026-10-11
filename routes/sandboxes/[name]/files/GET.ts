@@ -3,13 +3,13 @@ import { sandboxFiles, FILE_ROOTS, filesMaxUpload } from '../../../../services/s
 
 export const openapi = {
   mcp: { name: 'list_sandbox_files' },
-  summary: "List a folder of the sandbox's files (only /root, /home, /srv and /opt: the folders kept over a deep sleep)",
+  summary: "List a folder of the sandbox's files (/root, /home, /srv and /opt, the folders kept over a deep sleep, and the apps' volumes: see list_sandbox_volumes)",
   tags: ['files'],
   security: [{ bearerAuth: [] }],
   parameters: [{ name: 'path', in: 'query', description: 'The folder, e.g. /root/app (default: /root)', schema: { type: 'string' } }],
   responses: {
     200: { description: '{ path, roots, max_upload (bytes), entries: [{ name, type: dir | file | link | other, size, mtime }] }, folders first' },
-    400: { description: 'Not in one of the four folders, or not a folder' },
+    400: { description: 'Not in one of the four folders or a volume, or not a folder' },
     404: { description: 'Sandbox or folder not found' },
     409: { description: 'The sandbox is not running (reason: not_running)' },
   },

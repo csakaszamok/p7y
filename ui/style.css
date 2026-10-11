@@ -38,6 +38,7 @@ label.check input { width: auto }
 .button-like { padding: 4px 10px; border-radius: 6px; background: #ea580c; color: #fff; cursor: pointer }
 .files-name { overflow-wrap: anywhere }
 .files-note { font-size: 12px; margin-top: 8px }
+.files-warn { font-size: 13px; margin: 0 0 8px }
 /* the server's places in the topbar: taken / limit, orange from 90%, red when full */
 .places { padding: 3px 10px; border-radius: 999px; border: 1px solid #2c2c2c; color: #aaa; font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums }
 .places.warn { color: #f97316; border-color: rgba(249,115,22,.45) }

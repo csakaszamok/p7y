@@ -181,18 +181,34 @@ async function deleteVersion(b) {
   catch (e) { const err = $('[data-act-error]'); err.textContent = e.message; err.hidden = false }
 }
 
-// ---------- the Files tab: the sandbox's own files (/root, /home, /srv, /opt) ----------
-const filesAt = new Map() // sandbox → the folder open in its Files tab, kept over the panel's re-renders
+// ---------- the Files tab: the sandbox's own files (/root, /home, /srv, /opt) and its apps' volumes ----------
+const filesAt = new Map() // sandbox → the folder open in its Files tab ('volumes': their list), kept over the panel's re-renders
+const volumesOf = new Map() // sandbox → its volumes, as last listed (which apps use the one open)
 let filesListing = null
 const filesBase = name => `/sandboxes/${encodeURIComponent(name)}/files`
+const IN_VOLUME = /^\/var\/lib\/docker\/volumes\/[^/]+\/_data(\/|$)/
+async function listVolumes(name) {
+  const { volumes } = await api(`/sandboxes/${encodeURIComponent(name)}/volumes`)
+  volumesOf.set(name, volumes)
+  return volumes
+}
 async function loadFiles(name, path = filesAt.get(name) || '/root') {
   const box = $('[data-panel] [data-files]')
   if (!box) return
   try {
-    const d = await api(`${filesBase(name)}?path=${encodeURIComponent(path)}`)
+    if (path === 'volumes') {
+      const volumes = await listVolumes(name)
+      if (selected !== name || !box.isConnected) return
+      filesAt.set(name, 'volumes')
+      box.innerHTML = P7yPanel.volumesView({ volumes }, { name, now: Date.now(), roots: filesListing?.roots })
+      return
+    }
+    const [d, volumes] = await Promise.all([api(`${filesBase(name)}?path=${encodeURIComponent(path)}`),
+      IN_VOLUME.test(path) ? (volumesOf.get(name) ?? listVolumes(name).catch(() => [])) : null])
     if (selected !== name || !box.isConnected) return
     filesAt.set(name, d.path); filesListing = d
-    box.innerHTML = P7yPanel.filesView(d, { name, now: Date.now() })
+    const volume = volumes?.find(v => d.path === v.path || d.path.startsWith(`${v.path}/`))
+    box.innerHTML = P7yPanel.filesView(d, { name, now: Date.now(), volume })
   } catch (e) {
     // A folder removed meanwhile (or in a terminal): back to /root
     if (path !== '/root' && /^No such|^Not a folder/.test(e.message)) { filesAt.delete(name); return loadFiles(name, '/root') }
@@ -206,6 +222,7 @@ function filesStatus(text, error = false) {
 async function uploadFiles(fileList) {
   const name = selected, dir = filesAt.get(name) || '/root', files = [...fileList]
   if (!name || !files.length) return
+  if (dir === 'volumes') return filesStatus('Open a volume first, then drop the files in it.', true)
   const max = filesListing?.max_upload ?? Infinity, failed = []
   for (const [i, f] of files.entries()) {
     if (f.size > max) { failed.push(`${f.name}: larger than ${P7yPanel.fmtBytes(max)}`); continue }
@@ -737,6 +754,7 @@ function initSandboxes() {
     if (b.dataset.copyText !== undefined) return void copyText(b)
     if (b.dataset.deleteDigest) return void deleteVersion(b)
     if (b.dataset.filesPath) return void loadFiles(selected, b.dataset.filesPath)
+    if ('filesVolumes' in b.dataset) return void loadFiles(selected, 'volumes')
     if (b.dataset.filesDelete) return void deleteFile(b.dataset.filesDelete)
     if (b.dataset.show !== undefined) {
       const s = b.parentElement.querySelector('[data-secret]'); s.hidden = !s.hidden; b.textContent = s.hidden ? 'show' : 'hide'
