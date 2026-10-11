@@ -4,7 +4,9 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
-## [Unreleased]
+## [0.6.3] - 2026-10-11
+
+Upgrading from 0.6.2: as usual (`docker compose pull && docker compose up -d`). The server's places now count only running sandboxes: with `SANDBOX_MAX_TOTAL` set, more sandboxes may be asleep at once than before, and each keeps a Docker network until its deep sleep, so the host's Docker address pools must have room for them (`check-host.sh` says how many).
 
 ### Fixed
 
