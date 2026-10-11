@@ -241,9 +241,9 @@
     const listHref = q => ctx.isAdmin ? `/admin${q ? `?${q}` : ''}` : '/'
     let first
     if (ctx.isAdmin) {
-      // Only awake sandboxes hold a slot: one in deep sleep is not counted
-      const awake = list.filter(s => s.status !== 'deep_sleep')
-      const used = awake.length, adm = awake.filter(s => (s.owner || 'admin') === 'admin').length
+      // Only running sandboxes take a place: asleep or in deep sleep they take none
+      const taking = list.filter(s => s.status === 'running')
+      const used = taking.length, adm = taking.filter(s => (s.owner || 'admin') === 'admin').length
       const ofAdmin = adm ? ` · ${adm} of them the admin's` : ''
       const lim = sum.server_limit
       first = lim
@@ -268,15 +268,14 @@
       card('archived', 'Archived', dot('archived'), c.archived, 'deleted, kept, not counted'),
       ...(over.length ? [card('warn', 'Disk', '⚠', over.length, `${over.length} over its disk limit`, listHref(''))] : []),
     ]
-    // The admin's bar is the server's places: awake sandboxes against the limit (deep sleep holds none); otherwise the split of the list
+    // The admin's bar is the server's places: running sandboxes against the limit (asleep ones take none); otherwise the split of the list
     const lim = ctx.isAdmin ? sum.server_limit : null
-    const awake = list.filter(s => s.status !== 'deep_sleep').length
     // A user's: against their running limit while they have fewer sandboxes than that (two of two is not full)
     const runMax = ctx.isAdmin ? null : sum.max_running ?? c.quota
-    const whole = lim ? Math.max(lim, awake) : runMax ? Math.max(runMax, c.total) : c.total
+    const whole = lim ? Math.max(lim, c.running) : runMax ? Math.max(runMax, c.total) : c.total
     const pct = n => whole ? (n / whole * 100).toFixed(1) : 0
-    const stack = `<div class="ov-stack"><span class="r" style="width:${pct(c.running)}%"></span><span class="a" style="width:${pct(c.asleep)}%"></span>${lim ? '' : `<span class="d" style="width:${pct(c.deep_sleep)}%"></span>`}</div>
-      <div class="ov-legend"><span>${dot('running small')}${c.running} running</span><span>${dot('asleep small')}${c.asleep} asleep</span><span>${dot('deep small')}${c.deep_sleep} deep sleep</span>${lim ? `<span>${Math.max(0, lim - awake)} free of ${lim} places</span>` : ''}</div>`
+    const stack = `<div class="ov-stack"><span class="r" style="width:${pct(c.running)}%"></span>${lim ? '' : `<span class="a" style="width:${pct(c.asleep)}%"></span><span class="d" style="width:${pct(c.deep_sleep)}%"></span>`}</div>
+      <div class="ov-legend"><span>${dot('running small')}${c.running} running</span><span>${dot('asleep small')}${c.asleep} asleep</span><span>${dot('deep small')}${c.deep_sleep} deep sleep</span>${lim ? `<span>${Math.max(0, lim - c.running)} free of ${lim} places</span>` : ''}</div>`
     let out = `<div class="ov-cards">${cards.join('')}</div>${stack}`
 
     if (ctx.isAdmin) {

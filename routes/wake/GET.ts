@@ -47,7 +47,7 @@ function limitPage(name: string, r: WakeRefusal): Response {
   const text = r.reason === 'running'
     // A public page: the owner's other sandboxes (their addresses) are named only in the signed-in panel
     ? `This sandbox is asleep and cannot wake up: its owner reached their limit of ${r.limit} running sandbox${r.limit === 1 ? '' : 'es'}.`
-    : `This sandbox cannot wake up: the server is full (${r.limit} sandboxes running or asleep).`
+    : `This sandbox cannot wake up: the server is full (${r.limit} sandboxes running).`
   const link = r.reason === 'running'
     ? `<a href="${escapeHtml(`${base}/?wake=${encodeURIComponent(name)}`)}">Choose what sleeps (owner)</a>`
     : `<a href="${escapeHtml(`${base}/`)}">Open Purgatory (owner)</a>`
