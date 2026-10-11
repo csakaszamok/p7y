@@ -65,8 +65,8 @@ export async function summaryFor(p: { sub: string; role: 'user' | 'admin' }, dep
   // The admin has no quota (as at create)
   const quotaOf = (owner: string) => (owner === 'admin' ? null : deps.quota())
   const server = deps.server()
-  // Places on the server (SANDBOX_MAX_TOTAL): every sandbox that holds a network, the admin's too; deep sleep holds none
-  const used = live.filter(s => s.status !== 'deep_sleep').length
+  // Places on the server (SANDBOX_MAX_TOTAL): the running sandboxes, the admin's too; asleep ones take none
+  const used = live.filter(s => s.status === 'running').length
   if (p.role !== 'admin') {
     return { ...counts(live.filter(s => s.owner === p.sub), archived.filter(o => o === p.sub).length, deps.quota()), max_running: deps.running(), server_full: server !== null && used >= server }
   }

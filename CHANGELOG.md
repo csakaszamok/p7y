@@ -4,6 +4,15 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-10-11
+
+Upgrading from 0.6.2: as usual (`docker compose pull && docker compose up -d`). The server's places now count only running sandboxes: with `SANDBOX_MAX_TOTAL` set, more sandboxes may be asleep at once than before, and each keeps a Docker network until its deep sleep, so the host's Docker address pools must have room for them (`check-host.sh` says how many).
+
+### Fixed
+
+- The server's sandbox places (`SANDBOX_MAX_TOTAL`) counted asleep sandboxes too: with one running and 18 asleep the top bar and the Overview said *19 / 200 places*. Only running sandboxes take a place now, the admin's included, so letting a sandbox sleep frees it for everyone: the top bar, the sign-in page, the Overview's card and bar, and the server-full check of a create or a wake (from sleep too now, since it takes a place).
+- Waking a sandbox at an app's address opened a 404 page while that app was still starting (Redmine takes about a minute): the sandbox's router comes up with its first tunnel, and frps answers 404 for an app whose port does not answer yet. The waiting page now asks Purgatory whether the app at its address answers (`GET /wake/ready?host=…`, probed on the sandbox container, which neither wakes nor keeps it awake) and keeps waiting, saying *starting redmine…*, for up to 5 minutes.
+
 ## [0.6.2] - 2026-10-10
 
 Upgrading from 0.6.1: as usual (`docker compose pull && docker compose up -d`).

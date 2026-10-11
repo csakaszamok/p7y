@@ -25,7 +25,7 @@ describe('summaryFor', () => {
   })
   it('the admin: the whole server, and per owner (also owners with only archived sandboxes)', async () => {
     const s = await summaryFor(admin, deps)
-    expect(s).toMatchObject({ quota: null, free: null, total: 5, running: 2, asleep: 2, deep_sleep: 1, archived: 3, server_limit: null, server_used: 4, resources })
+    expect(s).toMatchObject({ quota: null, free: null, total: 5, running: 2, asleep: 2, deep_sleep: 1, archived: 3, server_limit: null, server_used: 2, resources })
     expect(s.by_owner).toEqual([
       { owner: 'admin', quota: null, total: 1, free: null, running: 1, asleep: 0, deep_sleep: 0, archived: 0, max_running: null },
       { owner: 'alice@x', quota: 3, total: 3, free: 2, running: 1, asleep: 1, deep_sleep: 1, archived: 2, max_running: 1 },
@@ -36,19 +36,21 @@ describe('summaryFor', () => {
 })
 
 describe('summaryFor, server places', () => {
-  it("every sandbox that holds a network counts, the admin's too; one in deep sleep does not", async () => {
+  it("the running sandboxes count, the admin's too; asleep and deep-sleeping ones do not", async () => {
     const d = { ...deps, server: () => 2, list: async () => [
       { name: 'p7y-x', owner: 'admin', status: 'running' }, { name: 'p7y-y', owner: 'admin', status: 'exited' }, { name: 'p7y-z', owner: 'alice@x', status: 'deep_sleep' },
     ] }
-    expect(await summaryFor(admin, d)).toMatchObject({ server_limit: 2, server_used: 2 })
-    expect((await summaryFor(alice, d)).server_full).toBe(true)
+    expect(await summaryFor(admin, d)).toMatchObject({ server_limit: 2, server_used: 1 })
+    expect((await summaryFor(alice, d)).server_full).toBe(false)
+    const full = { ...d, list: async () => [...await d.list(), { name: 'p7y-w', owner: 'bob@x', status: 'running' }] }
+    expect((await summaryFor(alice, full)).server_full).toBe(true)
   })
 })
 
 describe('summaryFor, server limit', () => {
   it("the admin sees the users' sandboxes against SANDBOX_MAX_TOTAL; a user only whether it is full", async () => {
-    const d = { ...deps, server: () => 4 }
-    expect(await summaryFor(admin, d)).toMatchObject({ server_limit: 4, server_used: 4 })
+    const d = { ...deps, server: () => 2 }
+    expect(await summaryFor(admin, d)).toMatchObject({ server_limit: 2, server_used: 2 })
     const a = await summaryFor(alice, d)
     expect(a.server_full).toBe(true)
     expect(a).not.toHaveProperty('server_used')

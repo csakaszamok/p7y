@@ -5,9 +5,9 @@ vi.mock('../../services/access', () => ({
   visibleSandboxStates: vi.fn(async (p: { sub: string }) => Array.from({ length: owned[p.sub] ?? 0 }, (_, i) => ({ name: `s${i}`, owner: p.sub, status: 'running' })))
 }))
 
-// The whole server: alice 2, bob 3, and the admin's 10, all asleep: each holds a Docker network, the admin's too
+// The whole server: alice 2, bob 3, and the admin's 10 running, and 4 asleep (they take no place)
 let server = [...Array(2).fill('alice@x.com'), ...Array(3).fill('bob@x.com'), ...Array(10).fill('admin')]
-vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxStates: vi.fn(async () => server.map((owner, i) => ({ name: `p${i}`, owner, status: 'exited' }))) } }))
+vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxStates: vi.fn(async () => [...server.map((owner, i) => ({ name: `p${i}`, owner, status: 'running' })), ...Array.from({ length: 4 }, (_, i) => ({ name: `z${i}`, owner: 'bob@x.com', status: 'exited' }))]) } }))
 
 import { quotaLimit, quotaStatus, quotaExceeded, serverLimit, serverUsed } from '../../services/quota'
 const user = (sub: string) => ({ sub, role: 'user' as const, via: 'session' as const })
@@ -71,8 +71,8 @@ describe('server limit (SANDBOX_MAX_TOTAL)', () => {
     expect(serverLimit({ SANDBOX_MAX_TOTAL: '30' })).toBe(30)
     expect(serverLimit({ SANDBOX_MAX_TOTAL: 'many' })).toBe(200)
   })
-  // A running sandbox of the admin's leaves one place less for everyone (the limit is about Docker networks)
-  it("counts every sandbox that holds a network, the admin's too", async () => {
+  // A running sandbox of the admin's leaves one place less for everyone; asleep ones take none (letting them sleep frees it)
+  it("counts the running sandboxes, the admin's too, not the asleep ones", async () => {
     expect(await serverUsed()).toBe(15)
   })
   it('refuses a user under their own quota when the server is full; never the admin', async () => {

@@ -21,9 +21,9 @@ const dora = { sub: 'dora@x', role: 'user' as const, via: 'session' as const }
 describe('only running sandboxes count against the quota', () => {
   beforeEach(() => { reset(); vi.stubEnv('SANDBOX_QUOTA', '3'); vi.stubEnv('SANDBOX_MAX_TOTAL', '0') })
 
-  it('asleep and deep-sleeping ones count nowhere for the user; the server limit counts running and asleep', async () => {
+  it('asleep and deep-sleeping ones count nowhere, not for the user and not for the server', async () => {
     expect(await quotaStatus(dora)).toEqual({ quota: 3, sandbox_count: 1 })
-    expect(await serverUsed()).toBe(8) // dora running + asleep, erin running, the admin's 5; deep sleep holds none
+    expect(await serverUsed()).toBe(7) // dora's and erin's running ones and the admin's 5; asleep and deep sleep take none
   })
 
   it('a user with 1 running of 3 may create one, however many sleep', async () => {
@@ -40,9 +40,16 @@ describe('only running sandboxes count against the quota', () => {
     expect(await wakeRefusal('dora@x', 'deep_sleep')).toBeNull() // d2 asleep does not count
   })
 
-  it('the server limit refuses a wake from deep sleep too; the admin is never refused', async () => {
-    vi.stubEnv('SANDBOX_MAX_TOTAL', '3')
-    expect((await wakeRefusal('erin@x', 'deep_sleep'))?.message).toMatch(/server is full/)
+  it("the server limit refuses any wake (it takes a running place), the admin's running ones count; the admin is never refused", async () => {
+    vi.stubEnv('SANDBOX_MAX_TOTAL', '7')
+    expect((await wakeRefusal('erin@x', 'deep_sleep'))?.message).toBe('The server is full (7 sandboxes running): ask the administrator.')
+    expect((await wakeRefusal('dora@x', 'exited'))?.reason).toBe('server')
     expect(await wakeRefusal('admin', 'deep_sleep')).toBeNull()
+    vi.stubEnv('SANDBOX_MAX_TOTAL', '8')
+    expect(await wakeRefusal('dora@x', 'exited')).toBeNull()
+  })
+  it('a swap frees the place of the one it puts to sleep', async () => {
+    vi.stubEnv('SANDBOX_MAX_TOTAL', '7')
+    expect(await wakeRefusal('dora@x', 'exited', [], { freeing: 'p7y-d1' })).toBeNull()
   })
 })
