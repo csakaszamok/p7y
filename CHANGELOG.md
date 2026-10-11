@@ -4,6 +4,12 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [Unreleased]
+
+### Fixed
+
+- Waking a sandbox at an app's address opened a 404 page while that app was still starting (Redmine takes about a minute): the sandbox's router comes up with its first tunnel, and frps answers 404 for an app whose port does not answer yet. The waiting page now asks Purgatory whether the app at its address answers (`GET /wake/ready?host=…`, probed on the sandbox container, which neither wakes nor keeps it awake) and keeps waiting, saying *starting redmine…*, for up to 5 minutes.
+
 ## [0.6.2] - 2026-10-10
 
 Upgrading from 0.6.1: as usual (`docker compose pull && docker compose up -d`).

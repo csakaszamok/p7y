@@ -15,7 +15,7 @@ export default async (req: Request): Promise<Response> => {
   if (result === 'no_route') return messageResponse(502, name, 'This address does not reach the sandbox',
     `The sandbox is running, but none of its routes matches this address. If you opened it over https://, try http://;
   restarting Purgatory updates the routes of sandboxes created before HTTPS support.`)
-  return new Response(wakingPage(name, from), {
+  return new Response(wakingPage(name, from, `${publicBase()}/wake/ready?host=${encodeURIComponent(host)}`), {
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }
   })
 }
@@ -24,7 +24,10 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
 }
 
-function wakingPage(name: string, from?: 'asleep' | 'deep_sleep'): string {
+const publicBase = () => (process.env.PUBLIC_URL ?? `https://p7y.${(process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()}`).replace(/\/$/, '')
+
+/** readyUrl: asked before opening the address, so the page waits until its app answers, not only its tunnel. */
+function wakingPage(name: string, from: 'asleep' | 'deep_sleep' | undefined, readyUrl: string): string {
   // Only deep sleep rebuilds; a wake whose start is not known (a reload while it runs) is a plain wake
   const asleep = from !== 'deep_sleep'
   return waitingPage({
@@ -32,6 +35,7 @@ function wakingPage(name: string, from?: 'asleep' | 'deep_sleep'): string {
     name: escapeHtml(name),
     // From sleep it takes seconds; deep sleep rebuilds, which takes longer
     refreshSeconds: asleep ? 1 : 3,
+    readyUrl: escapeHtml(readyUrl),
     body: `<div class="status" data-status><span class="dot starting"></span>${asleep ? 'waking up' : 'rebuilding after a long sleep'}</div>
   <div class="hint">${asleep ? 'This page updates by itself, in a few seconds.' : 'This page updates by itself. This can take up to a minute.'}</div>`,
   })
@@ -39,7 +43,7 @@ function wakingPage(name: string, from?: 'asleep' | 'deep_sleep'): string {
 
 /** At the owner's limit: says which limit and what runs, where the owner chooses, and tries again every 30 s. */
 function limitPage(name: string, r: WakeRefusal): Response {
-  const base = (process.env.PUBLIC_URL ?? `https://p7y.${(process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()}`).replace(/\/$/, '')
+  const base = publicBase()
   const text = r.reason === 'running'
     // A public page: the owner's other sandboxes (their addresses) are named only in the signed-in panel
     ? `This sandbox is asleep and cannot wake up: its owner reached their limit of ${r.limit} running sandbox${r.limit === 1 ? '' : 'es'}.`
