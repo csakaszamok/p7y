@@ -10,6 +10,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 - **A guaranteed quota and a maximum while there is room:** `SANDBOX_QUOTA` (3) is now guaranteed to every user, and `SANDBOX_QUOTA_MAX` (e.g. `10`) lets them run more while the server has room. Above the guarantee a new sandbox, or one woken, must leave room for every other owner to reach their guarantee (their running sandboxes hold their places already) and for one newcomer; otherwise it is refused with why (409, the wake page says so too), and **Wake** offers to put one to sleep. Nobody is ever put to sleep to make room. Unset, nothing changes. The Overview shows *2 more guaranteed · up to 10 while the server has room*, the owner table *4 / 3 (+7)*.
 - The top bar shows the server's sandbox places on every page, to everyone signed in: e.g. *142 / 200 places*, the free ones on hover, orange from 90% and red when the server is full. `GET /me` (and the MCP tool `who_am_i`) gives them as `server_places`.
 
+## [0.6.3] - 2026-10-11
+
+Upgrading from 0.6.2: as usual (`docker compose pull && docker compose up -d`). The server's places now count only running sandboxes: with `SANDBOX_MAX_TOTAL` set, more sandboxes may be asleep at once than before, and each keeps a Docker network until its deep sleep, so the host's Docker address pools must have room for them (`check-host.sh` says how many).
+
 ### Fixed
 
 - The server's sandbox places (`SANDBOX_MAX_TOTAL`) counted asleep sandboxes too: with one running and 18 asleep the top bar and the Overview said *19 / 200 places*. Only running sandboxes take a place now, the admin's included, so letting a sandbox sleep frees it for everyone: the top bar, the sign-in page, the Overview's card and bar, and the server-full check of a create or a wake (from sleep too now, since it takes a place).
