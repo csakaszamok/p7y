@@ -414,4 +414,31 @@ describe('the Files tab', () => {
   it('an empty folder says where files can go', () => {
     expect(P.filesView({ ...listing, entries: [] }, { ...ctx, name: 'p7y-shop' })).toContain('Empty: drop files here')
   })
+  const vol = { name: 'shop_db', path: '/var/lib/docker/volumes/shop_db/_data', project: 'shop', containers: [{ name: 'shop-db-1', service: 'db', running: true, mount: '/var/lib/postgresql/data' }] }
+  it('a Volumes chip next to the four folders', () => {
+    const html = P.filesView(listing, { ...ctx, name: 'p7y-shop' })
+    expect(html).toContain('data-files-volumes')
+    expect(html).not.toMatch(/files-root on[^>]*data-files-volumes/)
+  })
+  it('in a volume: the crumbs start at the volume, a running app using it is a warning', () => {
+    const html = P.filesView({ ...listing, path: `${vol.path}/base` }, { ...ctx, name: 'p7y-shop', volume: vol })
+    expect(html).toMatch(/files-root on[^>]*data-files-volumes/)
+    expect(html).toContain(`data-files-path="${vol.path}">shop_db</button> / <button class="link" data-files-path="${vol.path}/base">base</button>`)
+    expect(html).toContain('db (shop-db-1) is running')
+    expect(html).not.toContain('Only /root, /home, /srv and /opt are shown')
+    const stopped = P.filesView({ ...listing, path: vol.path }, { ...ctx, name: 'p7y-shop', volume: { ...vol, containers: [{ ...vol.containers[0], running: false }] } })
+    expect(stopped).not.toContain('is running')
+  })
+  it('a container named as its service is named once', () => {
+    const solo = { ...vol, containers: [{ name: 'portainer', service: 'portainer', running: true, mount: '/data' }] }
+    expect(P.filesView({ ...listing, path: vol.path }, { ...ctx, name: 'p7y-shop', volume: solo })).toContain('>portainer is running')
+  })
+  it("volumesView: the sandbox's volumes to open, who uses them; none says so", () => {
+    const html = P.volumesView({ volumes: [vol, { name: '3f9a <x>', path: '/var/lib/docker/volumes/3f9a/_data', project: null, containers: [] }] }, { ...ctx, name: 'p7y-shop' })
+    expect(html).toContain(`data-files-path="${vol.path}"`)
+    expect(html).toContain('/var/lib/postgresql/data')
+    expect(html).toContain('3f9a &lt;x&gt;')
+    expect(html).toMatch(/files-root on[^>]*data-files-volumes/)
+    expect(P.volumesView({ volumes: [] }, { ...ctx, name: 'p7y-shop' })).toContain('No volumes')
+  })
 })

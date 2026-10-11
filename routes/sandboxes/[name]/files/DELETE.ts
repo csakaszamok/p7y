@@ -6,10 +6,10 @@ export const openapi = {
   summary: "Delete a file or a folder (with everything in it) of the sandbox's files",
   tags: ['files'],
   security: [{ bearerAuth: [] }],
-  parameters: [{ name: 'path', in: 'query', required: true, description: 'e.g. /root/old.log; not /root, /home, /srv or /opt themselves', schema: { type: 'string' } }],
+  parameters: [{ name: 'path', in: 'query', required: true, description: "e.g. /root/old.log; not /root, /home, /srv or /opt themselves, nor a volume's folder", schema: { type: 'string' } }],
   responses: {
     200: { description: '{ deleted: path }' },
-    400: { description: 'No path, one of the four folders, or outside them' },
+    400: { description: "No path, one of the four folders or a volume's own folder, or outside them" },
     404: { description: 'Sandbox not found' },
     409: { description: 'The sandbox is not running (reason: not_running)' },
   },

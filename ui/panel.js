@@ -218,12 +218,18 @@
 
   // ---------- the Files tab (GET /sandboxes/:name/files) ----------
   const fileSize = b => b < 1024 ? `${b} B` : b < 1024 ** 2 ? `${Math.round(b / 1024)} KB` : fmtBytes(b)
+  const VOLUME_ROOT = /^\/var\/lib\/docker\/volumes\/[^/]+\/_data/
+  const rootChips = (roots, on) => roots.map(r => `<button class="files-root${r === on ? ' on' : ''}" data-files-path="${esc(r)}">${esc(r)}</button>`).join('')
+    + `<button class="files-root${on === 'volumes' ? ' on' : ''}" data-files-volumes title="The volumes of the apps in this sandbox's own Docker">Volumes</button>`
+  const userName = u => u.service && u.service !== u.name ? `${u.service} (${u.name})` : u.name
   function filesView(d, ctx) {
     const href = p => `/sandboxes/${encodeURIComponent(ctx.name)}/files/content?path=${encodeURIComponent(p)}`
-    const root = d.roots.find(r => d.path === r || d.path.startsWith(`${r}/`)) || d.roots[0]
-    const roots = d.roots.map(r => `<button class="files-root${r === root ? ' on' : ''}" data-files-path="${esc(r)}">${esc(r)}</button>`).join('')
+    // In a volume of the inner Docker: its folder is the root, shown by the volume's name
+    const volRoot = VOLUME_ROOT.exec(d.path)?.[0]
+    const root = volRoot || d.roots.find(r => d.path === r || d.path.startsWith(`${r}/`)) || d.roots[0]
+    const rootLabel = volRoot ? volRoot.split('/')[5] : root
     let at = root
-    const crumbs = [`<button class="link" data-files-path="${esc(root)}">${esc(root)}</button>`,
+    const crumbs = [`<button class="link" data-files-path="${esc(root)}">${esc(rootLabel)}</button>`,
       ...d.path.slice(root.length).split('/').filter(Boolean).map(seg => { at += `/${seg}`; return `<button class="link" data-files-path="${esc(at)}">${esc(seg)}</button>` })].join(' / ')
     const rows = d.entries.map(e => {
       const p = `${d.path}/${e.name}`
@@ -232,13 +238,31 @@
         : `<span class="muted" title="${e.type === 'link' ? 'a link' : 'not a regular file'}">${esc(e.name)}${e.type === 'link' ? ' →' : ''}</span>`
       return `<tr><td class="files-name">${name}</td><td>${e.type === 'dir' ? '<span class="muted">—</span>' : fileSize(e.size)}</td><td class="muted">${relativeAge(new Date(e.mtime), ctx.now)}</td><td><button class="link danger-link" data-files-delete="${esc(p)}">Delete</button></td></tr>`
     })
-    return `<div class="files-roots">${roots}</div>
+    const running = volRoot ? (ctx.volume?.containers || []).filter(u => u.running) : []
+    const warning = running.length ? `<p class="warn files-warn">${running.map(u => esc(userName(u))).join(', ')} ${running.length === 1 ? 'is' : 'are'} running and using this volume: a copy of a database's files taken while it runs may not be consistent, and changes here may surprise it. Stop the app first for that.</p>` : ''
+    const note = volRoot ? "A volume of an app in this sandbox's own Docker; it is kept over a deep sleep. Uploaded files belong to root (readable by everyone)."
+      : "Only /root, /home, /srv and /opt are shown: they are kept over a deep sleep. The apps' own data is under Volumes."
+    return `<div class="files-roots">${rootChips(d.roots, volRoot ? 'volumes' : root)}</div>
+      ${warning}
       <div class="files-bar"><span class="files-crumbs">${crumbs}</span>
         <span class="files-tools"><label class="button-like">Upload…<input type="file" multiple data-files-input hidden></label>
         <form data-files-mkdir><input name="folder" placeholder="new folder" aria-label="New folder name" required><button>New folder</button></form>
         <a href="${href(d.path)}" download title="This folder as a .tar">Download folder</a></span></div>
       ${rows.length ? table(['Name', 'Size', 'Modified', ''], rows, 'files-table') : '<p class="muted files-empty">Empty: drop files here, or Upload…</p>'}
-      <p class="muted files-note">Drop files here to upload them, up to ${fmtBytes(d.max_upload)} a file. Only /root, /home, /srv and /opt are shown: they are kept over a deep sleep.</p>
+      <p class="muted files-note">Drop files here to upload them, up to ${fmtBytes(d.max_upload)} a file. ${note}</p>
+      <p class="muted" data-files-status hidden></p>`
+  }
+
+  // ---------- the Files tab's Volumes (GET /sandboxes/:name/volumes) ----------
+  function volumesView(d, ctx) {
+    const roots = ctx.roots || ['/root', '/home', '/srv', '/opt']
+    const rows = d.volumes.map(v => {
+      const users = v.containers.length ? v.containers.map(u => `${esc(userName(u))} <span class="muted">at ${esc(u.mount)}${u.running ? '' : ', stopped'}</span>`).join('<br>') : '<span class="muted">no container</span>'
+      return `<tr><td class="files-name"><button class="link" data-files-path="${esc(v.path)}">${esc(v.name)}/</button></td><td>${v.project ? esc(v.project) : '<span class="muted">—</span>'}</td><td>${users}</td></tr>`
+    })
+    return `<div class="files-roots">${rootChips(roots, 'volumes')}</div>
+      ${rows.length ? table(['Volume', 'Project', 'Used by'], rows, 'files-table') : `<p class="muted files-empty">No volumes in this sandbox's Docker yet.</p>`}
+      <p class="muted files-note">The volumes of the apps in this sandbox's own Docker (a database's data, an app's uploads). They are kept over a deep sleep.</p>
       <p class="muted" data-files-status hidden></p>`
   }
 
@@ -354,7 +378,7 @@
     return out
   }
 
-  const api = { filesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  const api = { filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

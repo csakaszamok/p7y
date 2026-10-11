@@ -1,5 +1,6 @@
 // The Files tab: browse, upload and download a sandbox's own files, in the folders that outlive a deep sleep
-// (they are volumes; anything else in the sandbox container is gone when it is recreated).
+// (they are volumes; anything else in the sandbox container is gone when it is recreated), and the volumes of the
+// apps in its own Docker, whose files are in the sandbox container too (docker_data, at /var/lib/docker).
 import path from 'node:path'
 import { tarFile, firstFile } from './tar'
 import { parseMemory } from './resources'
@@ -8,10 +9,22 @@ export const FILE_ROOTS = ['/root', '/home', '/srv', '/opt']
 const ROOTS_TEXT = '/root, /home, /srv and /opt'
 export const TEXT_MAX = 1024 * 1024
 
-/** A normalized absolute path inside one of FILE_ROOTS, or an error. */
+export const VOLUMES_DIR = '/var/lib/docker/volumes'
+// A volume's files, as the sandbox's dockerd keeps them (its volume names: Docker's own rule)
+const IN_VOLUME = /^\/var\/lib\/docker\/volumes\/([a-zA-Z0-9][a-zA-Z0-9_.-]*)\/_data(?:\/|$)/
+
+/** The inner Docker volume a (normalized) path is in, with the folder that holds its files; null outside them. */
+export function volumeOf(p: string): { name: string; root: string } | null {
+  const m = IN_VOLUME.exec(p)
+  return m ? { name: m[1], root: `${VOLUMES_DIR}/${m[1]}/_data` } : null
+}
+
+/** A normalized absolute path inside one of FILE_ROOTS or an inner Docker volume, or an error. */
 export function safePath(p: string): string {
   const n = p.startsWith('/') ? path.posix.normalize(p).replace(/(.)\/+$/, '$1') : ''
-  if (!FILE_ROOTS.some(r => n === r || n.startsWith(`${r}/`))) throw new Error(`Only ${ROOTS_TEXT} are kept (and shown): ${p || '(no path)'}`)
+  if (!FILE_ROOTS.some(r => n === r || n.startsWith(`${r}/`)) && !volumeOf(n)) {
+    throw new Error(`Only ${ROOTS_TEXT} are kept (and shown), and the apps' volumes: ${p || '(no path)'}`)
+  }
   return n
 }
 
@@ -99,12 +112,17 @@ export function createSandboxFiles(deps: FilesDeps) {
     },
 
     async mkdir(name: string, p: string): Promise<void> {
-      const r = await deps.exec(name, ['mkdir', '-p', '--', p])
+      // mkdir -p would make a volume that is not there into a stray folder of the sandbox's dockerd
+      const vol = volumeOf(p)
+      const r = await deps.exec(name, vol ? ['sh', '-c', '[ -d "$2" ] || exit 3; mkdir -p -- "$1"', 'sh', p, vol.root] : ['mkdir', '-p', '--', p])
+      if (vol && r.code === 3) throw new Error(`No such volume: ${vol.name}`)
       if (r.code !== 0) throw new Error(r.stderr.trim() || `Could not make ${p}`)
     },
 
     async remove(name: string, p: string): Promise<void> {
       if (FILE_ROOTS.includes(p)) throw new Error(`${p} itself cannot be removed`)
+      const vol = volumeOf(p)
+      if (vol?.root === p) throw new Error(`The volume ${vol.name} itself cannot be removed here`)
       const r = await deps.exec(name, ['rm', '-rf', '--', p])
       if (r.code !== 0) throw new Error(r.stderr.trim() || `Could not remove ${p}`)
     },

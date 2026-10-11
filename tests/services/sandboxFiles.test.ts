@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { Readable } from 'node:stream'
-import { safePath, parseListing, createSandboxFiles, FILE_ROOTS } from '../../services/sandboxFiles'
+import { safePath, parseListing, createSandboxFiles, FILE_ROOTS, volumeOf } from '../../services/sandboxFiles'
 import { tarFile, firstFile } from '../../services/tar'
 
 const collect = async (s: AsyncIterable<Uint8Array>) => { const parts: Buffer[] = []; for await (const c of s) parts.push(Buffer.from(c)); return Buffer.concat(parts) }
@@ -11,6 +11,18 @@ describe('safePath', () => {
     expect(safePath('/root')).toBe('/root')
     expect(safePath('/srv/app/../data/')).toBe('/srv/data')
     for (const bad of ['/etc', '/root/../etc', '/rootkit', 'root/x', '', '/']) expect(() => safePath(bad), bad).toThrow(/Only \/root, \/home, \/srv and \/opt/)
+  })
+  it("and inside the volumes of the sandbox's own Docker, never the rest of its data", () => {
+    expect(safePath('/var/lib/docker/volumes/shop_db/_data')).toBe('/var/lib/docker/volumes/shop_db/_data')
+    expect(safePath('/var/lib/docker/volumes/shop_db/_data/pg/../base/')).toBe('/var/lib/docker/volumes/shop_db/_data/base')
+    for (const bad of ['/var/lib/docker', '/var/lib/docker/volumes', '/var/lib/docker/volumes/shop_db', '/var/lib/docker/volumes/metadata.db',
+      '/var/lib/docker/volumes/shop_db/other', '/var/lib/docker/volumes/shop_db/_data/../../../image', '/var/lib/docker/volumes/.x/_data', '/var/lib/docker/image/_data']) {
+      expect(() => safePath(bad), bad).toThrow(/^Only \/root/)
+    }
+  })
+  it('volumeOf: the volume a path is in, null outside the volumes', () => {
+    expect(volumeOf('/var/lib/docker/volumes/shop_db/_data/x')).toEqual({ name: 'shop_db', root: '/var/lib/docker/volumes/shop_db/_data' })
+    expect(volumeOf('/root/x')).toBeNull()
   })
 })
 
@@ -91,5 +103,15 @@ describe('sandbox files', () => {
     await f.remove('p7y-a', '/srv/data')
     expect(exec.mock.calls.at(-1)![1]).toEqual(['rm', '-rf', '--', '/srv/data'])
     await expect(f.remove('p7y-a', '/srv')).rejects.toThrow('/srv itself cannot be removed')
+  })
+  it("in a volume: never removes the volume's folder itself, makes a folder only in a volume that exists", async () => {
+    const { exec, f } = fakes()
+    await expect(f.remove('p7y-a', '/var/lib/docker/volumes/shop_db/_data')).rejects.toThrow('The volume shop_db itself cannot be removed')
+    await f.mkdir('p7y-a', '/var/lib/docker/volumes/shop_db/_data/a b')
+    const cmd = exec.mock.calls.at(-1)![1]
+    expect(cmd.slice(0, 2)).toEqual(['sh', '-c'])
+    expect(cmd.slice(3)).toEqual(['sh', '/var/lib/docker/volumes/shop_db/_data/a b', '/var/lib/docker/volumes/shop_db/_data'])
+    exec.mockResolvedValueOnce({ code: 3, stdout: '', stderr: '' })
+    await expect(f.mkdir('p7y-a', '/var/lib/docker/volumes/gone/_data/x')).rejects.toThrow('No such volume: gone')
   })
 })

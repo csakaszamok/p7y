@@ -127,7 +127,7 @@ describe('sandbox-scoped tokens', () => {
       ['POST', '/sandboxes/p7y-shop/start'], ['POST', '/sandboxes/p7y-shop/stop'], ['POST', '/sandboxes/p7y-shop/restart'], ['POST', '/sandboxes/p7y-shop/deep-sleep'], ['GET', '/sandboxes/p7y-shop/compose'], ['GET', '/sandboxes/p7y-shop/ssh-key'], ['POST', '/sandboxes/p7y-shop/ssh-key'], ['GET', '/sandboxes/p7y-shop/logs/stream'], ['POST', '/sandboxes/p7y-shop/keep-awake'], ['GET', '/sandboxes/p7y-shop/registry'], ['DELETE', '/sandboxes/p7y-shop/registry/todo/sha256:a'],
       ['GET', '/me'], ['GET', '/templates'], ['GET', '/runtimes'], ['GET', '/sandboxes/'],
       // its files (the Files tab, and an agent over MCP)
-      ['GET', '/sandboxes/p7y-shop/files'], ['DELETE', '/sandboxes/p7y-shop/files'], ['POST', '/sandboxes/p7y-shop/files/mkdir'], ['GET', '/sandboxes/p7y-shop/files/content'], ['PUT', '/sandboxes/p7y-shop/files/content'], ['GET', '/sandboxes/p7y-shop/files/text'],
+      ['GET', '/sandboxes/p7y-shop/files'], ['DELETE', '/sandboxes/p7y-shop/files'], ['POST', '/sandboxes/p7y-shop/files/mkdir'], ['GET', '/sandboxes/p7y-shop/files/content'], ['PUT', '/sandboxes/p7y-shop/files/content'], ['GET', '/sandboxes/p7y-shop/files/text'], ['GET', '/sandboxes/p7y-shop/volumes'],
     ]
     for (const [m, p] of allowed) expect(scopedTokenAllows(m, p), `${m} ${p}`).toBe(true)
     const denied: Array<[string, string]> = [
@@ -192,6 +192,7 @@ describe('scoped-token allowlist against the real routes', () => {
       'sandboxes/[name]/ssh-key/POST.ts',
       'sandboxes/[name]/start/POST.ts',
       'sandboxes/[name]/stop/POST.ts',
+      'sandboxes/[name]/volumes/GET.ts',
       'templates/GET.ts',
     ])
   })
