@@ -20,8 +20,8 @@ export function quotaLimit(env: NodeJS.ProcessEnv = process.env): number | null 
 const DEFAULT_SERVER_LIMIT = 200
 
 /**
- * SANDBOX_MAX_TOTAL: running and asleep sandboxes on the whole server (each holds a Docker network and
- * its subnet); 200 by default, 0 = none (null), invalid → default. The admin's count too (they hold networks as well),
+ * SANDBOX_MAX_TOTAL: the running sandboxes on the whole server (asleep and deep-sleeping ones take no place, so letting
+ * a sandbox sleep frees it for everyone); 200 by default, 0 = none (null), invalid → default. The admin's count too,
  * but the admin is never refused.
  */
 export function serverLimit(env: NodeJS.ProcessEnv = process.env): number | null {
@@ -34,12 +34,12 @@ export function serverLimit(env: NodeJS.ProcessEnv = process.env): number | null
   return Number(raw) || null
 }
 
-/** A sandbox in deep sleep holds no slot: its containers are gone, only its data is kept. */
-const awake = (s: { status: string }) => s.status !== 'deep_sleep'
+/** Only a running sandbox takes a place on the server: asleep or in deep sleep it takes none. */
+const isRunning = (s: { status: string }) => s.status === 'running'
 
-/** The places taken on the server (SANDBOX_MAX_TOTAL): every awake sandbox, the admin's too. */
+/** The places taken on the server (SANDBOX_MAX_TOTAL): every running sandbox, the admin's too. */
 export async function serverUsed(): Promise<number> {
-  return (await sandboxService.listSandboxStates()).filter(awake).length
+  return (await sandboxService.listSandboxStates()).filter(isRunning).length
 }
 
 /** SANDBOX_QUOTA counts running sandboxes: asleep and deep-sleeping ones are free (the reward for letting them sleep). */
@@ -53,7 +53,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : word.e
 
 /**
  * Why this owner's sandbox (now `from`: its status) may not wake, or null: from any sleep it takes a running
- * place (SANDBOX_QUOTA); from deep sleep also a place on the server (SANDBOX_MAX_TOTAL).
+ * place of its owner's (SANDBOX_QUOTA) and one on the server (SANDBOX_MAX_TOTAL).
  * `pending`: this owner's sandboxes being woken right now, counted as running; `creates`: their new sandboxes
  * being created (they will run); `freeing`: the running one a swap puts to sleep first (not counted). Never refuses the admin.
  */
@@ -61,13 +61,11 @@ export async function wakeRefusal(owner: string, from: string, pending: string[]
   if (owner === 'admin') return null
   const all = await sandboxService.listSandboxStates()
   const mine = all.filter(s => s.owner === owner)
-  if (from === 'deep_sleep') {
-    // Out of deep sleep it gets a Docker network again: within the server limit
-    const server = serverLimit()
-    if (server !== null && all.filter(s => (s.owner ?? 'admin') !== 'admin' && awake(s)).length + pending.length >= server) {
-      return { reason: 'server', title: 'The server is full', limit: server, running: [],
-        message: `The server is full (${server} sandboxes running or asleep): ask the administrator.` }
-    }
+  // Running, it takes a place on the server (the admin's running ones take theirs too)
+  const server = serverLimit()
+  if (server !== null && all.filter(s => isRunning(s) && s.name !== opts.freeing).length + pending.length >= server) {
+    return { reason: 'server', title: 'The server is full', limit: server, running: [],
+      message: `The server is full (${server} sandboxes running): ask the administrator.` }
   }
   const max = runningLimit()
   const running = [...new Set([...mine.filter(s => s.status === 'running').map(s => s.name), ...pending])].filter(n => n !== opts.freeing)
