@@ -19,6 +19,6 @@ COPY ui ./ui
 # Purgatory's own package.json (its version for the topbar); /app/package.json is the base image's
 COPY package.json ./p7y/package.json
 
-LABEL org.opencontainers.image.source="https://github.com/csakaszamok/p7y" \
+LABEL org.opencontainers.image.source="https://github.com/p7y-dev/p7y" \
       org.opencontainers.image.description="Purgatory: self-hosted sandboxes, each with its own Docker daemon" \
       org.opencontainers.image.licenses="Apache-2.0"

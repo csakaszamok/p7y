@@ -7,7 +7,7 @@ Thanks for helping. Bug reports, fixes and documentation improvements are all we
 You need Docker with the compose plugin, and Node.js 22 for the unit tests.
 
 ```bash
-git clone https://github.com/csakaszamok/p7y.git && cd p7y
+git clone https://github.com/p7y-dev/p7y.git && cd p7y
 ./setup.sh
 echo 'COMPOSE_PATH_SEPARATOR=:' >> .env
 echo 'COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml' >> .env

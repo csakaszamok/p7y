@@ -3,14 +3,14 @@
 # is none, replaces the example secrets with random ones and creates the data directories. Safe to run
 # again: values you already set are kept.
 #
-#   curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com
+#   curl -fsSL https://github.com/p7y-dev/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com
 #
 # The domain (optional) becomes HOST_DOMAIN: every address is under it (the UI is p7y.<domain>).
 set -euo pipefail
 
 # Set in the release asset (e.g. v0.5.0); empty in a checkout, which uses its own .env.example
 P7Y_RELEASE=
-P7Y_RELEASE_BASE=${P7Y_RELEASE_BASE:-https://github.com/csakaszamok/p7y/releases/download}
+P7Y_RELEASE_BASE=${P7Y_RELEASE_BASE:-https://github.com/p7y-dev/p7y/releases/download}
 
 command -v docker >/dev/null || { echo "docker is not installed" >&2; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "the docker compose plugin is not installed" >&2; exit 1; }
@@ -111,6 +111,6 @@ if ! grep -qs default-address-pools /etc/docker/daemon.json; then
 
 Note: /etc/docker/daemon.json has no default-address-pools. Docker's default
 pools allow about 30 networks, and every sandbox needs one. See "Give the Docker
-daemon a larger address pool" in https://csakaszamok.github.io/p7y/latest/install/
+daemon a larger address pool" in https://p7y-dev.github.io/p7y/latest/install/
 EOF
 fi
