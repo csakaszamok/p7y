@@ -1,6 +1,6 @@
 # <img src="ui/logo.svg" alt="" width="40" align="top"> Purgatory (p7y)
 
-[![Docs](https://img.shields.io/badge/docs-csakaszamok.github.io%2Fp7y-ea580c)](https://csakaszamok.github.io/p7y/latest/) [![CI](https://github.com/csakaszamok/p7y/actions/workflows/ci.yml/badge.svg)](https://github.com/csakaszamok/p7y/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-p7y-dev.github.io%2Fp7y-ea580c)](https://p7y-dev.github.io/p7y/latest/) [![CI](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml/badge.svg)](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 > [!NOTE]
 > **Purgatory is a proof of concept.** It works, but it is an experiment: expect rough edges and breaking changes before 1.0.
@@ -20,11 +20,11 @@
 
 All three are real runs, in real time.
 
-**With curl**, through the [API](https://csakaszamok.github.io/p7y/latest/api/):
+**With curl**, through the [API](https://p7y-dev.github.io/p7y/latest/api/):
 
 ![Creating a sandbox with curl and calling its app, in real time: about 7 seconds](docs/media/api-curl.gif)
 
-**By an agent**: Claude Code with the [MCP server](https://csakaszamok.github.io/p7y/latest/mcp/):
+**By an agent**: Claude Code with the [MCP server](https://p7y-dev.github.io/p7y/latest/mcp/):
 
 ![Claude Code creates a sandbox through the MCP server and checks its app, in real time](docs/media/mcp-agent.gif)
 
@@ -34,12 +34,12 @@ All three are real runs, in real time.
 
 ## Install
 
-On a Linux host with Docker Engine and the compose plugin, no clone needed ([check the host first](https://csakaszamok.github.io/p7y/latest/install/)):
+On a Linux host with Docker Engine and the compose plugin, no clone needed ([check the host first](https://p7y-dev.github.io/p7y/latest/install/)):
 
 ```bash
 mkdir p7y && cd p7y
-curl -fsSLO https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml
-curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com   # .env with your domain and random secrets
+curl -fsSLO https://github.com/p7y-dev/p7y/releases/latest/download/docker-compose.yml
+curl -fsSL https://github.com/p7y-dev/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com   # .env with your domain and random secrets
 docker compose up -d
 ```
 
@@ -47,8 +47,8 @@ Then sign in at `http://p7y.<HOST_DOMAIN>` (by default `http://p7y.lvh.me`).
 
 ## Documentation
 
-**[csakaszamok.github.io/p7y](https://csakaszamok.github.io/p7y/latest/)**: [install](https://csakaszamok.github.io/p7y/latest/install/), [configuration](https://csakaszamok.github.io/p7y/latest/configuration/), [let your agent deploy](https://csakaszamok.github.io/p7y/latest/agents/), [MCP](https://csakaszamok.github.io/p7y/latest/mcp/), [API](https://csakaszamok.github.io/p7y/latest/api/), and [`llms-full.txt`](https://csakaszamok.github.io/p7y/latest/llms-full.txt) for agents.
+**[p7y-dev.github.io/p7y](https://p7y-dev.github.io/p7y/latest/)**: [install](https://p7y-dev.github.io/p7y/latest/install/), [configuration](https://p7y-dev.github.io/p7y/latest/configuration/), [let your agent deploy](https://p7y-dev.github.io/p7y/latest/agents/), [MCP](https://p7y-dev.github.io/p7y/latest/mcp/), [API](https://p7y-dev.github.io/p7y/latest/api/), and [`llms-full.txt`](https://p7y-dev.github.io/p7y/latest/llms-full.txt) for agents.
 
-> **Security:** where [sysbox](https://github.com/nestybox/sysbox) is installed, sandboxes run without a privileged container; without it they fall back to the privileged `dind`, which suits a team that trusts each other, not hostile code. On a shared server install sysbox and set `ALLOWED_RUNTIMES=sysbox` ([details](https://csakaszamok.github.io/p7y/latest/security/)).
+> **Security:** where [sysbox](https://github.com/nestybox/sysbox) is installed, sandboxes run without a privileged container; without it they fall back to the privileged `dind`, which suits a team that trusts each other, not hostile code. On a shared server install sysbox and set `ALLOWED_RUNTIMES=sysbox` ([details](https://p7y-dev.github.io/p7y/latest/security/)).
 
 [Contributing](CONTRIBUTING.md) · [Security issues](SECURITY.md) · [Apache-2.0](LICENSE)

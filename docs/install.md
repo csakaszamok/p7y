@@ -5,13 +5,13 @@ No git clone is needed: every file comes from a GitHub release, and the image ca
 First check the machine; it changes nothing (give it the `HOST_DOMAIN` you plan to use):
 
 ```bash
-curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/check-host.sh | bash -s -- dev.example.com
+curl -fsSL https://github.com/p7y-dev/p7y/releases/latest/download/check-host.sh | bash -s -- dev.example.com
 ```
 
 Or download it, read it, then run it:
 
 ```bash
-curl -fsSLO https://github.com/csakaszamok/p7y/releases/latest/download/check-host.sh
+curl -fsSLO https://github.com/p7y-dev/p7y/releases/latest/download/check-host.sh
 less check-host.sh
 bash check-host.sh dev.example.com
 ```
@@ -20,8 +20,8 @@ Then, on a Linux host with Docker Engine and the compose plugin (Compose 2.17 or
 
 ```bash
 mkdir p7y && cd p7y
-curl -fsSLO https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml
-curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com   # .env with your domain and random secrets
+curl -fsSLO https://github.com/p7y-dev/p7y/releases/latest/download/docker-compose.yml
+curl -fsSL https://github.com/p7y-dev/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com   # .env with your domain and random secrets
 docker compose up -d
 ```
 
@@ -31,7 +31,7 @@ The directory must be called `p7y`: the compose project name comes from it. For 
 
 `setup.sh` works in the current directory: it creates `.env` from its release's `env.example`, sets `HOST_DOMAIN` to the domain you give it and `PUBLIC_URL` to `p7y.<domain>` (`https://` if `certs/` already holds a certificate, else `http://`: run it again with the domain after adding one; a `PUBLIC_URL` you set yourself is kept), fills in random secrets, creates `data/`, `opt/`, `certs/` and `dynamic/`, and prints the admin password and token. It keeps values you already set, so it is safe to run again. Without it: download `env.example` of the release as `.env` and set `HOST_DOMAIN`, `PUBLIC_URL` and the three secrets by hand.
 
-`docker compose up -d` pulls the released image `ghcr.io/csakaszamok/p7y`. It carries the sandbox templates and runtimes, and the files the other services read: on every `up` the one-shot `p7y-init` service copies the Sablier themes, the error pages, the registry config and `dynamic/errors.yml` from it, so they always match the running version. To work on the code, see [CONTRIBUTING.md](https://github.com/csakaszamok/p7y/blob/main/CONTRIBUTING.md).
+`docker compose up -d` pulls the released image `ghcr.io/p7y-dev/p7y`. It carries the sandbox templates and runtimes, and the files the other services read: on every `up` the one-shot `p7y-init` service copies the Sablier themes, the error pages, the registry config and `dynamic/errors.yml` from it, so they always match the running version. To work on the code, see [CONTRIBUTING.md](https://github.com/p7y-dev/p7y/blob/main/CONTRIBUTING.md).
 
 The stack runs Traefik v3.6 with the Sablier plugin, Sablier, a registry and the Purgatory API. The UI is at `http://p7y.<HOST_DOMAIN>` (by default `http://p7y.lvh.me`, which resolves to `127.0.0.1`), the API also on port `8081` of the host.
 
