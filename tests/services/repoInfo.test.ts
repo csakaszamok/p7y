@@ -18,12 +18,12 @@ describe('repoInfo', () => {
     const f = github({ stargazers_count: 42, forks_count: 7 })
     vi.stubGlobal('fetch', f)
     const first = repoInfo()
-    expect(first).toMatchObject({ repo: 'csakaszamok/p7y', url: 'https://github.com/csakaszamok/p7y', stars: null, forks: null })
+    expect(first).toMatchObject({ repo: 'p7y-dev/p7y', url: 'https://github.com/p7y-dev/p7y', stars: null, forks: null })
     expect(first.version).toMatch(/^\d+\.\d+\.\d+/)
     await _settled()
     expect(repoInfo()).toMatchObject({ stars: 42, forks: 7 })
     expect(f).toHaveBeenCalledTimes(1)
-    expect(String((f.mock.calls[0] as unknown[])[0])).toBe('https://api.github.com/repos/csakaszamok/p7y')
+    expect(String((f.mock.calls[0] as unknown[])[0])).toBe('https://api.github.com/repos/p7y-dev/p7y')
     repoInfo(Date.now() + 30 * 60_000)
     expect(f).toHaveBeenCalledTimes(1)
     repoInfo(Date.now() + 61 * 60_000)
@@ -61,8 +61,8 @@ describe('repoInfo', () => {
 
 describe('repoBadge', () => {
   it('links to the repo with stars, forks and version', () => {
-    const html = repoBadge({ repo: 'csakaszamok/p7y', url: 'https://github.com/csakaszamok/p7y', version: '0.3.0', stars: 1234, forks: 5 })
-    expect(html).toContain('href="https://github.com/csakaszamok/p7y"')
+    const html = repoBadge({ repo: 'p7y-dev/p7y', url: 'https://github.com/p7y-dev/p7y', version: '0.3.0', stars: 1234, forks: 5 })
+    expect(html).toContain('href="https://github.com/p7y-dev/p7y"')
     expect(html).toContain('rel="noopener"')
     expect(html).toContain('title="1234 stars"')
     expect(html).toContain('1.2k')
@@ -70,7 +70,7 @@ describe('repoBadge', () => {
     expect(html).toContain('v0.3.0')
   })
   it('before the counts (or with GITHUB_STATS=off): only the name and the version', () => {
-    const html = repoBadge({ repo: 'csakaszamok/p7y', url: 'https://github.com/csakaszamok/p7y', version: '0.3.0', stars: null, forks: null })
+    const html = repoBadge({ repo: 'p7y-dev/p7y', url: 'https://github.com/p7y-dev/p7y', version: '0.3.0', stars: null, forks: null })
     expect(html).not.toContain('stars')
     expect(html).toContain('v0.3.0')
   })

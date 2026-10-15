@@ -90,7 +90,7 @@ Upgrading from 0.4: check that Docker Compose is 2.17 or newer **before** `git p
 
 ### Changed
 
-- **Installed without a git clone**: `docker-compose.yml`, `setup.sh`, `check-host.sh` and `env.example` are files of each GitHub release (`releases/latest/download/…`), and the image carries everything else. A new one-shot service, `p7y-init`, copies the image's Sablier themes, error pages, registry config and `dynamic/errors.yml` into place on every `docker compose up`, so they always match the running version. Purgatory reads templates and runtimes from its image: **templates or runtimes edited in a checkout no longer apply**. See [Upgrading](https://csakaszamok.github.io/p7y/latest/upgrading/).
+- **Installed without a git clone**: `docker-compose.yml`, `setup.sh`, `check-host.sh` and `env.example` are files of each GitHub release (`releases/latest/download/…`), and the image carries everything else. A new one-shot service, `p7y-init`, copies the image's Sablier themes, error pages, registry config and `dynamic/errors.yml` into place on every `docker compose up`, so they always match the running version. Purgatory reads templates and runtimes from its image: **templates or runtimes edited in a checkout no longer apply**. See [Upgrading](https://p7y-dev.github.io/p7y/latest/upgrading/).
 - `setup.sh` prepares the current directory (it no longer needs to sit in a checkout) and creates `data/`, `opt/`, `certs/`, `dynamic/`.
 - Docker Compose 2.17 or newer is required; `check-host.sh` fails below it.
 - Traefik waits for `p7y-init` and restarts when a new release recreates it; the upgrade from 0.4 recreates it once (the pull recreates `dynamic/`, which is now kept in git with a `.gitkeep`).
@@ -112,7 +112,7 @@ Upgrading from 0.4: check that Docker Compose is 2.17 or newer **before** `git p
 
 ### Changed
 
-- Documentation: the `sysbox` runtime is used in production; on a shared server the recommended setting is sysbox on the host and `ALLOWED_RUNTIMES=sysbox` ([Security](https://csakaszamok.github.io/p7y/latest/security/)). The README no longer says that the default runtime is the privileged `dind`: with `DEFAULT_RUNTIME=auto` it is `sysbox` wherever sysbox is installed.
+- Documentation: the `sysbox` runtime is used in production; on a shared server the recommended setting is sysbox on the host and `ALLOWED_RUNTIMES=sysbox` ([Security](https://p7y-dev.github.io/p7y/latest/security/)). The README no longer says that the default runtime is the privileged `dind`: with `DEFAULT_RUNTIME=auto` it is `sysbox` wherever sysbox is installed.
 
 ### Fixed
 
@@ -260,13 +260,13 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.6.0...HEAD
-[0.6.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.6.0
-[0.5.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.2
-[0.5.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.1
-[0.5.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.0
-[0.4.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.2
-[0.4.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.1
-[0.4.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.0
-[0.3.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.1
-[0.3.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.0
+[Unreleased]: https://github.com/p7y-dev/p7y/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/p7y-dev/p7y/releases/tag/v0.6.0
+[0.5.2]: https://github.com/p7y-dev/p7y/releases/tag/v0.5.2
+[0.5.1]: https://github.com/p7y-dev/p7y/releases/tag/v0.5.1
+[0.5.0]: https://github.com/p7y-dev/p7y/releases/tag/v0.5.0
+[0.4.2]: https://github.com/p7y-dev/p7y/releases/tag/v0.4.2
+[0.4.1]: https://github.com/p7y-dev/p7y/releases/tag/v0.4.1
+[0.4.0]: https://github.com/p7y-dev/p7y/releases/tag/v0.4.0
+[0.3.1]: https://github.com/p7y-dev/p7y/releases/tag/v0.3.1
+[0.3.0]: https://github.com/p7y-dev/p7y/releases/tag/v0.3.0
