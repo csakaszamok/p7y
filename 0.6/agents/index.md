@@ -5,11 +5,11 @@ Give a coding agent (Claude Code, Codex, Cursor…) a personal access token and 
 1. In the UI: create a sandbox (say `shop`), then in its panel's **Access** tab **Token for this sandbox…** — a token that works only for that sandbox.
 1. **Download p7y.env** in the token's dialog and save it in your project folder (keep it out of git), then tell the agent: *Deploy this app to my Purgatory sandbox — settings in p7y.env.* The file holds `P7Y_URL`, `P7Y_TOKEN`, `P7Y_SANDBOX` and `P7Y_AGENT_GUIDE`. Or tell the agent everything yourself, for example:
 
-> Deploy this repo to my Purgatory sandbox `p7y-shop` at `https://p7y.example.com` with the token `p7y_…`. Follow https://csakaszamok.github.io/p7y/latest/agent-guide/index.md.
+> Deploy this repo to my Purgatory sandbox `p7y-shop` at `https://p7y.example.com` with the token `p7y_…`. Follow https://p7y-dev.github.io/p7y/latest/agent-guide/index.md.
 
-[docs/agent-guide.md](https://csakaszamok.github.io/p7y/0.6/agent-guide/index.md) is written for the agent: every call it needs, tried against a live Purgatory. A token limited to one sandbox keeps the agent away from your other sandboxes; a token for all your sandboxes (Access tokens → + New token) acts as you.
+[docs/agent-guide.md](https://p7y-dev.github.io/p7y/0.6/agent-guide/index.md) is written for the agent: every call it needs, tried against a live Purgatory. A token limited to one sandbox keeps the agent away from your other sandboxes; a token for all your sandboxes (Access tokens → + New token) acts as you.
 
-An agent with MCP can also use Purgatory as an MCP server with the same token: see [MCP](https://csakaszamok.github.io/p7y/0.6/mcp/index.md).
+An agent with MCP can also use Purgatory as an MCP server with the same token: see [MCP](https://p7y-dev.github.io/p7y/0.6/mcp/index.md).
 
 ## Docker, registry, export
 

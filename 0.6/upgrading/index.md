@@ -3,11 +3,11 @@
 To a new version, in the install directory:
 
 ```
-curl -fsSLO https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml
+curl -fsSLO https://github.com/p7y-dev/p7y/releases/latest/download/docker-compose.yml
 docker compose pull && docker compose up -d
 ```
 
-If `.env` sets `P7Y_VERSION`, change or remove it. Each release's notes are in the [changelog](https://github.com/csakaszamok/p7y/blob/main/CHANGELOG.md).
+If `.env` sets `P7Y_VERSION`, change or remove it. Each release's notes are in the [changelog](https://github.com/p7y-dev/p7y/blob/main/CHANGELOG.md).
 
 ## From 0.4 (an install from a git clone)
 
