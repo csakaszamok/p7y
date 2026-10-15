@@ -30,7 +30,7 @@ TAG=p7y-install-test
 OLD_REF=${OLD_REF:-v0.4.2}
 git rev-parse -q --verify "$OLD_REF^{commit}" >/dev/null || fail "no $OLD_REF in this repository (fetch the tags)"
 info "building the image"
-docker build -q -t "ghcr.io/csakaszamok/p7y:$TAG" . >/dev/null
+docker build -q -t "ghcr.io/p7y-dev/p7y:$TAG" . >/dev/null
 
 # Its own compose project, so `down -v` removes only the test's volumes
 export COMPOSE_PROJECT_NAME=p7y-install-test
@@ -40,7 +40,7 @@ base=$(mktemp -d); dir=$base/p7y; mkdir "$dir"
 cleanup() {
   local rc=$?
   (cd "$dir" && docker compose down -v --remove-orphans >/dev/null 2>&1) || true
-  docker run --rm -v "$base:/b" --entrypoint sh "ghcr.io/csakaszamok/p7y:$TAG" -c 'rm -rf /b/*' >/dev/null 2>&1 || true
+  docker run --rm -v "$base:/b" --entrypoint sh "ghcr.io/p7y-dev/p7y:$TAG" -c 'rm -rf /b/*' >/dev/null 2>&1 || true
   rm -rf "$base" 2>/dev/null || true
   exit $rc
 }
@@ -68,7 +68,7 @@ has_portainer && fail "starter has Portainer" || pass "starter from the image (n
 [ -f dynamic/errors.yml ] && pass "dynamic/errors.yml written" || fail "no dynamic/errors.yml"
 for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q 'VIEW IN FULL SCREEN' && break; sleep 2; done
 curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q 'VIEW IN FULL SCREEN' && pass "our 404 page" || fail "404 page"
-docker run --rm --entrypoint ls -v "${COMPOSE_PROJECT_NAME}_sablier_themes:/t" "ghcr.io/csakaszamok/p7y:$TAG" /t | grep -qx p7y.html && pass "Sablier has the p7y theme" || fail "theme"
+docker run --rm --entrypoint ls -v "${COMPOSE_PROJECT_NAME}_sablier_themes:/t" "ghcr.io/p7y-dev/p7y:$TAG" /t | grep -qx p7y.html && pass "Sablier has the p7y theme" || fail "theme"
 
 info "old checkout ($OLD_REF) upgraded with git while it runs"
 # A real one: the old release's files in a git repository, running; then the checkout moves to this tree,

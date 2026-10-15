@@ -2,9 +2,9 @@
 # by .github/workflows/docs.yml. Locally: pip install -r docs/requirements.txt && mkdocs serve
 site_name: Purgatory (p7y)
 site_description: Self-hosted sandboxes for your team and their AI agents
-site_url: https://csakaszamok.github.io/p7y/
-repo_url: https://github.com/csakaszamok/p7y
-repo_name: csakaszamok/p7y
+site_url: https://p7y-dev.github.io/p7y/
+repo_url: https://github.com/p7y-dev/p7y
+repo_name: p7y-dev/p7y
 edit_uri: ""
 copyright: Apache-2.0
 
@@ -90,7 +90,7 @@ plugins:
   - search
   - llmstxt:
       # The version's own address (https://…/p7y/0.4/): docs.yml sets it for each version it publishes
-      base_url: !ENV [LLMSTXT_BASE_URL, 'https://csakaszamok.github.io/p7y/latest/']
+      base_url: !ENV [LLMSTXT_BASE_URL, 'https://p7y-dev.github.io/p7y/latest/']
       markdown_description: >-
         Purgatory (p7y) gives each user of a team their own Docker daemon on demand: a sandbox with Portainer,
         a public URL for every app, sleep when idle and wake on the next request, archive on delete.

@@ -6,7 +6,7 @@ import fs from 'fs'
  * GITHUB_STATS=off never asks GitHub (the link and the version stay).
  */
 
-export const REPO = 'csakaszamok/p7y'
+export const REPO = 'p7y-dev/p7y'
 const TTL = 60 * 60_000
 const RETRY = 10 * 60_000
 
