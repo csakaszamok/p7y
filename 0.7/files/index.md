@@ -12,7 +12,7 @@ It shows four folders, the ones that are kept when the sandbox goes into deep sl
 - **Owners:** uploaded files and new folders belong to root, readable by everyone (`0644`). An app running as another user that has to write them needs a `chown` in the sandbox.
 - A volume's own folder cannot be deleted here: remove the volume with `docker volume rm`.
 
-The sandbox has to be running: asleep, the tab offers to wake it. A file can be up to `FILES_MAX_UPLOAD` (100 MB by default, see [Configuration](https://csakaszamok.github.io/p7y/0.7/configuration/index.md)).
+The sandbox has to be running: asleep, the tab offers to wake it. A file can be up to `FILES_MAX_UPLOAD` (100 MB by default, see [Configuration](https://p7y-dev.github.io/p7y/0.7/configuration/index.md)).
 
 ## API and MCP
 
@@ -30,4 +30,4 @@ The sandbox has to be running: asleep, the tab offers to wake it. A file can be 
 curl -T notes.md -H "Authorization: Bearer $P7Y_TOKEN" "https://p7y.example.com/sandboxes/p7y-shop/files/content?path=/root/notes.md"
 ```
 
-A token limited to the sandbox may use all of them. Over [MCP](https://csakaszamok.github.io/p7y/0.7/mcp/index.md) they are `list_sandbox_files`, `read_sandbox_file`, `write_sandbox_file` (text), `create_sandbox_folder`, `delete_sandbox_file` and `list_sandbox_volumes`; a download is left out, since a tool result carries no file.
+A token limited to the sandbox may use all of them. Over [MCP](https://p7y-dev.github.io/p7y/0.7/mcp/index.md) they are `list_sandbox_files`, `read_sandbox_file`, `write_sandbox_file` (text), `create_sandbox_folder`, `delete_sandbox_file` and `list_sandbox_volumes`; a download is left out, since a tool result carries no file.
