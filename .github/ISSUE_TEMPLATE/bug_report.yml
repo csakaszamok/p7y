@@ -23,15 +23,15 @@ body:
     id: version
     attributes:
       label: Purgatory version or commit
-      placeholder: v0.1.0, or the output of git rev-parse --short HEAD
+      placeholder: v0.6.4 (shown in the top bar), or the output of git rev-parse --short HEAD
     validations:
       required: true
   - type: input
     id: host
     attributes:
       label: Host
-      description: OS, Docker version, and the template (dind-standard or sysbox-sandbox)
-      placeholder: Ubuntu 24.04, Docker 29.8, dind-standard
+      description: OS, Docker version, and the sandbox's runtime (dind or sysbox) and template
+      placeholder: Ubuntu 24.04, Docker 29.8, sysbox, starter
   - type: textarea
     id: logs
     attributes:
