@@ -65,3 +65,5 @@ Then sign in at `http://p7y.<HOST_DOMAIN>` (by default `http://p7y.lvh.me`).
 > **Security:** where [sysbox](https://github.com/nestybox/sysbox) is installed, sandboxes run without a privileged container; without it they fall back to the privileged `dind`, which suits a team that trusts each other, not hostile code. On a shared server install sysbox and set `ALLOWED_RUNTIMES=sysbox` ([details](https://p7y-dev.github.io/p7y/latest/security/)).
 
 [Contributing](CONTRIBUTING.md) · [Security issues](SECURITY.md) · [Apache-2.0](LICENSE)
+
+Free to use, also commercially. If you ship Purgatory or a product built on it, keep the [NOTICE](NOTICE) with it, so your users see it is based on Purgatory; the names "Purgatory" and "p7y" are not licensed for another product's name.
