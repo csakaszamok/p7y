@@ -1,6 +1,6 @@
 # <img src="ui/logo.svg" alt="" width="40" align="top"> Purgatory (p7y)
 
-[![Docs](https://img.shields.io/badge/docs-p7y-dev.github.io%2Fp7y-ea580c)](https://p7y-dev.github.io/p7y/latest/) [![CI](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml/badge.svg)](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-p7y--dev.github.io%2Fp7y-ea580c)](https://p7y-dev.github.io/p7y/latest/) [![CI](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml/badge.svg)](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 > [!NOTE]
 > **Early, before 1.0.** It works and is tested (CI on every change, releases with a changelog), but expect rough edges, and breaking changes between minor versions.
@@ -15,6 +15,8 @@
 - **A public URL for every app**, and TLS addresses for Postgres, Redis and SSH
 - **Sleeps when idle, wakes on the next request**; a delete archives, nothing is lost
 - **Made for agents:** tokens limited to one sandbox, an [agent guide](docs/agent-guide.md) and an MCP server
+
+**[Why Purgatory, and how it compares](https://p7y-dev.github.io/p7y/latest/comparison/)** with a laptop, a cloud PaaS, a shared Docker host, Coolify and a VM for everyone · **[How it works](https://p7y-dev.github.io/p7y/latest/architecture.html)**: the components (Docker-in-Docker, frp, Traefik, Sablier), a sandbox's lifecycle and the path of a request
 
 ### The same from a script or an agent
 
