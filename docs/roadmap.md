@@ -25,6 +25,11 @@
   - the TCP path still needs Purgatory (its addresses do not answer while Purgatory is down or upgrading, and open connections drop): whether Traefik could carry it with TCP routers to frps, which have no Sablier middleware;
   - one rule for staying awake on every path: traffic in the last minute, not an open connection (today: every web request; a `-docker` connection while bytes go through it, never waking a sleeping one, since Docker Desktop reconnects to every context at once; a `-tcp` connection not at all, though it wakes one);
   - moving existing sandboxes over; the Kata runtime and Kubernetes support build on this.
+- **Deploy from git.** Today a sandbox gets its apps through `docker compose` (the API, SSH, the Docker CLI or an agent). Next: connect a repository, and a push builds the image and deploys it into the sandbox, like a self-hosted Vercel; optionally a preview sandbox per branch or pull request, which sleeps like any other and is archived when the branch is merged. To work out:
+  - where the build runs: in the sandbox's own Docker (its CPU and memory limits apply, and the image goes to the Purgatory registry, which already scans pushes for secrets);
+  - how Purgatory reaches the repository and hears about pushes: a webhook from GitHub/GitLab/Gitea, or polling, and a deploy key per sandbox;
+  - projects without a `Dockerfile` or a compose file: buildpacks (Nixpacks, Cloud Native Buildpacks), or refuse them with a clear message;
+  - build logs in the panel and the API, and what a failed build does to the running version (it keeps running).
 - **Teams:** a sandbox owned by a group, so several people see and manage it, and other teams do not; optionally a quota per team.
 - **A hard disk quota per sandbox.** Today a sandbox above its disk limit is only flagged (see [Disk](resources.md#disk)). For a hard limit: its `docker_data` as a fixed-size ext4 image, loop-mounted through the local volume driver (`type=ext4`, `o=loop`); to work out: moving existing sandboxes' data, resizing (only while stopped), the archive, Docker Desktop. The Kata runtime gets this from its VM disk.
 - **Kubernetes support:** move the runtime layer behind the Docker-specific code; Sablier's Kubernetes provider helps here.

@@ -7,6 +7,8 @@
 
 **Self-hosted sandboxes for your team and their AI agents: everyone gets their own Docker, every app gets a URL, idle sandboxes sleep.**
 
+Think of it as a self-hosted Vercel for the apps your team and its agents spin up. Today you deploy with `docker compose`; [git-based builds](https://p7y-dev.github.io/p7y/latest/roadmap/) are on the roadmap.
+
 **About 10 seconds** from *New sandbox* to your own Docker and a public URL for your app; a sleeping sandbox is back in under 10. (Measured with the images already pulled: the first sandbox on a new server also downloads them.)
 
 <a href="docs/media/demo.gif"><img src="docs/media/demo-thumb.webp" alt="Creating a sandbox and opening its app, in real time: about 10 seconds" width="100%"></a>
