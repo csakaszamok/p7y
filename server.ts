@@ -25,7 +25,7 @@ import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
 import { repoInfo } from "./services/repoInfo";
 import { mcpCaller, mcpToolsFor } from "./services/mcp";
-// From the base image (csakaszamok/rododentron): the API routes as MCP tools
+// From the base image (ghcr.io/p7y-dev/rododentron): the API routes as MCP tools
 import { createMcpHandler } from "./mcp-core";
 import { defaultRuntime, runtimeAllowed } from "./services/defaultRuntime";
 import { startRegistryGc } from "./services/registryGc";

@@ -5,7 +5,7 @@ description: "Docker-in-Docker, privileged: any Docker host (incl. Docker Deskto
 docker_compose:
   services:
     sandbox:
-      image: csakaszamok/foxglove:0.6.0-dind
+      image: ghcr.io/p7y-dev/foxglove:0.7.0-dind
       container_name: ${name}
       privileged: true
       environment:
