@@ -3,7 +3,7 @@
 [![Docs](https://img.shields.io/badge/docs-p7y-dev.github.io%2Fp7y-ea580c)](https://p7y-dev.github.io/p7y/latest/) [![CI](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml/badge.svg)](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 > [!NOTE]
-> **Purgatory is a proof of concept.** It works, but it is an experiment: expect rough edges and breaking changes before 1.0.
+> **Early, before 1.0.** It works and is tested (CI on every change, releases with a changelog), but expect rough edges, and breaking changes between minor versions.
 
 **Self-hosted sandboxes for your team and their AI agents: everyone gets their own Docker, every app gets a URL, idle sandboxes sleep.**
 
@@ -31,6 +31,21 @@ All three are real runs, in real time.
 **The MCP server by hand**: JSON-RPC over HTTP, so even curl can call its tools:
 
 ![The MCP server called with curl: tools/list, then create_sandbox, in real time](docs/media/mcp-rpc.gif)
+
+## Try it on your laptop
+
+With Docker Desktop, or Docker Engine and the compose plugin on Linux, and ports 80 and 443 free (on Windows, in Git Bash or WSL):
+
+```bash
+mkdir p7y && cd p7y
+curl -fsSLO https://github.com/p7y-dev/p7y/releases/latest/download/docker-compose.yml
+curl -fsSL https://github.com/p7y-dev/p7y/releases/latest/download/setup.sh | bash   # prints the admin password
+docker compose up -d
+```
+
+Open **http://p7y.lvh.me** (`lvh.me` and all its subdomains point to `127.0.0.1`, so no DNS to set up), sign in as administrator with the password `setup.sh` printed, and press **New sandbox**. The first one takes a minute or two while the images are pulled; after that about 10 seconds. Its app opens at its own `http://<name>-….lvh.me` address.
+
+To remove it: delete the sandboxes in the UI first (each is a compose project of its own, so the next step would leave them running), then `docker compose down -v` in the `p7y` directory, and delete the directory.
 
 ## Install
 
