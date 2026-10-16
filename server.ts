@@ -23,7 +23,7 @@ import { filesMaxUpload } from "./services/sandboxFiles";
 import { attachTerminals } from "./services/terminalServer";
 import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
-import { repoInfo } from "./services/repoInfo";
+import { repoInfo, p7yVersion } from "./services/repoInfo";
 import { mcpCaller, mcpToolsFor } from "./services/mcp";
 // From the base image (ghcr.io/p7y-dev/rododentron): the API routes as MCP tools
 import { createMcpHandler } from "./mcp-core";
@@ -139,7 +139,7 @@ async function buildSpec(): Promise<object> {
   const apiTitle = process.env.API_TITLE ?? "Rododentron API";
   return {
     openapi: "3.0.0",
-    info: { title: apiTitle, version: "1.0.0" },
+    info: { title: apiTitle, version: p7yVersion() ?? "0.0.0" },
     components: { securitySchemes: { bearerAuth: { type: "http", scheme: "bearer" } } },
     ...(hasAuth ? { security: [{ bearerAuth: [] }] } : {}),
     paths,

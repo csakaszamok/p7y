@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- The OpenAPI document (`/swagger.json`) gives Purgatory's own version instead of `1.0.0`, and the API page says how to generate a client from it ([OpenAPI and clients](https://p7y-dev.github.io/p7y/latest/api/#openapi-and-clients)).
+
 ## [0.7.0] - 2026-10-16
 
 Upgrading from 0.6: download the new `docker-compose.yml` (it names this version), then `docker compose pull && docker compose up -d`; nothing is migrated. Existing sandboxes keep running on foxglove 0.6.0; new ones get 0.7.0 (see *Changed*). A request body may now be at most `FILES_MAX_UPLOAD` (100m): raise it if you send larger ones to the API.
