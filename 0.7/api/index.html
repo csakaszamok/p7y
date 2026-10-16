@@ -981,6 +981,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -997,6 +1015,36 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#openapi-and-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenAPI and clients
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1169,6 +1217,25 @@
   
     
   
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#openapi-and-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenAPI and clients
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -1390,7 +1457,12 @@
 </tbody>
 </table>
 <p>All endpoints require <code>Authorization: Bearer &lt;ADMIN_TOKEN | personal token&gt;</code> or a signed-in browser session. Users only see their own sandboxes.</p>
-<p>Swagger UI available at <code>/swagger</code>.</p>
+<h2 id="openapi-and-clients">OpenAPI and clients<a class="headerlink" href="#openapi-and-clients" title="Permanent link">&para;</a></h2>
+<p>The whole API is described as OpenAPI 3.0 at <code>/swagger.json</code> (no token needed to read it), and you can try it in Swagger UI at <code>/swagger</code>. There is no official SDK yet; generate a client in your language from that document instead, for example typed TypeScript:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>https://p7y.example.com/swagger.json<span class="w"> </span>-o<span class="w"> </span>p7y.json
+npx<span class="w"> </span>openapi-typescript<span class="w"> </span>p7y.json<span class="w"> </span>-o<span class="w"> </span>p7y.d.ts<span class="w">   </span><span class="c1"># use it with openapi-fetch</span>
+</code></pre></div>
+<p>or any language <a href="https://openapi-generator.tech/">openapi-generator</a> supports (<code>openapi-generator-cli generate -i p7y.json -g python -o p7y-client</code>). The document's version is Purgatory's own, so regenerate after an upgrade.</p>
 <p>More reading: <a href="../architecture.html">architecture diagrams</a>, <a href="../agent-guide/">how agents deploy</a>, <a href="../comparison/">comparison with other sandbox platforms</a>, <a href="../roadmap/">roadmap</a>.</p>
 
 
