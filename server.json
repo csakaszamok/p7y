@@ -1,0 +1,32 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.p7y-dev/p7y",
+  "title": "Purgatory (p7y)",
+  "description": "Self-hosted Docker sandboxes for agents: create one, deploy a compose stack, read its files and URLs",
+  "version": "0.7.0",
+  "repository": {
+    "url": "https://github.com/p7y-dev/p7y",
+    "source": "github"
+  },
+  "websiteUrl": "https://p7y-dev.github.io/p7y/latest/mcp/",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://p7y.{domain}/mcp",
+      "variables": {
+        "domain": {
+          "description": "The HOST_DOMAIN of your Purgatory server (its UI is at p7y.<domain>), e.g. example.com",
+          "isRequired": true
+        }
+      },
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Bearer <token>: a Purgatory access token (Access tokens page); a token limited to one sandbox gets only that sandbox's tools",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}

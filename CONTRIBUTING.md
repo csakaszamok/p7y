@@ -39,7 +39,7 @@ Each release series has its own branch, `release/<major>.<minor>` (`release/0.3`
 
 - **New features** go to the newest series' branch (now `release/0.4`) through a pull request from a feature branch.
 - **Fixes for a released series** go to its branch (e.g. `release/0.3`), and that branch is then merged into each newer one, so no fix is lost going forward.
-- **A release** is a version bump and a `[x.y.z]` section in `CHANGELOG.md` on the series' branch, then a `vx.y.z` tag on it. The tag builds and publishes the image as `x.y.z` and `x.y`; `latest` only for the highest version, so a fix for an older series does not move it back.
+- **A release** is a version bump (`package.json`, the two image defaults in `docker-compose.yml` and `server.json`, checked by `scripts/check-release-version.sh`) and a `[x.y.z]` section in `CHANGELOG.md` on the series' branch, then a `vx.y.z` tag on it. The tag builds and publishes the image as `x.y.z` and `x.y`; `latest` only for the highest version, so a fix for an older series does not move it back. A release of the newest series is then published to the MCP Registry from `main` (`mcp-publisher login github` as p7y-dev, then `mcp-publisher publish`).
 - **`main`** is the newest release: it is updated when a release of the newest series is made.
 
 A server can follow one series with `P7Y_VERSION=0.3` in `.env` (the newest `0.3.x` image) and a checkout of `release/0.3` (its templates and runtimes).
