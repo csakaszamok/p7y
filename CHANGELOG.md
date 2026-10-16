@@ -10,6 +10,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 - **A guaranteed quota and a maximum while there is room:** `SANDBOX_QUOTA` (3) is now guaranteed to every user, and `SANDBOX_QUOTA_MAX` (e.g. `10`) lets them run more while the server has room. Above the guarantee a new sandbox, or one woken, must leave room for every other owner to reach their guarantee (their running sandboxes hold their places already) and for one newcomer; otherwise it is refused with why (409, the wake page says so too), and **Wake** offers to put one to sleep. Nobody is ever put to sleep to make room. Unset, nothing changes. The Overview shows *2 more guaranteed · up to 10 while the server has room*, the owner table *4 / 3 (+7)*.
 - The top bar shows the server's sandbox places on every page, to everyone signed in: e.g. *142 / 200 places*, the free ones on hover, orange from 90% and red when the server is full. `GET /me` (and the MCP tool `who_am_i`) gives them as `server_places`.
 
+### Changed
+
+- New sandboxes run foxglove 0.7.0, now from `ghcr.io/p7y-dev/foxglove` (was `csakaszamok/foxglove` on Docker Hub): a port published on `127.0.0.1` (or `::1`) gets no tunnel any more, so it really is private to the sandbox, as the documentation already said (before, frpc still registered it). Existing sandboxes keep their image. The base image is `ghcr.io/p7y-dev/rododentron:0.3.1`, the same as `csakaszamok/rododentron:0.3.1`.
+
 ## [0.6.4] - 2026-10-15
 
 Upgrading from 0.6.3: download the new `docker-compose.yml` (see [Upgrading](https://p7y-dev.github.io/p7y/latest/upgrading/)), because the image has moved to `ghcr.io/p7y-dev/p7y`; then `docker compose pull && docker compose up -d`. Images up to 0.6.3 stay at `ghcr.io/csakaszamok/p7y`.
