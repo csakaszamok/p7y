@@ -58,6 +58,17 @@ docker compose up -d
 
 Then sign in at `http://p7y.<HOST_DOMAIN>` (by default `http://p7y.lvh.me`).
 
+## When to use something else
+
+Purgatory is for a team's apps and agents' deployments that should be up at a URL, cheaply, on your own server. For other jobs other tools fit better:
+
+- **Production that must scale and stay up** → a cloud PaaS, or [Coolify](https://coolify.io) / [Dokploy](https://dokploy.com) on your own servers
+- **Untrusted code from strangers** → a microVM sandbox such as [E2B](https://e2b.dev) or Docker Sandboxes (until Purgatory has a Kata runtime)
+- **Writing code in a cloud IDE** → [Coder](https://coder.com) or GitHub Codespaces
+- **An agent running short scripts from an SDK** → E2B or [Daytona](https://daytona.io)
+
+More in [how it compares](https://p7y-dev.github.io/p7y/latest/comparison/).
+
 ## Documentation
 
 **[p7y-dev.github.io/p7y](https://p7y-dev.github.io/p7y/latest/)**: [install](https://p7y-dev.github.io/p7y/latest/install/), [configuration](https://p7y-dev.github.io/p7y/latest/configuration/), [let your agent deploy](https://p7y-dev.github.io/p7y/latest/agents/), [MCP](https://p7y-dev.github.io/p7y/latest/mcp/), [API](https://p7y-dev.github.io/p7y/latest/api/), and [`llms-full.txt`](https://p7y-dev.github.io/p7y/latest/llms-full.txt) for agents.
