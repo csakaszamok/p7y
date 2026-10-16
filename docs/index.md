@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 # Purgatory (p7y)
 
 !!! note "Early, before 1.0"
