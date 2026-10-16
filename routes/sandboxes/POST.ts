@@ -152,7 +152,8 @@ export default async (req: Request): Promise<Response> => {
 
   const slot = await reserveSandboxSlot(p)
   if (!slot.ok) {
-    return Response.json({ error: slot.scope === 'server'
+    return Response.json({ error: slot.scope === 'room' && slot.message ? slot.message
+      : slot.scope === 'server'
       ? `The server is full (${slot.limit} sandboxes running): ask the administrator.`
       : `${slot.limit} running sandbox${slot.limit === 1 ? '' : 'es'} allowed: put one to sleep first (Sleep in its panel), then create a new one.` }, { status: 409 })
   }

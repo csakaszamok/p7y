@@ -256,6 +256,14 @@ describe('POST /sandboxes', () => {
     expect((await res.json()).error).toBe('1 running sandbox allowed: put one to sleep first (Sleep in its panel), then create a new one.')
   })
 
+  it('refuses with 409 above the guarantee when the server has no room to spare, saying why', async () => {
+    const { reserveSandboxSlot } = await import('../../../services/quota')
+    vi.mocked(reserveSandboxSlot).mockResolvedValueOnce({ ok: false, limit: 3, scope: 'room', message: '3 running sandboxes guaranteed; more only while the server has room…' })
+    const res = await handler(jsonReq({ name: 'over' }))
+    expect(res.status).toBe(409)
+    expect((await res.json()).error).toBe('3 running sandboxes guaranteed; more only while the server has room…')
+  })
+
   it('releases the quota reservation whether the create succeeds or fails', async () => {
     release.mockClear()
     await handler(jsonReq({ name: 'alice' }))

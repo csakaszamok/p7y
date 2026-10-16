@@ -32,6 +32,12 @@ const SCOPED_ALLOWED: Array<[string, RegExp]> = [
   ['GET', /^\/runtimes$/],
   ['GET', /^\/sandboxes\/[^/]+\/ssh-key$/],
   ['POST', /^\/sandboxes\/[^/]+\/ssh-key$/],
+  // Its files (the Files tab, an agent over MCP)
+  ['GET', /^\/sandboxes\/[^/]+\/files(\/content|\/text)?$/],
+  ['DELETE', /^\/sandboxes\/[^/]+\/files$/],
+  ['POST', /^\/sandboxes\/[^/]+\/files\/mkdir$/],
+  ['PUT', /^\/sandboxes\/[^/]+\/files\/content$/],
+  ['GET', /^\/sandboxes\/[^/]+\/volumes$/],
 ]
 
 // The router prefers a static directory under routes/sandboxes/ over [name], so such a

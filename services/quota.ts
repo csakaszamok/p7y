@@ -5,7 +5,7 @@ import { rawNameOf } from './naming'
 
 const DEFAULT_QUOTA = 3
 
-/** SANDBOX_QUOTA: max sandboxes per user; 0 = unlimited (null). */
+/** SANDBOX_QUOTA: the running sandboxes guaranteed to each user; 0 = unlimited (null). */
 export function quotaLimit(env: NodeJS.ProcessEnv = process.env): number | null {
   const raw = env.SANDBOX_QUOTA
   if (raw === undefined || raw === '') return DEFAULT_QUOTA
@@ -42,12 +42,53 @@ export async function serverUsed(): Promise<number> {
   return (await sandboxService.listSandboxStates()).filter(isRunning).length
 }
 
-/** SANDBOX_QUOTA counts running sandboxes: asleep and deep-sleeping ones are free (the reward for letting them sleep). */
-export function runningLimit(env: NodeJS.ProcessEnv = process.env): number | null {
-  return quotaLimit(env)
+/**
+ * SANDBOX_QUOTA_MAX: how many may run while the server has room, above the guarantee (SANDBOX_QUOTA).
+ * Unset = the guarantee (no extra); 0 = no maximum (null); below the guarantee or invalid → the guarantee.
+ */
+export function quotaMax(env: NodeJS.ProcessEnv = process.env): number | null {
+  const guarantee = quotaLimit(env)
+  if (guarantee === null) return null
+  const raw = env.SANDBOX_QUOTA_MAX
+  if (raw === undefined || raw === '') return guarantee
+  if (!/^\d+$/.test(raw)) {
+    console.warn(`[quota] invalid SANDBOX_QUOTA_MAX "${raw}", using SANDBOX_QUOTA (${guarantee})`)
+    return guarantee
+  }
+  const n = Number(raw)
+  if (n === 0) return null
+  if (n < guarantee) {
+    console.warn(`[quota] SANDBOX_QUOTA_MAX ${n} is below SANDBOX_QUOTA ${guarantee}, using ${guarantee}`)
+    return guarantee
+  }
+  return n
 }
 
-export interface WakeRefusal { reason: 'running' | 'server'; title: string; message: string; limit: number; running: string[] }
+/** The running limit: SANDBOX_QUOTA_MAX (the guarantee when unset). Asleep and deep-sleeping ones are free (the reward for letting them sleep). */
+export function runningLimit(env: NodeJS.ProcessEnv = process.env): number | null {
+  return quotaMax(env)
+}
+
+/**
+ * Server places `owner` must leave free when going above their guarantee: what every other owner lacks of their
+ * guarantee (a running sandbox holds its place already; asleep or in deep sleep it holds none), and one newcomer's guarantee
+ * (someone without a sandbox yet is not known). The admin is never refused, so nothing is kept for them.
+ */
+export function reservedFor(owner: string, states: { owner?: string; status: string }[], guarantee: number): number {
+  const held = new Map<string, number>()
+  for (const s of states) {
+    const o = s.owner ?? 'admin'
+    if (o === owner || o === 'admin') continue
+    held.set(o, (held.get(o) ?? 0) + (isRunning(s) ? 1 : 0))
+  }
+  return [...held.values()].reduce((sum, n) => sum + Math.max(0, guarantee - n), 0) + guarantee
+}
+
+/** Why a sandbox above the guarantee may not take a new place now. */
+export const roomMessage = (guarantee: number, reserved: number) =>
+  `${plural(guarantee, 'running sandbox')} guaranteed; more only while the server has room, and it has none to spare now: ${plural(reserved, 'place')} ${reserved === 1 ? 'is' : 'are'} kept for the others' guarantees. Put one to sleep first.`
+
+export interface WakeRefusal { reason: 'running' | 'server' | 'room'; title: string; message: string; limit: number; running: string[] }
 const short = (n: string) => rawNameOf(n) ?? n
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : word.endsWith('x') ? 'es' : 's'}`
 
@@ -63,7 +104,8 @@ export async function wakeRefusal(owner: string, from: string, pending: string[]
   const mine = all.filter(s => s.owner === owner)
   // Running, it takes a place on the server (the admin's running ones take theirs too)
   const server = serverLimit()
-  if (server !== null && all.filter(s => isRunning(s) && s.name !== opts.freeing).length + pending.length >= server) {
+  const taken = all.filter(s => isRunning(s) && s.name !== opts.freeing).length + pending.length
+  if (server !== null && taken >= server) {
     return { reason: 'server', title: 'The server is full', limit: server, running: [],
       message: `The server is full (${server} sandboxes running): ask the administrator.` }
   }
@@ -72,6 +114,14 @@ export async function wakeRefusal(owner: string, from: string, pending: string[]
   if (max !== null && running.length + (opts.creates ?? 0) >= max) {
     return { reason: 'running', title: 'Running limit reached', limit: max, running,
       message: `Running limit reached: ${plural(max, 'running sandbox')} allowed, running now: ${running.map(short).join(', ')}. Put one to sleep first.` }
+  }
+  // Above the guarantee (any wake takes a place): only if the others keep room for theirs
+  const guarantee = quotaLimit()
+  if (guarantee !== null && server !== null && running.length + (opts.creates ?? 0) >= guarantee) {
+    const reserved = reservedFor(owner, all, guarantee)
+    if (taken + 1 + reserved > server) {
+      return { reason: 'room', title: 'No room above your guarantee', limit: guarantee, running, message: roomMessage(guarantee, reserved) }
+    }
   }
   return null
 }
@@ -120,7 +170,7 @@ export async function quotaExceeded(p: Principal): Promise<number | null> {
 // count check. Purgatory is a single process, so in-memory is enough.
 const inFlight = new Map<string, number>()
 
-export type SlotReservation = { ok: true; release: () => void } | { ok: false; limit: number; scope: 'server' | 'running' }
+export type SlotReservation = { ok: true; release: () => void } | { ok: false; limit: number; scope: 'server' | 'running' | 'room'; message?: string }
 
 /**
  * Reserve room for one more sandbox before creating it; call release() when the
@@ -143,21 +193,31 @@ export async function reserveSandboxSlot(p: Principal): Promise<SlotReservation>
     else inFlight.set(p.sub, n)
   }
   const max = runningLimit()
-  if (max !== null) {
-    // A new sandbox starts running: it needs a running slot too
-    // A sandbox still finishing its wake may already run: counted once
-    const running = new Set([...(await visibleSandboxStates(p)).filter(s => s.status === 'running').map(s => s.name), ...wakesBefore]).size
-    if (running + (inFlight.get(p.sub) ?? 0) > max) {
-      release()
-      return { ok: false, limit: max, scope: 'running' }
-    }
+  const guarantee = quotaLimit()
+  // A new sandbox starts running: it needs a running slot too
+  // A sandbox still finishing its wake may already run: counted once
+  const runningAfter = guarantee === null ? 0
+    : new Set([...(await visibleSandboxStates(p)).filter(s => s.status === 'running').map(s => s.name), ...wakesBefore]).size + (inFlight.get(p.sub) ?? 0)
+  if (max !== null && runningAfter > max) {
+    release()
+    return { ok: false, limit: max, scope: 'running' }
   }
   if (server !== null) {
     // Every user's creates in flight count: two people must not take the server's last place together
     const flying = [...inFlight.values()].reduce((a, b) => a + b, 0)
-    if ((await serverUsed()) + flying > server) {
+    const all = await sandboxService.listSandboxStates()
+    const used = all.filter(isRunning).length
+    if (used + flying > server) {
       release()
       return { ok: false, limit: server, scope: 'server' }
+    }
+    // Above the guarantee: only while every other owner (and a newcomer) keeps room for theirs
+    if (guarantee !== null && runningAfter > guarantee) {
+      const reserved = reservedFor(p.sub, all, guarantee)
+      if (used + flying + reserved > server) {
+        release()
+        return { ok: false, limit: guarantee, scope: 'room', message: roomMessage(guarantee, reserved) }
+      }
     }
   }
   return { ok: true, release }

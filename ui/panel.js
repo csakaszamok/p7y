@@ -2,7 +2,7 @@
 // module.exports in Node for the tests. ui/app.js renders it and handles the clicks.
 ;(function (root) {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
-  const TABS = [['apps', 'Apps'], ['access', 'Access'], ['resources', 'Resources'], ['registry', 'Registry'], ['settings', 'Settings']]
+  const TABS = [['apps', 'Apps'], ['access', 'Access'], ['files', 'Files'], ['resources', 'Resources'], ['registry', 'Registry'], ['settings', 'Settings']]
 
   const statusLabel = s => ({ exited: 'asleep', created: 'asleep', deep_sleep: 'deep sleep', starting: 'creating…' }[s] || s)
   // A stopped sandbox whose last start failed is not asleep; "created" (recreated, never started) is asleep
@@ -24,6 +24,23 @@
   function meter(used, max) {
     const pct = max ? Math.min(100, Math.round(used / max * 100)) : 0
     return `<span class="meter ${pct >= 95 ? 'hot' : pct >= 80 ? 'warm' : ''}"><span style="width:${pct}%"></span></span>`
+  }
+
+  // My sandboxes' running line (GET /me): the guarantee, and how far above it while the server has room
+  function quotaLine(me) {
+    const max = me.max_running === undefined ? me.quota : me.max_running
+    if (max === me.quota) return { text: `Running ${me.sandbox_count} / ${me.quota}`, title: '' }
+    const more = max === null ? 'more' : `up to ${max}`
+    return { text: `Running ${me.sandbox_count} / ${me.quota} · ${more}`, title: `${me.quota} running sandbox${me.quota === 1 ? '' : 'es'} guaranteed; ${more} while the server has room` }
+  }
+
+  // The server's places in the topbar (GET /me server_places): like the sign-in page, orange from 90%, red when full
+  function placesBadge(sp) {
+    if (!sp) return null
+    const free = Math.max(0, sp.limit - sp.used)
+    const state = free === 0 ? 'full' : sp.used / sp.limit >= 0.9 ? 'warn' : ''
+    return { text: `${sp.used} / ${sp.limit} places`, state,
+      title: `Sandbox places on the server: ${sp.used} taken, ${free} free (running and asleep sandboxes; deep sleep holds none)` }
   }
 
   // Portainer's address only while it is one of the links: published on 127.0.0.1 it is private to the sandbox
@@ -199,6 +216,56 @@
     }).join('')
   }
 
+  // ---------- the Files tab (GET /sandboxes/:name/files) ----------
+  const fileSize = b => b < 1024 ? `${b} B` : b < 1024 ** 2 ? `${Math.round(b / 1024)} KB` : fmtBytes(b)
+  const VOLUME_ROOT = /^\/var\/lib\/docker\/volumes\/[^/]+\/_data/
+  const rootChips = (roots, on) => roots.map(r => `<button class="files-root${r === on ? ' on' : ''}" data-files-path="${esc(r)}">${esc(r)}</button>`).join('')
+    + `<button class="files-root${on === 'volumes' ? ' on' : ''}" data-files-volumes title="The volumes of the apps in this sandbox's own Docker">Volumes</button>`
+  const userName = u => u.service && u.service !== u.name ? `${u.service} (${u.name})` : u.name
+  function filesView(d, ctx) {
+    const href = p => `/sandboxes/${encodeURIComponent(ctx.name)}/files/content?path=${encodeURIComponent(p)}`
+    // In a volume of the inner Docker: its folder is the root, shown by the volume's name
+    const volRoot = VOLUME_ROOT.exec(d.path)?.[0]
+    const root = volRoot || d.roots.find(r => d.path === r || d.path.startsWith(`${r}/`)) || d.roots[0]
+    const rootLabel = volRoot ? volRoot.split('/')[5] : root
+    let at = root
+    const crumbs = [`<button class="link" data-files-path="${esc(root)}">${esc(rootLabel)}</button>`,
+      ...d.path.slice(root.length).split('/').filter(Boolean).map(seg => { at += `/${seg}`; return `<button class="link" data-files-path="${esc(at)}">${esc(seg)}</button>` })].join(' / ')
+    const rows = d.entries.map(e => {
+      const p = `${d.path}/${e.name}`
+      const name = e.type === 'dir' ? `<button class="link" data-files-path="${esc(p)}">${esc(e.name)}/</button>`
+        : e.type === 'file' ? `<a href="${href(p)}" download>${esc(e.name)}</a>`
+        : `<span class="muted" title="${e.type === 'link' ? 'a link' : 'not a regular file'}">${esc(e.name)}${e.type === 'link' ? ' →' : ''}</span>`
+      return `<tr><td class="files-name">${name}</td><td>${e.type === 'dir' ? '<span class="muted">—</span>' : fileSize(e.size)}</td><td class="muted">${relativeAge(new Date(e.mtime), ctx.now)}</td><td><button class="link danger-link" data-files-delete="${esc(p)}">Delete</button></td></tr>`
+    })
+    const running = volRoot ? (ctx.volume?.containers || []).filter(u => u.running) : []
+    const warning = running.length ? `<p class="warn files-warn">${running.map(u => esc(userName(u))).join(', ')} ${running.length === 1 ? 'is' : 'are'} running and using this volume: a copy of a database's files taken while it runs may not be consistent, and changes here may surprise it. Stop the app first for that.</p>` : ''
+    const note = volRoot ? "A volume of an app in this sandbox's own Docker; it is kept over a deep sleep. Uploaded files belong to root (readable by everyone)."
+      : "Only /root, /home, /srv and /opt are shown: they are kept over a deep sleep. The apps' own data is under Volumes."
+    return `<div class="files-roots">${rootChips(d.roots, volRoot ? 'volumes' : root)}</div>
+      ${warning}
+      <div class="files-bar"><span class="files-crumbs">${crumbs}</span>
+        <span class="files-tools"><label class="button-like">Upload…<input type="file" multiple data-files-input hidden></label>
+        <form data-files-mkdir><input name="folder" placeholder="new folder" aria-label="New folder name" required><button>New folder</button></form>
+        <a href="${href(d.path)}" download title="This folder as a .tar">Download folder</a></span></div>
+      ${rows.length ? table(['Name', 'Size', 'Modified', ''], rows, 'files-table') : '<p class="muted files-empty">Empty: drop files here, or Upload…</p>'}
+      <p class="muted files-note">Drop files here to upload them, up to ${fmtBytes(d.max_upload)} a file. ${note}</p>
+      <p class="muted" data-files-status hidden></p>`
+  }
+
+  // ---------- the Files tab's Volumes (GET /sandboxes/:name/volumes) ----------
+  function volumesView(d, ctx) {
+    const roots = ctx.roots || ['/root', '/home', '/srv', '/opt']
+    const rows = d.volumes.map(v => {
+      const users = v.containers.length ? v.containers.map(u => `${esc(userName(u))} <span class="muted">at ${esc(u.mount)}${u.running ? '' : ', stopped'}</span>`).join('<br>') : '<span class="muted">no container</span>'
+      return `<tr><td class="files-name"><button class="link" data-files-path="${esc(v.path)}">${esc(v.name)}/</button></td><td>${v.project ? esc(v.project) : '<span class="muted">—</span>'}</td><td>${users}</td></tr>`
+    })
+    return `<div class="files-roots">${rootChips(roots, 'volumes')}</div>
+      ${rows.length ? table(['Volume', 'Project', 'Used by'], rows, 'files-table') : `<p class="muted files-empty">No volumes in this sandbox's Docker yet.</p>`}
+      <p class="muted files-note">The volumes of the apps in this sandbox's own Docker (a database's data, an app's uploads). They are kept over a deep sleep.</p>
+      <p class="muted" data-files-status hidden></p>`
+  }
+
   function renderPanel(s, ctx) {
     const tab = TABS.some(([id]) => id === ctx.tab) ? ctx.tab : 'apps'
     const tabs = TABS.map(([id, label]) => `<button role="tab" id="tab-${id}" aria-selected="${id === tab}" aria-controls="tabpanel-${id}" tabindex="${id === tab ? 0 : -1}" data-tab="${id}">${label}</button>`).join('')
@@ -207,6 +274,8 @@
       access: accessTab(s, ctx),
       resources: `<div data-resources>${resourcesTable(s)}</div><div class="actions"><button data-act="resources">Change limits…</button></div>`,
       registry: '<div data-registry><p class="muted">Loading…</p></div>',
+      files: s.status === 'running' ? '<div data-files><p class="muted">Loading…</p></div>'
+        : `<p class="muted">The sandbox is ${esc(statusLabel(s.status))}: wake it to see its files.</p><div class="actions"><button data-act="start">Wake</button></div>`,
       settings: settingsTab(s, ctx),
     }
     return `${header(s, ctx)}
@@ -254,8 +323,13 @@
     }
     // A user's quota counts running sandboxes only: asleep and deep-sleeping ones are free
     const q = ctx.isAdmin ? null : c.quota
+    // SANDBOX_QUOTA_MAX: above the guarantee while the server has room (max_running null: no maximum)
+    const max = ctx.isAdmin || q === null ? q : sum.max_running === undefined ? q : sum.max_running
+    const room = max === null ? 'more while the server has room' : `up to ${max} while the server has room`
     const runningSub = q === null ? (c.running ? 'awake, serving' : 'nothing awake')
-      : c.running >= q ? 'limit reached: Wake lets you choose one to put to sleep' : `${q - c.running} more can run`
+      : max !== null && c.running >= max ? 'limit reached: Wake lets you choose one to put to sleep'
+      : max === q ? `${q - c.running} more can run`
+      : c.running >= q ? `above the ${q} guaranteed · ${room}` : `${q - c.running} more guaranteed · ${room}`
     const over = list.filter(s => s.disk && s.disk.over)
     const cards = [
       ...(first ? [first] : []),
@@ -292,7 +366,7 @@
       const owners = (sum.by_owner || []).map(o => ({ ...o, ...countsOf(list.filter(s => (s.owner || 'admin') === o.owner), o.quota, o.archived) }))
       const ownerRows = owners.map(o => {
         const qb = o.quota === null ? '' : `<span class="ov-qbar${o.running >= o.quota ? ' full' : ''}"><span style="width:${Math.min(100, o.running / o.quota * 100).toFixed(1)}%"></span></span>`
-        return `<tr><td><a href="/admin?owner=${encodeURIComponent(o.owner)}">${esc(o.owner === 'admin' ? 'admin API' : o.owner)}</a></td><td>${o.total}</td><td>${qb}${dot('running small')}${o.running} / ${o.quota === null ? '∞' : o.quota}</td><td>${dot('asleep small')}${o.asleep}</td><td class="ov-hide">${dot('deep small')}${o.deep_sleep}</td><td class="ov-hide">${o.archived}</td></tr>`
+        return `<tr><td><a href="/admin?owner=${encodeURIComponent(o.owner)}">${esc(o.owner === 'admin' ? 'admin API' : o.owner)}</a></td><td>${o.total}</td><td>${qb}${dot('running small')}${o.running} / ${o.quota === null ? '∞' : o.quota}${o.quota !== null && o.max_running !== undefined && o.max_running !== o.quota ? ` (+${o.max_running === null ? '∞' : o.max_running - o.quota})` : ''}</td><td>${dot('asleep small')}${o.asleep}</td><td class="ov-hide">${dot('deep small')}${o.deep_sleep}</td><td class="ov-hide">${o.archived}</td></tr>`
       }).join('')
       out += `<section class="ov-box"><h2>Per owner</h2><div class="ov-tablewrap"><table class="ov-table"><thead><tr><th>Owner</th><th>Sandboxes</th><th>Running</th><th>Asleep</th><th class="ov-hide">Deep sleep</th><th class="ov-hide">Archived</th></tr></thead><tbody>${ownerRows}</tbody></table></div><p class="ov-note">An owner opens All sandboxes, filtered to them.</p></section>`
     } else if (list.length) {
@@ -303,7 +377,7 @@
     return out
   }
 
-  const api = { overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  const api = { filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

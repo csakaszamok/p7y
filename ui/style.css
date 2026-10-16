@@ -22,6 +22,27 @@ label.check input { width: auto }
 .topbar nav a { color: #aaa; text-decoration: none }
 .topbar nav a.active { color: #fff; font-weight: 600 }
 .who { display: flex; gap: 12px; align-items: center; margin: 0; color: #aaa }
+/* My sandboxes: the running line beside New sandbox, on one line (the details on hover) */
+.quota { white-space: nowrap }
+/* the Files tab: the four folders, the path, the tools, the list; a dashed outline while files are dragged over */
+[data-files] { border-radius: 8px; outline: 2px dashed transparent; outline-offset: 4px }
+[data-files].drop { outline-color: #ea580c }
+.files-roots { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px }
+.files-root { padding: 3px 10px; border-radius: 999px; border: 1px solid #2c2c2c; background: none; color: #aaa; cursor: pointer; font-family: ui-monospace, monospace; font-size: 12px }
+.files-root.on { border-color: #ea580c; color: #fff }
+.files-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px }
+.files-crumbs { font-family: ui-monospace, monospace; font-size: 13px; overflow-wrap: anywhere }
+.files-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px }
+.files-tools form { display: flex; gap: 4px }
+.files-tools input[name=folder] { width: 110px }
+.button-like { padding: 4px 10px; border-radius: 6px; background: #ea580c; color: #fff; cursor: pointer }
+.files-name { overflow-wrap: anywhere }
+.files-note { font-size: 12px; margin-top: 8px }
+.files-warn { font-size: 13px; margin: 0 0 8px }
+/* the server's places in the topbar: taken / limit, orange from 90%, red when full */
+.places { padding: 3px 10px; border-radius: 999px; border: 1px solid #2c2c2c; color: #aaa; font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums }
+.places.warn { color: #f97316; border-color: rgba(249,115,22,.45) }
+.places.full { color: #ef4444; border-color: rgba(239,68,68,.5) }
 /* the GitHub repo card in the topbar: repo, stars, forks, version */
 .repo-badge { display: inline-flex; align-items: center; gap: 10px; padding: 4px 10px; border-radius: 8px; color: #aaa; text-decoration: none; font-size: 12px; line-height: 1.2 }
 .repo-badge:hover { background: #1f1f1f; color: #fff }

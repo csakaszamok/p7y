@@ -4,6 +4,21 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-16
+
+Upgrading from 0.6: download the new `docker-compose.yml` (it names this version), then `docker compose pull && docker compose up -d`; nothing is migrated. Existing sandboxes keep running on foxglove 0.6.0; new ones get 0.7.0 (see *Changed*). A request body may now be at most `FILES_MAX_UPLOAD` (100m): raise it if you send larger ones to the API.
+
+### Added
+
+- **Files** tab: browse a sandbox's files, upload them (pick or drop, several at once), download a file or a whole folder (.tar), make folders and delete. It shows `/root`, `/home`, `/srv` and `/opt`, the folders that are kept over a deep sleep, and, under **Volumes**, the volumes of the apps in the sandbox's own Docker (with the containers that use them, and a warning while one of them runs), and works while the sandbox runs (asleep, it offers to wake it). The same in the API (`/sandboxes/:name/files`, `/sandboxes/:name/volumes`, also for a token limited to the sandbox) and as MCP tools, so an agent can read and write files too. `FILES_MAX_UPLOAD` (100m) is the largest file; it is also the cap on any request body now, which used to be read whole into memory without a limit.
+- **A guaranteed quota and a maximum while there is room:** `SANDBOX_QUOTA` (3) is now guaranteed to every user, and `SANDBOX_QUOTA_MAX` (e.g. `10`) lets them run more while the server has room. Above the guarantee a new sandbox, or one woken, must leave room for every other owner to reach their guarantee (their running sandboxes hold their places already) and for one newcomer; otherwise it is refused with why (409, the wake page says so too), and **Wake** offers to put one to sleep. Nobody is ever put to sleep to make room. Unset, nothing changes. The Overview shows *2 more guaranteed · up to 10 while the server has room*, the owner table *4 / 3 (+7)*.
+- The top bar shows the server's sandbox places on every page, to everyone signed in: e.g. *142 / 200 places*, the free ones on hover, orange from 90% and red when the server is full. `GET /me` (and the MCP tool `who_am_i`) gives them as `server_places`.
+
+### Changed
+
+- A `NOTICE` file: who ships Purgatory or a product built on it keeps it (Apache-2.0, section 4), so its users see it is based on Purgatory. It is in the image with the licence (`/app/p7y/`). The licence stays Apache-2.0.
+- New sandboxes run foxglove 0.7.0, now from `ghcr.io/p7y-dev/foxglove` (was `csakaszamok/foxglove` on Docker Hub): a port published on `127.0.0.1` (or `::1`) gets no tunnel any more, so it really is private to the sandbox, as the documentation already said (before, frpc still registered it). Existing sandboxes keep their image. The base image is `ghcr.io/p7y-dev/rododentron:0.3.1`, the same as `csakaszamok/rododentron:0.3.1`.
+
 ## [0.6.4] - 2026-10-15
 
 Upgrading from 0.6.3: download the new `docker-compose.yml` (see [Upgrading](https://p7y-dev.github.io/p7y/latest/upgrading/)), because the image has moved to `ghcr.io/p7y-dev/p7y`; then `docker compose pull && docker compose up -d`. Images up to 0.6.3 stay at `ghcr.io/csakaszamok/p7y`.

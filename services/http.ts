@@ -1,4 +1,4 @@
-import type { ServerResponse } from 'http'
+import type { IncomingMessage, ServerResponse } from 'http'
 
 /** Web Headers → Node response headers; Object.fromEntries would keep only one Set-Cookie. */
 export function toNodeHeaders(h: Headers): Record<string, string | string[]> {
@@ -33,4 +33,25 @@ export async function writeWebResponse(webRes: Response, res: ServerResponse): P
     reader.cancel().catch(() => {})
     res.end()
   }
+}
+
+/**
+ * A request's body, up to `max` bytes: a larger one is refused (an error with status 413) as soon as it passes the
+ * limit, and the rest is not kept. Every route gets its body read into memory, so this is the cap for all of them.
+ */
+export function readBody(req: IncomingMessage, max: number): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const declared = Number(req.headers['content-length'] ?? 0)
+    const tooLarge = () => Object.assign(new Error(`Request body over ${max} bytes`), { status: 413 })
+    if (declared > max) { req.resume(); reject(tooLarge()); return }
+    const chunks: Buffer[] = []
+    let size = 0
+    req.on('data', (chunk: Buffer) => {
+      size += chunk.length
+      if (size > max) { chunks.length = 0; req.removeAllListeners('data'); req.resume(); reject(tooLarge()); return }
+      chunks.push(chunk)
+    })
+    req.on('end', () => { if (size <= max) resolve(Buffer.concat(chunks)) })
+    req.on('error', reject)
+  })
 }

@@ -9,7 +9,7 @@
 
 **About 10 seconds** from *New sandbox* to your own Docker and a public URL for your app; a sleeping sandbox is back in under 10. (Measured with the images already pulled: the first sandbox on a new server also downloads them.)
 
-![Creating a sandbox and opening its app, in real time: about 10 seconds](docs/media/demo.gif)
+<a href="docs/media/demo.gif"><img src="docs/media/demo-thumb.webp" alt="Creating a sandbox and opening its app, in real time: about 10 seconds" width="100%"></a>
 
 - **Its own Docker daemon** for every sandbox (with a Portainer UI if you want one)
 - **A public URL for every app**, and TLS addresses for Postgres, Redis and SSH
@@ -20,19 +20,15 @@
 
 ### The same from a script or an agent
 
-All three are real runs, in real time.
+All real runs, in real time; press one to watch it.
 
-**With curl**, through the [API](https://p7y-dev.github.io/p7y/latest/api/):
+<table><tr>
+<td width="33%"><a href="docs/media/api-curl.gif"><img src="docs/media/api-curl-thumb.webp" alt="Creating a sandbox with curl and calling its app, in real time: about 7 seconds" width="100%"></a></td>
+<td width="33%"><a href="docs/media/mcp-agent.gif"><img src="docs/media/mcp-agent-thumb.webp" alt="Claude Code creates a sandbox through the MCP server and checks its app, in real time" width="100%"></a></td>
+<td width="33%"><a href="docs/media/mcp-rpc.gif"><img src="docs/media/mcp-rpc-thumb.webp" alt="The MCP server called with curl: tools/list, then create_sandbox, in real time" width="100%"></a></td>
+</tr></table>
 
-![Creating a sandbox with curl and calling its app, in real time: about 7 seconds](docs/media/api-curl.gif)
-
-**By an agent**: Claude Code with the [MCP server](https://p7y-dev.github.io/p7y/latest/mcp/):
-
-![Claude Code creates a sandbox through the MCP server and checks its app, in real time](docs/media/mcp-agent.gif)
-
-**The MCP server by hand**: JSON-RPC over HTTP, so even curl can call its tools:
-
-![The MCP server called with curl: tools/list, then create_sandbox, in real time](docs/media/mcp-rpc.gif)
+With curl through the [API](https://p7y-dev.github.io/p7y/latest/api/), by an agent over the [MCP server](https://p7y-dev.github.io/p7y/latest/mcp/), and the MCP server by hand (JSON-RPC over HTTP, so even curl can call its tools).
 
 ## Try it on your laptop
 
@@ -69,3 +65,5 @@ Then sign in at `http://p7y.<HOST_DOMAIN>` (by default `http://p7y.lvh.me`).
 > **Security:** where [sysbox](https://github.com/nestybox/sysbox) is installed, sandboxes run without a privileged container; without it they fall back to the privileged `dind`, which suits a team that trusts each other, not hostile code. On a shared server install sysbox and set `ALLOWED_RUNTIMES=sysbox` ([details](https://p7y-dev.github.io/p7y/latest/security/)).
 
 [Contributing](CONTRIBUTING.md) · [Security issues](SECURITY.md) · [Apache-2.0](LICENSE)
+
+Free to use, also commercially. If you ship Purgatory or a product built on it, keep the [NOTICE](NOTICE) with it, so your users see it is based on Purgatory; the names "Purgatory" and "p7y" are not licensed for another product's name.

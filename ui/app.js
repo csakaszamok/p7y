@@ -111,11 +111,15 @@ async function loadQuota() {
     if (me.quota === null) { el.textContent = ''; $('[data-new]').disabled = false; return }
     // Running and asleep sandboxes hold a slot; deep sleep frees it
     // The quota counts running sandboxes; asleep and deep-sleeping ones are free
-    el.textContent = `Running ${me.sandbox_count} / ${me.quota}`
+    const line = P7yPanel.quotaLine(me)
+    el.textContent = line.text
+    el.title = line.title
     // The server limit (SANDBOX_MAX_TOTAL) can stop a user under their own quota
     if (me.server_full) { $('[data-new]').disabled = true; $('[data-new]').title = 'The server is full: ask the administrator'; return }
-    $('[data-new]').disabled = me.sandbox_count >= me.quota
-    $('[data-new]').title = me.sandbox_count >= me.quota ? 'Running limit reached: put a sandbox to sleep first' : ''
+    // Above the guarantee the server decides whether there is room; the button stops only at the maximum (SANDBOX_QUOTA_MAX)
+    const atMax = me.max_running !== null && me.sandbox_count >= me.max_running
+    $('[data-new]').disabled = atMax
+    $('[data-new]').title = atMax ? 'Running limit reached: put a sandbox to sleep first' : ''
   } catch (e) { if (e.message !== 'signed out') console.error(e) }
 }
 
@@ -157,6 +161,7 @@ function selectTab(tab, focus = false) {
   }
   for (const p of panel.querySelectorAll('[role="tabpanel"]')) p.hidden = p.dataset.tabpanel !== tab
   if (tab === 'registry' && selected) void loadRegistry(selected)
+  if (tab === 'files' && selected) void loadFiles(selected)
 }
 
 // The Registry tab: the sandbox's images and their secret-scan results
@@ -174,6 +179,74 @@ async function deleteVersion(b) {
   if (!name || !await confirmDialog(`Delete ${app} (${digest.slice(7, 19)}) from the registry?`, 'Delete')) return
   try { await api(`/sandboxes/${encodeURIComponent(name)}/registry/${encodeURIComponent(app)}/${encodeURIComponent(digest)}`, { method: 'DELETE' }); await loadRegistry(name) }
   catch (e) { const err = $('[data-act-error]'); err.textContent = e.message; err.hidden = false }
+}
+
+// ---------- the Files tab: the sandbox's own files (/root, /home, /srv, /opt) and its apps' volumes ----------
+const filesAt = new Map() // sandbox → the folder open in its Files tab ('volumes': their list), kept over the panel's re-renders
+const volumesOf = new Map() // sandbox → its volumes, as last listed (which apps use the one open)
+let filesListing = null
+const filesBase = name => `/sandboxes/${encodeURIComponent(name)}/files`
+const IN_VOLUME = /^\/var\/lib\/docker\/volumes\/[^/]+\/_data(\/|$)/
+async function listVolumes(name) {
+  const { volumes } = await api(`/sandboxes/${encodeURIComponent(name)}/volumes`)
+  volumesOf.set(name, volumes)
+  return volumes
+}
+async function loadFiles(name, path = filesAt.get(name) || '/root') {
+  const box = $('[data-panel] [data-files]')
+  if (!box) return
+  try {
+    if (path === 'volumes') {
+      const volumes = await listVolumes(name)
+      if (selected !== name || !box.isConnected) return
+      filesAt.set(name, 'volumes')
+      box.innerHTML = P7yPanel.volumesView({ volumes }, { name, now: Date.now(), roots: filesListing?.roots })
+      return
+    }
+    const [d, volumes] = await Promise.all([api(`${filesBase(name)}?path=${encodeURIComponent(path)}`),
+      IN_VOLUME.test(path) ? (volumesOf.get(name) ?? listVolumes(name).catch(() => [])) : null])
+    if (selected !== name || !box.isConnected) return
+    filesAt.set(name, d.path); filesListing = d
+    const volume = volumes?.find(v => d.path === v.path || d.path.startsWith(`${v.path}/`))
+    box.innerHTML = P7yPanel.filesView(d, { name, now: Date.now(), volume })
+  } catch (e) {
+    // A folder removed meanwhile (or in a terminal): back to /root
+    if (path !== '/root' && /^No such|^Not a folder/.test(e.message)) { filesAt.delete(name); return loadFiles(name, '/root') }
+    if (box.isConnected) box.innerHTML = `<p class="error">${esc(e.message)}</p>`
+  }
+}
+function filesStatus(text, error = false) {
+  const el = $('[data-panel] [data-files-status]'); if (!el) return
+  el.hidden = !text; el.textContent = text || ''; el.className = error ? 'error' : 'muted'
+}
+async function uploadFiles(fileList) {
+  const name = selected, dir = filesAt.get(name) || '/root', files = [...fileList]
+  if (!name || !files.length) return
+  if (dir === 'volumes') return filesStatus('Open a volume first, then drop the files in it.', true)
+  const max = filesListing?.max_upload ?? Infinity, failed = []
+  for (const [i, f] of files.entries()) {
+    if (f.size > max) { failed.push(`${f.name}: larger than ${P7yPanel.fmtBytes(max)}`); continue }
+    filesStatus(`Uploading ${f.name} (${i + 1} of ${files.length})…`)
+    try {
+      const res = await fetch(`${filesBase(name)}/content?path=${encodeURIComponent(`${dir}/${f.name}`)}`, { method: 'PUT', body: f, headers: { 'Content-Type': 'application/octet-stream' }, credentials: 'same-origin' })
+      if (!res.ok) failed.push(`${f.name}: ${(await res.json().catch(() => ({}))).error || `HTTP ${res.status}`}`)
+    } catch { failed.push(`${f.name}: the upload broke off (too large?)`) }
+  }
+  await loadFiles(name, dir)
+  filesStatus(failed.length ? `Not uploaded: ${failed.join('; ')}` : `Uploaded ${files.length === 1 ? files[0].name : `${files.length} files`}.`, failed.length > 0)
+}
+async function deleteFile(path) {
+  const name = selected
+  if (!name || !await confirmDialog(`Delete ${path}? A folder goes with everything in it.`, 'Delete')) return
+  try { await api(`${filesBase(name)}?path=${encodeURIComponent(path)}`, { method: 'DELETE' }); await loadFiles(name) }
+  catch (e) { filesStatus(e.message, true) }
+}
+async function makeFolder(form) {
+  const name = selected, folder = form.folder.value.trim().replace(/^\/+|\/+$/g, '')
+  if (!name || !folder) return
+  const path = `${filesAt.get(name) || '/root'}/${folder}`
+  try { await api(`${filesBase(name)}/mkdir`, { method: 'POST', body: JSON.stringify({ path }) }); await loadFiles(name, path) }
+  catch (e) { filesStatus(e.message, true) }
 }
 
 // ---------- export for coding agents ----------
@@ -271,6 +344,7 @@ async function showPanel(name) {
   renderedJSON = sJSON
   panel.innerHTML = P7yPanel.renderPanel(s, { isAdmin, me, shortName, tab: panelTab, protocol: location.protocol })
   if (panelTab === 'registry') void loadRegistry(name)
+  if (panelTab === 'files') void loadFiles(name)
   if (busy.has(name)) markBusy(panel, busy.get(name))
 }
 
@@ -366,7 +440,7 @@ async function act(action) {
     if (selected === name) { renderedJSON = null; await showPanel(name) }
   } catch (e) {
     // At the running limit: let the owner choose which running sandbox sleeps instead
-    if (action === 'start' && e.body?.reason === 'running') { busy.delete(name); renderRows(); if (selected === name) { renderedJSON = null; await showPanel(name) } return openSwapDialog(name, e.body.running, e.body.limit) }
+    if (action === 'start' && (e.body?.reason === 'running' || e.body?.reason === 'room')) { busy.delete(name); renderRows(); if (selected === name) { renderedJSON = null; await showPanel(name) } return openSwapDialog(name, e.body.running, e.body.limit) }
     busy.delete(name)
     renderRows()
     if (selected !== name) {
@@ -679,6 +753,9 @@ function initSandboxes() {
     if (b.dataset.tab) return selectTab(b.dataset.tab)
     if (b.dataset.copyText !== undefined) return void copyText(b)
     if (b.dataset.deleteDigest) return void deleteVersion(b)
+    if (b.dataset.filesPath) return void loadFiles(selected, b.dataset.filesPath)
+    if ('filesVolumes' in b.dataset) return void loadFiles(selected, 'volumes')
+    if (b.dataset.filesDelete) return void deleteFile(b.dataset.filesDelete)
     if (b.dataset.show !== undefined) {
       const s = b.parentElement.querySelector('[data-secret]'); s.hidden = !s.hidden; b.textContent = s.hidden ? 'show' : 'hide'
       const mask = b.parentElement.querySelector('[data-secret-mask]'); if (mask) mask.hidden = !s.hidden
@@ -686,6 +763,12 @@ function initSandboxes() {
     if (b.dataset.connect) { if ($('[data-connect-dialog]')) openConnectDialog(b.dataset.connect, { port: Number(b.dataset.port), user: b.dataset.user, demoPassword: b.dataset.demoPassword, keyFile: b.dataset.keyFile }); else location.reload(); return }
     if (b.dataset.act) act(b.dataset.act)
   })
+  // The Files tab: a new folder, files picked or dropped
+  $('[data-panel]').addEventListener('submit', e => { if (e.target.matches('[data-files-mkdir]')) { e.preventDefault(); void makeFolder(e.target) } })
+  $('[data-panel]').addEventListener('change', e => { if (e.target.matches('[data-files-input]')) { void uploadFiles(e.target.files); e.target.value = '' } })
+  $('[data-panel]').addEventListener('dragover', e => { const z = e.target.closest('[data-files]'); if (z && e.dataTransfer?.types.includes('Files')) { e.preventDefault(); z.classList.add('drop') } })
+  $('[data-panel]').addEventListener('dragleave', e => { const z = e.target.closest('[data-files]'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('drop') })
+  $('[data-panel]').addEventListener('drop', e => { const z = e.target.closest('[data-files]'); if (!z) return; e.preventDefault(); z.classList.remove('drop'); void uploadFiles(e.dataTransfer.files) })
   $('[data-panel]').addEventListener('keydown', e => {
     const t = e.target.closest('[role="tab"]'); if (!t) return
     const ids = P7yPanel.TABS.map(([id]) => id), i = ids.indexOf(t.dataset.tab)
@@ -750,7 +833,7 @@ async function wakeFromLink() {
   if (!name) return
   history.replaceState(null, '', location.pathname)
   try { await api(`/sandboxes/${encodeURIComponent(name)}/start`, { method: 'POST' }); await loadList(); await showPanel(name) }
-  catch (e) { if (e.body?.reason === 'running') openSwapDialog(name, e.body.running, e.body.limit); else alert(e.message) }
+  catch (e) { if (e.body?.reason === 'running' || e.body?.reason === 'room') openSwapDialog(name, e.body.running, e.body.limit); else alert(e.message) }
 }
 
 // ---------- tokens ----------
@@ -847,6 +930,18 @@ function initTokens() {
   })
   loadTokens()
 }
+
+// ---------- topbar: the server's places, on every page ----------
+async function loadPlaces() {
+  try {
+    const b = P7yPanel.placesBadge((await api('/me')).server_places)
+    const el = $('[data-places]')
+    el.hidden = !b
+    if (b) { el.textContent = b.text; el.title = b.title; el.className = `places ${b.state}` }
+  } catch (e) { if (e.message !== 'signed out') console.error(e) }
+}
+loadPlaces()
+setInterval(() => { if (!document.hidden) loadPlaces() }, 10_000)
 
 if (view === 'mine' || view === 'all') initSandboxes()
 if (view === 'overview') initOverview()

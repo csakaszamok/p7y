@@ -18,13 +18,14 @@ import { ensureKeyPair } from "./services/registryAuth";
 import { stat, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { writeWebResponse } from "./services/http";
+import { writeWebResponse, readBody } from "./services/http";
+import { filesMaxUpload } from "./services/sandboxFiles";
 import { attachTerminals } from "./services/terminalServer";
 import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
 import { repoInfo } from "./services/repoInfo";
 import { mcpCaller, mcpToolsFor } from "./services/mcp";
-// From the base image (csakaszamok/rododentron): the API routes as MCP tools
+// From the base image (ghcr.io/p7y-dev/rododentron): the API routes as MCP tools
 import { createMcpHandler } from "./mcp-core";
 import { defaultRuntime, runtimeAllowed } from "./services/defaultRuntime";
 import { startRegistryGc } from "./services/registryGc";
@@ -166,25 +167,26 @@ function authorized(req: IncomingMessage): boolean {
 }
 
 // Convert IncomingMessage to Web API Request
-function toWebRequest(req: IncomingMessage): Promise<Request> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (chunk) => chunks.push(chunk));
-    req.on("end", () => {
-      const body = Buffer.concat(chunks);
-      const url = new URL(req.url ?? "/", `http://localhost`);
-      const headers = new Headers();
-      for (const [k, v] of Object.entries(req.headers)) {
-        if (v) headers.set(k, Array.isArray(v) ? v.join(", ") : v);
-      }
-      resolve(new Request(url.toString(), {
-        method: req.method ?? "GET",
-        headers,
-        body: body.length > 0 ? body : undefined,
-      }));
-    });
-    req.on("error", reject);
+// Read into memory, so capped: the largest upload the Files tab takes, and a little more
+async function toWebRequest(req: IncomingMessage): Promise<Request> {
+  const body = await readBody(req, filesMaxUpload() + 1024 * 1024);
+  const url = new URL(req.url ?? "/", `http://localhost`);
+  const headers = new Headers();
+  for (const [k, v] of Object.entries(req.headers)) {
+    if (v) headers.set(k, Array.isArray(v) ? v.join(", ") : v);
+  }
+  return new Request(url.toString(), {
+    method: req.method ?? "GET",
+    headers,
+    body: body.length > 0 ? new Uint8Array(body) : undefined,
   });
+}
+
+/** A body over the cap (readBody): 413, and the connection closed so the rest is not read. */
+function tooLarge(err: unknown, res: ServerResponse): boolean {
+  if ((err as { status?: number }).status !== 413 || res.headersSent) return false;
+  res.writeHead(413, { "Content-Type": "application/json", Connection: "close" }).end(JSON.stringify({ error: `Request body too large (over FILES_MAX_UPLOAD)` }));
+  return true;
 }
 
 const configErrors = insecureConfigErrors(process.env);
@@ -219,6 +221,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
         : await createMcpHandler({ name: "p7y", version: repoInfo().version ?? undefined, include: mcpToolsFor(caller) })(webReq);
       await writeWebResponse(out, res);
     } catch (err) {
+      if (tooLarge(err, res)) return;
       console.error("[mcp]", err);
       if (!res.headersSent) res.writeHead(500).end(String(err));
     }
@@ -254,6 +257,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       res.writeHead(500).end("Invalid handler module");
     }
   } catch (err) {
+    if (tooLarge(err, res)) return;
     console.error(`Handler hiba [${path}]:`, err);
     if (!res.headersSent) res.writeHead(500).end(String(err));
   }

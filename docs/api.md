@@ -1,6 +1,6 @@
 # API
 
-![Creating a sandbox with curl and calling its app, in real time: about 7 seconds](media/api-curl.gif)
+<video controls preload="none" playsinline poster="../media/api-curl-poster.webp" src="../media/api-curl.mp4" aria-label="Creating a sandbox with curl and calling its app, in real time: about 7 seconds" style="width:100%;max-width:960px;border-radius:8px"></video>
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -19,6 +19,13 @@
 | `GET` | `/sandboxes/:name/registry` | The sandbox's images in the registry, with secret-scan results |
 | `DELETE` | `/sandboxes/:name/registry/:app/:digest` | Delete one version of an image |
 | `POST` | `/sandboxes/:name/restart` | Restart a sandbox |
+| `GET` | `/sandboxes/:name/files` | List a folder of the sandbox's files (`path`, default `/root`): `/root`, `/home`, `/srv` and `/opt`, the folders kept over a deep sleep, and the apps' volumes; the sandbox must be running (409 `not_running` otherwise). See [Files](files.md) |
+| `GET` | `/sandboxes/:name/files/content` | Download a file (`path`), or a folder as a tar |
+| `PUT` | `/sandboxes/:name/files/content` | Upload a file to `path` (the body is the file; its folder must exist), up to `FILES_MAX_UPLOAD` |
+| `GET` | `/sandboxes/:name/files/text` | A text file's content as JSON (UTF-8, up to 1 MB): for agents |
+| `POST` | `/sandboxes/:name/files/mkdir` | Create a folder (`{"path": "/srv/data"}`) |
+| `DELETE` | `/sandboxes/:name/files` | Delete a file or a folder (`path`), not the four folders themselves (nor a volume's folder) |
+| `GET` | `/sandboxes/:name/volumes` | The volumes of the apps in the sandbox's own Docker: `name`, `path` (for the routes above), `project`, `containers` that use it |
 | `DELETE` | `/sandboxes/:name` | Archive the sandbox, then remove it (**Archive…** in the UI; see [Delete = archive](archive.md)) |
 | `GET` | `/runtimes` | List the runtimes new sandboxes may use (`name`, `description`, `default`; only those in `ALLOWED_RUNTIMES` when it is set) |
 | `GET` | `/templates` | List the templates (`name`, `description`, `default`) |
@@ -31,7 +38,7 @@
 | `GET` | `/sandboxes/:name/logs/stream` | The sandbox's app logs as Server-Sent Events: the last 100 lines of every container, then live (token too) |
 | `DELETE` | `/ssh-keys/:id` | Delete one of your keys (it stops working at once) |
 | `GET` | `/templates/:name` | A template's `compose.yaml` as written (`compose`), to show or edit before a create |
-| `GET` | `/me` | Who you are signed in as |
+| `GET` | `/me` | Who you are signed in as, your running sandboxes and limit, and `server_places`: the sandbox places on the server, `used` and `limit` (`null` without a server limit) |
 | `GET` | `/tokens` | List your personal access tokens (`hint`: the token's start and end, e.g. `p7y_aB3x…9fQz`; null for tokens made before hints) |
 | `POST` | `/tokens` | Mint a personal access token (`name`, optional `expires_in` like `30d`/`90d`/`never`) |
 | `DELETE` | `/tokens/:id` | Revoke a personal access token |

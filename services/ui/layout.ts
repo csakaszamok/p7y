@@ -64,6 +64,7 @@ export function renderPage(opts: { title: string; view: 'overview' | 'mine' | 'a
     ${link('/settings/tokens', 'Access tokens', 'tokens')}
     ${link('/settings/ssh-keys', 'SSH keys', 'ssh-keys')}
   </nav>
+  <span class="places" data-places hidden></span>
   ${repoBadge(repoInfo())}
   <form method="post" action="/logout" class="who"><span>${escapeHtml(session.sub)}</span><button class="link">Sign out</button></form>
 </header>
@@ -157,7 +158,7 @@ export const SANDBOX_VIEW_BODY = `
         <input type="search" placeholder="Filter by name or owner…" data-filter-text>
         <select data-filter-status><option value="">All statuses</option><option>running</option><option>exited</option><option>deep_sleep</option></select>
       </div>
-      <span class="muted" data-quota></span>
+      <span class="muted quota" data-quota></span>
       <button class="primary" data-new>+ New sandbox</button>
     </div>
     <table class="grid"><thead data-head></thead><tbody data-rows><tr><td class="muted">Loading…</td></tr></tbody></table>

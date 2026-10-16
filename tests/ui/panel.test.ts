@@ -185,7 +185,7 @@ describe('agent access in the panel', () => {
   })
 
   it('a Registry tab: images, scan state, findings, delete', () => {
-    expect(P.TABS.map(([id]: [string]) => id)).toEqual(['apps', 'access', 'resources', 'registry', 'settings'])
+    expect(P.TABS.map(([id]: [string]) => id)).toEqual(['apps', 'access', 'files', 'resources', 'registry', 'settings'])
     expect(panelOf(P.renderPanel(running, ctx), 'registry')).toContain('data-registry')
     const html = P.registryTable({ registry: 'registry.lvh.me', public_pull: true, repos: [{ repo: 'shop/todo', versions: [
       { digest: 'sha256:aaaaaaaaaaaaaaaa', state: 'clean', tags: ['1'], pushed_at: '2026-10-04T10:00:00Z', findings: [] },
@@ -337,6 +337,46 @@ describe('overview: the running limit', () => {
   })
 })
 
+describe('placesBadge: the server places in the topbar', () => {
+  it('taken / limit, the free ones in the title; orange from 90%, red when full; nothing without a limit', () => {
+    const b = P.placesBadge({ used: 142, limit: 200 })
+    expect(b.text).toBe('142 / 200 places')
+    expect(b.title).toBe('Sandbox places on the server: 142 taken, 58 free (running and asleep sandboxes; deep sleep holds none)')
+    expect(b.state).toBe('')
+    expect(P.placesBadge({ used: 180, limit: 200 }).state).toBe('warn')
+    expect(P.placesBadge({ used: 200, limit: 200 }).state).toBe('full')
+    expect(P.placesBadge({ used: 203, limit: 200 }).title).toContain('0 free')
+    expect(P.placesBadge(null)).toBeNull()
+  })
+})
+
+// SANDBOX_QUOTA is guaranteed, SANDBOX_QUOTA_MAX (max_running) the most while the server has room
+describe('the guarantee and the maximum', () => {
+  const mine = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `p7y-${i}`, owner: 'u@x', status: 'running' }))
+  it('a user under the guarantee: how many more are guaranteed, and how far they may go', () => {
+    const html = P.overviewHtml({ quota: 3, max_running: 10, archived: 0, server_full: false }, mine(1), { isAdmin: false })
+    expect(html).toMatch(/Running[\s\S]*?class="ov-num">1<small> \/ 3<\/small>/)
+    expect(html).toContain('2 more guaranteed · up to 10 while the server has room')
+  })
+  it('a user above the guarantee, and at the maximum', () => {
+    expect(P.overviewHtml({ quota: 3, max_running: 10, archived: 0, server_full: false }, mine(4), { isAdmin: false })).toContain('above the 3 guaranteed · up to 10 while the server has room')
+    expect(P.overviewHtml({ quota: 3, max_running: 10, archived: 0, server_full: false }, mine(10), { isAdmin: false })).toContain('limit reached')
+  })
+  it('without a maximum above the guarantee nothing changes', () => {
+    expect(P.overviewHtml({ quota: 3, max_running: 3, archived: 0, server_full: false }, mine(1), { isAdmin: false })).toContain('2 more can run')
+  })
+  it("the admin's owner table: running / guarantee (+ the extra)", () => {
+    const html = P.overviewHtml({ archived: 0, server_limit: 200, server_used: 4, by_owner: [{ owner: 'u@x', quota: 3, max_running: 10, total: 4, archived: 0 }], resources: null }, mine(4), { isAdmin: true })
+    expect(html).toContain('4 / 3 (+7)</td>')
+  })
+  it('quotaLine: the line on My sandboxes', () => {
+    // short, beside the New sandbox button; the rest on hover
+    expect(P.quotaLine({ quota: 3, max_running: 3, sandbox_count: 1 })).toEqual({ text: 'Running 1 / 3', title: '' })
+    expect(P.quotaLine({ quota: 3, max_running: 10, sandbox_count: 4 })).toEqual({ text: 'Running 4 / 3 · up to 10', title: '3 running sandboxes guaranteed; up to 10 while the server has room' })
+    expect(P.quotaLine({ quota: 3, max_running: null, sandbox_count: 4 })).toEqual({ text: 'Running 4 / 3 · more', title: '3 running sandboxes guaranteed; more while the server has room' })
+  })
+})
+
 // Two running of two read as full, with one more allowed
 describe("overview: a user's bar", () => {
   it('is scaled to their running limit, not to the sandboxes they have', () => {
@@ -348,5 +388,64 @@ describe("overview: a user's bar", () => {
     const list = [{ name: 'p7y-a', owner: 'u@x', status: 'running' }, { name: 'p7y-b', owner: 'u@x', status: 'exited' }, { name: 'p7y-c', owner: 'u@x', status: 'exited' }]
     expect(P.overviewHtml({ quota: 2, max_running: 2, archived: 0, server_full: false }, list, { isAdmin: false })).toContain('class="r" style="width:33.3%"')
     expect(P.overviewHtml({ quota: null, max_running: null, archived: 0, server_full: false }, list, { isAdmin: false })).toContain('class="r" style="width:33.3%"')
+  })
+})
+
+describe('the Files tab', () => {
+  const listing = { path: '/root/app', roots: ['/root', '/home', '/srv', '/opt'], max_upload: 100 * 1024 ** 2, entries: [
+    { name: 'src', type: 'dir', size: 4096, mtime: '2026-10-04T14:00:00.000Z' },
+    { name: 'notes <b>.md', type: 'file', size: 2048, mtime: '2026-10-04T14:58:00.000Z' },
+    { name: 'latest', type: 'link', size: 7, mtime: '2026-10-04T14:00:00.000Z' },
+  ] }
+  it('is a tab; a running sandbox loads its files, a sleeping one offers to wake it', () => {
+    expect(P.TABS.map(([id]: string[]) => id)).toEqual(['apps', 'access', 'files', 'resources', 'registry', 'settings'])
+    expect(P.renderPanel(running, { ...ctx, tab: 'files' })).toContain('data-files')
+    const asleep = P.renderPanel({ ...running, status: 'exited' }, { ...ctx, tab: 'files' })
+    expect(asleep).toContain('wake it to see its files')
+    expect(asleep).toContain('data-act="start"')
+  })
+  it('the four folders, the path to click back along, folders to open, files to download', () => {
+    const html = P.filesView(listing, { ...ctx, name: 'p7y-shop' })
+    expect(html).toContain('data-files-path="/srv"')
+    expect(html).toContain('data-files-path="/root"') // the crumb back to /root
+    expect(html).toContain('data-files-path="/root/app/src"')
+    expect(html).toContain('href="/sandboxes/p7y-shop/files/content?path=%2Froot%2Fapp%2Fnotes%20%3Cb%3E.md"')
+    expect(html).toContain('notes &lt;b&gt;.md')
+    expect(html).not.toContain('notes <b>')
+    expect(html).toContain('2 KB')
+    expect(html).toContain('data-files-delete="/root/app/notes &lt;b&gt;.md"')
+    expect(html).toContain('data-files-input')
+    expect(html).toContain('up to 100 MB a file')
+    expect(html).toContain('href="/sandboxes/p7y-shop/files/content?path=%2Froot%2Fapp"') // the folder as a tar
+  })
+  it('an empty folder says where files can go', () => {
+    expect(P.filesView({ ...listing, entries: [] }, { ...ctx, name: 'p7y-shop' })).toContain('Empty: drop files here')
+  })
+  const vol = { name: 'shop_db', path: '/var/lib/docker/volumes/shop_db/_data', project: 'shop', containers: [{ name: 'shop-db-1', service: 'db', running: true, mount: '/var/lib/postgresql/data' }] }
+  it('a Volumes chip next to the four folders', () => {
+    const html = P.filesView(listing, { ...ctx, name: 'p7y-shop' })
+    expect(html).toContain('data-files-volumes')
+    expect(html).not.toMatch(/files-root on[^>]*data-files-volumes/)
+  })
+  it('in a volume: the crumbs start at the volume, a running app using it is a warning', () => {
+    const html = P.filesView({ ...listing, path: `${vol.path}/base` }, { ...ctx, name: 'p7y-shop', volume: vol })
+    expect(html).toMatch(/files-root on[^>]*data-files-volumes/)
+    expect(html).toContain(`data-files-path="${vol.path}">shop_db</button> / <button class="link" data-files-path="${vol.path}/base">base</button>`)
+    expect(html).toContain('db (shop-db-1) is running')
+    expect(html).not.toContain('Only /root, /home, /srv and /opt are shown')
+    const stopped = P.filesView({ ...listing, path: vol.path }, { ...ctx, name: 'p7y-shop', volume: { ...vol, containers: [{ ...vol.containers[0], running: false }] } })
+    expect(stopped).not.toContain('is running')
+  })
+  it('a container named as its service is named once', () => {
+    const solo = { ...vol, containers: [{ name: 'portainer', service: 'portainer', running: true, mount: '/data' }] }
+    expect(P.filesView({ ...listing, path: vol.path }, { ...ctx, name: 'p7y-shop', volume: solo })).toContain('>portainer is running')
+  })
+  it("volumesView: the sandbox's volumes to open, who uses them; none says so", () => {
+    const html = P.volumesView({ volumes: [vol, { name: '3f9a <x>', path: '/var/lib/docker/volumes/3f9a/_data', project: null, containers: [] }] }, { ...ctx, name: 'p7y-shop' })
+    expect(html).toContain(`data-files-path="${vol.path}"`)
+    expect(html).toContain('/var/lib/postgresql/data')
+    expect(html).toContain('3f9a &lt;x&gt;')
+    expect(html).toMatch(/files-root on[^>]*data-files-volumes/)
+    expect(P.volumesView({ volumes: [] }, { ...ctx, name: 'p7y-shop' })).toContain('No volumes')
   })
 })
