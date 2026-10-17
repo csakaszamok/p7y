@@ -42,6 +42,12 @@ async function refresh(): Promise<void> {
 }
 
 /** The counts as last fetched (null before the first answer); starts a refresh in the background when stale. */
+/** Purgatory's own version (its package.json), null if unknown: the topbar and the OpenAPI document. */
+export function p7yVersion(): string | null {
+  if (version === undefined) version = readVersion()
+  return version
+}
+
 export function repoInfo(now = Date.now()): RepoInfo {
   if (version === undefined) version = readVersion()
   if (statsEnabled() && !pending && now - fetchedAt >= TTL) pending = refresh().finally(() => { pending = null })

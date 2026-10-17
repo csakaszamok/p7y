@@ -12,6 +12,12 @@ claude mcp add --transport http p7y https://p7y.example.com/mcp --header "Author
 
 Other clients take the same URL and header, e.g. `{"mcpServers": {"p7y": {"type": "http", "url": "https://p7y.example.com/mcp", "headers": {"Authorization": "Bearer p7y_…"}}}}`. Left out: the log stream (it never ends) and the zip export (a file a tool result cannot carry).
 
+A client that can only start a local process (stdio) can use `scripts/mcp-stdio.mjs` from this repository: it needs only Node.js 18+, no packages, and passes each message to the server's `/mcp` with your token:
+
+```json
+{"mcpServers": {"p7y": {"command": "node", "args": ["/path/to/p7y/scripts/mcp-stdio.mjs"], "env": {"P7Y_URL": "https://p7y.example.com", "P7Y_TOKEN": "p7y_…"}}}}
+```
+
 Under the hood it is JSON-RPC over HTTP: one `POST /mcp` per call, no session to open first, so even `curl` can call a tool (`tools/list`, then `tools/call` with the tool's `name` and `arguments`):
 
 <video controls preload="none" playsinline poster="../media/mcp-rpc-poster.webp" src="../media/mcp-rpc.mp4" aria-label="The MCP server called with curl: tools/list, then create_sandbox, in real time" style="width:100%;max-width:960px;border-radius:8px"></video>

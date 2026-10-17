@@ -45,6 +45,15 @@
 
 All endpoints require `Authorization: Bearer <ADMIN_TOKEN | personal token>` or a signed-in browser session. Users only see their own sandboxes.
 
-Swagger UI available at `/swagger`.
+## OpenAPI and clients
+
+The whole API is described as OpenAPI 3.0 at `/swagger.json` (no token needed to read it), and you can try it in Swagger UI at `/swagger`. There is no official SDK yet; generate a client in your language from that document instead, for example typed TypeScript:
+
+```bash
+curl -s https://p7y.example.com/swagger.json -o p7y.json
+npx openapi-typescript p7y.json -o p7y.d.ts   # use it with openapi-fetch
+```
+
+or any language [openapi-generator](https://openapi-generator.tech/) supports (`openapi-generator-cli generate -i p7y.json -g python -o p7y-client`). The document's version is Purgatory's own, so regenerate after an upgrade.
 
 More reading: [architecture diagrams](architecture.html), [how agents deploy](agent-guide.md), [comparison with other sandbox platforms](comparison.md), [roadmap](roadmap.md).

@@ -4,6 +4,19 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-10-17
+
+Upgrading from 0.7.0: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d`.
+
+### Added
+
+- Purgatory is in the official MCP Registry as `io.github.p7y-dev/p7y` (`server.json`): a client that reads the registry asks for your server's domain and a token.
+- `scripts/mcp-stdio.mjs`: the MCP server over stdio, for clients that only start a local process. Node.js 18+, no packages; it passes each message to `/mcp` with `P7Y_TOKEN` ([MCP](https://p7y-dev.github.io/p7y/latest/mcp/)).
+
+### Changed
+
+- The OpenAPI document (`/swagger.json`) gives Purgatory's own version instead of `1.0.0`, and the API page says how to generate a client from it ([OpenAPI and clients](https://p7y-dev.github.io/p7y/latest/api/#openapi-and-clients)).
+
 ## [0.7.0] - 2026-10-16
 
 Upgrading from 0.6: download the new `docker-compose.yml` (it names this version), then `docker compose pull && docker compose up -d`; nothing is migrated. Existing sandboxes keep running on foxglove 0.6.0; new ones get 0.7.0 (see *Changed*). A request body may now be at most `FILES_MAX_UPLOAD` (100m): raise it if you send larger ones to the API.
