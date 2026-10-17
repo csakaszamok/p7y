@@ -25,7 +25,7 @@
   - the TCP path still needs Purgatory (its addresses do not answer while Purgatory is down or upgrading, and open connections drop): whether Traefik could carry it with TCP routers to frps, which have no Sablier middleware;
   - one rule for staying awake on every path: traffic in the last minute, not an open connection (today: every web request; a `-docker` connection while bytes go through it, never waking a sleeping one, since Docker Desktop reconnects to every context at once; a `-tcp` connection not at all, though it wakes one);
   - moving existing sandboxes over; the Kata runtime and Kubernetes support build on this.
-- **A Hub: the team's apps in one place.** Today only the person who started an app knows its address. A label on an inner container would publish it to a **Hub** tab that everyone signed in sees, so a team finds what colleagues built and opens it with one click; an asleep app wakes on the first request, so every link works:
+- **A Hub: the team's apps in one place.** Today only the person who started an app knows its address. A label on an inner container would publish it to the **Hub**, so the people who use the apps find what colleagues built and open it with one click; an asleep app wakes on the first request, so every link works:
 
   ```yaml
   labels:
@@ -34,11 +34,15 @@
     p7y.description: "Who took what from the stock room"
   ```
 
-  Each entry shows the app's owner, its sandbox, whether it runs, sleeps or is in deep sleep, and when it was last updated. The Hub also has an RSS/JSON feed and an optional webhook, so a new app shows up by itself wherever the team looks: a Slack/Teams/Mattermost channel, Linkwarden, an RSS reader, or Lemmy and others through a bot or n8n, without an integration per service. To work out:
+  The Hub is **a web app of its own** at its own address (e.g. `hub.example.com`), served by Purgatory but apart from its UI: a searchable list with each app's title, description, owner and whether it runs, sleeps or is in deep sleep, and an **Open** button. No sandboxes, no *New sandbox*, no quota: people who only look at the apps are not drawn into running their own. They sign in with the same single sign-on, **as viewers**: who may see the Hub and who may create sandboxes are separate settings (e.g. `HUB_ALLOWED_DOMAINS` for the whole company, `OIDC_ALLOWED_EMAILS` for the people who build). In the Purgatory UI a builder sees which of their apps are published.
+
+  The Hub also has an RSS/JSON feed and an optional webhook, so a new app shows up by itself wherever the team looks: a Slack/Teams/Mattermost channel, Linkwarden, an RSS reader, or Lemmy and others through a bot or n8n, without an integration per service. To work out:
+  - roles: a viewer can sign in to the Hub only; today anyone who can sign in can create sandboxes, so this needs a viewer role that the sandbox API refuses;
   - the feed for readers that cannot sign in: a secret token in its address, one per team, that can be rotated;
   - reading the labels: from the compose file Purgatory deployed, or from the inner Docker (an app started by hand or by an agent has no compose file there);
-  - who may publish (any sandbox owner) and who sees what: the Hub is for signed-in users only; with **Teams**, per team;
-  - an app that is gone (sandbox archived, label removed) leaves the Hub and the feed.
+  - who may publish (any sandbox owner) and who sees what; with **Teams**, a Hub per team;
+  - an app that is gone (sandbox archived, label removed) leaves the Hub and the feed;
+  - optionally, for small installs without single sign-on: a Hub open on the internal network only.
 - **Deploy from git.** Today a sandbox gets its apps through `docker compose` (the API, SSH, the Docker CLI or an agent). Next: connect a repository, and a push builds the image and deploys it into the sandbox, like a self-hosted Vercel; optionally a preview sandbox per branch or pull request, which sleeps like any other and is archived when the branch is merged. To work out:
   - where the build runs: in the sandbox's own Docker (its CPU and memory limits apply, and the image goes to the Purgatory registry, which already scans pushes for secrets);
   - how Purgatory reaches the repository and hears about pushes: a webhook from GitHub/GitLab/Gitea, or polling, and a deploy key per sandbox;
