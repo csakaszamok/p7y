@@ -1250,15 +1250,26 @@
 <li>the TCP path still needs Purgatory (its addresses do not answer while Purgatory is down or upgrading, and open connections drop): whether Traefik could carry it with TCP routers to frps, which have no Sablier middleware;</li>
 <li>one rule for staying awake on every path: traffic in the last minute, not an open connection (today: every web request; a <code>-docker</code> connection while bytes go through it, never waking a sleeping one, since Docker Desktop reconnects to every context at once; a <code>-tcp</code> connection not at all, though it wakes one);</li>
 <li>moving existing sandboxes over; the Kata runtime and Kubernetes support build on this.</li>
-<li><strong>Deploy from git.</strong> Today a sandbox gets its apps through <code>docker compose</code> (the API, SSH, the Docker CLI or an agent). Next: connect a repository, and a push builds the image and deploys it into the sandbox, like a self-hosted Vercel; optionally a preview sandbox per branch or pull request, which sleeps like any other and is archived when the branch is merged. To work out:</li>
-<li>where the build runs: in the sandbox's own Docker (its CPU and memory limits apply, and the image goes to the Purgatory registry, which already scans pushes for secrets);</li>
-<li>how Purgatory reaches the repository and hears about pushes: a webhook from GitHub/GitLab/Gitea, or polling, and a deploy key per sandbox;</li>
-<li>projects without a <code>Dockerfile</code> or a compose file: buildpacks (Nixpacks, Cloud Native Buildpacks), or refuse them with a clear message;</li>
-<li>build logs in the panel and the API, and what a failed build does to the running version (it keeps running).</li>
-<li><strong>Teams:</strong> a sandbox owned by a group, so several people see and manage it, and other teams do not; optionally a quota per team.</li>
-<li><strong>A hard disk quota per sandbox.</strong> Today a sandbox above its disk limit is only flagged (see <a href="../resources/#disk">Disk</a>). For a hard limit: its <code>docker_data</code> as a fixed-size ext4 image, loop-mounted through the local volume driver (<code>type=ext4</code>, <code>o=loop</code>); to work out: moving existing sandboxes' data, resizing (only while stopped), the archive, Docker Desktop. The Kata runtime gets this from its VM disk.</li>
-<li><strong>Kubernetes support:</strong> move the runtime layer behind the Docker-specific code; Sablier's Kubernetes provider helps here.</li>
+<li><strong>A Hub: the team's apps in one place.</strong> Today only the person who started an app knows its address. A label on an inner container would publish it to a <strong>Hub</strong> tab that everyone signed in sees, so a team finds what colleagues built and opens it with one click; an asleep app wakes on the first request, so every link works:</li>
 </ul>
+<div class="highlight"><pre><span></span><code><span class="nt">labels</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">p7y.publish</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<span class="w">  </span><span class="nt">p7y.title</span><span class="p">:</span><span class="w"> </span><span class="s">"Stock</span><span class="nv"> </span><span class="s">room"</span>
+<span class="w">  </span><span class="nt">p7y.description</span><span class="p">:</span><span class="w"> </span><span class="s">"Who</span><span class="nv"> </span><span class="s">took</span><span class="nv"> </span><span class="s">what</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">stock</span><span class="nv"> </span><span class="s">room"</span>
+</code></pre></div>
+<p>Each entry shows the app's owner, its sandbox, whether it runs, sleeps or is in deep sleep, and when it was last updated. The Hub also has an RSS/JSON feed and an optional webhook, so a new app shows up by itself wherever the team looks: a Slack/Teams/Mattermost channel, Linkwarden, an RSS reader, or Lemmy and others through a bot or n8n, without an integration per service. To work out:
+  - the feed for readers that cannot sign in: a secret token in its address, one per team, that can be rotated;
+  - reading the labels: from the compose file Purgatory deployed, or from the inner Docker (an app started by hand or by an agent has no compose file there);
+  - who may publish (any sandbox owner) and who sees what: the Hub is for signed-in users only; with <strong>Teams</strong>, per team;
+  - an app that is gone (sandbox archived, label removed) leaves the Hub and the feed.
+- <strong>Deploy from git.</strong> Today a sandbox gets its apps through <code>docker compose</code> (the API, SSH, the Docker CLI or an agent). Next: connect a repository, and a push builds the image and deploys it into the sandbox, like a self-hosted Vercel; optionally a preview sandbox per branch or pull request, which sleeps like any other and is archived when the branch is merged. To work out:
+  - where the build runs: in the sandbox's own Docker (its CPU and memory limits apply, and the image goes to the Purgatory registry, which already scans pushes for secrets);
+  - how Purgatory reaches the repository and hears about pushes: a webhook from GitHub/GitLab/Gitea, or polling, and a deploy key per sandbox;
+  - projects without a <code>Dockerfile</code> or a compose file: buildpacks (Nixpacks, Cloud Native Buildpacks), or refuse them with a clear message;
+  - build logs in the panel and the API, and what a failed build does to the running version (it keeps running).
+- <strong>Teams:</strong> a sandbox owned by a group, so several people see and manage it, and other teams do not; optionally a quota per team.
+- <strong>A hard disk quota per sandbox.</strong> Today a sandbox above its disk limit is only flagged (see <a href="../resources/#disk">Disk</a>). For a hard limit: its <code>docker_data</code> as a fixed-size ext4 image, loop-mounted through the local volume driver (<code>type=ext4</code>, <code>o=loop</code>); to work out: moving existing sandboxes' data, resizing (only while stopped), the archive, Docker Desktop. The Kata runtime gets this from its VM disk.
+- <strong>Kubernetes support:</strong> move the runtime layer behind the Docker-specific code; Sablier's Kubernetes provider helps here.</p>
 
 
 
