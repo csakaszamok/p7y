@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- `scripts/mcp-stdio.mjs`: the MCP server over stdio, for clients that only start a local process. Node.js 18+, no packages; it passes each message to `/mcp` with `P7Y_TOKEN` ([MCP](https://p7y-dev.github.io/p7y/latest/mcp/)).
+
 ### Changed
 
 - The OpenAPI document (`/swagger.json`) gives Purgatory's own version instead of `1.0.0`, and the API page says how to generate a client from it ([OpenAPI and clients](https://p7y-dev.github.io/p7y/latest/api/#openapi-and-clients)).
