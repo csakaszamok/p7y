@@ -4,8 +4,13 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-10-17
+
+Upgrading from 0.7.0: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d`.
+
 ### Added
 
+- Purgatory is in the official MCP Registry as `io.github.p7y-dev/p7y` (`server.json`): a client that reads the registry asks for your server's domain and a token.
 - `scripts/mcp-stdio.mjs`: the MCP server over stdio, for clients that only start a local process. Node.js 18+, no packages; it passes each message to `/mcp` with `P7Y_TOKEN` ([MCP](https://p7y-dev.github.io/p7y/latest/mcp/)).
 
 ### Changed
