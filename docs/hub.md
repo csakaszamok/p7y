@@ -43,6 +43,14 @@ services:
       p7y.description: "Who took what from the stock room"   # optional, at most 280
 ```
 
+- A description over several lines keeps its line breaks on the Hub (YAML's `|`):
+
+    ```yaml
+    p7y.description: |
+      Who took what from the stock room.
+      Ask Anna for access.
+    ```
+
 - What is published is the app's **web address**, the one its sandbox's *Apps* tab shows; with several ports, the lowest one published on all interfaces. A published container with no such port is not on the Hub: the *Apps* tab says *published, but has no web address*.
 - It appears on the Hub within half a minute, without approval. Remove the label (and deploy again) to take it off; archiving the sandbox does too. Deep sleep keeps it on the Hub.
 - Apps started by hand or by an agent count as well: Purgatory reads the labels from the sandbox's own Docker.
