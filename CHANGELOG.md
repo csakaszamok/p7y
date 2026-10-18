@@ -6,7 +6,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Added
 
-- **The Hub** ([docs](https://p7y-dev.github.io/p7y/latest/hub/)): the apps builders publish with a `p7y.publish: "true"` label, at their own address `hub.<HOST_DOMAIN>`, for colleagues who only use them: search, *Popular* and *New*, whether an app runs or sleeps, **Open** (an asleep app wakes). Viewers sign in with the same single sign-on but only to the Hub (`HUB_ALLOWED_DOMAINS`, `HUB_ALLOWED_EMAILS`); everyone signed in can vote once per app. An RSS and a JSON feed with a secret key (*Overview → Create feed link*). Off unless `HUB_ENABLED=true`; with single sign-on, add `https://hub.<HOST_DOMAIN>/auth/callback` at the provider. A published app has an *On the Hub* marker on the *Apps* tab.
+- **The Hub** ([docs](https://p7y-dev.github.io/p7y/latest/hub/)): the apps builders publish with a `p7y.publish: "true"` label, at their own address `hub.<HOST_DOMAIN>`, for colleagues who only use them: search, *Popular* and *New*, whether an app runs or sleeps, **Open** (an asleep app wakes). Viewers sign in with the same single sign-on but only to the Hub (`HUB_ALLOWED_DOMAINS`, `HUB_ALLOWED_EMAILS`); everyone signed in can vote once per app, their own too. An RSS and a JSON feed with a secret key (*Overview → Create feed link*). Off unless `HUB_ENABLED=true`; with single sign-on, add `https://hub.<HOST_DOMAIN>/auth/callback` at the provider. A published app has an *On the Hub* marker on the *Apps* tab.
 
 ### Changed
 

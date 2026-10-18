@@ -34,8 +34,7 @@ function render() {
     const [label, cls] = STATUS[a.status] ?? STATUS.asleep
     side.append(text('span', `status ${cls}`, label))
     const vote = text('button', `vote${a.voted ? ' on' : ''}`, `👍 ${a.votes}`)
-    vote.disabled = a.mine
-    vote.title = a.mine ? 'Your app' : a.voted ? 'Take your vote back' : 'Vote'
+    vote.title = a.voted ? 'Take your vote back' : 'Vote'
     vote.setAttribute('aria-pressed', String(a.voted))
     vote.onclick = () => toggleVote(a)
     const open = text('a', 'primary', 'Open ↗')
