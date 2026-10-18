@@ -24,6 +24,8 @@ import { attachTerminals } from "./services/terminalServer";
 import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
 import { repoInfo, p7yVersion } from "./services/repoInfo";
+import { isHubHost } from "./services/hub/config";
+import { handleHub } from "./services/hub/router";
 import { mcpCaller, mcpToolsFor } from "./services/mcp";
 // From the base image (ghcr.io/p7y-dev/rododentron): the API routes as MCP tools
 import { createMcpHandler } from "./mcp-core";
@@ -207,6 +209,18 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   const method = req.method ?? "GET";
 
   if (path.includes("..")) { res.writeHead(400).end("Bad Request"); return; }
+
+  // The Hub host: only the Hub's own routes; Purgatory's API, /mcp and /swagger never answer here
+  if (isHubHost(req.headers.host)) {
+    try {
+      await writeWebResponse(await handleHub(await toWebRequest(req)), res);
+    } catch (err) {
+      if (tooLarge(err, res)) return;
+      console.error("[hub]", err);
+      if (!res.headersSent) res.writeHead(500).end("Internal Server Error");
+    }
+    return;
+  }
 
   if (path === "/swagger") {
     res.writeHead(200, { "Content-Type": "text/html" }).end(SWAGGER_UI);
