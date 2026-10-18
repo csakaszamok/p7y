@@ -3,6 +3,7 @@
  * addresses). Without either, anyone the provider lets through — with Google, any Google account. The local admin is
  * never on a list.
  */
+import { hubEnabled, hubUrl } from './hub/config'
 const list = (raw: string | undefined, strip = '') =>
   new Set((raw ?? '').split(',').map(v => v.trim().toLowerCase().replace(strip, '')).filter(Boolean))
 
@@ -30,4 +31,29 @@ export function openSignInWarning(env: NodeJS.ProcessEnv = process.env): string 
   const { domains, emails } = lists(env)
   if (!oidc || domains.size || emails.size) return null
   return `[auth] anyone with an account at ${env.OIDC_ISSUER} can sign in and create sandboxes: set OIDC_ALLOWED_DOMAINS or OIDC_ALLOWED_EMAILS to limit it`
+}
+
+function hubLists(env: NodeJS.ProcessEnv) {
+  return { domains: list(env.HUB_ALLOWED_DOMAINS, '@'), emails: list(env.HUB_ALLOWED_EMAILS) }
+}
+
+/** On the Hub: every builder, and HUB_ALLOWED_DOMAINS / HUB_ALLOWED_EMAILS (viewers). */
+export function hubAllowed(email: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  if (signInAllowed(email, env)) return true
+  const { domains, emails } = hubLists(env)
+  const e = email.trim().toLowerCase()
+  const at = e.lastIndexOf('@')
+  return emails.has(e) || (at > 0 && domains.has(e.slice(at + 1)))
+}
+
+/** May use the Hub but not Purgatory itself. */
+export function viewerOnly(email: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  return !signInAllowed(email, env) && hubAllowed(email, env)
+}
+
+/** Why Purgatory's own sign-in refuses this e-mail, or null to let it in. */
+export function purgatorySignInRefusal(email: string, env: NodeJS.ProcessEnv = process.env): string | null {
+  if (signInAllowed(email, env)) return null
+  if (hubEnabled(env) && viewerOnly(email, env)) return `You have access to the Hub only: ${hubUrl(env)}`
+  return `Your account (${email}) may not sign in here. Ask the administrator.`
 }
