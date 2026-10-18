@@ -147,6 +147,9 @@ export const OVERVIEW_BODY = `
 <div class="ov">
   <div class="ov-head"><h1>Overview</h1><span class="muted" data-ov-scope></span></div>
   <div data-overview><p class="muted">Loading…</p></div>
+  <section id="hub-feed" hidden><h2>Hub feed</h2>
+    <p class="muted">An RSS link for Slack, Teams, Linkwarden or an RSS reader. Creating a new one ends the old link.</p>
+    <button id="hub-feed-new">Create feed link</button> <code id="hub-feed-url"></code></section>
 </div>`
 
 export const SANDBOX_VIEW_BODY = `

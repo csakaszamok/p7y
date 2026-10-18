@@ -259,3 +259,5 @@ a.ov-card:hover { border-color: #ea580c; transform: translateY(-1px) }
   .repo-badge .name { display: none }
   .who { margin-left: auto }
 }
+/* Apps tab: an app published to the Hub */
+.tag { font-size: 12px; padding: 1px 6px; border: 1px solid #ea580c; border-radius: 10px; color: #f0a060; text-decoration: none; margin-left: 4px }
