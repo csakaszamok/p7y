@@ -25,7 +25,7 @@ main { max-width: 900px; margin: 0 auto; padding: 20px 16px 40px }
 .app:hover { background: #1e1e1e; border-color: #343434; box-shadow: 0 6px 18px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35); transform: translateY(-2px) }
 .app:focus-within { border-color: #4a2a14 }
 .app h2 { margin: 0 0 4px; font-size: 17px }
-.desc { margin: 0 0 6px; color: #cfcfcf } .meta { margin: 0; color: #888; font-size: 13px }
+.desc { margin: 0 0 6px; color: #cfcfcf; white-space: pre-line } /* a description's line breaks (YAML |) */ .meta { margin: 0; color: #888; font-size: 13px }
 .side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; min-width: 130px }
 .status { font-size: 13px } .status.run { color: #f59e0b } .status.sleep { color: #888 }
 .vote.on { border-color: #ea580c; color: #fff; background: #3a2414 } .vote.on:hover { background: #4a2d17 } .vote:disabled { cursor: default; opacity: .7 }
