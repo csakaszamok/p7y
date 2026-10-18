@@ -7,6 +7,7 @@ import { voteCounts, votedBy, addVote, removeVote } from './votes'
 import { rssFeed, jsonFeed } from './feed'
 import { feedKeyValid } from './feedKey'
 import { rememberName } from './names'
+import { refreshImages, imageOf } from './images'
 import { hubPage, hubLoginPage } from './page'
 import { html, redirect } from '../ui/layout'
 import { checkAdminLogin, sameOrigin } from '../principal'
@@ -21,8 +22,9 @@ const ASSETS: Record<string, [string, string]> = {
 }
 const notFound = () => new Response('Not Found', { status: 404 })
 const VOTE = /^\/api\/hub\/apps\/([a-z0-9.-]+)\/vote$/
+const IMAGE = /^\/api\/hub\/apps\/([a-z0-9.-]+)\/image$/
 
-interface Deps { entries?: () => Promise<HubEntry[]> }
+interface Deps { entries?: () => Promise<HubEntry[]>; refresh?: (list: HubEntry[]) => void }
 
 /** Everything on the Hub host. Purgatory's own routes never answer here. */
 export async function handleHub(req: Request, deps: Deps = {}): Promise<Response> {
@@ -86,8 +88,22 @@ export async function handleHub(req: Request, deps: Deps = {}): Promise<Response
     if (!viewer) return Response.json({ error: 'Unauthorized' }, { status: 401 })
     const counts = voteCounts()
     const mine = votedBy(viewer.sub)
-    const apps = (await entries()).map(({ sandbox: _s, service: _v, ...e }) => ({ ...e, votes: counts[e.id] ?? 0, voted: mine.has(e.id), mine: e.owner === viewer.sub }))
+    const list = await entries()
+    // The cards' images: fetched in the background, never in the way of the list
+    ;(deps.refresh ?? (l => { refreshImages(l).catch(err => console.error('[hub] images:', err)) }))(list)
+    const apps = list.map(({ sandbox: _s, service: _v, port: _p, image: _i, ...e }) => {
+      const img = imageOf(e.id)
+      return { ...e, image: img ? `/api/hub/apps/${e.id}/image?v=${img.version}` : null, votes: counts[e.id] ?? 0, voted: mine.has(e.id), mine: e.owner === viewer.sub }
+    })
     return Response.json({ title: hubTitle(), apps }, { headers: { 'Cache-Control': 'no-store' } })
+  }
+  const image = req.method === 'GET' ? p.match(IMAGE) : null
+  if (image) {
+    if (!viewer) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    const img = imageOf(image[1])
+    if (!img) return notFound()
+    // The address carries the version (?v=): a new image gets a new address, so it can be kept long
+    return new Response(fs.readFileSync(img.file), { headers: { 'Content-Type': img.type, 'Cache-Control': 'private, max-age=86400', 'X-Content-Type-Options': 'nosniff' } })
   }
   const vote = p.match(VOTE)
   if (vote && (req.method === 'PUT' || req.method === 'DELETE')) {

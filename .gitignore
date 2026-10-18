@@ -34,6 +34,7 @@ data/disk-usage.json
 data/hub-feed.key
 data/hub-votes.json
 data/hub-names.json
+data/hub-images/
 dynamic/tls.yml
 # written by p7y-init from the image
 dynamic/errors.yml

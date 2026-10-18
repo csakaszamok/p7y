@@ -17,7 +17,7 @@ beforeEach(() => {
   fs.rmSync(path.join(dir, 'votes.json'), { force: true })
 })
 
-const app: HubEntry = { id: 'shop-web.example.com', url: 'https://shop-web.example.com', title: 'Shop', description: '', service: 'web', owner: 'anna@example.com', owner_name: 'Anna', sandbox: 'p7y-shop', status: 'running', updated_at: '2026-10-20T10:00:00.000Z' }
+const app: HubEntry = { id: 'shop-web.example.com', url: 'https://shop-web.example.com', title: 'Shop', description: '', service: 'web', port: 80, image: null, owner: 'anna@example.com', owner_name: 'Anna', sandbox: 'p7y-shop', status: 'running', updated_at: '2026-10-20T10:00:00.000Z' }
 const deps = { entries: async () => [app] }
 const as = (sub: string) => ({ cookie: `p7y_hub=${createHubSession(sub, null)}` })
 const get = (p: string, headers: Record<string, string> = {}) => handleHub(new Request(`https://hub.example.com${p}`, { headers }), deps)
@@ -68,5 +68,30 @@ describe('handleHub', () => {
     const r = await handleHub(new Request('https://hub.example.com/login', { method: 'POST', headers: { origin: 'https://hub.example.com', host: 'hub.example.com', 'content-type': 'application/x-www-form-urlencoded' }, body: 'username=admin&password=pw' }), deps)
     expect(r.status).toBe(303)
     expect(r.headers.get('set-cookie')).toContain('p7y_hub=')
+  })
+})
+
+describe('handleHub: images', () => {
+  const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3])
+  it('lists each app’s image address, serves it to signed-in users only, and starts a refresh in the background', async () => {
+    process.env.HUB_IMAGES_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'hubimg-'))
+    const { refreshImages } = await import('../../../services/hub/images')
+    await refreshImages([{ ...app, image: '/shot.png' }], { get: async () => ({ status: 200, body: PNG }) })
+    let refreshed: unknown[] | null = null
+    const d = { entries: async () => [app], refresh: (list: unknown[]) => { refreshed = list } }
+    const list = await (await handleHub(new Request('https://hub.example.com/api/hub', { headers: as('peter@example.com') }), d)).json()
+    expect(list.apps[0].image).toMatch(/^\/api\/hub\/apps\/shop-web\.example\.com\/image\?v=[0-9a-f]{12}$/)
+    expect(refreshed).toHaveLength(1)
+    const img = await handleHub(new Request(`https://hub.example.com${list.apps[0].image}`, { headers: as('peter@example.com') }), d)
+    expect(img.status).toBe(200)
+    expect(img.headers.get('content-type')).toBe('image/png')
+    expect(Buffer.from(await img.arrayBuffer())).toEqual(PNG)
+    expect((await handleHub(new Request(`https://hub.example.com${list.apps[0].image}`), d)).status).toBe(401)
+    expect((await handleHub(new Request('https://hub.example.com/api/hub/apps/none.example.com/image', { headers: as('peter@example.com') }), d)).status).toBe(404)
+  })
+  it('an app without a stored image has image: null', async () => {
+    process.env.HUB_IMAGES_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'hubimg-'))
+    const list = await (await handleHub(new Request('https://hub.example.com/api/hub', { headers: as('peter@example.com') }), { entries: async () => [app], refresh: () => {} })).json()
+    expect(list.apps[0].image).toBeNull()
   })
 })
