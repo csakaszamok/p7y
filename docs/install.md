@@ -35,6 +35,9 @@ The directory must be called `p7y`: the compose project name comes from it. For 
 
 The stack runs Traefik v3.6 with the Sablier plugin, Sablier, a registry and the Purgatory API. The UI is at `http://p7y.<HOST_DOMAIN>` (by default `http://p7y.lvh.me`, which resolves to `127.0.0.1`), the API also on port `8081` of the host.
 
+!!! tip "An app takes seconds to open the first time?"
+    In Chrome, *Settings → Privacy and security → Security → Use secure DNS*: with "your current service provider" each new `*.lvh.me` name can wait for a slow or filtering resolver. Turn it off, or pick a provider such as Cloudflare (1.1.1.1).
+
 Each sandbox's files (compose file, certificates, tunnel config) live in `opt/sandboxes/<owner>/<name>/`, its archives in `opt/archive/<owner>/`; `<owner>` is `admin` or the user's sign-in e-mail. Sandboxes from older versions (`opt/users/<name>/`) are moved there at startup; a running one restarts once.
 
 > **Give the Docker daemon a larger address pool.** Every sandbox — sleeping ones included — keeps its own compose network until it is archived. Docker's default pools only allow about 30 networks; beyond that sandbox creation fails with `fully subnetted`. Set smaller subnets in the daemon config (`/etc/docker/daemon.json`, or Docker Desktop → Settings → Docker Engine) and restart Docker:
