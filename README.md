@@ -45,6 +45,8 @@ docker compose up -d
 
 Open **http://p7y.lvh.me** (`lvh.me` and all its subdomains point to `127.0.0.1`, so no DNS to set up), sign in as administrator with the password `setup.sh` printed, and press **New sandbox**. The first one takes a minute or two while the images are pulled; after that about 10 seconds. Its app opens at its own `http://<name>-….lvh.me` address.
 
+> **An app takes seconds to open the first time?** In Chrome, *Settings → Privacy and security → Security → Use secure DNS*: with "your current service provider" each new `*.lvh.me` name can wait for a slow or filtering resolver. Turn it off, or pick a provider such as Cloudflare (1.1.1.1).
+
 To remove it: delete the sandboxes in the UI first (each is a compose project of its own, so the next step would leave them running), then `docker compose down -v` in the `p7y` directory, and delete the directory.
 
 ## Install
