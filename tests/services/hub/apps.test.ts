@@ -30,3 +30,14 @@ describe('hubAppsOf', () => {
     expect(r.unlinked).toEqual(['worker', 'admin'])
   })
 })
+
+describe('hubAppsOf: only addresses under the domain', () => {
+  it('drops an app whose frpc.subdomain is not a plain DNS label, so Open cannot point elsewhere', () => {
+    const r = hubAppsOf('shop', [
+      c('web', { 'p7y.publish': 'true', 'frpc.subdomain': 'x@evil.com/' }, [web(80)]),
+      c('ok', { 'p7y.publish': 'true', 'frpc.subdomain': 'board' }, [web(81)]),
+    ], 'example.com', 'https')
+    expect(r.apps.map(a => a.url)).toEqual(['https://shop-board.example.com'])
+    expect(r.unlinked).toEqual(['web'])
+  })
+})

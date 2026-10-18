@@ -5,6 +5,7 @@ export interface HubApp { id: string; url: string; title: string; description: s
 
 const MAX_TITLE = 80
 const MAX_DESCRIPTION = 280
+const DNS_LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
 
 /**
  * The published apps of one sandbox, from its inner containers' labels. The address is the one the Apps tab shows
@@ -20,7 +21,10 @@ export function hubAppsOf(instance: string, containers: InnerContainer[], domain
     const service = ct.Labels['com.docker.compose.service'] || (ct.Names[0] ?? '').replace(/^\//, '')
     const ports = [...new Set(ct.Ports.filter(p => p.Type === 'tcp' && p.PublicPort && ALL_INTERFACES.has(p.IP ?? '')).map(p => p.PublicPort!))].sort((a, b) => a - b)
     if (!ports.length) { unlinked.push(service); continue }
-    const id = `${frpcName(instance, ct.Labels, ct.Names[0] ?? '', ports[0]).toLowerCase()}.${domain}`
+    const name = frpcName(instance, ct.Labels, ct.Names[0] ?? '', ports[0]).toLowerCase()
+    // One DNS label under the domain, nothing else: a label like frpc.subdomain "x@evil.com/" must not steer Open
+    if (!DNS_LABEL.test(name)) { unlinked.push(service); continue }
+    const id = `${name}.${domain}`
     if (seen.has(id)) continue
     seen.add(id)
     apps.push({

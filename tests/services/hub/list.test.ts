@@ -72,3 +72,29 @@ describe('hubEntries', () => {
     expect(await hubEntries(deps([]))).toEqual([])
   })
 })
+
+describe('hubEntries: apps that are briefly missing', () => {
+  it('an app missing from one read (a partial wake or a recreate) keeps its first date when it comes back', async () => {
+    const both = [web('web', { 'p7y.publish': 'true' }), web('other', { 'p7y.publish': 'true' })]
+    containers = { 'p7y-part': both }
+    await hubEntries(deps([meta('p7y-part', 'running')]))
+    const first = new Date(clock).toISOString()
+    forgetHubList(); clock += 3_600_000
+    containers = { 'p7y-part': [both[1]] }
+    await hubEntries(deps([meta('p7y-part', 'running')]))
+    forgetHubList(); clock += 3_600_000
+    containers = { 'p7y-part': both }
+    const back = (await hubEntries(deps([meta('p7y-part', 'running')]))).find(e => e.service === 'web')!
+    expect(back.updated_at).toBe(first)
+  })
+  it('a running sandbox whose daemon stays empty (compose down) drops its apps after two minutes', async () => {
+    containers = { 'p7y-down': [web('web', { 'p7y.publish': 'true' })] }
+    await hubEntries(deps([meta('p7y-down', 'running')]))
+    forgetHubList(); containers = { 'p7y-down': [] }
+    expect(await hubEntries(deps([meta('p7y-down', 'running')]))).toHaveLength(1)
+    forgetHubList(); clock += 60_000
+    expect(await hubEntries(deps([meta('p7y-down', 'running')]))).toHaveLength(1)
+    forgetHubList(); clock += 90_000
+    expect(await hubEntries(deps([meta('p7y-down', 'running')]))).toEqual([])
+  })
+})

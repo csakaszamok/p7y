@@ -15,7 +15,14 @@ export interface HubEntry extends HubApp {
   status: 'running' | 'asleep' | 'deep_sleep'
   updated_at: string
 }
-export interface Remembered { apps: Array<HubApp & { updated_at: string }>; unlinked: string[] }
+export interface Remembered {
+  apps: Array<HubApp & { updated_at: string }>
+  unlinked: string[]
+  /** Every app ever seen here, kept when it is missing: one that comes back keeps its date (not "new" again) */
+  seen?: Record<string, { updated_at: string; title: string; description: string }>
+  /** Since when the running sandbox's daemon has listed no containers */
+  empty_since?: string
+}
 export interface HubListDeps {
   states(): Promise<SandboxMeta[]>
   containers(name: string): Promise<InnerContainer[]>
@@ -50,20 +57,43 @@ export function rememberedHub(name: string, dir = defaults.dir(name)): Remembere
 }
 
 /** A running sandbox's published apps, read live; updated_at kept unless the title or description changed. */
+/** How long a running sandbox may list no containers before its apps leave the Hub: a wake, not a compose down. */
+const EMPTY_GRACE_MS = 120_000
+
 async function liveApps(name: string, d: HubListDeps, prev: Remembered | null): Promise<Remembered> {
   const containers = await d.containers(name)
-  // No containers yet (right after a wake): keep what was remembered, the apps are coming back
-  if (!containers.length) return prev ?? { apps: [], unlinked: [] }
+  if (!containers.length) {
+    // Right after a wake the apps are coming back: keep them a while; still none after that (compose down): gone
+    if (!prev?.apps.length) return prev ?? { apps: [], unlinked: [] }
+    const since = prev.empty_since ?? new Date(d.now()).toISOString()
+    if (d.now() - Date.parse(since) < EMPTY_GRACE_MS) {
+      const kept = { ...prev, empty_since: since }
+      rememberLastSeen(d.dir(name), 'hub', kept)
+      return kept
+    }
+    const gone = { apps: [], unlinked: [], seen: prev.seen }
+    rememberLastSeen(d.dir(name), 'hub', gone)
+    return gone
+  }
   const https = (process.env.PUBLIC_URL ?? '').startsWith('https://')
   const { apps, unlinked } = hubAppsOf(d.instance(name), containers, (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase(), https ? 'https' : 'http')
   const now = new Date(d.now()).toISOString()
+  const seen = { ...(prev?.seen ?? Object.fromEntries((prev?.apps ?? []).map(a => [a.id, { updated_at: a.updated_at, title: a.title, description: a.description }]))) }
   const merged = apps.map(a => {
-    const old = prev?.apps.find(p => p.id === a.id)
-    return { ...a, updated_at: old && old.title === a.title && old.description === a.description ? old.updated_at : now }
+    const old = seen[a.id]
+    const updated_at = old && old.title === a.title && old.description === a.description ? old.updated_at : now
+    seen[a.id] = { updated_at, title: a.title, description: a.description }
+    return { ...a, updated_at }
   })
-  const next = { apps: merged, unlinked }
+  const next = { apps: merged, unlinked, seen }
   rememberLastSeen(d.dir(name), 'hub', next)
   return next
+}
+
+/** One running sandbox's published apps, read live now and remembered (its Apps tab: right without anyone opening the Hub). */
+export async function refreshHub(name: string, deps: Partial<HubListDeps> = {}): Promise<Remembered> {
+  const d = { ...defaults, ...deps }
+  return liveApps(name, d, asRemembered(lastSeen(d.dir(name), 'hub')))
 }
 
 /** Every published app of every sandbox (archived ones are not listed), newest first. Cached 30 s. */

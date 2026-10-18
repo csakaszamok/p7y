@@ -25,7 +25,11 @@ vi.mock('../../../services/appProbe', () => ({
   appStatuses: vi.fn(async (_n: string, links: Array<{ url: string; port: number }>) => links.map(l => ({ ...l, answers: false }))),
 }))
 vi.mock('../../../services/hub/list', () => ({
-  rememberedHub: vi.fn((n: string) => n === 'p7y-up'
+  // A running sandbox is read live (refreshHub), so the marker is right without anyone opening the Hub
+  refreshHub: vi.fn(async (n: string) => n === 'p7y-up'
+    ? { apps: [{ id: 'up-inner-web-port8080.lvh.me', url: 'http://up-inner-web-port8080.lvh.me', title: 'Web', description: '', service: 'web', updated_at: '' }], unlinked: ['worker'] }
+    : null),
+  rememberedHub: vi.fn((n: string) => n === 'p7y-up' ? null : n === 'p7y-up-never'
     ? { apps: [{ id: 'up-inner-web-port8080.lvh.me', url: 'http://up-inner-web-port8080.lvh.me', title: 'Web', description: '', service: 'web', updated_at: '' }], unlinked: ['worker'] }
     : null),
 }))
