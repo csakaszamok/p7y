@@ -4,6 +4,14 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **The Hub** ([docs](https://p7y-dev.github.io/p7y/latest/hub/)): the apps builders publish with a `p7y.publish: "true"` label, at their own address `hub.<HOST_DOMAIN>`, for colleagues who only use them: search, *Popular* and *New*, whether an app runs or sleeps, **Open** (an asleep app wakes). Viewers sign in with the same single sign-on but only to the Hub (`HUB_ALLOWED_DOMAINS`, `HUB_ALLOWED_EMAILS`); everyone signed in can vote once per app. An RSS and a JSON feed with a secret key (*Overview → Create feed link*). Off unless `HUB_ENABLED=true`; with single sign-on, add `https://hub.<HOST_DOMAIN>/auth/callback` at the provider. A published app has an *On the Hub* marker on the *Apps* tab.
+
+### Changed
+
+- Single sign-on asks the provider for `profile` too (`openid email profile`): the Hub shows owners by name. An account that may use only the Hub is sent there by Purgatory's sign-in.
+
 ## [0.7.1] - 2026-10-17
 
 Upgrading from 0.7.0: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d`.

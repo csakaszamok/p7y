@@ -76,6 +76,7 @@ nav:
       - Isolation and TCP addresses: networking.md
       - SSH, terminal and logs: shell-and-logs.md
       - Files: files.md
+      - Hub: hub.md
   - Agents:
       - Let your agent deploy: agents.md
       - MCP: mcp.md
