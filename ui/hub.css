@@ -45,3 +45,9 @@ main { max-width: 900px; margin: 0 auto; padding: 20px 16px 40px }
 .app h2 a.stretch:focus-visible::after { outline: 2px solid #f97316; outline-offset: 2px }
 .app .vote { position: relative; z-index: 1 }
 .app:hover .primary { background: #f26d1f; border-color: #f26d1f; box-shadow: 0 3px 10px rgba(234,88,12,.35) }
+/* The card's image (16:9), or the title's letter on a colour */
+.thumb { flex: 0 0 160px; height: 90px; border-radius: 8px; overflow: hidden; background: #222; display: flex; align-items: center; justify-content: center }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block }
+.thumb.ph { color: rgba(255,255,255,.9); font-size: 38px; font-weight: 700 }
+.app .main { flex: 1 1 auto; min-width: 0 }
+@media (max-width: 600px) { .thumb { flex-basis: auto; width: 100%; height: auto; aspect-ratio: 16 / 9 } }

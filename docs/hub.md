@@ -51,6 +51,7 @@ services:
       Ask Anna for access.
     ```
 
+- **An image on its card:** `p7y.image: "/screenshot.png"`, a path inside the app (PNG, JPEG, WebP or GIF, at most 2 MB). Without it the Hub uses the page's own `<meta property="og:image">` if it has one, and otherwise the title's first letter on a colour. Purgatory fetches the image in the background straight from the sandbox, only while the app runs (it never wakes an app for it), refreshes it once a day or when the label changes, and never fetches anything from another site: a URL in the label, or an og:image on another host, is ignored.
 - What is published is the app's **web address**, the one its sandbox's *Apps* tab shows; with several ports, the lowest one published on all interfaces. A published container with no such port is not on the Hub: the *Apps* tab says *published, but has no web address*.
 - It appears on the Hub within half a minute, without approval. Remove the label (and deploy again) to take it off; archiving the sandbox does too. Deep sleep keeps it on the Hub.
 - Apps started by hand or by an agent count as well: Purgatory reads the labels from the sandbox's own Docker.

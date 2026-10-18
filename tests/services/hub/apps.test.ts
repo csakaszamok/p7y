@@ -13,7 +13,7 @@ describe('hubAppsOf', () => {
       c('api', { 'p7y.publish': 'yes' }, [web(9000)]),
       c('db', {}, [web(5432)]),
     ], 'example.com', 'https')
-    expect(apps).toEqual([{ id: 'shop-inner-web-port8080.example.com', url: 'https://shop-inner-web-port8080.example.com', title: 'Stock room', description: 'Who took what', service: 'web' }])
+    expect(apps).toEqual([{ id: 'shop-inner-web-port8080.example.com', url: 'https://shop-inner-web-port8080.example.com', title: 'Stock room', description: 'Who took what', service: 'web', port: 8080, image: null }])
   })
   it('defaults the title to the service, uses frpc.subdomain, and the lowest port', () => {
     const { apps } = hubAppsOf('shop', [c('ui', { 'p7y.publish': 'true', 'frpc.subdomain': 'board' }, [web(9001), web(3000)])], 'example.com', 'http')
@@ -39,5 +39,16 @@ describe('hubAppsOf: only addresses under the domain', () => {
     ], 'example.com', 'https')
     expect(r.apps.map(a => a.url)).toEqual(['https://shop-board.example.com'])
     expect(r.unlinked).toEqual(['web'])
+  })
+})
+
+describe('hubAppsOf: the image label', () => {
+  it('keeps a path inside the app, and nothing else', () => {
+    const r = hubAppsOf('shop', [
+      c('a', { 'p7y.publish': 'true', 'p7y.image': '/img/shot.png' }, [web(81)]),
+      c('b', { 'p7y.publish': 'true', 'p7y.image': 'https://evil.example/x.png' }, [web(82)]),
+      c('c', { 'p7y.publish': 'true', 'p7y.image': '//evil.example/x.png' }, [web(83)]),
+    ], 'example.com', 'https')
+    expect(r.apps.map(a => a.image)).toEqual(['/img/shot.png', null, null])
   })
 })

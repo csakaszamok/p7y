@@ -9,6 +9,24 @@ const ago = iso => {
   return d < 14 ? `${d} days ago` : d < 60 ? `${Math.round(d / 7)} weeks ago` : `${Math.round(d / 30)} months ago`
 }
 const text = (tag, cls, t) => { const e = document.createElement(tag); if (cls) e.className = cls; if (t !== undefined) e.textContent = t; return e }
+// No image: the title's first letter on a colour of its own (the same title, the same colour)
+function placeholder(title) {
+  let h = 0
+  for (const ch of title) h = (h * 31 + ch.codePointAt(0)) >>> 0
+  const el = text('div', 'thumb ph', [...title.trim()][0]?.toUpperCase() ?? '?')
+  el.style.background = `hsl(${h % 360} 45% 32%)`
+  el.setAttribute('aria-hidden', 'true')
+  return el
+}
+function thumb(a) {
+  if (!a.image) return placeholder(a.title)
+  const box = text('div', 'thumb')
+  const img = document.createElement('img')
+  img.src = a.image; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'
+  img.onerror = () => box.replaceWith(placeholder(a.title))
+  box.append(img)
+  return box
+}
 const STATUS = { running: ['● running', 'run'], asleep: ['◐ asleep', 'sleep'], deep_sleep: ['○ deep sleep', 'sleep'] }
 
 function visible() {
@@ -47,7 +65,7 @@ function render() {
     open.setAttribute('aria-hidden', 'true')
     side.append(vote, open)
     if (a.status !== 'running') side.append(text('span', 'hint', 'wakes in ~10 s'))
-    li.append(main, side)
+    li.append(thumb(a), main, side)
     list.append(li)
   }
 }

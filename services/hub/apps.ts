@@ -1,7 +1,14 @@
 import { frpcName, ALL_INTERFACES, type InnerContainer } from '../tcpNames'
 
-/** An app a builder published with `p7y.publish: "true"` on its container. id: its web address (host). */
-export interface HubApp { id: string; url: string; title: string; description: string; service: string }
+/** An app a builder published with `p7y.publish: "true"` on its container. id: its web address (host);
+ * port: its port published in the sandbox (how Purgatory reaches it without waking anything); image: p7y.image. */
+export interface HubApp { id: string; url: string; title: string; description: string; service: string; port: number; image: string | null }
+
+/** A path inside the app ("/shot.png"), never another site: Purgatory fetches it, so a URL would let a label steer it. */
+export function appImagePath(label: string | undefined): string | null {
+  const v = label?.trim()
+  return v && v.startsWith('/') && !v.startsWith('//') && !/[\\\s]/.test(v) ? v : null
+}
 
 const MAX_TITLE = 80
 const MAX_DESCRIPTION = 280
@@ -33,6 +40,8 @@ export function hubAppsOf(instance: string, containers: InnerContainer[], domain
       title: (ct.Labels['p7y.title']?.trim() || service).slice(0, MAX_TITLE),
       description: (ct.Labels['p7y.description']?.trim() ?? '').slice(0, MAX_DESCRIPTION),
       service,
+      port: ports[0],
+      image: appImagePath(ct.Labels['p7y.image']),
     })
   }
   return { apps, unlinked }
