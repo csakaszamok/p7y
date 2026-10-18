@@ -41,11 +41,13 @@ describe('handleHub', () => {
     expect(r.apps[0]).not.toHaveProperty('sandbox')
     expect((await get('/api/hub')).status).toBe(401)
   })
-  it('votes once, takes it back; not for your own app, not for an app that is not on the Hub, not cross-site', async () => {
+  it('votes once, takes it back; also for your own app; not for an app that is not on the Hub, not cross-site', async () => {
     expect((await send('PUT', '/api/hub/apps/shop-web.example.com/vote', as('peter@example.com'))).status).toBe(200)
     expect((await (await get('/api/hub', as('eva@example.com'))).json()).apps[0].votes).toBe(1)
     expect((await send('DELETE', '/api/hub/apps/shop-web.example.com/vote', as('peter@example.com'))).status).toBe(200)
-    expect((await send('PUT', '/api/hub/apps/shop-web.example.com/vote', as('anna@example.com'))).status).toBe(403)
+    // As a GitHub star: the owner may vote for their own app too
+    expect((await send('PUT', '/api/hub/apps/shop-web.example.com/vote', as('anna@example.com'))).status).toBe(200)
+    expect((await (await get('/api/hub', as('anna@example.com'))).json()).apps[0]).toMatchObject({ votes: 1, voted: true, mine: true })
     expect((await send('PUT', '/api/hub/apps/nope.example.com/vote', as('peter@example.com'))).status).toBe(404)
     expect((await send('PUT', '/api/hub/apps/shop-web.example.com/vote', { ...as('peter@example.com'), origin: 'https://evil.example' })).status).toBe(403)
   })

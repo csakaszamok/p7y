@@ -50,7 +50,7 @@ services:
 
 ## Votes
 
-Everyone signed in to the Hub can vote for an app once (👍) and take the vote back; not for their own app. The Hub sorts by votes (*Popular*) or by date (*New*); only the count is shown, not who voted. Votes stay when an app leaves the Hub and count on if it is published again at the same address.
+Everyone signed in to the Hub can vote for an app once (👍), their own too (as a GitHub star), and take the vote back. The Hub sorts by votes (*Popular*) or by date (*New*); only the count is shown, not who voted. Votes stay when an app leaves the Hub and count on if it is published again at the same address.
 
 ## Feed
 

@@ -95,7 +95,6 @@ export async function handleHub(req: Request, deps: Deps = {}): Promise<Response
     if (!sameOrigin(req)) return Response.json({ error: 'Cross-site request rejected' }, { status: 403 })
     const app = (await entries()).find(e => e.id === vote[1])
     if (!app) return Response.json({ error: 'No such app on the Hub' }, { status: 404 })
-    if (app.owner === viewer.sub) return Response.json({ error: 'You cannot vote for your own app' }, { status: 403 })
     if (req.method === 'PUT') addVote(app.id, viewer.sub); else removeVote(app.id, viewer.sub)
     return Response.json({ votes: voteCounts()[app.id] ?? 0, voted: req.method === 'PUT' })
   }

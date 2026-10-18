@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Integration test: the Hub. Run the stack with HUB_ENABLED=true (and ADMIN_USER/ADMIN_PASSWORD set).
 # Creates a sandbox with one published and one unpublished container, signs in to the Hub as the admin,
-# checks the list, a vote by the admin is refused only for its own app (the admin owns this sandbox: so
-# it checks the 403), the feed with and without the key, and that the app leaves after the label goes.
+# checks the list, a vote and taking it back, the feed with and without the key, and that the sandbox
+# API is not reachable on the Hub host.
 # Usage: P7Y_TOKEN=<ADMIN_TOKEN> ADMIN_USER=admin ADMIN_PASSWORD=… bash tests/hub.sh
 set -euo pipefail
 P7Y_API="${P7Y_API:-http://localhost:8081}"
@@ -34,8 +34,9 @@ echo "$apps" | grep -q "other" && fail "the unpublished container is on the Hub"
 pass "only the published app is listed"
 
 id=$(echo "$apps" | "$PY" -c 'import json,sys;print([a["id"] for a in json.load(sys.stdin)["apps"] if a["title"]=="Hub test"][0])')
-code=$(hub -o /dev/null -w '%{http_code}' -X PUT -H "Origin: http://$HUB" "$TRAEFIK_URL/api/hub/apps/$id/vote")
-[ "$code" = 403 ] && pass "no vote for one's own app (403)" || fail "own-app vote answered $code"
+hub -X PUT -H "Origin: http://$HUB" "$TRAEFIK_URL/api/hub/apps/$id/vote" | grep -q '"votes":1' || fail "vote"
+hub -X DELETE -H "Origin: http://$HUB" "$TRAEFIK_URL/api/hub/apps/$id/vote" | grep -q '"votes":0' || fail "take the vote back"
+pass "vote and take it back"
 
 key=$(api -X POST "$P7Y_API/hub/feed-key" | "$PY" -c 'import json,sys;from urllib.parse import urlparse,parse_qs;print(parse_qs(urlparse(json.load(sys.stdin)["url"]).query)["key"][0])')
 [ "$(hub -o /dev/null -w '%{http_code}' "$TRAEFIK_URL/feed.xml?key=$key")" = 200 ] || fail "feed with the key"
