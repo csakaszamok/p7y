@@ -37,3 +37,11 @@ main { max-width: 900px; margin: 0 auto; padding: 20px 16px 40px }
 .wide { width: 100%; margin-top: 12px } .error { color: #f87171 }
 @media (max-width: 600px) { .app { flex-direction: column } .side { flex-direction: row; align-items: center; min-width: 0; flex-wrap: wrap } }
 @media (prefers-reduced-motion: reduce) { .app, button, .primary { transition: none } .app:hover { transform: none } }
+/* The whole card opens the app: the title's link stretches over it; the vote button stays clickable above */
+.app { position: relative; cursor: pointer }
+.app h2 a.stretch { color: inherit; text-decoration: none }
+.app h2 a.stretch::after { content: ''; position: absolute; inset: 0; border-radius: 12px }
+.app h2 a.stretch:focus-visible { outline: none }
+.app h2 a.stretch:focus-visible::after { outline: 2px solid #f97316; outline-offset: 2px }
+.app .vote { position: relative; z-index: 1 }
+.app:hover .primary { background: #f26d1f; border-color: #f26d1f; box-shadow: 0 3px 10px rgba(234,88,12,.35) }

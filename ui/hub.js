@@ -27,7 +27,12 @@ function render() {
   for (const a of apps) {
     const li = text('li', 'app')
     const main = text('div', 'main')
-    main.append(text('h2', null, a.title))
+    // The title is the card's one link; its ::after stretches over the whole card (the vote button sits above it)
+    const h2 = text('h2')
+    const link = text('a', 'stretch', a.title)
+    link.href = a.url; link.target = '_blank'; link.rel = 'noopener'
+    h2.append(link)
+    main.append(h2)
     if (a.description) main.append(text('p', 'desc', a.description))
     main.append(text('p', 'meta', `${a.owner_name ?? a.owner} · ${ago(a.updated_at)}`))
     const side = text('div', 'side')
@@ -37,8 +42,9 @@ function render() {
     vote.title = a.voted ? 'Take your vote back' : 'Vote'
     vote.setAttribute('aria-pressed', String(a.voted))
     vote.onclick = () => toggleVote(a)
-    const open = text('a', 'primary', 'Open ↗')
-    open.href = a.url; open.target = '_blank'; open.rel = 'noopener'
+    // A visual cue only: the card itself is the link, so this adds no second tab stop
+    const open = text('span', 'primary', 'Open ↗')
+    open.setAttribute('aria-hidden', 'true')
     side.append(vote, open)
     if (a.status !== 'running') side.append(text('span', 'hint', 'wakes in ~10 s'))
     li.append(main, side)
