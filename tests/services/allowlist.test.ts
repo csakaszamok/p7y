@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { signInAllowed, subAllowed, openSignInWarning } from '../../services/allowlist'
+import { signInAllowed, subAllowed, openSignInWarning, hubAllowed, viewerOnly, purgatorySignInRefusal } from '../../services/allowlist'
 
 const env = (over: Record<string, string>) => ({ ...over }) as NodeJS.ProcessEnv
 
@@ -37,5 +37,42 @@ describe('who may sign in', () => {
     expect(openSignInWarning(env(oidc))).toMatch(/anyone/)
     expect(openSignInWarning(env({ ...oidc, OIDC_ALLOWED_EMAILS: 'a@b.c' }))).toBeNull()
     expect(openSignInWarning(env({}))).toBeNull()
+  })
+})
+
+
+describe('hubAllowed / viewerOnly', () => {
+  const e = env({ OIDC_ALLOWED_EMAILS: 'anna@example.com', HUB_ALLOWED_DOMAINS: 'example.com' })
+  it('lets builders and Hub-list accounts onto the Hub', () => {
+    expect(hubAllowed('anna@example.com', e)).toBe(true)
+    expect(hubAllowed('peter@example.com', e)).toBe(true)
+    expect(hubAllowed('eve@other.org', e)).toBe(false)
+  })
+  it('a viewer is on the Hub list only', () => {
+    expect(viewerOnly('peter@example.com', e)).toBe(true)
+    expect(viewerOnly('anna@example.com', e)).toBe(false)
+    expect(viewerOnly('eve@other.org', e)).toBe(false)
+  })
+  it('without Hub lists only builders use the Hub', () => {
+    const b = env({ OIDC_ALLOWED_EMAILS: 'anna@example.com' })
+    expect(hubAllowed('anna@example.com', b)).toBe(true)
+    expect(hubAllowed('peter@example.com', b)).toBe(false)
+  })
+  it('open sign-in (no builder lists) stays open on the Hub too', () => {
+    expect(hubAllowed('anyone@anywhere.org', env({}))).toBe(true)
+  })
+})
+
+describe('purgatorySignInRefusal', () => {
+  it('lets builders in', () => {
+    expect(purgatorySignInRefusal('anna@example.com', env({ OIDC_ALLOWED_EMAILS: 'anna@example.com' }))).toBeNull()
+  })
+  it('points a viewer to the Hub when it is on', () => {
+    const e = env({ OIDC_ALLOWED_EMAILS: 'anna@example.com', HUB_ALLOWED_DOMAINS: 'example.com', HUB_ENABLED: 'true', HOST_DOMAIN: 'example.com', PUBLIC_URL: 'https://p7y.example.com' })
+    expect(purgatorySignInRefusal('peter@example.com', e)).toBe('You have access to the Hub only: https://hub.example.com')
+  })
+  it('refuses others as before', () => {
+    expect(purgatorySignInRefusal('eve@other.org', env({ OIDC_ALLOWED_EMAILS: 'anna@example.com' })))
+      .toBe('Your account (eve@other.org) may not sign in here. Ask the administrator.')
   })
 })

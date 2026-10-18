@@ -62,6 +62,12 @@ services:
       # Who may sign in with OIDC (comma lists); without either, anyone with an account at the provider
       OIDC_ALLOWED_DOMAINS: ${OIDC_ALLOWED_DOMAINS:-}
       OIDC_ALLOWED_EMAILS: ${OIDC_ALLOWED_EMAILS:-}
+      # The Hub (docs: hub.md): off unless true; viewers besides the builders by domain or address
+      HUB_ENABLED: ${HUB_ENABLED:-false}
+      HUB_HOST: ${HUB_HOST:-}
+      HUB_ALLOWED_DOMAINS: ${HUB_ALLOWED_DOMAINS:-}
+      HUB_ALLOWED_EMAILS: ${HUB_ALLOWED_EMAILS:-}
+      HUB_TITLE: ${HUB_TITLE:-Hub}
     networks:
       - default
       - traefik-net
@@ -72,6 +78,10 @@ services:
       traefik.http.routers.p7y.entrypoints: web,websecure
       traefik.http.routers.p7y.service: p7y
       traefik.http.services.p7y.loadbalancer.server.port: "3000"
+      # The Hub's own host (HUB_ENABLED=true), served by Purgatory; 404 while the Hub is off
+      traefik.http.routers.p7y-hub.rule: "Host(`${HUB_HOST:-hub.${HOST_DOMAIN:-lvh.me}}`)"
+      traefik.http.routers.p7y-hub.entrypoints: web,websecure
+      traefik.http.routers.p7y-hub.service: p7y
       # TLS-only TCP addresses for sandbox ports (<http-name>-tcp.<domain>:443) and sandbox Docker APIs
       # (<raw>-docker.<domain>:443), passed through to the TCP gateway
       traefik.tcp.routers.p7y-tcp.rule: "HostSNIRegexp(`^[a-z0-9-]+-(tcp|docker)[.]${HOST_DOMAIN:-lvh.me}$$`)"

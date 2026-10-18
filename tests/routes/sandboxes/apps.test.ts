@@ -24,6 +24,15 @@ vi.mock('../../../services/appLinks', () => ({ appLinks: vi.fn(async () => [{ ur
 vi.mock('../../../services/appProbe', () => ({
   appStatuses: vi.fn(async (_n: string, links: Array<{ url: string; port: number }>) => links.map(l => ({ ...l, answers: false }))),
 }))
+vi.mock('../../../services/hub/list', () => ({
+  // A running sandbox is read live (refreshHub), so the marker is right without anyone opening the Hub
+  refreshHub: vi.fn(async (n: string) => n === 'p7y-up'
+    ? { apps: [{ id: 'up-inner-web-port8080.lvh.me', url: 'http://up-inner-web-port8080.lvh.me', title: 'Web', description: '', service: 'web', updated_at: '' }], unlinked: ['worker'] }
+    : null),
+  rememberedHub: vi.fn((n: string) => n === 'p7y-up' ? null : n === 'p7y-up-never'
+    ? { apps: [{ id: 'up-inner-web-port8080.lvh.me', url: 'http://up-inner-web-port8080.lvh.me', title: 'Web', description: '', service: 'web', updated_at: '' }], unlinked: ['worker'] }
+    : null),
+}))
 const { appStatuses } = await import('../../../services/appProbe')
 const { default: get } = await import('../../../routes/sandboxes/[name]/GET')
 const req = (n: string) => new Request(`http://localhost/sandboxes/${n}`, { headers: { Authorization: 'Bearer admin-secret' } })
@@ -48,5 +57,15 @@ describe('GET /sandboxes/:name apps', () => {
     const body = await (await get(req('p7y-down'))).json()
     expect(body.tcp_addresses).toEqual([{ address: 'down-db-tcp.lvh.me:443', port: 5432, user: 'postgres' }])
     expect(body.tcp_urls).toEqual(['down-db-tcp.lvh.me:443'])
+  })
+})
+
+describe('GET /sandboxes/:name hub', () => {
+  it('says which apps are on the Hub and which published ones have no web address', async () => {
+    vi.stubEnv('HUB_ENABLED', 'true')
+    const body = await (await get(req('p7y-up'))).json()
+    expect(body.hub).toEqual({ enabled: true, url: 'http://hub.lvh.me', published: ['up-inner-web-port8080.lvh.me'], unlinked: ['worker'] })
+    vi.stubEnv('HUB_ENABLED', 'false')
+    expect((await (await get(req('p7y-down'))).json()).hub).toEqual({ enabled: false, url: null, published: [], unlinked: [] })
   })
 })

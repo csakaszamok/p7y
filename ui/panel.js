@@ -109,9 +109,12 @@
     if (!rows.length) return '<p class="muted">No apps yet — publish a port on all interfaces (e.g. 8080:8080) to get a link.</p>'
     const mark = a => a === true ? ' <span class="ok" title="answering">✓</span><span class="sr-only">answering</span>'
       : a === false ? ' <span class="warn" title="not answering">⚠</span><span class="sr-only">not answering</span>' : ''
+    const hub = s.hub || { published: [], unlinked: [] }
+    const onHub = r => r.url && hub.published.includes(r.url)
+      ? ` ${hub.url ? `<a class="tag" href="${esc(hub.url)}" target="_blank" rel="noopener">On the Hub</a>` : '<span class="tag">On the Hub</span>'}` : ''
     const body = rows.map(r => `<tr>
       <td>${esc(r.service)}</td>
-      <td>${r.url ? `<a href="${esc(ctx.protocol)}//${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.url)}">open ↗</a>${mark(r.answers)}` : '<span class="muted">—</span>'}</td>
+      <td>${r.url ? `<a href="${esc(ctx.protocol)}//${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.url)}">open ↗</a>${mark(r.answers)}${onHub(r)}` : '<span class="muted">—</span>'}</td>
       <td>${r.tcp ? `<span class="tcp">${esc(r.tcp.address)}</span> ${copyButton(r.tcp.address)}` : ''}</td>
       <td>${r.tcp ? `<button class="link" data-connect="${esc(r.tcp.address)}" data-port="${esc(r.tcp.port ?? '')}" data-user="${esc(r.tcp.user ?? '')}"${extras.demo_password ? ` data-demo-password="${esc(extras.demo_password)}"` : ''}>Connect…</button>` : ''}</td>
     </tr>`)
@@ -120,7 +123,8 @@
       : down.length === 1 ? `<p class="not-answering">⚠ ${esc(down[0])} is not answering — does it listen on 0.0.0.0 (not 127.0.0.1) inside its container?</p>`
       : `<p class="not-answering">⚠ ${down.map(esc).join(', ')} are not answering — do they listen on 0.0.0.0 (not 127.0.0.1) inside their containers?</p>`
     const asleep = s.status !== 'running' && rows.some(r => r.url) ? '<p class="muted">opening one wakes the sandbox</p>' : ''
-    return table(['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep
+    const unlinked = hub.unlinked.map(n => `<p class="muted">${esc(n)}: published, but has no web address (publish a port on all interfaces)</p>`).join('')
+    return table(['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep + unlinked
   }
 
   function accessTab(s, ctx) {

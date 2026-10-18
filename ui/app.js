@@ -135,6 +135,21 @@ async function loadOverview() {
 function initOverview() {
   loadOverview()
   setInterval(() => { if (!document.hidden) loadOverview() }, 10_000)
+  initHubFeed()
+}
+
+// The admin's Hub feed link: a new one each time (only its hash is kept), the old one stops working
+function initHubFeed() {
+  const feed = document.getElementById('hub-feed')
+  if (!feed || document.body.dataset.role !== 'admin') return
+  feed.hidden = false
+  const out = document.getElementById('hub-feed-url')
+  document.getElementById('hub-feed-new').onclick = async () => {
+    const res = await fetch('/hub/feed-key', { method: 'POST' })
+    if (res.status === 404) { out.textContent = 'The Hub is off (HUB_ENABLED=true turns it on).'; return }
+    if (!res.ok) { out.textContent = `Could not create it (${res.status})`; return }
+    out.textContent = (await res.json()).url
+  }
 }
 
 async function loadList() {

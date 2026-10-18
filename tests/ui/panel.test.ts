@@ -449,3 +449,16 @@ describe('the Files tab', () => {
     expect(P.volumesView({ volumes: [] }, { ...ctx, name: 'p7y-shop' })).toContain('No volumes')
   })
 })
+
+describe('Apps: the Hub', () => {
+  it('marks the apps on the Hub, with a link to it, and names published ones that have no web address', () => {
+    const s = { ...running, hub: { enabled: true, url: 'https://hub.lvh.me', published: ['shop-portainer.lvh.me'], unlinked: ['worker'] } }
+    const apps = panelOf(P.renderPanel(s, ctx), 'apps')
+    expect(apps).toContain('<a class="tag" href="https://hub.lvh.me" target="_blank" rel="noopener">On the Hub</a>')
+    expect(apps.match(/On the Hub/g)).toHaveLength(1)
+    expect(apps).toContain('worker: published, but has no web address (publish a port on all interfaces)')
+  })
+  it('shows nothing about the Hub without it', () => {
+    expect(panelOf(P.renderPanel(running, ctx), 'apps')).not.toContain('On the Hub')
+  })
+})

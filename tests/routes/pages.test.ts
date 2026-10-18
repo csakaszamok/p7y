@@ -231,3 +231,13 @@ describe('pages', () => {
     expect(await logo.text()).toContain('<svg')
   })
 })
+
+describe('Overview: the Hub feed link', () => {
+  it('has the Hub feed block (shown for the admin by app.js)', async () => {
+    const overview = (await import('../../routes/overview/GET')).default
+    const res = await overview(new Request('http://localhost/overview', { headers: { cookie: `p7y_session=${createSession('admin', 'admin')}` } }))
+    const body = await res.text()
+    expect(body).toContain('id="hub-feed" hidden')
+    expect(body).toContain('id="hub-feed-new"')
+  })
+})
