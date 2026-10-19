@@ -115,3 +115,19 @@ A page that says the sandbox is waking up is Purgatory's waiting page, not the a
 
 To change how long it stays awake: `set_sleep_settings` (`idle_timeout`, e.g. `2h`, or `off`), only if the
 user asks.
+
+## Publish on the Hub (when the user asks)
+
+The Hub (`https://hub.<domain>`, if the admin turned it on) lists apps for the user's colleagues. Labels on the
+app's service, then deploy again:
+
+```yaml
+    labels:
+      p7y.publish: "true"            # exactly "true"
+      p7y.title: "Stock room"        # optional, up to 80 characters
+      p7y.description: "Who took what from the stock room"   # optional, up to 280
+      p7y.image: "/screenshot.png"   # optional: a path the app itself serves (PNG, JPEG, WebP, GIF; up to 2 MB)
+```
+
+It appears within about 90 seconds; `get_sandbox` → `hub.published` lists it. Taking it off: remove
+`p7y.publish` and deploy again.

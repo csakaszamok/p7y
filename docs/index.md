@@ -24,6 +24,9 @@ The same from a script or an agent, all real runs:
 
 **Purgatory gives each user their own Docker daemon on demand** — not a shared platform where you deploy apps, but a full Docker engine they own, with a public URL for every app (and a Portainer UI if they want one), provisioned in seconds from the web UI or a REST API.
 
+!!! tip "Just want your app online?"
+    [Tutorials](tutorials/index.md): with Claude Code, install the p7y plugin once and say *deploy this app*; you get a link that works for anyone.
+
 ## Who is this for
 
 Teams where people need to spin up arbitrary Docker workloads without touching shared infrastructure. Designed for vibe-coded apps: your colleague runs an AI agent, gets a `docker-compose.yml`, and the agent deploys it into their sandbox (or they paste it into Portainer), done.
