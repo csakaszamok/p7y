@@ -130,6 +130,10 @@ export async function refreshImages(entries: HubEntry[], deps: Partial<ImageDeps
       if (got) {
         writeFileAtomic(fileOf(d.dir, e.id), got.body)
         index[e.id] = { want, checked_at: now, ok: true, type: got.type, version: crypto.createHash('sha1').update(got.body).digest('hex').slice(0, 12) }
+      } else if (prev && prev.want !== want) {
+        // The label names another image now and it cannot be had: drop the old one (the card shows the letter)
+        fs.rmSync(fileOf(d.dir, e.id), { force: true })
+        index[e.id] = { want, checked_at: now, ok: false }
       } else {
         index[e.id] = { ...(prev ?? {}), want, checked_at: now, ok: false }
       }

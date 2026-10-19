@@ -52,3 +52,14 @@ describe('hubAppsOf: the image label', () => {
     expect(r.apps.map(a => a.image)).toEqual(['/img/shot.png', null, null])
   })
 })
+
+describe('hubAppsOf: an unusable image label', () => {
+  it('names the services whose p7y.image is not a path inside the app', () => {
+    const r = hubAppsOf('shop', [
+      c('a', { 'p7y.publish': 'true', 'p7y.image': 'https://picsum.photos/200' }, [web(81)]),
+      c('b', { 'p7y.publish': 'true', 'p7y.image': '/ok.png' }, [web(82)]),
+      c('d', { 'p7y.publish': 'true' }, [web(83)]),
+    ], 'example.com', 'https')
+    expect(r.badImage).toEqual(['a'])
+  })
+})

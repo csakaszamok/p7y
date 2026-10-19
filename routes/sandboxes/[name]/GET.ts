@@ -48,7 +48,7 @@ export default async (req: Request): Promise<Response> => {
     const remembered = hubEnabled() && sandbox.status === 'running'
       ? await refreshHub(name).catch(() => rememberedHub(name))
       : rememberedHub(name)
-    const hub = { enabled: hubEnabled(), url: hubEnabled() ? hubUrl() : null, published: remembered?.apps.map(a => a.id) ?? [], unlinked: remembered?.unlinked ?? [] }
+    const hub = { enabled: hubEnabled(), url: hubEnabled() ? hubUrl() : null, published: remembered?.apps.map(a => a.id) ?? [], unlinked: remembered?.unlinked ?? [], bad_image: remembered?.bad_image ?? [] }
     const ssh = sandbox.ssh ? { address: `${rawNameOf(name) ?? name}-shell-tcp.${domain}:443`, user: 'root', keys: sshKeyCount(name), generated_key: hasGeneratedKey(name) } : null
     return Response.json({ ...info, ...(await sleepTimes(name)), idle_timeout: sleepSettingsOf(name).idle_timeout ?? null, tcp_urls, tcp_addresses, apps, ssh, docker_access: dockerAccessInfo(name, sandbox.status), limits: limitsOf(name), disk: diskOf(name), usage: sandbox.status === 'running' ? usageOf(name) : null, hub })
   } catch (err) {

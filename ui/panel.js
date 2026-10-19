@@ -124,6 +124,7 @@
       : `<p class="not-answering">⚠ ${down.map(esc).join(', ')} are not answering — do they listen on 0.0.0.0 (not 127.0.0.1) inside their containers?</p>`
     const asleep = s.status !== 'running' && rows.some(r => r.url) ? '<p class="muted">opening one wakes the sandbox</p>' : ''
     const unlinked = hub.unlinked.map(n => `<p class="muted">${esc(n)}: published, but has no web address (publish a port on all interfaces)</p>`).join('')
+      + (hub.bad_image || []).map(n => `<p class="muted">${esc(n)}: p7y.image is ignored: use a path inside the app, e.g. /shot.png</p>`).join('')
     return table(['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep + unlinked
   }
 

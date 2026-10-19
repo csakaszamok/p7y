@@ -19,13 +19,16 @@ const DNS_LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
  * (foxglove's frpc names, the lowest port published on all interfaces); a published container with no such port
  * has no web address and is listed in `unlinked` instead.
  */
-export function hubAppsOf(instance: string, containers: InnerContainer[], domain: string, scheme: 'http' | 'https'): { apps: HubApp[]; unlinked: string[] } {
+export function hubAppsOf(instance: string, containers: InnerContainer[], domain: string, scheme: 'http' | 'https'): { apps: HubApp[]; unlinked: string[]; badImage: string[] } {
   const apps: HubApp[] = []
   const unlinked: string[] = []
+  // Published with a p7y.image that is not a path inside the app (a URL, say): ignored, and said on the Apps tab
+  const badImage: string[] = []
   const seen = new Set<string>()
   for (const ct of containers) {
     if (ct.Labels['p7y.publish'] !== 'true') continue
     const service = ct.Labels['com.docker.compose.service'] || (ct.Names[0] ?? '').replace(/^\//, '')
+    if (ct.Labels['p7y.image']?.trim() && !appImagePath(ct.Labels['p7y.image'])) badImage.push(service)
     const ports = [...new Set(ct.Ports.filter(p => p.Type === 'tcp' && p.PublicPort && ALL_INTERFACES.has(p.IP ?? '')).map(p => p.PublicPort!))].sort((a, b) => a - b)
     if (!ports.length) { unlinked.push(service); continue }
     const name = frpcName(instance, ct.Labels, ct.Names[0] ?? '', ports[0]).toLowerCase()
@@ -44,5 +47,5 @@ export function hubAppsOf(instance: string, containers: InnerContainer[], domain
       image: appImagePath(ct.Labels['p7y.image']),
     })
   }
-  return { apps, unlinked }
+  return { apps, unlinked, badImage }
 }
