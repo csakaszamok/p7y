@@ -46,7 +46,8 @@ function onLocalClock(s) {
 function sleepCell(s) {
   if (s.idle_timeout === 'off') return '<span class="muted">never</span>'
   if (s.status !== 'running') return '<span class="muted">—</span>'
-  return s.stops_at ? countdown(s.stops_at) : '<span class="muted">not counting yet</span>'
+  // going_to_sleep: its session has run out, Sablier stops it within a few minutes
+  return s.stops_at ? countdown(s.stops_at) : s.going_to_sleep ? '<span class="muted">going to sleep…</span>' : '<span class="muted">not counting yet</span>'
 }
 
 function deepSleepCell(s) {
