@@ -306,8 +306,11 @@ function openExportDialog(name) {
   const dlg = $('[data-export-dialog]')
   if (!dlg) return void location.reload()
   dlg.dataset.sandbox = name
-  const folder = $('[data-export-folder]')
-  if (folder) folder.textContent = `p7y-${shortName(name)}/README.md`
+  // Simple: the plugin's two answers, the address and a token made on request (never one left from before)
+  const url = $('[data-plugin-url]')
+  if (url) url.textContent = location.origin
+  const tokenBtn = $('[data-plugin-token]'), tokenValue = $('[data-plugin-token-value]'), tokenCopy = $('[data-plugin-token-copy]')
+  if (tokenBtn) { tokenBtn.hidden = false; tokenBtn.disabled = false; tokenBtn.textContent = 'Create token'; tokenValue.textContent = ''; tokenValue.hidden = true; tokenCopy.hidden = true }
   let ready = false
   try { ready = JSON.parse(renderedJSON || '{}').docker_access?.state === 'ready' } catch { /* not rendered yet */ }
   $('[data-export-needs-certs]').hidden = ready
@@ -321,6 +324,30 @@ function openExportDialog(name) {
 function initExportDialog() {
   const form = $('[data-export-form]')
   if (!form) return
+  form.addEventListener('click', async ev => {
+    const copy = ev.target.closest('[data-copy-from]')
+    if (copy) {
+      const el = copy.closest('.copy-line')?.querySelector(copy.dataset.copyFrom)
+      if (!el?.textContent) return
+      try { await navigator.clipboard.writeText(el.textContent); copy.textContent = 'Copied'; setTimeout(() => { copy.textContent = 'Copy' }, 1500) }
+      catch { const r = document.createRange(); r.selectNodeContents(el); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r) }
+      return
+    }
+    const make = ev.target.closest('[data-plugin-token]')
+    if (!make) return
+    // A token for this sandbox only, for the plugin: shown once, like any new token
+    make.disabled = true; make.textContent = 'Creating…'
+    try {
+      const { token } = await api('/tokens', { method: 'POST', body: JSON.stringify({ name: 'Claude Code plugin', sandbox: $('[data-export-dialog]').dataset.sandbox, expires_in: '90d' }) })
+      const value = $('[data-plugin-token-value]')
+      value.textContent = token; value.hidden = false
+      $('[data-plugin-token-copy]').hidden = false
+      make.hidden = true
+    } catch (e) {
+      make.disabled = false; make.textContent = 'Create token'
+      const err = $('[data-export-error]'); err.textContent = e.message; err.hidden = false
+    }
+  })
   form.addEventListener('submit', async ev => {
     const how = ev.submitter?.value
     if (!['download', 'plain', 'enable'].includes(how)) return

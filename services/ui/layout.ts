@@ -107,11 +107,28 @@ const TOKEN_DIALOG = `
 const EXPORT_DIALOG = `
 <dialog data-export-dialog>
   <form method="dialog" data-export-form>
-    <h2>Export for coding agents</h2>
-    <p class="muted">A zip with a new token for this sandbox, its Docker client keys and a README with the commands. It is a secret: keep it out of git.</p>
+    <h2 class="adv">Export for coding agents</h2>
+    <h2 class="simple-only">Let your agent deploy</h2>
+    <p class="muted adv">A zip with a <code>.p7y</code> folder for your project's folder: a new token for this sandbox, its Docker client keys and a README with the commands. It is a secret; its own .gitignore keeps it out of git.</p>
     <label class="adv">Token name<input name="name" maxlength="80" placeholder="laptop agent"></label>
     <label class="adv">Expires<select name="expires_in"><option value="30d">in 30 days</option><option value="90d" selected>in 90 days</option><option value="never">never</option></select></label>
-    <p class="muted simple-only">Unzip it in your project's folder and tell your agent: <em>Read <span data-export-folder>the p7y folder's README.md</span> and deploy this app to my sandbox.</em></p>
+    <section class="simple-only agent-way" data-way="claude">
+      <h3>Claude Code <small class="muted">recommended</small></h3>
+      <ol>
+        <li>Once, in Claude Code:
+          <div class="copy-line"><code>/plugin marketplace add p7y-dev/p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+          <div class="copy-line"><code>/plugin install p7y@p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div></li>
+        <li>It asks for:
+          <div class="copy-line">Address <code data-plugin-url></code><button type="button" class="link" data-copy-from="[data-plugin-url]">Copy</button></div>
+          <div class="copy-line">Token <button type="button" data-plugin-token>Create token</button><code data-plugin-token-value hidden></code><button type="button" class="link" data-copy-from="[data-plugin-token-value]" data-plugin-token-copy hidden>Copy</button></div>
+          <small class="muted">for this sandbox only, valid 90 days; shown once</small></li>
+        <li>In your project's folder, say: <em>deploy this app</em></li>
+      </ol>
+    </section>
+    <section class="simple-only agent-way" data-way="other">
+      <h3>Other agents <small class="muted">Codex, Cursor…</small></h3>
+      <p class="muted">Download the zip below, then tell your agent: <em>set up the p7y zip from my Downloads in this project and deploy</em>. It holds a token and keys: the agent puts them in a <code>.p7y</code> folder that git leaves out.</p>
+    </section>
     <p class="muted" data-export-needs-certs hidden>This sandbox has no Docker access yet: enable it (the sandbox restarts, ~30 s) to include the Docker keys, or export without them.</p>
     <p class="muted" data-export-progress hidden></p>
     <p class="error" data-export-error hidden></p>
