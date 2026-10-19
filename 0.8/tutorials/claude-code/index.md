@@ -19,19 +19,22 @@ The switch at the top right changes how much the screen shows. **Simple** is eno
 
 1. In Purgatory, click your sandbox, then **Let your agent deploy…**.
 
-1. In Claude Code, run the two commands shown there, one after the other (**Copy** puts each on the clipboard):
+1. Click **Create token**. It makes a token that works only for this sandbox, and shows it once.
+
+1. Below it appears a command with your address and the new token in it. Click **Copy**, open a terminal (in VS Code: **Terminal → New Terminal**; on Windows also PowerShell, on a Mac the Terminal app), paste it and press Enter:
 
    ```
-   /plugin marketplace add p7y-dev/p7y
-   /plugin install p7y@p7y
+   claude plugin marketplace add p7y-dev/p7y
+   claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.com --config p7y_token=p7y_…
    ```
 
-1. When Claude Code asks where to install it, choose **user**: then it works in all your projects.
+   It installs the plugin for you (**user**: in all your projects) and gives it the address and the token; Claude Code keeps the token in your system's secure storage.
 
-1. It asks for two things. Both are in the same window in Purgatory:
+Good to know
 
-   - **Purgatory address**: click **Copy** next to *Address* and paste it.
-   - **Purgatory access token**: click **Create token**, then **Copy**, and paste it. The token is shown only once; Claude Code keeps it safely, not in a file. It works only for this sandbox.
+- `claude` not found? Claude Code is not installed for the terminal: see [Claude Code's setup](https://code.claude.com/docs/en/setup). An *unknown option* means an older Claude Code: run `claude update`.
+- The pasted line can stay in the terminal's history, token included. The token works only for this sandbox, expires in 90 days, and you can revoke it in Purgatory (Advanced → **Access tokens**).
+- Rather not paste a token? **Other ways** in the same window: run `claude` in a terminal, then `/plugin marketplace add p7y-dev/p7y` and `/plugin install p7y@p7y` in it, and paste the address and the token when it asks. (The Claude Code panel in VS Code has no `/plugin`.)
 
 You do this once. For another sandbox later, see [More projects](#more-projects) below.
 

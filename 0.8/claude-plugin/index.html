@@ -1723,6 +1723,11 @@
 <div class="highlight"><pre><span></span><code>/plugin marketplace add p7y-dev/p7y
 /plugin install p7y@p7y
 </code></pre></div>
+<p>Or from a terminal, without starting Claude (a sandbox's <strong>Let your agent deploy…</strong> gives this, filled in, after <strong>Create token</strong>). Claude Code in an editor (the VS Code extension) has no <code>/plugin</code>, so there it is the way:</p>
+<div class="highlight"><pre><span></span><code>claude plugin marketplace add p7y-dev/p7y
+claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.com --config p7y_token=p7y_…
+</code></pre></div>
+<p>(that leaves the token in the shell's history).</p>
 <p>Claude Code asks where to install it: <strong>user</strong> (every folder of yours; usually what you want), <strong>project</strong> (this repository, for everyone who uses it, through its <code>.claude/settings.json</code>) or <strong>local</strong> (this folder, only you). Then it asks for two things, which a sandbox's <strong>Let your agent deploy…</strong> shows, ready to copy:</p>
 <ul>
 <li><strong>Purgatory address</strong>: as in your browser, e.g. <code>https://p7y.example.com</code>;</li>
