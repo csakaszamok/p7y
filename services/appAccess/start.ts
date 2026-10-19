@@ -1,8 +1,8 @@
 import { pageSession } from '../ui/layout'
-import { getCookie } from '../session'
+import { getCookie, cookieHeader } from '../session'
 import { accessOfHost, type HostAccess } from './hosts'
 import { mayOpen, type Viewer } from './level'
-import { issueTicket } from './sign'
+import { issueTicket, signNext, readNext } from './sign'
 import { LANDING } from './decide'
 
 /**
@@ -30,7 +30,8 @@ export async function startResponse(req: Request, deps: Partial<StartDeps> = {})
   const viewer = d.session(req)
   if (!viewer) {
     const back = `${START}${self.searchParams.toString()}`
-    return new Response(null, { status: 303, headers: { location: '/login', 'set-cookie': `${NEXT_COOKIE}=${encodeURIComponent(back)}; Path=/; Max-Age=600; HttpOnly; SameSite=Lax${self.protocol === 'https:' ? '; Secure' : ''}`, 'cache-control': 'no-store' } })
+    // Like the session cookie (Secure when PUBLIC_URL is https), and signed
+    return new Response(null, { status: 303, headers: { location: '/login', 'set-cookie': cookieHeader(NEXT_COOKIE, signNext(back), 600), 'cache-control': 'no-store' } })
   }
   if (!mayOpen(a.access, viewer, a.owner, d.env)) {
     const who = a.access === 'owner' ? 'only to its owner' : 'only to people who can sign in to this Purgatory'
@@ -42,10 +43,9 @@ export async function startResponse(req: Request, deps: Partial<StartDeps> = {})
   return new Response(null, { status: 302, headers: { location: landing.toString(), 'cache-control': 'no-store' } })
 }
 
-/** Where to go after signing in: only back to /auth/app/start (from the cookie this set), nowhere else. */
+/** Where to go after signing in: only back to /auth/app/start, from the signed cookie start set, nowhere else. */
 export function nextAfterSignIn(req: Request): string | null {
-  const raw = getCookie(req, NEXT_COOKIE)
-  let v: string
-  try { v = decodeURIComponent(raw ?? '') } catch { return null }
-  return v.startsWith(START) ? v : null
+  const v = readNext(getCookie(req, NEXT_COOKIE))
+  // No control characters: the value becomes a Location header
+  return v && v.startsWith(START) && !/[\u0000-\u001f\u007f]/.test(v) ? v : null
 }

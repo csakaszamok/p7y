@@ -24,6 +24,7 @@ vi.mock('openid-client', () => ({
 }))
 
 const { readSession, getCookie } = await import('../../services/session')
+const { signNext } = await import('../../services/appAccess/sign')
 const loginPost = (await import('../../routes/login/POST')).default
 const logout = (await import('../../routes/logout/POST')).default
 const oidcStart = (await import('../../routes/auth/oidc/GET')).default
@@ -57,7 +58,7 @@ describe('admin login', () => {
 
   it('after signing in for a sandbox app (p7y_next): back to /auth/app/start, and the cookie cleared', async () => {
     const req = form({ username: 'admin', password: 'pw' })
-    req.headers.set('cookie', `p7y_next=${encodeURIComponent('/auth/app/start?rd=https%3A%2F%2Fshop-web.lvh.me%2F')}`)
+    req.headers.set('cookie', `p7y_next=${signNext('/auth/app/start?rd=https%3A%2F%2Fshop-web.lvh.me%2F')}`)
     const res = await loginPost(req)
     expect(res.headers.get('location')).toBe('/auth/app/start?rd=https%3A%2F%2Fshop-web.lvh.me%2F')
     expect(res.headers.getSetCookie().some(c => /^p7y_next=;.*Max-Age=0/.test(c))).toBe(true)
@@ -98,7 +99,7 @@ describe('OIDC login', () => {
 
   it('signed in for a sandbox app (p7y_next): back to /auth/app/start', async () => {
     const flow = await start()
-    const res = await callback(new Request('http://p7y.lvh.me/auth/callback?code=abc&state=state-1', { headers: { cookie: `p7y_oidc=${flow}; p7y_next=${encodeURIComponent('/auth/app/start?rd=x')}` } }))
+    const res = await callback(new Request('http://p7y.lvh.me/auth/callback?code=abc&state=state-1', { headers: { cookie: `p7y_oidc=${flow}; p7y_next=${signNext('/auth/app/start?rd=x')}` } }))
     expect(res.headers.get('location')).toBe('/auth/app/start?rd=x')
     expect(res.headers.getSetCookie().some(c => /^p7y_next=;.*Max-Age=0/.test(c))).toBe(true)
   })

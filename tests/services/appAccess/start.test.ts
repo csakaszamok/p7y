@@ -38,10 +38,14 @@ describe('/auth/app/start', () => {
     for (const rd of ['https://evil.example/x', 'https://p7y.example.com/', 'javascript:alert(1)', 'not a url'])
       expect((await startResponse(at(rd), deps({ sub: 'bob@example.com', role: 'user' }))).status).toBe(400)
   })
-  it('after sign-in: back to the start path from p7y_next, nothing else', () => {
-    const next = (v: string) => new Request('https://p7y.example.com/', { headers: { cookie: `p7y_next=${encodeURIComponent(v)}` } })
-    expect(nextAfterSignIn(next('/auth/app/start?rd=x'))).toBe('/auth/app/start?rd=x')
-    expect(nextAfterSignIn(next('https://evil.example/'))).toBeNull()
-    expect(nextAfterSignIn(next('/admin'))).toBeNull()
+  it('after sign-in: back to the start path only from the p7y_next that start set (signed)', async () => {
+    const r = await startResponse(at('https://shop-dom.example.com/a'), deps(null))
+    const value = r.headers.get('set-cookie')!.split(';')[0].slice('p7y_next='.length)
+    const next = (v: string) => new Request('https://p7y.example.com/', { headers: { cookie: `p7y_next=${v}` } })
+    expect(nextAfterSignIn(next(value))).toBe('/auth/app/start?rd=' + encodeURIComponent('https://shop-dom.example.com/a'))
+    // A sandbox app on a sibling address can set this cookie for the whole domain: an unsigned one is ignored
+    expect(nextAfterSignIn(next(encodeURIComponent('/auth/app/start?rd=https%3A%2F%2Fevil-app.example.com%2F')))).toBeNull()
+    expect(nextAfterSignIn(next(encodeURIComponent('/auth/app/start?rd=x\r\nSet-Cookie: a=b')))).toBeNull()
+    expect(nextAfterSignIn(next('garbage'))).toBeNull()
   })
 })

@@ -73,4 +73,12 @@ export function appCookieHeader(value: string, secure: boolean): string {
   return `${APP_COOKIE}=${value}; Path=/; Max-Age=${COOKIE_S}; HttpOnly; SameSite=Lax${secure ? '; Secure' : ''}`
 }
 
+/** Where to go back to after signing in (p7y_next), signed: a sandbox app on a sibling address can set a cookie
+ * for the whole domain, but not sign one. 10 minutes. */
+export function signNext(path: string, now = Date.now()): string { return sign({ k: 'n', p: path, e: now + 600_000 }) }
+export function readNext(value: string | undefined, now = Date.now()): string | null {
+  const v = verify<{ k: string; p: string; e: number }>(value)
+  return v && v.k === 'n' && typeof v.p === 'string' && v.e >= now ? v.p : null
+}
+
 export function _resetSign(): void { key = null; used.clear() }
