@@ -573,3 +573,16 @@ describe('pluginInstallCommand', () => {
     expect(() => P.pluginInstallCommand('https://p7y.example.com', 'p7y_x $(id)')).toThrow()
   })
 })
+
+describe('loadingPanel', () => {
+  it("right after a click: the new sandbox's name and status at once, its details loading (no tabs yet)", () => {
+    const html = P.loadingPanel({ name: 'p7y-shop', status: 'exited' }, ctx)
+    expect(html).toContain('<h2>shop</h2>')
+    expect(html).toContain('asleep')
+    expect(html).toContain('Loading')
+    expect(html).not.toContain('role="tab"')
+  })
+  it('escapes the name', () => {
+    expect(P.loadingPanel({ name: 'p7y-<x>', status: 'running' }, ctx)).not.toContain('<x>')
+  })
+})
