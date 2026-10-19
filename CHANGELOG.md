@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- A sandbox whose idle time had just run out showed *not counting yet* for a few minutes while still running: Sablier drops an expired session at once but stops the containers a few minutes later. It now shows *going to sleep…* (`going_to_sleep` in the API).
+
 ## [0.7.1] - 2026-10-17
 
 Upgrading from 0.7.0: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d`.
