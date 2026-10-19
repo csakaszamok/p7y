@@ -19,7 +19,7 @@ import { writeAuthorizedKeys, createGeneratedKey } from './sandboxSsh'
 import { sshKeysOf } from './sshKeys'
 import { resourceDefaults, memoryForCompose, type Limits } from './resources'
 import { sandboxName, rawNameOf, readLabel } from './naming'
-import { sessionDurationOf } from './sleepSettings'
+import { sessionDurationOf, cappedSleepDefault } from './sleepSettings'
 import { listManagedContainers, resolveHostSandboxesDir, type SandboxMeta } from './docker'
 import { sandboxDir, legacyUsersDir, listSandboxDirs, newSandboxDir, archiveRoot, ownerDirName, ownerOfCompose, sandboxesDir, forgetSandboxDir, sandboxesMounted, SANDBOX_NAME } from './sandboxPaths'
 import { composeUp, composeStop, composeStart, composeDown, composeUpInner, composeConfigCheck } from './compose'
@@ -265,8 +265,9 @@ export const sandboxService = {
       host_domain: hostDomain,
       frp_token: frpToken,
       frps_api_auth: `p7y:${frpsApiPassword}`,
-      idle_timeout: sessionDurationOf(idleTimeout ?? template.idle_timeout ?? '30m'),
-      deep_sleep_after: deepSleepAfter ?? template.deep_sleep_after ?? '7d',
+      // A template's default, cut to the server's limit for a user's sandbox
+      idle_timeout: sessionDurationOf(idleTimeout ?? cappedSleepDefault('idle_timeout', template.idle_timeout ?? '30m', owner)),
+      deep_sleep_after: deepSleepAfter ?? cappedSleepDefault('deep_sleep_after', template.deep_sleep_after ?? '7d', owner),
       owner: JSON.stringify(owner),
       cpus: String((limits ?? resourceDefaults().limits).cpus),
       memory: memoryForCompose((limits ?? resourceDefaults().limits).memory),

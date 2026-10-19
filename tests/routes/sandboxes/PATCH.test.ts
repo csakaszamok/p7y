@@ -77,4 +77,19 @@ describe('PATCH /sandboxes/<name>', () => {
     expect((await admin.json()).disk).toEqual({ limit: 50 * 1024 ** 3, used: null, measured_at: null, over: false })
     expect((await patch(r('leander-b1', { disk: 'huge' }, { authorization: 'Bearer admin-secret', 'content-type': 'application/json' }))).status).toBe(400)
   })
+
+  it('sleep limits: a user not above SANDBOX_MAX_IDLE_TIMEOUT / _DEEP_SLEEP_AFTER, nor never; the admin is not limited', async () => {
+    vi.stubEnv('SANDBOX_MAX_IDLE_TIMEOUT', '2h')
+    vi.stubEnv('SANDBOX_MAX_DEEP_SLEEP_AFTER', '1d')
+    try {
+      const over = await patch(r('leander-a1', { idle_timeout: '3h' }))
+      expect(over.status).toBe(400)
+      expect((await over.json()).error).toMatch(/at most 2h on this server/)
+      expect((await patch(r('leander-a1', { deep_sleep_after: 'off' }))).status).toBe(400)
+      expect(updateSleepSettings).not.toHaveBeenCalled()
+      expect((await patch(r('leander-a1', { idle_timeout: '1h', deep_sleep_after: '1d' }))).status).toBe(200)
+      expect((await patch(r('leander-b1', { idle_timeout: 'off' }, { authorization: 'Bearer admin-secret', 'content-type': 'application/json' }))).status).toBe(200)
+    } finally { vi.unstubAllEnvs(); vi.stubEnv('ADMIN_TOKEN', 'admin-secret') }
+  })
 })
+

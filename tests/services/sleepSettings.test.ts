@@ -146,3 +146,30 @@ describe('never sleeping: 0 or off', () => {
     expect(sessionDurationOf('30m')).toBe('30m')
   })
 })
+
+describe('sleep limits (SANDBOX_MAX_IDLE_TIMEOUT, SANDBOX_MAX_DEEP_SLEEP_AFTER)', () => {
+  const env = { SANDBOX_MAX_IDLE_TIMEOUT: '2h', SANDBOX_MAX_DEEP_SLEEP_AFTER: '1d' } as NodeJS.ProcessEnv
+  it('a user: up to the limit, not above it, and not never', async () => {
+    const { sleepLimitError } = await import('../../services/sleepSettings')
+    expect(sleepLimitError({ idle_timeout: '2h', deep_sleep_after: '1d' }, 'user', env)).toBeNull()
+    expect(sleepLimitError({ idle_timeout: '30m' }, 'user', env)).toBeNull()
+    expect(sleepLimitError({ idle_timeout: '3h' }, 'user', env)).toMatch(/idle_timeout.*at most 2h on this server/)
+    expect(sleepLimitError({ idle_timeout: '48h' }, 'user', env)).toMatch(/at most 2h/)
+    expect(sleepLimitError({ idle_timeout: 'off' }, 'user', env)).toMatch(/never.*at most 2h/)
+    expect(sleepLimitError({ deep_sleep_after: '2d' }, 'user', env)).toMatch(/deep_sleep_after.*at most 1d on this server/)
+    expect(sleepLimitError({ deep_sleep_after: 'off' }, 'user', env)).toMatch(/never.*at most 1d/)
+  })
+  it('the admin, or no limit set: anything', async () => {
+    const { sleepLimitError } = await import('../../services/sleepSettings')
+    expect(sleepLimitError({ idle_timeout: 'off', deep_sleep_after: 'off' }, 'admin', env)).toBeNull()
+    expect(sleepLimitError({ idle_timeout: 'off', deep_sleep_after: '30d' }, 'user', {} as NodeJS.ProcessEnv)).toBeNull()
+  })
+  it("a template's default above the limit is cut to it (for a user's new sandbox)", async () => {
+    const { cappedSleepDefault } = await import('../../services/sleepSettings')
+    expect(cappedSleepDefault('idle_timeout', '30m', 'ann@example.com', { SANDBOX_MAX_IDLE_TIMEOUT: '15m' } as NodeJS.ProcessEnv)).toBe('15m')
+    expect(cappedSleepDefault('idle_timeout', '30m', 'ann@example.com', env)).toBe('30m')
+    expect(cappedSleepDefault('deep_sleep_after', '7d', 'ann@example.com', env)).toBe('1d')
+    expect(cappedSleepDefault('deep_sleep_after', 'off', 'ann@example.com', env)).toBe('1d')
+    expect(cappedSleepDefault('deep_sleep_after', '7d', 'admin', env)).toBe('7d')
+  })
+})
