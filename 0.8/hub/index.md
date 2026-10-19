@@ -38,7 +38,7 @@ services:
     image: my-stock-room
     ports: ["8080:8080"]          # on all interfaces: it needs a web address
     labels:
-      p7y.publish: "true"         # only the exact string "true" publishes
+      p7y.publish: "true"         # "true" or "1" publishes; anything else does not
       p7y.title: "Stock room"     # optional, at most 80 characters; default: the service name
       p7y.description: "Who took what from the stock room"   # optional, at most 280
 ```
