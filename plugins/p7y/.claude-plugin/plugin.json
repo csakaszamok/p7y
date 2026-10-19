@@ -1,6 +1,6 @@
 {
   "name": "p7y",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "description": "Deploy your app to your Purgatory sandbox and get its public address: the p7y MCP server and a deploy skill",
   "author": { "name": "p7y-dev", "url": "https://github.com/p7y-dev" },
   "homepage": "https://p7y-dev.github.io/p7y/latest/claude-plugin/",
