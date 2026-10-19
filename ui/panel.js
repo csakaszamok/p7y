@@ -138,9 +138,7 @@
       : down.length === 1 ? `<p class="not-answering">⚠ ${esc(down[0])} is not answering — does it listen on 0.0.0.0 (not 127.0.0.1) inside its container?</p>`
       : `<p class="not-answering">⚠ ${down.map(esc).join(', ')} are not answering — do they listen on 0.0.0.0 (not 127.0.0.1) inside their containers?</p>`
     const asleep = s.status !== 'running' && rows.some(r => r.url) ? '<p class="muted">opening one wakes the sandbox</p>' : ''
-    const unlinked = hub.unlinked.map(n => `<p class="muted">${esc(n)}: published, but has no web address (publish a port on all interfaces)</p>`).join('')
-      + (hub.bad_image || []).map(n => `<p class="muted">${esc(n)}: p7y.image is ignored: use a path inside the app, e.g. /shot.png</p>`).join('')
-    return table(['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep + unlinked
+    return table(['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep
   }
 
   function accessTab(s, ctx) {
@@ -203,6 +201,16 @@
     return `<tr><td>Disk</td><td${when}>${now}</td><td>${fmtBytes(d.limit)}</td></tr>`
   }
 
+  // What the owner may want to fix: published apps the Hub cannot show as asked
+  function warnings(s) {
+    const hub = s.hub || {}
+    const lines = [
+      ...(hub.unlinked || []).map(n => `${esc(n)}: published, but has no web address (publish a port on all interfaces)`),
+      ...(hub.bad_image || []).map(n => `${esc(n)}: p7y.image is ignored: use a path inside the app, e.g. /shot.png`),
+    ]
+    return lines.length ? `<div class="warnings"><h3>Warnings</h3><ul>${lines.map(l => `<li>⚠ ${l}</li>`).join('')}</ul></div>` : ''
+  }
+
   function settingsTab(s, ctx) {
     const created = parseCreated(s.created_at)
     const when = created ? `${esc(new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(created))} <span class="muted">(${relativeAge(created, ctx.now)})</span>` : esc(s.created_at || '—')
@@ -211,14 +219,15 @@
       ...(ctx.isAdmin ? [kv('Owner', esc(s.owner === 'admin' ? 'admin API' : s.owner))] : []),
       kv('Runtime · Template', `${esc([s.runtime, s.template].filter(Boolean).join(' · ') || '—')}${s.compose === 'edited' ? ' <span class="muted">(edited)</span>' : ''}`),
       kv('Created', when),
-      // Not running: when it last ran (~ when only estimated), the exact time on hover
-      ...(s.status !== 'running' && s.last_running_at
-        ? [kv('Last ran', `<span title="${esc(new Date(s.last_running_at).toLocaleString())}">${s.last_running_estimated ? '~' : ''}${esc(ago(s.last_running_at, ctx.now))}</span>`)] : []),
+      // When it last ran (~ when only estimated), the exact time on hover
+      kv('Last ran', s.status === 'running' ? 'now (running)'
+        : s.last_running_at ? `<span title="${esc(new Date(s.last_running_at).toLocaleString())}">${s.last_running_estimated ? '~' : ''}${esc(ago(s.last_running_at, ctx.now))}</span>`
+        : '<span class="muted">unknown</span>'),
       ...((s.status === 'exited' || s.status === 'created') && s.deep_sleep_after !== 'off' && s.deep_sleep_at
         ? [kv('Deep sleep', `in ${countdown(s.deep_sleep_at, ctx.now)}`)] : []),
       kv('Sleep', sleep),
       kv('Compose', '<button class="link" data-act="compose">Starter stack…</button>'),
-    ]) + `<div class="danger-zone"><h3>Danger zone</h3><div class="actions">${s.status !== 'deep_sleep' ? '<button data-act="deep-sleep">Deep sleep now</button>' : ''}<button class="danger" data-act="delete">Archive…</button></div></div>`
+    ]) + warnings(s) + `<div class="danger-zone"><h3>Danger zone</h3><div class="actions">${s.status !== 'deep_sleep' ? '<button data-act="deep-sleep">Deep sleep now</button>' : ''}<button class="danger" data-act="delete">Archive…</button></div></div>`
   }
 
   /** The Registry tab: the sandbox's images, their scan results, and whether they can be pulled without a login. */

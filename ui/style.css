@@ -261,3 +261,7 @@ a.ov-card:hover { border-color: #ea580c; transform: translateY(-1px) }
 }
 /* Apps tab: an app published to the Hub */
 .tag { font-size: 12px; padding: 1px 6px; border: 1px solid #ea580c; border-radius: 10px; color: #f0a060; text-decoration: none; margin-left: 4px }
+/* Details tab: things the owner may want to fix */
+.warnings h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #f59e0b; margin: 16px 0 6px }
+.warnings ul { margin: 0; padding-left: 0; list-style: none }
+.warnings li { margin: 4px 0; color: #e8c27a }
