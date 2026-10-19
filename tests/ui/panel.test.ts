@@ -553,3 +553,18 @@ describe('Simple view', () => {
     expect(panelOf(html, 'apps')).not.toContain('Let your agent deploy')
   })
 })
+
+describe('pluginInstallCommand', () => {
+  it('two lines for a terminal: add the marketplace, install for the user with the address and the token', () => {
+    expect(P.pluginInstallCommand('https://p7y.example.com', 'p7y_abc123')).toBe(
+      'claude plugin marketplace add p7y-dev/p7y\n' +
+      'claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.com --config p7y_token=p7y_abc123')
+  })
+  it('drops a trailing slash of the address (the MCP is <address>/mcp)', () => {
+    expect(P.pluginInstallCommand('https://p7y.example.com/', 'p7y_x')).toContain('p7y_url=https://p7y.example.com --config')
+  })
+  it('refuses what could break out of the command line', () => {
+    expect(() => P.pluginInstallCommand('https://p7y.example.com; rm -rf ~', 'p7y_x')).toThrow()
+    expect(() => P.pluginInstallCommand('https://p7y.example.com', 'p7y_x $(id)')).toThrow()
+  })
+})

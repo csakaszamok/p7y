@@ -420,7 +420,19 @@
     return out
   }
 
-  const api = { filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  /**
+   * What a user pastes into a terminal to install the Claude Code plugin with this Purgatory's address and a token.
+   * Only plain URL and token characters go in: nothing a shell would read as more than one argument.
+   */
+  function pluginInstallCommand(url, token) {
+    const u = String(url).replace(/\/+$/, '')
+    if (!/^https?:\/\/[A-Za-z0-9.:-]+$/.test(u)) throw new Error(`not an address: ${u}`)
+    if (!/^p7y_[A-Za-z0-9_-]+$/.test(token)) throw new Error('not a token')
+    return 'claude plugin marketplace add p7y-dev/p7y\n' +
+      `claude plugin install p7y@p7y --scope user --config p7y_url=${u} --config p7y_token=${token}`
+  }
+
+  const api = { pluginInstallCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

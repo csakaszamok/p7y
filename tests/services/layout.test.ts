@@ -45,15 +45,24 @@ describe('renderPage: Simple / Advanced', () => {
       expect(dlg).toMatch(/<label class="adv">Token name/)
       expect(dlg).toMatch(/<label class="adv">Expires/)
     })
-    it('Claude Code: the plugin commands, the address and a token for this sandbox, each to copy', () => {
-      expect(claude).toContain('<code>/plugin marketplace add p7y-dev/p7y</code>')
-      expect(claude).toContain('<code>/plugin install p7y@p7y</code>')
-      expect(claude).toContain('data-plugin-url')
+    it('Claude Code: Create token, then one command to copy into a terminal', () => {
       // type=button: inside the form, it must not submit (download) it
       expect(claude).toMatch(/<button type="button"[^>]*data-plugin-token[^>]*>Create token<\/button>/)
       expect(claude).toContain('this sandbox only')
+      expect(claude).toMatch(/<pre[^>]*data-plugin-cmd[^>]*hidden/)
+      expect(claude).toMatch(/<button type="button"[^>]*data-copy-from="\[data-plugin-cmd\]"[^>]*hidden/)
+      expect(claude).toContain('Terminal → New Terminal')
       expect(claude).toMatch(/deploy this app/)
-      expect([...claude.matchAll(/<button type="button"[^>]*data-copy-from=/g)].length).toBe(4)
+    })
+    it('Claude Code, other ways: /plugin in Claude Code, with the address and the token to paste', () => {
+      const other = /<details[^>]*>[\s\S]*?<\/details>/.exec(claude)?.[0] ?? ''
+      expect(other).toContain('<code>/plugin marketplace add p7y-dev/p7y</code>')
+      expect(other).toContain('<code>/plugin install p7y@p7y</code>')
+      expect(other).toContain('data-plugin-url')
+      expect(other).toContain('data-plugin-token-value')
+    })
+    it('the zip keeps its Download button', () => {
+      expect(dlg).toMatch(/<button class="primary" value="download" data-export-download>Download<\/button>/)
     })
     it('other agents: the zip, unpacked by the agent', () => {
       expect(other).toContain('set up the p7y zip from my Downloads in this project and deploy')

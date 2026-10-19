@@ -14,7 +14,7 @@ In Claude Code:
 /plugin install p7y@p7y
 ```
 
-Claude Code in an editor (the VS Code extension) has no `/plugin`: run `claude` in a terminal and the two commands there, or, from the shell, without starting Claude:
+Or from a terminal, without starting Claude (a sandbox's **Let your agent deploy…** gives this, filled in, after **Create token**). Claude Code in an editor (the VS Code extension) has no `/plugin`, so there it is the way:
 
 ```
 claude plugin marketplace add p7y-dev/p7y

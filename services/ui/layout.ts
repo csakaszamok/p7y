@@ -115,15 +115,19 @@ const EXPORT_DIALOG = `
     <section class="simple-only agent-way" data-way="claude">
       <h3>Claude Code <small class="muted">recommended</small></h3>
       <ol>
-        <li>Once, in Claude Code:
-          <div class="copy-line"><code>/plugin marketplace add p7y-dev/p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
-          <div class="copy-line"><code>/plugin install p7y@p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div></li>
-        <li>It asks for:
-          <div class="copy-line">Address <code data-plugin-url></code><button type="button" class="link" data-copy-from="[data-plugin-url]">Copy</button></div>
-          <div class="copy-line">Token <button type="button" data-plugin-token>Create token</button><code data-plugin-token-value hidden></code><button type="button" class="link" data-copy-from="[data-plugin-token-value]" data-plugin-token-copy hidden>Copy</button></div>
-          <small class="muted">for this sandbox only, valid 90 days; shown once</small></li>
-        <li>In your project's folder, say: <em>deploy this app</em></li>
+        <li><button type="button" data-plugin-token>Create token</button> <small class="muted">for this sandbox only, valid 90 days; shown once</small></li>
+        <li>Copy this and paste it into a terminal (in VS Code: Terminal → New Terminal), once:
+          <div class="copy-line"><pre class="plugin-cmd" data-plugin-cmd hidden></pre><button type="button" class="primary" data-copy-from="[data-plugin-cmd]" data-plugin-cmd-copy hidden>Copy</button></div>
+          <small class="muted" data-plugin-cmd-wait>the command appears here with your token</small></li>
+        <li>In your project's folder, ask Claude Code: <em>deploy this app</em></li>
       </ol>
+      <details class="plugin-other"><summary>Other ways: in Claude Code itself</summary>
+        <p class="muted">Run these in Claude Code (in a terminal; the VS Code panel has no <code>/plugin</code>), then answer its two questions:</p>
+        <div class="copy-line"><code>/plugin marketplace add p7y-dev/p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+        <div class="copy-line"><code>/plugin install p7y@p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+        <div class="copy-line">Address <code data-plugin-url></code><button type="button" class="link" data-copy-from="[data-plugin-url]">Copy</button></div>
+        <div class="copy-line">Token <code data-plugin-token-value hidden></code><button type="button" class="link" data-copy-from="[data-plugin-token-value]" data-plugin-token-copy hidden>Copy</button><small class="muted" data-plugin-token-wait>Create token above</small></div>
+      </details>
     </section>
     <section class="simple-only agent-way" data-way="other">
       <h3>Other agents <small class="muted">Codex, Cursor…</small></h3>
