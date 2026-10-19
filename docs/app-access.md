@@ -41,7 +41,7 @@ Behind `domain` and `owner`, every request to the app carries `X-P7y-User: <thei
 
 ## Timing and failures
 
-- A new or changed label applies within about 15 seconds of the deploy (Purgatory reads the running sandboxes' labels every 10 s; Traefik asks Purgatory every 2 s). Set the label before the first deploy of an app that must never be open, rather than right after it.
+- A new or changed label applies within about 12 seconds of the deploy (Purgatory reads the running sandboxes' labels every 10 s; Traefik asks Purgatory every 2 s). Until then the sandbox goes by what Purgatory last knew of it: in a sandbox whose apps were all public, a newly deployed `owner` app is open for those seconds. For an app that must never be open, not even briefly, publish its port on `127.0.0.1` first and on all interfaces only after a few seconds, or deploy it into a sandbox that already has a `domain` or `owner` app.
 - A sandbox whose apps are all public does not depend on Purgatory while it runs, as before. One with a `domain` or `owner` app does: while Purgatory is down, those apps do not open (it fails closed); public sandboxes keep working.
 
 ## On the Hub

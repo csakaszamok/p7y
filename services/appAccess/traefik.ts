@@ -1,5 +1,5 @@
 import { listSandboxDirs } from '../sandboxPaths'
-import { rememberedApps, appLinks, type AppLink } from '../appLinks'
+import { rememberedApps, appLinks, forgetAppLinks, type AppLink } from '../appLinks'
 import { listManagedContainers } from '../docker'
 import { sandboxAccess } from './hosts'
 
@@ -24,7 +24,8 @@ export function traefikAccessConfig(deps: Partial<TraefikDeps> = {}) {
 export interface RefreshDeps { running: () => Promise<string[]>; links: (name: string) => Promise<unknown> }
 const refreshDefaults: RefreshDeps = {
   running: async () => (await listManagedContainers().catch(() => [])).filter(c => c.status === 'running').map(c => c.name),
-  links: name => appLinks(name),
+  // Afresh, past appLinks' 10 s cache: a new label applies within one round, not two
+  links: name => { forgetAppLinks(name); return appLinks(name) },
 }
 
 /** Reads the running sandboxes' app links (and so their p7y.access) every 10 s: a new label applies within seconds. */
