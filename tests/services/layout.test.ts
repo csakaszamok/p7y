@@ -36,14 +36,22 @@ describe('renderPage: Simple / Advanced', () => {
     expect(html).toMatch(/<a class="adv" href="\/settings\/ssh-keys"/)
     expect(html).toMatch(/<a class="active" href="\/"/)
   })
-  describe('Let your agent deploy (Simple)', () => {
+  describe('Let your agent deploy (the same window in both views)', () => {
     const dlg = /<dialog data-export-dialog>[\s\S]*?<\/dialog>/.exec(SANDBOX_VIEW_BODY)?.[0] ?? ''
-    const claude = /<section class="simple-only[^"]*" data-way="claude">[\s\S]*?<\/section>/.exec(dlg)?.[0] ?? ''
-    const other = /<section class="simple-only[^"]*" data-way="other">[\s\S]*?<\/section>/.exec(dlg)?.[0] ?? ''
+    // Not simple-only: Advanced shows the same two ways
+    const claude = /<section class="agent-way" data-way="claude">[\s\S]*?<\/section>/.exec(dlg)?.[0] ?? ''
+    const other = /<section class="agent-way" data-way="other">[\s\S]*?<\/section>/.exec(dlg)?.[0] ?? ''
+    const options = /<details class="adv export-options">[\s\S]*?<\/details>/.exec(dlg)?.[0] ?? ''
 
-    it('hides the token name and expiry', () => {
-      expect(dlg).toMatch(/<label class="adv">Token name/)
-      expect(dlg).toMatch(/<label class="adv">Expires/)
+    it('one title for both views', () => {
+      expect(dlg).toContain('<h2>Let your agent deploy</h2>')
+      expect(dlg).not.toContain('Export for coding agents</h2>')
+    })
+    it('Advanced only: Options with the token name, expiry, no Docker keys and Copy as .env', () => {
+      expect(options).toContain('<label>Token name<input name="name"')
+      expect(options).toContain('<label>Expires<select name="expires_in"')
+      expect(options).toMatch(/<input type="checkbox" name="no_docker"/)
+      expect(options).toMatch(/<button type="button"[^>]*data-copy-env[^>]*>Copy as \.env<\/button>/)
     })
     it('Claude Code: Create token, then one command to copy into a terminal', () => {
       // type=button: inside the form, it must not submit (download) it

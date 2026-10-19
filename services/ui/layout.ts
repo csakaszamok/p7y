@@ -103,19 +103,16 @@ const TOKEN_DIALOG = `
   <form method="dialog"><div class="actions"><button class="primary">Done</button></div></form>
 </dialog>`
 
-// Export for coding agents: a zip with a new token for the sandbox, its Docker client keys and a README
+// Let your agent deploy, the same in both views: the Claude Code plugin (a token and the command to install it),
+// or a zip for other agents (a new token for the sandbox, its Docker client keys and a README); Advanced adds Options
 const EXPORT_DIALOG = `
 <dialog data-export-dialog>
   <form method="dialog" data-export-form>
-    <h2 class="adv">Export for coding agents</h2>
-    <h2 class="simple-only">Let your agent deploy</h2>
-    <p class="muted adv">A zip with a <code>.p7y</code> folder for your project's folder: a new token for this sandbox, its Docker client keys and a README with the commands. It is a secret; its own .gitignore keeps it out of git.</p>
-    <label class="adv">Token name<input name="name" maxlength="80" placeholder="laptop agent"></label>
-    <label class="adv">Expires<select name="expires_in"><option value="30d">in 30 days</option><option value="90d" selected>in 90 days</option><option value="never">never</option></select></label>
-    <section class="simple-only agent-way" data-way="claude">
+    <h2>Let your agent deploy</h2>
+    <section class="agent-way" data-way="claude">
       <h3>Claude Code <small class="muted">recommended</small></h3>
       <ol>
-        <li><button type="button" data-plugin-token>Create token</button> <small class="muted">for this sandbox only, valid 90 days; shown once</small></li>
+        <li><button type="button" data-plugin-token>Create token</button> <small class="muted">for this sandbox only, valid <span data-plugin-expiry>90 days</span>; shown once</small></li>
         <li>Copy this and paste it into a terminal (in VS Code: Terminal → New Terminal), once:
           <div class="copy-line"><pre class="plugin-cmd" data-plugin-cmd hidden></pre><button type="button" class="primary" data-copy-from="[data-plugin-cmd]" data-plugin-cmd-copy hidden>Copy</button></div>
           <small class="muted" data-plugin-cmd-wait>the command appears here with your token</small></li>
@@ -129,10 +126,17 @@ const EXPORT_DIALOG = `
         <div class="copy-line">Token <code data-plugin-token-value hidden></code><button type="button" class="link" data-copy-from="[data-plugin-token-value]" data-plugin-token-copy hidden>Copy</button><small class="muted" data-plugin-token-wait>Create token above</small></div>
       </details>
     </section>
-    <section class="simple-only agent-way" data-way="other">
+    <section class="agent-way" data-way="other">
       <h3>Other agents <small class="muted">Codex, Cursor…</small></h3>
       <p class="muted">Download the zip below, then tell your agent: <em>set up the p7y zip from my Downloads in this project and deploy</em>. It holds a token and keys: the agent puts them in a <code>.p7y</code> folder that git leaves out.</p>
     </section>
+    <details class="adv export-options"><summary>Options</summary>
+      <p class="muted">For the token above and the zip. The zip holds a <code>.p7y</code> folder for your project's folder: a new token for this sandbox, its Docker client keys and a README with the commands; its own .gitignore keeps it out of git.</p>
+      <label>Token name<input name="name" maxlength="80" placeholder="laptop agent"></label>
+      <label>Expires<select name="expires_in" data-export-expiry><option value="30d">in 30 days</option><option value="90d" selected>in 90 days</option><option value="never">never</option></select></label>
+      <label class="check"><input type="checkbox" name="no_docker"> Without the Docker keys (the zip: p7y.env and the README only)</label>
+      <div class="actions"><button type="button" data-copy-env>Copy as .env</button><small class="muted">p7y.env with a new token, to the clipboard</small></div>
+    </details>
     <p class="muted" data-export-needs-certs hidden>This sandbox has no Docker access yet: enable it (the sandbox restarts, ~30 s) to include the Docker keys, or export without them.</p>
     <p class="muted" data-export-progress hidden></p>
     <p class="error" data-export-error hidden></p>
