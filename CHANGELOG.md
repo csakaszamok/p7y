@@ -16,6 +16,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Fixed
 
+- A sandbox recreated while asleep (by an upgrade's migration) and not started since never went into deep sleep and showed no *Deep sleep in*: its container has no stop time. Deep sleep now counts from when it was recreated, so it never comes earlier than it should; such sandboxes that have waited longer than `deep_sleep_after` go into deep sleep at the first check after the upgrade (their data stays).
 - A sandbox whose idle time had just run out showed *not counting yet* for a few minutes while still running: Sablier drops an expired session at once but stops the containers a few minutes later. It now shows *going to sleep…* (`going_to_sleep` in the API).
 
 ## [0.7.1] - 2026-10-17

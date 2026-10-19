@@ -131,3 +131,11 @@ describe('sleepTimes: going to sleep', () => {
     expect((await sleepTimes('leander-cd656a', new Date((EXPIRY + 60) * 1000))).going_to_sleep).toBe(false)
   })
 })
+
+describe('sleepTimes: recreated, never started', () => {
+  it('deep sleep counts from when the container was created', async () => {
+    mockFetch.mockResolvedValue({ ok: true, text: async () => METRICS })
+    vi.mocked(getSandboxState).mockResolvedValue({ ...running, status: 'created', finishedAt: '0001-01-01T00:00:00Z', createdAt: '2026-09-27T12:00:00Z' })
+    expect(await sleepTimes('leander-cd656a', NOW)).toMatchObject({ deep_sleep_at: '2026-10-04T12:00:00.000Z', deep_sleep_in: 601200 })
+  })
+})
