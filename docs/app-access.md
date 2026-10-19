@@ -1,0 +1,56 @@
+# App access
+
+By default every web app in a sandbox is public: anyone with its address opens it. A builder can choose, app by app, who opens it, with a label on the app's container:
+
+| `p7y.access` | Who opens the app's web address |
+|---|---|
+| `public` | Anyone. |
+| `domain` | Anyone who can sign in to this Purgatory (its sign-in allowlist, `OIDC_ALLOWED_DOMAINS` and `OIDC_ALLOWED_EMAILS`), and the admin. |
+| `owner` | The sandbox's owner, and the admin. |
+
+```yaml
+services:
+  admin:
+    build: .
+    ports: ["8080:8080"]
+    restart: unless-stopped
+    labels:
+      p7y.access: owner     # or domain, or public
+```
+
+An app without the label gets the server's default, `APPS_ACCESS_DEFAULT` (`public` unless set; a company may set `domain`). A value that is not one of the three (a typo such as `privat`) means `owner`, and the sandbox's **Details** tab says so. The **Apps** tab marks each app that is not public: *Owner only*, *Your domain*.
+
+## What a visitor sees
+
+The first time someone opens an app that is not public, their browser makes a short hop to Purgatory: they sign in if they are not signed in yet, and come straight back to the app. That gives them a cookie for that one app's address, for 8 hours. Someone who may not open it sees a page that says so (*This app is open only to its owner*) and which account they are signed in with.
+
+Purgatory's own sign-in never reaches an app: the cookie an app's address gets says only that this person may view this app, and Purgatory takes it off every request before the app sees it, so an app cannot use it to act as its visitor.
+
+An asleep app is woken only for someone who may open it: an anonymous visitor of an owner-only app gets the sign-in hop, not a waking sandbox.
+
+## The app knows who is viewing
+
+Behind `domain` and `owner`, every request to the app carries `X-P7y-User: <their e-mail>` (`admin` for the admin). An app can greet its visitor with it, or use it as its own sign-in. Purgatory removes an `X-P7y-User` that a visitor sends themselves, also for public apps, so the header can be trusted, but only behind Purgatory.
+
+## Not covered
+
+- **The TCP addresses** (databases, SSH, Docker) are not HTTP: this does not apply to them. They are protected by their own TLS certificates and passwords, as before; see [Isolation and TCP addresses](networking.md).
+- **Other sandboxes on the internal network.** A port published on all interfaces is also reachable from other sandboxes directly on the internal `traefik-net` address ([Isolation and TCP addresses](networking.md)), without going through Purgatory's check. App access protects the web address, not that path: for an app no other sandbox must reach, publish its port on `127.0.0.1` and nothing else (it then has no web address either).
+- **Webhooks and API clients without a browser** cannot make the sign-in hop. Keep an app that receives webhooks, or that a script or a mobile app calls, `public` for now.
+- **A coding agent's own `curl`** to an app that is not public gets the sign-in redirect. The agent checks whether an app answers from inside (`GET /sandboxes/:name` → `apps[].answers`), which is not affected.
+
+## Timing and failures
+
+- A new or changed label applies within about 15 seconds of the deploy (Purgatory reads the running sandboxes' labels every 10 s; Traefik asks Purgatory every 2 s). Set the label before the first deploy of an app that must never be open, rather than right after it.
+- A sandbox whose apps are all public does not depend on Purgatory while it runs, as before. One with a `domain` or `owner` app does: while Purgatory is down, those apps do not open (it fails closed); public sandboxes keep working.
+
+## On the Hub
+
+An owner-only app is not published on the [Hub](hub.md), even with `p7y.publish` (the **Details** tab says so: set `p7y.access: domain`). A `domain` app shows to Hub viewers who can sign in to Purgatory itself; viewers who can sign in only to the Hub (`HUB_ALLOWED_*`) see the public apps.
+
+## Settings
+
+| Variable | Default | |
+|---|---|---|
+| `APPS_ACCESS_DEFAULT` | `public` | The level of an app without `p7y.access`: `public`, `domain` or `owner`. |
+| `APP_ACCESS_SECRET` | generated | Signs the app cookies and the one-time sign-in tickets. Without it Purgatory generates one into `data/app-access.key` and keeps it. |

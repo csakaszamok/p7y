@@ -9,6 +9,8 @@ An app in one sandbox must not reach another sandbox's apps. Today:
 
 The Purgatory API itself requires authentication (see [Web UI and sign-in](web-ui.md)). Two endpoints of each sandbox are not published on the host but are reachable from other sandboxes over `traefik-net`: its Docker API (protected by per-sandbox TLS client certs) and its frps API (`:7500`, which lists the sandbox's proxies; it has a per-sandbox password, kept in the sandbox's `frps.toml`, so a neighbour gets 401). Closing published ports to neighbours is on the [roadmap](roadmap.md).
 
+Who may open an app's **web address** can be limited per app with `p7y.access` ([App access](app-access.md)); that applies to HTTP through Purgatory only, not to the TCP addresses below, nor to the direct `traefik-net` path from other sandboxes.
+
 ## TLS TCP addresses
 A port an inner container publishes on all interfaces (`"5432:5432"`) also gets a TCP address, its HTTP name plus `-tcp`, on port 443, TLS only: `shop-inner-db-port5432-tcp.<domain>:443`. Ports published on `127.0.0.1` stay private: no TCP address and no link.
 

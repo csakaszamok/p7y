@@ -66,6 +66,7 @@ The same link shows the new version a few seconds later.
 - **Sleep:** when nobody uses the app for a while (30 minutes by default), the sandbox sleeps to free the server. The next visit wakes it in a few seconds: the visitor sees *waking up* and then your app. Nothing is lost.
 - **Sleep later:** *let it sleep only after 2 hours without visitors* works too, or set it in Purgatory: the sandbox → **Details** → **Sleep** → **Change…** (*never* is there as well).
 - **It does not answer?** Ask Claude Code *why does my app not answer?*: it reads the app's logs in the sandbox. The usual cause is an app that listens only on `localhost`; Claude Code fixes that.
+- **Only for you or your colleagues?** Say *make it visible only to me* (or *only to my colleagues*): Claude Code sets `p7y.access` ([App access](../app-access.md)), and opening the link then asks the visitor to sign in to Purgatory.
 - **Docker is needed on your computer** only for its command line: the build runs in the sandbox.
 
 ## More projects

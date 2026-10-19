@@ -85,7 +85,7 @@ services:
       frpc.subdomain: shop
 ```
 
-- **Publish ports on all interfaces** (`8080:8080`): that is what gives the app its public address. A port published on `127.0.0.1` stays private to the sandbox: no address at all. The app itself must listen on `0.0.0.0` inside its container (not `127.0.0.1`), or its address answers with an error; `GET /sandboxes/:name` → `apps[].answers` says whether it answers.
+- **Publish ports on all interfaces** (`8080:8080`): that is what gives the app its public address. A port published on `127.0.0.1` stays private to the sandbox: no address at all. The app itself must listen on `0.0.0.0` inside its container (not `127.0.0.1`), or its address answers with an error; `GET /sandboxes/:name` → `apps[].answers` says whether it answers. An app labelled `p7y.access: domain` or `owner` ([App access](app-access.md)) answers your own `curl` with a redirect to Purgatory's sign-in: check `apps[].answers` instead. Set the label the user asks for (*only for me* → `owner`, *for my colleagues* → `domain`) before the first deploy.
 - **Set a restart policy** (`restart: unless-stopped`): when the sandbox wakes from sleep, only containers with one start again.
 - Pass secrets when the container runs (`environment:`, `env_file:` read on your machine by `docker compose`), **never in the image**.
 

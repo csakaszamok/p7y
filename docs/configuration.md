@@ -12,6 +12,8 @@ Main settings in `.env`:
 | `PUBLIC_URL` | `http://p7y.<HOST_DOMAIN>` | The address of the UI as users see it; `https://…` turns on the HTTPS checks (see [HTTPS](https.md)) |
 | `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_PROVIDER_NAME` | — | Sign-in for everyone but the admin (see [Web UI and sign-in](web-ui.md)) |
 | `OIDC_ALLOWED_DOMAINS`, `OIDC_ALLOWED_EMAILS` | — (anyone) | Who may sign in with OIDC, as comma lists: domains (`example.com,partner.org`, the exact domain, not its subdomains) and single addresses (`guest@gmail.com`). Without either, anyone with an account at the provider can sign in, with Google any Google account; Purgatory says so in its log at startup. Checked at sign-in and on every request: someone taken off the list (after a restart) is signed out and their tokens stop working at once. The admin is never limited |
+| `APPS_ACCESS_DEFAULT` | `public` | Who opens a sandbox app without a `p7y.access` label: `public`, `domain` (anyone who can sign in to Purgatory) or `owner` (see [App access](app-access.md)) |
+| `APP_ACCESS_SECRET` | generated into `data/app-access.key` | Signs the app access cookies and sign-in tickets |
 | `HUB_ENABLED` | `false` | The [Hub](hub.md), the team's published apps at their own address: off unless `true`. |
 | `HUB_HOST` | `hub.<HOST_DOMAIN>` | The Hub's address. |
 | `HUB_ALLOWED_DOMAINS`, `HUB_ALLOWED_EMAILS` | (empty) | Who may look at the Hub besides the builders (`OIDC_ALLOWED_*`): viewers, who cannot sign in to Purgatory itself. Empty: only builders. |
