@@ -21,6 +21,8 @@ export interface ImageDeps {
 interface Record_ { want: string; checked_at: number; ok: boolean; type?: string; version?: string }
 
 const MAX_BYTES = 2 * 1024 * 1024
+/** Larger images are refused: a small file can unpack to a huge one and stall the viewers' browsers (an image bomb) */
+const MAX_SIDE = 4096
 const TIMEOUT_MS = 5000
 const RECHECK_MS = 24 * 3600_000
 const RETRY_MS = 3600_000
@@ -74,6 +76,38 @@ export function imageKind(b: Buffer): string | null {
   return null
 }
 
+/** An image's dimensions from its header (no decoding); null if they cannot be read. */
+export function imageSize(b: Buffer): { width: number; height: number } | null {
+  const kind = imageKind(b)
+  try {
+    if (kind === 'image/png') return b.toString('latin1', 12, 16) === 'IHDR' ? { width: b.readUInt32BE(16), height: b.readUInt32BE(20) } : null
+    if (kind === 'image/gif') return { width: b.readUInt16LE(6), height: b.readUInt16LE(8) }
+    if (kind === 'image/webp') {
+      const chunk = b.toString('latin1', 12, 16)
+      if (chunk === 'VP8X') return { width: b.readUIntLE(24, 3) + 1, height: b.readUIntLE(27, 3) + 1 }
+      if (chunk === 'VP8 ') return { width: b.readUInt16LE(26) & 0x3fff, height: b.readUInt16LE(28) & 0x3fff }
+      if (chunk === 'VP8L') { const v = b.readUInt32LE(21); return { width: (v & 0x3fff) + 1, height: ((v >> 14) & 0x3fff) + 1 } }
+      return null
+    }
+    if (kind === 'image/jpeg') {
+      // Walk the segments to the frame header (SOF0–SOF15, not DHT/JPG/DAC)
+      let i = 2
+      while (i + 9 < b.length) {
+        if (b[i] !== 0xff) return null
+        const marker = b[i + 1]
+        if (marker === 0xff) { i++; continue }
+        const len = b.readUInt16BE(i + 2)
+        if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+          return { width: b.readUInt16BE(i + 7), height: b.readUInt16BE(i + 5) }
+        }
+        i += 2 + len
+      }
+      return null
+    }
+  } catch { return null }
+  return null
+}
+
 const fileOf = (dir: string, id: string) => path.join(dir, crypto.createHash('sha1').update(id).digest('hex'))
 const indexFile = (dir: string) => path.join(dir, 'index.json')
 
@@ -105,7 +139,9 @@ async function fetchImage(e: HubEntry, d: ImageDeps): Promise<{ type: string; bo
   const res = await d.get(e.sandbox, e.port, p, e.id)
   if (res.status !== 200 || res.body.length > MAX_BYTES) return null
   const type = imageKind(res.body)
-  return type ? { type, body: res.body } : null
+  const size = imageSize(res.body)
+  if (!type || !size || !size.width || !size.height || size.width > MAX_SIDE || size.height > MAX_SIDE) return null
+  return { type, body: res.body }
 }
 
 let running = false

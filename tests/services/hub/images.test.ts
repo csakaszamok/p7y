@@ -6,8 +6,9 @@ import { ogImageOf, imageKind, refreshImages, imageOf, type Fetched } from '../.
 import { appImagePath } from '../../../services/hub/apps'
 import type { HubEntry } from '../../../services/hub/list'
 
-const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3])
-const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2])
+// Minimal files with real headers (signature and dimensions), as imageKind and imageSize read them
+const PNG = (() => { const b = Buffer.alloc(33); Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(b); b.writeUInt32BE(13, 8); b.write('IHDR', 12, 'latin1'); b.writeUInt32BE(320, 16); b.writeUInt32BE(180, 20); return b })()
+const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0, 0, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0xb4, 0x01, 0x40, 3])
 
 describe('appImagePath', () => {
   it('is a path inside the app only', () => {
@@ -139,5 +140,34 @@ describe('refreshImages: a changed image that cannot be fetched', () => {
     expect(imageOf('shop-web.example.com', deps)).not.toBeNull()
     await refreshImages([entry({ image: '/gone.png' })], deps)
     expect(imageOf('shop-web.example.com', deps)).toBeNull()
+  })
+})
+
+// Headers with the given dimensions (only the bytes imageSize reads)
+const pngOf = (w: number, h: number) => { const b = Buffer.alloc(33); Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(b); b.writeUInt32BE(13, 8); b.write('IHDR', 12, 'latin1'); b.writeUInt32BE(w, 16); b.writeUInt32BE(h, 20); return b }
+const gifOf = (w: number, h: number) => { const b = Buffer.alloc(13); b.write('GIF89a', 0, 'latin1'); b.writeUInt16LE(w, 6); b.writeUInt16LE(h, 8); return b }
+const jpegOf = (w: number, h: number) => Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0, 0, 0xff, 0xc0, 0x00, 0x11, 0x08, h >> 8, h & 255, w >> 8, w & 255, 3])
+const webpX = (w: number, h: number) => { const b = Buffer.alloc(30); b.write('RIFF', 0, 'latin1'); b.write('WEBPVP8X', 8, 'latin1'); b.writeUIntLE(w - 1, 24, 3); b.writeUIntLE(h - 1, 27, 3); return b }
+
+describe('imageSize', () => {
+  it('reads the dimensions of PNG, GIF, JPEG and WebP from their headers', async () => {
+    const { imageSize } = await import('../../../services/hub/images')
+    expect(imageSize(pngOf(320, 180))).toEqual({ width: 320, height: 180 })
+    expect(imageSize(gifOf(64, 32))).toEqual({ width: 64, height: 32 })
+    expect(imageSize(jpegOf(1280, 720))).toEqual({ width: 1280, height: 720 })
+    expect(imageSize(webpX(800, 600))).toEqual({ width: 800, height: 600 })
+    expect(imageSize(Buffer.from('<html>'))).toBeNull()
+  })
+})
+
+describe('refreshImages: image bombs', () => {
+  it('refuses an image larger than 4096 × 4096 however small its file, and keeps one at the limit', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hubimg-'))
+    const routes: Record<string, Fetched> = { '/bomb.png': { status: 200, body: pngOf(50000, 50000) }, '/ok.png': { status: 200, body: pngOf(4096, 4096) } }
+    const deps = { dir, now: () => 0, get: async (_s: string, _p: number, p: string) => routes[p] ?? { status: 404, body: Buffer.alloc(0) } }
+    await refreshImages([entry({ image: '/bomb.png' })], deps)
+    expect(imageOf('shop-web.example.com', deps)).toBeNull()
+    await refreshImages([entry({ id: 'other.example.com', image: '/ok.png' })], deps)
+    expect(imageOf('other.example.com', deps)?.type).toBe('image/png')
   })
 })

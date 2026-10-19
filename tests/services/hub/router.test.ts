@@ -72,7 +72,7 @@ describe('handleHub', () => {
 })
 
 describe('handleHub: images', () => {
-  const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3])
+  const PNG = (() => { const b = Buffer.alloc(33); Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(b); b.writeUInt32BE(13, 8); b.write('IHDR', 12, 'latin1'); b.writeUInt32BE(320, 16); b.writeUInt32BE(180, 20); return b })()
   it('lists each app’s image address, serves it to signed-in users only, and starts a refresh in the background', async () => {
     process.env.HUB_IMAGES_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'hubimg-'))
     const { refreshImages } = await import('../../../services/hub/images')
