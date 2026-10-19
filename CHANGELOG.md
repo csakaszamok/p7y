@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-19
+
+Upgrading from 0.7: download the new `docker-compose.yml` (and see `env.example` for the new, optional Hub settings), then `docker compose pull && docker compose up -d`. The Hub stays off unless `HUB_ENABLED=true`; with single sign-on it also needs `https://hub.<HOST_DOMAIN>/auth/callback` at the provider.
+
 ### Added
 
 - **App access** ([docs](https://p7y-dev.github.io/p7y/latest/app-access/)): who opens each web app of a sandbox, with a `p7y.access` label: `public` (anyone, as before), `domain` (anyone who can sign in to this Purgatory) or `owner` (the sandbox's owner); the admin opens all. `APPS_ACCESS_DEFAULT` (default `public`) for apps without the label; an invalid value means `owner`. The first visit makes a short sign-in hop to Purgatory and back; the app gets `X-P7y-User` (who is viewing), never Purgatory's sign-in. An asleep app wakes only for someone who may open it. Owner-only apps are not published on the Hub; Hub-only viewers see public apps. HTTP only: TCP addresses are not covered. Upgrading recreates each sandbox's socat container once (its apps are unreachable for a few seconds), and Traefik reads Purgatory's new HTTP provider (`docker-compose.yml`).
@@ -23,6 +27,15 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 ### Fixed
 
 - The README in an export for coding agents said that connecting with Docker wakes the sandbox; it does not: wake it first.
+
+## [0.7.3] - 2026-10-19
+
+Upgrading from 0.7.2: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d`.
+
+### Fixed
+
+- Two sandboxes created with the same name at the same moment (two users typing the same name) both went ahead and worked on one sandbox, the second user getting the first one's. Now one is created and the other is refused: *Sandbox already exists*.
+- After clicking another sandbox in the list, its panel kept showing the previous sandbox's details until the new ones arrived, for seconds on a slow or busy server. It now shows the clicked sandbox's name and status at once, its details loading.
 
 ## [0.7.2] - 2026-10-19
 
