@@ -52,6 +52,7 @@ describe('appLinks', () => {
       now: () => t,
       tick: (ms: number) => { t += ms },
       remember: vi.fn(),
+      rememberAccess: vi.fn(),
     }
   }
 
@@ -69,6 +70,22 @@ describe('appLinks', () => {
     await appLinks('p7y-shop', deps([]))
     const d = deps([ct('web', [['0.0.0.0', 8080]])])
     expect(await appLinks('p7y-shop', d, ['shop-inner-web-port8080.lvh.me'])).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'public' }])
+  })
+
+  // App access: every app's level from its container's labels, also before frps registers it (no partial knowledge)
+  it('remembers the level of every app from the labels, whatever frps serves yet', async () => {
+    const remembered: Array<Record<string, string>> = []
+    const d = { ...deps([ct('web', [['0.0.0.0', 8080]]), ct('own', [['0.0.0.0', 8081]], { 'p7y.access': 'owner' })]), rememberAccess: (_n: string, m: Record<string, string>) => { remembered.push(m) } }
+    d.domains = vi.fn(async () => ['shop-inner-web-port8080.lvh.me']) // only web registered so far
+    await appLinks('p7y-shop', d)
+    expect(remembered).toEqual([{ 'shop-inner-web-port8080': 'public', 'shop-inner-own-port8081': 'owner' }])
+  })
+
+  // Right after a create or a wake frps has no proxy yet: the next ask must see the app as soon as it registers
+  it('does not keep an empty answer', async () => {
+    const d = deps([])
+    await appLinks('p7y-shop', d); d.tick(1_000); await appLinks('p7y-shop', d)
+    expect(d.containers).toHaveBeenCalledTimes(2)
   })
 
   it('asks again only after 10 s', async () => {
