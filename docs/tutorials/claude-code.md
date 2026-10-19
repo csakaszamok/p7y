@@ -38,6 +38,16 @@ A sandbox is your own small server: your app runs there, not on your computer.
     - **Purgatory address**: click **Copy** next to *Address* and paste it.
     - **Purgatory access token**: click **Create token**, then **Copy**, and paste it. The token is shown only once; Claude Code keeps it safely, not in a file. It works only for this sandbox.
 
+!!! note "Claude Code in VS Code (or another editor)"
+    The editor's Claude Code panel has no `/plugin` command. Install the plugin from a terminal instead (in VS Code: **Terminal → New Terminal**): type `claude` and press Enter, then run the two commands above in it. Or, without starting Claude, in one go (put your address and token in):
+
+    ```
+    claude plugin marketplace add p7y-dev/p7y
+    claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.com --config p7y_token=p7y_…
+    ```
+
+    The second way leaves the token in your terminal's history; the first does not. The editor's Claude Code reads the same settings, so the plugin installed this way is meant to be there too; if it is not, use Claude Code in the terminal.
+
 You do this once. For another sandbox later, see [More projects](#more-projects) below.
 
 ## 3. Deploy
