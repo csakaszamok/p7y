@@ -209,7 +209,7 @@ export const SANDBOX_VIEW_BODY = `
       <textarea name="compose" data-compose-editor rows="24" spellcheck="false" autocomplete="off" aria-label="Compose" placeholder="Paste your docker compose file here"></textarea>
     </details>
     <details class="adv"><summary>Advanced</summary>
-      <label>Sleep after no traffic for<input name="idle_timeout" value="30m" pattern="([1-9][0-9]*(s|m|h)|0|off)"></label>
+      <label>Sleep after no traffic for<input name="idle_timeout" value="30m" pattern="([1-9][0-9]*(s|m|h|d)|0|off)"></label>
       <label>Deep sleep after asleep for<input name="deep_sleep_after" value="7d" pattern="([1-9][0-9]*(m|h|d)|0|off)"></label>
       <label>CPUs<input name="cpus" inputmode="decimal" placeholder="2"></label>
       <label>Memory<input name="memory" placeholder="4g"></label>
@@ -225,8 +225,8 @@ export const SANDBOX_VIEW_BODY = `
 <dialog data-sleep-dialog>
   <form method="dialog" data-sleep-form>
     <h2>Sleep settings</h2>
-    <label>Sleep after no traffic for<input name="idle_timeout" required pattern="([1-9][0-9]*(s|m|h)|0|off)"></label>
-    <small class="muted">e.g. 30m or 2h; 0 or off = never. A running sandbox's apps are unreachable for a few seconds while this is applied.</small>
+    <label>Sleep after no traffic for<input name="idle_timeout" required pattern="([1-9][0-9]*(s|m|h|d)|0|off)"></label>
+    <small class="muted">e.g. 30m, 2h or 1d; 0 or off = never. A running sandbox's apps are unreachable for a few seconds while this is applied.</small>
     <label>Deep sleep after asleep for<input name="deep_sleep_after" required pattern="([1-9][0-9]*(m|h|d)|0|off)"></label>
     <small class="muted">e.g. 7d or 12h; 0 or off = never</small>
     <p class="error" data-sleep-error hidden></p>
