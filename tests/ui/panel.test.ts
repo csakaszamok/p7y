@@ -458,7 +458,9 @@ describe('Apps: the Hub', () => {
     const apps = panelOf(P.renderPanel(s, ctx), 'apps')
     expect(apps).toContain('<a class="tag" href="https://hub.lvh.me" target="_blank" rel="noopener">On the Hub</a>')
     expect(apps.match(/On the Hub/g)).toHaveLength(1)
-    expect(apps).toContain('worker: published, but has no web address (publish a port on all interfaces)')
+    // Warnings are on the Details tab, not among the apps
+    expect(apps).not.toContain('has no web address')
+    expect(panelOf(P.renderPanel(s, ctx), 'settings')).toContain('worker: published, but has no web address (publish a port on all interfaces)')
   })
   it('shows nothing about the Hub without it', () => {
     expect(panelOf(P.renderPanel(running, ctx), 'apps')).not.toContain('On the Hub')
@@ -468,7 +470,10 @@ describe('Apps: the Hub', () => {
 describe('Apps: an unusable p7y.image', () => {
   it('says why the image is ignored', () => {
     const s = { ...running, hub: { enabled: true, url: 'https://hub.lvh.me', published: [], unlinked: [], bad_image: ['web'] } }
-    expect(panelOf(P.renderPanel(s, ctx), 'apps')).toContain('web: p7y.image is ignored: use a path inside the app, e.g. /shot.png')
+    const details = panelOf(P.renderPanel(s, ctx), 'settings')
+    expect(details).toContain('<h3>Warnings</h3>')
+    expect(details).toContain('web: p7y.image is ignored: use a path inside the app, e.g. /shot.png')
+    expect(panelOf(P.renderPanel(running, ctx), 'settings')).not.toContain('Warnings')
   })
 })
 
@@ -483,9 +488,9 @@ describe('Details: when it last ran', () => {
     const html = P.renderPanel({ ...asleep, status: 'deep_sleep', deep_sleep_at: null, last_running_at: '2026-08-04T15:00:00Z', last_running_estimated: true }, ctx)
     expect(panelOf(html, 'settings')).toContain('>~2 months ago</span>')
   })
-  it('nothing while it runs, or when unknown', () => {
-    expect(P.renderPanel(running, ctx)).not.toContain('Last ran')
-    expect(P.renderPanel({ ...asleep, last_running_at: null }, ctx)).not.toContain('Last ran')
+  it('always on the Details tab: "now (running)" while it runs, "unknown" when it is not known', () => {
+    expect(panelOf(P.renderPanel(running, ctx), 'settings')).toMatch(/Last ran<\/td><td>now \(running\)<\/td>/)
+    expect(panelOf(P.renderPanel({ ...asleep, last_running_at: null }, ctx), 'settings')).toMatch(/Last ran<\/td><td><span class="muted">unknown<\/span><\/td>/)
   })
   it('the tab is called Details', () => {
     expect(P.TABS.find(([id]: string[]) => id === 'settings')[1]).toBe('Details')
