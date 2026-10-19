@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { renderPage } from '../../services/ui/layout'
+import { renderPage, SANDBOX_VIEW_BODY } from '../../services/ui/layout'
 import { setView } from '../../services/userPrefs'
 
 const user = { sub: 'leander', role: 'user' as const, exp: 0 }
@@ -35,5 +35,11 @@ describe('renderPage: Simple / Advanced', () => {
     expect(html).toMatch(/<a class="adv" href="\/settings\/tokens"/)
     expect(html).toMatch(/<a class="adv" href="\/settings\/ssh-keys"/)
     expect(html).toMatch(/<a class="active" href="\/"/)
+  })
+  it('Export for coding agents: Simple hides the token name and expiry and says what to do with the zip', () => {
+    const dlg = /<dialog data-export-dialog>[\s\S]*?<\/dialog>/.exec(SANDBOX_VIEW_BODY)?.[0] ?? ''
+    expect(dlg).toMatch(/<label class="adv">Token name/)
+    expect(dlg).toMatch(/<label class="adv">Expires/)
+    expect(dlg).toMatch(/<p class="muted simple-only"[^>]*>[^<]*Unzip it in your project/)
   })
 })
