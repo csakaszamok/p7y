@@ -1,5 +1,8 @@
 # Claude Code plugin
 
+!!! tip "New to this?"
+    [Put your app online with Claude Code](tutorials/claude-code.md) walks through it step by step.
+
 The `p7y` plugin connects Claude Code to your Purgatory and teaches it to deploy: you say *put my app online*, it picks or creates a sandbox, wakes it, deploys the project to the sandbox's own Docker, checks that the app answers and gives you its address.
 
 ## Install

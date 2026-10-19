@@ -75,7 +75,7 @@ More in [how it compares](https://p7y-dev.github.io/p7y/latest/comparison/).
 
 ## Documentation
 
-**[p7y-dev.github.io/p7y](https://p7y-dev.github.io/p7y/latest/)**: [install](https://p7y-dev.github.io/p7y/latest/install/), [configuration](https://p7y-dev.github.io/p7y/latest/configuration/), [let your agent deploy](https://p7y-dev.github.io/p7y/latest/agents/), [MCP](https://p7y-dev.github.io/p7y/latest/mcp/), [API](https://p7y-dev.github.io/p7y/latest/api/), and [`llms-full.txt`](https://p7y-dev.github.io/p7y/latest/llms-full.txt) for agents.
+**[p7y-dev.github.io/p7y](https://p7y-dev.github.io/p7y/latest/)**: [tutorials](https://p7y-dev.github.io/p7y/latest/tutorials/), [install](https://p7y-dev.github.io/p7y/latest/install/), [configuration](https://p7y-dev.github.io/p7y/latest/configuration/), [let your agent deploy](https://p7y-dev.github.io/p7y/latest/agents/), [MCP](https://p7y-dev.github.io/p7y/latest/mcp/), [API](https://p7y-dev.github.io/p7y/latest/api/), and [`llms-full.txt`](https://p7y-dev.github.io/p7y/latest/llms-full.txt) for agents.
 
 > **Security:** where [sysbox](https://github.com/nestybox/sysbox) is installed, sandboxes run without a privileged container; without it they fall back to the privileged `dind`, which suits a team that trusts each other, not hostile code. On a shared server install sysbox and set `ALLOWED_RUNTIMES=sysbox` ([details](https://p7y-dev.github.io/p7y/latest/security/)).
 
