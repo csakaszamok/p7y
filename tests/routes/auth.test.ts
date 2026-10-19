@@ -55,6 +55,18 @@ describe('admin login', () => {
     expect(csrf.status).toBe(403)
   })
 
+  it('after signing in for a sandbox app (p7y_next): back to /auth/app/start, and the cookie cleared', async () => {
+    const req = form({ username: 'admin', password: 'pw' })
+    req.headers.set('cookie', `p7y_next=${encodeURIComponent('/auth/app/start?rd=https%3A%2F%2Fshop-web.lvh.me%2F')}`)
+    const res = await loginPost(req)
+    expect(res.headers.get('location')).toBe('/auth/app/start?rd=https%3A%2F%2Fshop-web.lvh.me%2F')
+    expect(res.headers.getSetCookie().some(c => /^p7y_next=;.*Max-Age=0/.test(c))).toBe(true)
+    // Anything else in it: home, as without it
+    const other = form({ username: 'admin', password: 'pw' })
+    other.headers.set('cookie', `p7y_next=${encodeURIComponent('https://evil.example/')}`)
+    expect((await loginPost(other)).headers.get('location')).toBe('/')
+  })
+
   it('logs out by clearing the cookie', async () => {
     const res = await logout(new Request('http://p7y.lvh.me/logout', { method: 'POST', headers: { origin: 'http://p7y.lvh.me', host: 'p7y.lvh.me' } }))
     expect(res.status).toBe(303)
@@ -82,6 +94,13 @@ describe('OIDC login', () => {
     expect(res.headers.get('location')).toBe('/')
     expect(readSession(cookieValue(res, 'p7y_session'))).toMatchObject({ sub: 'alice@example.com', role: 'user' })
     expect(res.headers.getSetCookie().some(c => /^p7y_oidc=; .*Max-Age=0/.test(c))).toBe(true)
+  })
+
+  it('signed in for a sandbox app (p7y_next): back to /auth/app/start', async () => {
+    const flow = await start()
+    const res = await callback(new Request('http://p7y.lvh.me/auth/callback?code=abc&state=state-1', { headers: { cookie: `p7y_oidc=${flow}; p7y_next=${encodeURIComponent('/auth/app/start?rd=x')}` } }))
+    expect(res.headers.get('location')).toBe('/auth/app/start?rd=x')
+    expect(res.headers.getSetCookie().some(c => /^p7y_next=;.*Max-Age=0/.test(c))).toBe(true)
   })
 
   it('rejects missing flow, bad state, no email and unverified email', async () => {

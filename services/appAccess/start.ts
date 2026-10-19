@@ -1,0 +1,51 @@
+import { pageSession } from '../ui/layout'
+import { getCookie } from '../session'
+import { accessOfHost, type HostAccess } from './hosts'
+import { mayOpen, type Viewer } from './level'
+import { issueTicket } from './sign'
+import { LANDING } from './decide'
+
+/**
+ * /auth/app/start, on Purgatory's own host (its session cookie is here): sign the visitor in, then hand the app's
+ * host a one-time ticket, or say that this app is not open to them. Only for addresses of this Purgatory's sandbox apps.
+ */
+export const NEXT_COOKIE = 'p7y_next'
+const START = '/auth/app/start?'
+export interface StartDeps { session: (req: Request) => Viewer | null; access: (host: string) => Promise<HostAccess | null>; env: NodeJS.ProcessEnv }
+const defaults: StartDeps = { session: req => pageSession(req), access: h => accessOfHost(h), env: process.env }
+
+const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
+const page = (status: number, title: string, body: string) => new Response(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)} — Purgatory</title><link rel="stylesheet" href="/assets/style.css"></head><body class="login"><main class="card"><h1>${esc(title)}</h1>${body}</main></body></html>`,
+  { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } })
+const notAnApp = () => page(400, 'Not an app address', '<p>This link does not lead to an app here.</p>')
+
+export async function startResponse(req: Request, deps: Partial<StartDeps> = {}): Promise<Response> {
+  const d = { ...defaults, ...deps }
+  const self = new URL(req.url)
+  let target: URL
+  try { target = new URL(self.searchParams.get('rd') ?? '') } catch { return notAnApp() }
+  if (target.protocol !== 'https:' && target.protocol !== 'http:') return notAnApp()
+  const a = await d.access(target.host)
+  if (!a) return notAnApp()
+  const viewer = d.session(req)
+  if (!viewer) {
+    const back = `${START}${self.searchParams.toString()}`
+    return new Response(null, { status: 303, headers: { location: '/login', 'set-cookie': `${NEXT_COOKIE}=${encodeURIComponent(back)}; Path=/; Max-Age=600; HttpOnly; SameSite=Lax${self.protocol === 'https:' ? '; Secure' : ''}`, 'cache-control': 'no-store' } })
+  }
+  if (!mayOpen(a.access, viewer, a.owner, d.env)) {
+    const who = a.access === 'owner' ? 'only to its owner' : 'only to people who can sign in to this Purgatory'
+    return page(403, 'Not open to you', `<p>This app is open ${who}. You are signed in as <b>${esc(viewer.sub)}</b>.</p><form method="post" action="/logout"><button class="link">Sign out</button> to use another account.</form>`)
+  }
+  const landing = new URL(`${target.protocol}//${target.host}${LANDING}`)
+  landing.searchParams.set('ticket', issueTicket(target.host, viewer))
+  landing.searchParams.set('rd', `${target.pathname}${target.search}`)
+  return new Response(null, { status: 302, headers: { location: landing.toString(), 'cache-control': 'no-store' } })
+}
+
+/** Where to go after signing in: only back to /auth/app/start (from the cookie this set), nowhere else. */
+export function nextAfterSignIn(req: Request): string | null {
+  const raw = getCookie(req, NEXT_COOKIE)
+  let v: string
+  try { v = decodeURIComponent(raw ?? '') } catch { return null }
+  return v.startsWith(START) ? v : null
+}
