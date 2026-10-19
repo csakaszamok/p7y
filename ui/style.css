@@ -6,6 +6,8 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace }
 .error { color: #ef4444 }
 button { font: inherit; color: #e8e8e8; background: #252525; border: 1px solid #333; border-radius: 6px; padding: 6px 12px; cursor: pointer }
 button:hover { background: #2e2e2e }
+/* hidden always hides: a class that sets display (button.primary) must not bring it back */
+[hidden] { display: none !important }
 button.primary, a.primary { background: #ea580c; border-color: #ea580c; color: #fff; text-decoration: none; display: inline-block; text-align: center; padding: 7px 14px; border-radius: 6px }
 button.primary:hover, a.primary:hover { background: #c2410c; border-color: #c2410c }
 button.primary:disabled { background: #5a3a28; border-color: #5a3a28; color: #b9aea7; cursor: not-allowed }
