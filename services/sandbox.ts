@@ -180,7 +180,10 @@ export const sandboxService = {
   /** Creates a sandbox; while it does, a request to its address waits instead of starting it (wake.ts). */
   async createSandbox(rawName: string, createInnerStack = true, idleTimeout?: string, deepSleepAfter?: string, owner = 'admin', templateName?: string, runtimeName?: string, customCompose?: string, sshKeys?: string[], limits?: Limits): Promise<CreateSandboxResult> {
     const name = sandboxName(rawName)
-    const marked = markCreating(name)
+    // One at a time per name: a second create of the same name (another user at the same moment) passed the
+    // "does it exist" check before the first made its directory, and both worked on one sandbox
+    if (!markCreating(name)) throw new Error(`Sandbox already exists: ${name}`)
+    const marked = true
     try {
       return await this.createSandboxUnmarked(rawName, createInnerStack, idleTimeout, deepSleepAfter, owner, templateName, runtimeName, customCompose, sshKeys, limits)
     } finally {

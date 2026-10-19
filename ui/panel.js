@@ -315,6 +315,13 @@
   const SIMPLE_TABS = ['apps', 'settings']
   const tabsOf = ctx => ctx.simple ? TABS.filter(([id]) => SIMPLE_TABS.includes(id)) : TABS
 
+  /** Right after a click, from the list's row: the new sandbox's name and status at once, never the previous one's
+   * details while its own load (on a slow or busy server that takes seconds) */
+  function loadingPanel(s, ctx) {
+    return `<div class="panel-head"><h2>${esc(ctx.shortName(s.name))}</h2><span class="status ${esc(statusClass(s))}">${esc(statusLabel(s.status))}</span></div>
+      <p class="muted">Loading…</p>`
+  }
+
   function renderPanel(s, ctx) {
     const shown = tabsOf(ctx)
     const tab = shown.some(([id]) => id === ctx.tab) ? ctx.tab : 'apps'
@@ -439,7 +446,7 @@
       `claude plugin install p7y@p7y --scope user --config p7y_url=${u} --config p7y_token=${token}`
   }
 
-  const api = { pluginInstallCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  const api = { loadingPanel, pluginInstallCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

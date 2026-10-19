@@ -416,6 +416,12 @@ async function showPanel(name) {
   renderRows()
   const panel = $('[data-panel]')
   if (pending.has(name)) { panel.innerHTML = `<h2>${esc(shortName(name))}</h2><p class="muted">Creating… usually 10–30 s.</p>`; renderedName = name; renderedJSON = null; return }
+  // Another sandbox than the one shown: its name and status at once, never the previous one's details while its load
+  if (renderedName !== name) {
+    panel.innerHTML = P7yPanel.loadingPanel(sandboxes.find(s => s.name === name) ?? { name, status: '' }, { shortName })
+    renderedName = name
+    renderedJSON = null
+  }
   let s
   try { s = await api(`/sandboxes/${encodeURIComponent(name)}`) } catch (e) { panel.innerHTML = `<p class="error">${esc(e.message)}</p>`; renderedJSON = null; return }
   if (selected !== name) return

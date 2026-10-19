@@ -19,7 +19,13 @@ vi.mock('../../services/compose', () => ({
 }))
 
 // Opening the Sablier session needs Traefik; here only that it is asked for
-vi.mock('../../services/wake', () => ({ primeSablierSession: vi.fn(async () => {}), markWoken: vi.fn(), markCreating: vi.fn(() => true), creatingDone: vi.fn() }))
+// markCreating as the real one: a name being created is refused a second time until creatingDone
+const creating = vi.hoisted(() => new Set<string>())
+vi.mock('../../services/wake', () => ({
+  primeSablierSession: vi.fn(async () => {}), markWoken: vi.fn(),
+  markCreating: vi.fn((n: string) => creating.has(n) ? false : (creating.add(n), true)),
+  creatingDone: vi.fn((n: string) => { creating.delete(n) }),
+}))
 let slot: unknown = { ok: true, release: () => {} }
 vi.mock('../../services/quota', () => ({ reserveWake: vi.fn(async () => slot) }))
 // The 127.0.0.1 filter is tested in appLinks.test; here frps' answer passes through
@@ -130,6 +136,17 @@ describe('sandbox service', () => {
     } finally {
       vi.useRealTimers()
     }
+  }, 60000)
+
+  // Two users at once with one name: both passed "does it exist" before either made its directory, and both went on
+  it('the same name twice at once: one is created, the other refused', async () => {
+    const both = await Promise.allSettled([
+      sandboxService.createSandbox('twin', true, undefined, undefined, 'ann@example.com'),
+      sandboxService.createSandbox('twin', true, undefined, undefined, 'bob@example.com'),
+    ])
+    expect(both.map(r => r.status).sort()).toEqual(['fulfilled', 'rejected'])
+    const refused = both.find(r => r.status === 'rejected') as PromiseRejectedResult
+    expect(String(refused.reason)).toMatch(/already exists/)
   }, 60000)
 
   it('throws if name already exists', async () => {
