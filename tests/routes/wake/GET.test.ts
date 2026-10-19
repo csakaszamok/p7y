@@ -12,6 +12,13 @@ vi.mock('../../../services/wake', () => ({
       : { result: 'not_found' })
 }))
 
+// App access: own-* is an owner-only app this visitor may not open (yet); pub-* answers 200; others are not known
+vi.mock('../../../services/appAccess/decide', () => ({
+  decide: vi.fn(async ({ host }: { host: string }) =>
+    host.startsWith('own-') ? { status: 302, headers: { Location: 'https://p7y.lvh.me/auth/app/start?rd=x', 'Set-Cookie': '__p7y_app=v; Path=/' } }
+      : host.startsWith('pub-') ? { status: 200, headers: { Cookie: '', 'X-P7y-User': '' } }
+      : { status: 404, headers: {} })
+}))
 vi.stubEnv('PUBLIC_URL', 'https://p7y.lvh.me')
 const { default: handler } = await import('../../../routes/wake/GET')
 const req = (host: string) => new Request('http://localhost/wake', { headers: { host } })
@@ -119,3 +126,25 @@ describe('GET /wake', () => {
     expect(html).toContain('data-p7y-waiting')
   })
 })
+
+describe('GET /wake: app access', () => {
+  it('an app this visitor may not open: the decision (sign-in, or the cookie), and no wake', async () => {
+    const { wakeByHost } = await import('../../../services/wake')
+    const { decide } = await import('../../../services/appAccess/decide')
+    vi.mocked(wakeByHost).mockClear()
+    const res = await handler(new Request('http://localhost/wake', { headers: { host: 'own-web.lvh.me', 'x-replaced-path': '/a', 'x-forwarded-proto': 'https', cookie: 'k=1' } }))
+    expect(res.status).toBe(302)
+    expect(res.headers.get('location')).toBe('https://p7y.lvh.me/auth/app/start?rd=x')
+    expect(res.headers.get('set-cookie')).toBe('__p7y_app=v; Path=/')
+    expect(wakeByHost).not.toHaveBeenCalled()
+    expect(decide).toHaveBeenCalledWith({ host: 'own-web.lvh.me', proto: 'https', uri: '/a', cookie: 'k=1' })
+  })
+  it('allowed (200) or not a known app (404): wakes as before', async () => {
+    const { wakeByHost } = await import('../../../services/wake')
+    vi.mocked(wakeByHost).mockClear()
+    await handler(req('pub-web.lvh.me'))
+    await handler(req('as-web.lvh.me'))
+    expect(wakeByHost).toHaveBeenCalledTimes(2)
+  })
+})
+
