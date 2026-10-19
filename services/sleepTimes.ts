@@ -1,5 +1,6 @@
 import { getSandboxState } from './docker'
 import { parseDuration } from './duration'
+import { asleepSince } from './deepSleep'
 
 const METRIC = 'sablier_session_expires_at_timestamp_seconds'
 const LINE = new RegExp(`^${METRIC}\\{([^}]*)\\}\\s+(\\S+)`)
@@ -97,8 +98,8 @@ async function sleepTimesWith(name: string, now: Date, expiries: () => Promise<M
   }
 
   const after = parseDuration(deepSleepAfter, 'mhd')
-  const finished = Date.parse(state.finishedAt)
-  const due = state.status === 'exited' && after !== null && !isNaN(finished) && finished > Date.UTC(2000, 0, 1)
+  const finished = asleepSince(state) ?? NaN
+  const due = after !== null && !isNaN(finished)
   return {
     stops_at: null, stops_in: null,
     deep_sleep_at: due ? new Date(finished + after!).toISOString() : null,

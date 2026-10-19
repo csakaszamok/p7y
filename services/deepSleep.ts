@@ -20,13 +20,24 @@ function errMsg(err: unknown): string {
  * lets the next request rebuild it (Purgatory /wake) on the current networks.
  */
 export function isDeepSleepDue(state: SandboxState, now: Date): boolean {
-  if (state.status !== 'exited') return false
+  if (state.status !== 'exited' && state.status !== 'created') return false
   if (state.staleNetwork) return true
   const after = parseDuration(state.deepSleepAfter, 'mhd')
   if (after === null) return false
-  const finished = Date.parse(state.finishedAt)
-  if (isNaN(finished) || finished < EPOCH_2000) return false
-  return now.getTime() - finished >= after
+  const since = asleepSince(state)
+  return since !== null && now.getTime() - since >= after
+}
+
+/**
+ * Since when an asleep sandbox has not run (ms), or null: when its container stopped; or, for a container
+ * recreated while asleep (a migration) and never started ("created", no FinishedAt), when it was created,
+ * which is after it last ran, so deep sleep never comes earlier than it should.
+ */
+export function asleepSince(state: Pick<SandboxState, 'status' | 'finishedAt' | 'createdAt'>): number | null {
+  const valid = (iso: string | undefined) => { const t = iso ? Date.parse(iso) : NaN; return !isNaN(t) && t >= EPOCH_2000 ? t : null }
+  if (state.status === 'exited') return valid(state.finishedAt)
+  if (state.status === 'created') return valid(state.finishedAt) ?? valid(state.createdAt)
+  return null
 }
 
 /** Containers and network down, volumes and files kept; the next request (or Wake) rebuilds it. */

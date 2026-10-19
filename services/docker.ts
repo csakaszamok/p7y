@@ -127,6 +127,8 @@ export interface SandboxState {
   error: string
   /** When the container last started (Docker's State.StartedAt) */
   startedAt?: string
+  /** When the container was created (Docker's Created): for one recreated while asleep and never started */
+  createdAt?: string
 }
 
 /** Current container state of a sandbox, or null if its container does not exist. */
@@ -143,7 +145,8 @@ export async function getSandboxState(name: string): Promise<SandboxState | null
       deepSleepAfter: composeDeepSleepAfter(name) ?? readLabel(info.Config.Labels, 'deep_sleep_after'),
       staleNetwork: attached.some(id => !existing.has(id)),
       error: info.State.Error ?? '',
-      startedAt: info.State.StartedAt
+      startedAt: info.State.StartedAt,
+      createdAt: info.Created
     }
   } catch {
     return null
