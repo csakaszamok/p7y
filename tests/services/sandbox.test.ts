@@ -603,7 +603,7 @@ describe('sysbox runtime', () => {
     expect(sandbox.labels?.['sablier.group']).toBe('p7y-sb2')
     expect(compose.volumes).toHaveProperty('docker_data')
     const socat = compose.services.socat.labels!
-    expect(socat['traefik.http.routers.frps-p7y-sb2.middlewares']).toBe('sablier-p7y-sb2')
+    expect(socat['traefik.http.routers.frps-p7y-sb2.middlewares']).toBe('access-p7y-sb2@http,sablier-p7y-sb2')
     expect(socat['traefik.docker.allownonrunning']).toBeUndefined() // its router exists only while it runs
     expect(compose.services.frps.labels?.['sablier.group']).toBe('p7y-sb2')
   }, 60000)

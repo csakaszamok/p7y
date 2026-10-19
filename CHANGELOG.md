@@ -4,6 +4,14 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-19
+
+Upgrading from 0.8: download the new `docker-compose.yml` (Traefik now also reads Purgatory's HTTP provider for the app access middlewares, on Purgatory's internal port 3001), then `docker compose pull && docker compose up -d`. On its first start Purgatory recreates every sandbox's socat container once (a running sandbox's apps are unreachable for a few seconds). Nothing changes for apps until you use `p7y.access` or set `APPS_ACCESS_DEFAULT`.
+
+### Added
+
+- **App access** ([docs](https://p7y-dev.github.io/p7y/latest/app-access/)): who opens each web app of a sandbox, with a `p7y.access` label: `public` (anyone, as before), `domain` (anyone who can sign in to this Purgatory) or `owner` (the sandbox's owner); the admin opens all. `APPS_ACCESS_DEFAULT` (default `public`) for apps without the label; an invalid value means `owner`. The first visit makes a short sign-in hop to Purgatory and back; the app gets `X-P7y-User` (who is viewing), never Purgatory's sign-in. An asleep app wakes only for someone who may open it. Owner-only apps are not published on the Hub; Hub-only viewers see public apps. HTTP only: TCP addresses are not covered. Upgrading recreates each sandbox's socat container once (its apps are unreachable for a few seconds), and Traefik reads Purgatory's new HTTP provider (`docker-compose.yml`).
+
 ## [0.8.0] - 2026-10-19
 
 Upgrading from 0.7: download the new `docker-compose.yml` (and see `env.example` for the new, optional Hub settings), then `docker compose pull && docker compose up -d`. The Hub stays off unless `HUB_ENABLED=true`; with single sign-on it also needs `https://hub.<HOST_DOMAIN>/auth/callback` at the provider.

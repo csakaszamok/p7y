@@ -3,7 +3,7 @@ services:
     # The released image: it carries the templates, runtimes and the files p7y-init installs.
     # To work on the code, add docker-compose.dev.yml (COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml,
     # and COMPOSE_PATH_SEPARATOR=: on Windows, in .env).
-    image: ghcr.io/p7y-dev/p7y:${P7Y_VERSION:-0.8.0}
+    image: ghcr.io/p7y-dev/p7y:${P7Y_VERSION:-0.9.0}
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
       # to localhost (P7Y_API_BIND=127.0.0.1) so everything goes through HTTPS.
@@ -62,6 +62,9 @@ services:
       # Who may sign in with OIDC (comma lists); without either, anyone with an account at the provider
       OIDC_ALLOWED_DOMAINS: ${OIDC_ALLOWED_DOMAINS:-}
       OIDC_ALLOWED_EMAILS: ${OIDC_ALLOWED_EMAILS:-}
+      # App access (docs: app-access.md): who opens an app without p7y.access; the key of its cookies and tickets
+      APPS_ACCESS_DEFAULT: ${APPS_ACCESS_DEFAULT:-public}
+      APP_ACCESS_SECRET: ${APP_ACCESS_SECRET:-}
       # The Hub (docs: hub.md): off unless true; viewers besides the builders by domain or address
       HUB_ENABLED: ${HUB_ENABLED:-false}
       HUB_HOST: ${HUB_HOST:-}
@@ -117,7 +120,7 @@ services:
   # One-shot, on every up: copies this release's Sablier themes, error pages, registry config and
   # dynamic/errors.yml from the image, so they always match it (no files from a checkout).
   p7y-init:
-    image: ghcr.io/p7y-dev/p7y:${P7Y_VERSION:-0.8.0}
+    image: ghcr.io/p7y-dev/p7y:${P7Y_VERSION:-0.9.0}
     entrypoint: ["sh", "/app/assets/install-assets.sh"]
     volumes:
       - sablier_themes:/out/sablier-themes
@@ -176,6 +179,9 @@ services:
 
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--providers.file.watch=true"
+      # The app access middleware of every sandbox (p7y.access), from Purgatory every 2 s
+      - "--providers.http.endpoint=http://p7y:3001/traefik/access"
+      - "--providers.http.pollInterval=2s"
       - "--entrypoints.web.http.middlewares=global-error-pages@file"
       - "--entrypoints.websecure.http.middlewares=global-error-pages@file"
     ports:

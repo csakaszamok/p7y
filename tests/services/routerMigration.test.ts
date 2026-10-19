@@ -9,7 +9,7 @@ vi.mock('../../services/compose', () => ({ composeUpService: vi.fn().mockResolve
 vi.mock('../../services/project', () => ({ nudgeTraefik: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('../../services/docker', () => ({ listManagedContainers: vi.fn() }))
 
-import { withWebsecure, withSocatUrl, withoutAllowNonRunning, withoutSocatDump, migrateRouters } from '../../services/routerMigration'
+import { withWebsecure, withSocatUrl, withoutAllowNonRunning, withoutSocatDump, withAccessMiddleware, migrateRouters } from '../../services/routerMigration'
 import { composeUpService } from '../../services/compose'
 import { nudgeTraefik } from '../../services/project'
 import { listManagedContainers } from '../../services/docker'
@@ -189,5 +189,16 @@ describe('migrateRouters without a directory', () => {
       expect(await migrateRouters()).toEqual(['p7y-own'])
       expect(entrypointsIn(`${root}/a@b.c`, 'p7y-own')).toBe('web,websecure')
     })
+  })
+})
+
+describe('withAccessMiddleware', () => {
+  it('the access middleware first, once', () => {
+    const name = 'p7y-shop'
+    const doc = (mw: string) => `services:\n  socat:\n    labels:\n      traefik.http.routers.frps-${name}.middlewares: ${mw}\n`
+    const out = withAccessMiddleware(doc(`sablier-${name}`), name)!
+    expect(out).toContain(`traefik.http.routers.frps-${name}.middlewares: access-${name}@http,sablier-${name}`)
+    expect(withAccessMiddleware(out, name)).toBeNull()
+    expect(withAccessMiddleware('services:\n  socat: {}\n', name)).toBeNull()
   })
 })

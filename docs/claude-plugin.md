@@ -50,4 +50,4 @@ The plugin has:
 
 ## Where it works
 
-The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's **Code** tab. Claude chat and Cowork can install it too (**Customize → Plugins**, add the marketplace `p7y-dev/p7y`), but there only the skill works: they do not ask for the address and the token, so the MCP server is not connected. Without the plugin, any agent can deploy with an export (**Let your agent deploy…** on a sandbox) or a token: see [Let your agent deploy](agents.md).
+The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's **Code** tab; also in Claude Code inside a sandbox, deploying to another one (on a local `lvh.me` stack see [An agent inside a sandbox](agents.md#an-agent-inside-a-sandbox)). Claude chat and Cowork can install it too (**Customize → Plugins**, add the marketplace `p7y-dev/p7y`), but there only the skill works: they do not ask for the address and the token, so the MCP server is not connected. Without the plugin, any agent can deploy with an export (**Let your agent deploy…** on a sandbox) or a token: see [Let your agent deploy](agents.md).

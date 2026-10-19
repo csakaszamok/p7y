@@ -17,7 +17,7 @@ beforeEach(() => {
   fs.rmSync(path.join(dir, 'votes.json'), { force: true })
 })
 
-const app: HubEntry = { id: 'shop-web.example.com', url: 'https://shop-web.example.com', title: 'Shop', description: '', service: 'web', port: 80, image: null, owner: 'anna@example.com', owner_name: 'Anna', sandbox: 'p7y-shop', status: 'running', updated_at: '2026-10-20T10:00:00.000Z', last_ran_at: null, last_ran_estimated: false }
+const app: HubEntry = { id: 'shop-web.example.com', url: 'https://shop-web.example.com', title: 'Shop', description: '', service: 'web', port: 80, image: null, access: 'public', owner: 'anna@example.com', owner_name: 'Anna', sandbox: 'p7y-shop', status: 'running', updated_at: '2026-10-20T10:00:00.000Z', last_ran_at: null, last_ran_estimated: false }
 const deps = { entries: async () => [app] }
 const as = (sub: string) => ({ cookie: `p7y_hub=${createHubSession(sub, null)}` })
 const get = (p: string, headers: Record<string, string> = {}) => handleHub(new Request(`https://hub.example.com${p}`, { headers }), deps)
@@ -68,6 +68,23 @@ describe('handleHub', () => {
     const r = await handleHub(new Request('https://hub.example.com/login', { method: 'POST', headers: { origin: 'https://hub.example.com', host: 'hub.example.com', 'content-type': 'application/x-www-form-urlencoded' }, body: 'username=admin&password=pw' }), deps)
     expect(r.status).toBe(303)
     expect(r.headers.get('set-cookie')).toContain('p7y_hub=')
+  })
+})
+
+describe('handleHub: app access', () => {
+  const dom: HubEntry = { ...app, id: 'shop-dom.example.com', url: 'https://shop-dom.example.com', title: 'Board', access: 'domain' }
+  const d = { entries: async () => [app, dom] }
+  const list = async (sub: string) => (await (await handleHub(new Request('https://hub.example.com/api/hub', { headers: as(sub) }), d)).json()).apps.map((a: { id: string }) => a.id)
+  it('a domain app shows to viewers who can sign in to Purgatory; Hub-only viewers see public apps only', async () => {
+    expect(await list('anna@example.com')).toEqual(['shop-web.example.com', 'shop-dom.example.com'])
+    expect(await list('peter@example.com')).toEqual(['shop-web.example.com'])
+  })
+  it('the admin sees domain apps too (the admin opens every app)', async () => {
+    expect(await list('admin')).toEqual(['shop-web.example.com', 'shop-dom.example.com'])
+  })
+  it('a Hub-only viewer cannot vote for a domain app (404)', async () => {
+    const r = await handleHub(new Request('https://hub.example.com/api/hub/apps/shop-dom.example.com/vote', { method: 'PUT', headers: { origin: 'https://hub.example.com', host: 'hub.example.com', ...as('peter@example.com') } }), d)
+    expect(r.status).toBe(404)
   })
 })
 

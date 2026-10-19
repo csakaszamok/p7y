@@ -70,3 +70,7 @@ Readers cannot sign in, so the feed takes a secret key: the administrator create
 ## Not yet
 
 A webhook on new apps, a Hub per team (with teams), and a Hub open on the internal network without signing in are on the [roadmap](roadmap.md).
+
+## App access
+
+An app open only to its owner (`p7y.access: owner`, see [App access](app-access.md)) is not published, even with `p7y.publish`: its **Details** tab says so. A `domain` app shows to Hub viewers who can sign in to Purgatory itself; viewers allowed only on the Hub (`HUB_ALLOWED_DOMAINS`, `HUB_ALLOWED_EMAILS`) see public apps only. Opening a `domain` app makes the usual sign-in hop.
