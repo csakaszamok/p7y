@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-19
+
+Upgrading from 0.7: download the new `docker-compose.yml` (and see `env.example` for the new, optional Hub settings), then `docker compose pull && docker compose up -d`. The Hub stays off unless `HUB_ENABLED=true`; with single sign-on it also needs `https://hub.<HOST_DOMAIN>/auth/callback` at the provider.
+
 ### Added
 
 - *Sleep after no traffic* (`idle_timeout`) takes days too, as the deep sleep time does: `1d` is kept as `24h` (Sablier's durations have no days).
