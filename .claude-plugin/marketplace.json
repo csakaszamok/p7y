@@ -1,0 +1,14 @@
+{
+  "name": "p7y",
+  "description": "Purgatory (p7y): self-hosted Docker sandboxes for teams and their AI agents",
+  "owner": { "name": "p7y-dev", "url": "https://github.com/p7y-dev" },
+  "plugins": [
+    {
+      "name": "p7y",
+      "source": "./plugins/p7y",
+      "description": "Deploy your app to your Purgatory sandbox and get its public address: the p7y MCP server and a deploy skill",
+      "category": "deployment",
+      "tags": ["docker", "sandbox", "deploy", "self-hosted", "mcp"]
+    }
+  ]
+}
