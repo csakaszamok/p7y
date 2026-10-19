@@ -449,3 +449,11 @@ describe('the Files tab', () => {
     expect(P.volumesView({ volumes: [] }, { ...ctx, name: 'p7y-shop' })).toContain('No volumes')
   })
 })
+
+describe('header: going to sleep', () => {
+  it('running with its session just expired: "Going to sleep…", not "not started yet"', () => {
+    const html = P.renderPanel({ ...running, stops_at: null, going_to_sleep: true }, ctx)
+    expect(html).toContain('Going to sleep…')
+    expect(html).not.toContain('The idle countdown has not started yet')
+  })
+})
