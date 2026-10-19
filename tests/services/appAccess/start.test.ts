@@ -3,10 +3,10 @@ import os from 'node:os'; import path from 'node:path'; import fs from 'node:fs'
 import { startResponse, nextAfterSignIn } from '../../../services/appAccess/start'
 import { redeemTicket, _resetSign } from '../../../services/appAccess/sign'
 
-const levels: Record<string, 'domain' | 'owner'> = { 'shop-dom.example.com': 'domain', 'shop-own.example.com': 'owner' }
+const levels: Record<string, 'public' | 'domain' | 'owner'> = { 'shop-pub.example.com': 'public', 'shop-dom.example.com': 'domain', 'shop-own.example.com': 'owner' }
 const deps = (viewer: { sub: string; role: 'user' | 'admin' } | null) => ({
   session: () => viewer,
-  access: async (h: string) => levels[h] ? { sandbox: 'p7y-shop', owner: 'bob@example.com', access: levels[h] } : null,
+  access: async (h: string) => levels[h.replace(/:\d+$/, '')] ? { sandbox: 'p7y-shop', owner: 'bob@example.com', access: levels[h] } : null,
   env: { HOST_DOMAIN: 'example.com' } as NodeJS.ProcessEnv,
 })
 const at = (rd: string) => new Request(`https://p7y.example.com/auth/app/start?rd=${encodeURIComponent(rd)}`)
@@ -48,4 +48,18 @@ describe('/auth/app/start', () => {
     expect(nextAfterSignIn(next(encodeURIComponent('/auth/app/start?rd=x\r\nSet-Cookie: a=b')))).toBeNull()
     expect(nextAfterSignIn(next('garbage'))).toBeNull()
   })
+  it('a public app: straight back to it, no ticket (the app itself would receive it)', async () => {
+    const r = await startResponse(at('https://shop-pub.example.com/a'), deps({ sub: 'bob@example.com', role: 'user' }))
+    expect(r.status).toBe(302)
+    expect(r.headers.get('location')).toBe('https://shop-pub.example.com/a')
+  })
+  it("the ticket goes over Purgatory's own scheme (never http when it is https), without a port", async () => {
+    vi.stubEnv('PUBLIC_URL', 'https://p7y.example.com')
+    for (const rd of ['http://shop-own.example.com/a', 'https://shop-own.example.com:443/a']) {
+      const loc = new URL((await startResponse(at(rd), deps({ sub: 'bob@example.com', role: 'user' }))).headers.get('location')!)
+      expect(`${loc.protocol}//${loc.host}${loc.pathname}`).toBe('https://shop-own.example.com/__p7y/auth')
+      expect(redeemTicket(loc.searchParams.get('ticket')!, 'shop-own.example.com')).toEqual({ sub: 'bob@example.com', role: 'user' })
+    }
+  })
 })
+

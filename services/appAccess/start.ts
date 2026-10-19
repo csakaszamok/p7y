@@ -1,5 +1,5 @@
 import { pageSession } from '../ui/layout'
-import { getCookie, cookieHeader } from '../session'
+import { getCookie, cookieHeader, publicUrl } from '../session'
 import { accessOfHost, type HostAccess } from './hosts'
 import { mayOpen, type Viewer } from './level'
 import { issueTicket, signNext, readNext } from './sign'
@@ -27,6 +27,8 @@ export async function startResponse(req: Request, deps: Partial<StartDeps> = {})
   if (target.protocol !== 'https:' && target.protocol !== 'http:') return notAnApp()
   const a = await d.access(target.host)
   if (!a) return notAnApp()
+  // Public: nothing to hand over (the app itself would receive a ticket)
+  if (a.access === 'public') return new Response(null, { status: 302, headers: { location: target.toString(), 'cache-control': 'no-store' } })
   const viewer = d.session(req)
   if (!viewer) {
     const back = `${START}${self.searchParams.toString()}`
@@ -37,8 +39,11 @@ export async function startResponse(req: Request, deps: Partial<StartDeps> = {})
     const who = a.access === 'owner' ? 'only to its owner' : 'only to people who can sign in to this Purgatory'
     return page(403, 'Not open to you', `<p>This app is open ${who}. You are signed in as <b>${esc(viewer.sub)}</b>.</p><form method="post" action="/logout"><button class="link">Sign out</button> to use another account.</form>`)
   }
-  const landing = new URL(`${target.protocol}//${target.host}${LANDING}`)
-  landing.searchParams.set('ticket', issueTicket(target.host, viewer))
+  // Over Purgatory's own scheme, never the one in rd (http would show the ticket on the way); the host without a port,
+  // as /auth/app reads it
+  const scheme = publicUrl().startsWith('https://') ? 'https:' : target.protocol
+  const landing = new URL(`${scheme}//${target.hostname}${LANDING}`)
+  landing.searchParams.set('ticket', issueTicket(target.hostname, viewer))
   landing.searchParams.set('rd', `${target.pathname}${target.search}`)
   return new Response(null, { status: 302, headers: { location: landing.toString(), 'cache-control': 'no-store' } })
 }
