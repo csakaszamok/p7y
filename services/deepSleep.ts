@@ -67,7 +67,7 @@ async function deepSleepSandbox(name: string, now: Date): Promise<void> {
   await takeDown(name)
   console.log(state.staleNetwork
     ? `[deep-sleep] ${name} points at a removed network, down (the next request rebuilds it)`
-    : `[deep-sleep] ${name} stopped since ${state.finishedAt}, down`)
+    : `[deep-sleep] ${name} asleep since ${new Date(asleepSince(state) ?? 0).toISOString()}, down`)
 }
 
 export async function runDeepSleepOnce(now = new Date()): Promise<void> {
