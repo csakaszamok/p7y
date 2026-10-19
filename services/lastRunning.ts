@@ -30,12 +30,20 @@ export function lastRunning(state: { status: string; finishedAt?: string } | nul
   if (state?.status === 'running') return { at: null, estimated: false }
   if (state) {
     const t = valid(state.finishedAt)
-    return { at: t === null ? null : new Date(t).toISOString(), estimated: false }
+    if (t !== null) return { at: new Date(t).toISOString(), estimated: false }
+    // Recreated while asleep and never started: its stop time is gone, estimate as for an old deep sleep
+    if (state.status !== 'created') return { at: null, estimated: false }
+    return estimate(dir)
   }
   try {
     const t = valid((JSON.parse(fs.readFileSync(path.join(dir, FILE), 'utf8')) as { at?: string }).at)
     if (t !== null) return { at: new Date(t).toISOString(), estimated: false }
   } catch { /* not remembered: estimate */ }
+  return estimate(dir)
+}
+
+/** About when it last ran: when it last showed its apps (these files are written while it runs). */
+function estimate(dir: string): LastRunning {
   const seen = ['apps.json', 'tcp.json', 'hub.json']
     .map(f => { try { return fs.statSync(path.join(dir, f)).mtimeMs } catch { return 0 } })
     .reduce((a, b) => Math.max(a, b), 0)
