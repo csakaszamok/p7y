@@ -37,6 +37,20 @@ export function withSocatUrl(text: string, name: string): string | null {
   return yaml.dump(doc, { lineWidth: -1 })
 }
 
+const middlewaresLabel = (name: string) => `traefik.http.routers.frps-${name}.middlewares`
+
+/** The compose file with the app access middleware (p7y.access, from Purgatory over HTTP) on the sandbox router,
+ * before Sablier: a visitor who may not open an app neither reaches nor wakes it. Null if it needs no change. */
+export function withAccessMiddleware(text: string, name: string): string | null {
+  let doc: { services?: Services } | null
+  try { doc = yaml.load(text) as { services?: Services } | null } catch { return null }
+  const labels = doc?.services?.socat?.labels
+  const mw = labels?.[middlewaresLabel(name)]
+  if (!labels || mw === undefined || mw.split(',').includes(`access-${name}@http`)) return null
+  labels[middlewaresLabel(name)] = `access-${name}@http,${mw}`
+  return yaml.dump(doc, { lineWidth: -1 })
+}
+
 /** The compose file without allownonrunning on socat, or null if it needs no change (see the runtimes). */
 export function withoutAllowNonRunning(text: string, _name: string): string | null {
   let doc: { services?: Services } | null
@@ -80,7 +94,7 @@ export async function migrateRouters(usersDir?: string): Promise<string[]> {
     let original: string
     try { original = fs.readFileSync(composePath, 'utf8') } catch { continue }
     let updated: string | null = null
-    for (const step of [withWebsecure, withSocatUrl, withoutAllowNonRunning, withoutSocatDump]) {
+    for (const step of [withWebsecure, withSocatUrl, withoutAllowNonRunning, withoutSocatDump, withAccessMiddleware]) {
       const next = step(updated ?? original, name)
       if (next) updated = next
     }
