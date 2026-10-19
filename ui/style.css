@@ -26,6 +26,8 @@ label.check input { width: auto }
 .who { display: flex; gap: 12px; align-items: center; margin: 0; color: #aaa }
 /* Simple | Advanced: Simple hides what is marked adv (it does not restrict anything) */
 body[data-mode="simple"] .adv { display: none !important }
+body:not([data-mode="simple"]) .simple-only { display: none !important }
+[data-export-folder] { white-space: nowrap }
 .mode-switch { display: inline-flex; border: 1px solid #2c2c2c; border-radius: 999px; overflow: hidden; flex: none }
 .mode-switch button { background: none; border: 0; border-radius: 0; color: #aaa; padding: 3px 10px; font-size: 12px; cursor: pointer }
 .mode-switch button[aria-pressed="true"] { background: #2a2a2a; color: #fff }

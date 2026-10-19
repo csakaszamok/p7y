@@ -109,8 +109,9 @@ const EXPORT_DIALOG = `
   <form method="dialog" data-export-form>
     <h2>Export for coding agents</h2>
     <p class="muted">A zip with a new token for this sandbox, its Docker client keys and a README with the commands. It is a secret: keep it out of git.</p>
-    <label>Token name<input name="name" maxlength="80" placeholder="laptop agent"></label>
-    <label>Expires<select name="expires_in"><option value="30d">in 30 days</option><option value="90d" selected>in 90 days</option><option value="never">never</option></select></label>
+    <label class="adv">Token name<input name="name" maxlength="80" placeholder="laptop agent"></label>
+    <label class="adv">Expires<select name="expires_in"><option value="30d">in 30 days</option><option value="90d" selected>in 90 days</option><option value="never">never</option></select></label>
+    <p class="muted simple-only">Unzip it in your project's folder and tell your agent: <em>Read <span data-export-folder>the p7y folder's README.md</span> and deploy this app to my sandbox.</em></p>
     <p class="muted" data-export-needs-certs hidden>This sandbox has no Docker access yet: enable it (the sandbox restarts, ~30 s) to include the Docker keys, or export without them.</p>
     <p class="muted" data-export-progress hidden></p>
     <p class="error" data-export-error hidden></p>

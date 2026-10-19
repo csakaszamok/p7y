@@ -306,6 +306,8 @@ function openExportDialog(name) {
   const dlg = $('[data-export-dialog]')
   if (!dlg) return void location.reload()
   dlg.dataset.sandbox = name
+  const folder = $('[data-export-folder]')
+  if (folder) folder.textContent = `p7y-${shortName(name)}/README.md`
   let ready = false
   try { ready = JSON.parse(renderedJSON || '{}').docker_access?.state === 'ready' } catch { /* not rendered yet */ }
   $('[data-export-needs-certs]').hidden = ready
