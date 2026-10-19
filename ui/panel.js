@@ -266,6 +266,13 @@
       <p class="muted" data-files-status hidden></p>`
   }
 
+  /** Right after a click, from the list's row: the new sandbox's name and status at once, never the previous one's
+   * details while its own load (on a slow or busy server that takes seconds) */
+  function loadingPanel(s, ctx) {
+    return `<div class="panel-head"><h2>${esc(ctx.shortName(s.name))}</h2><span class="status ${esc(statusClass(s))}">${esc(statusLabel(s.status))}</span></div>
+      <p class="muted">Loading…</p>`
+  }
+
   function renderPanel(s, ctx) {
     const tab = TABS.some(([id]) => id === ctx.tab) ? ctx.tab : 'apps'
     const tabs = TABS.map(([id, label]) => `<button role="tab" id="tab-${id}" aria-selected="${id === tab}" aria-controls="tabpanel-${id}" tabindex="${id === tab ? 0 : -1}" data-tab="${id}">${label}</button>`).join('')
@@ -377,7 +384,7 @@
     return out
   }
 
-  const api = { filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  const api = { loadingPanel, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)
