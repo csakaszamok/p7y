@@ -68,3 +68,26 @@ pass "the cookie is for its own app only"
 spoof=$(curl -sk -H "X-P7y-User: someone@evil.example" "$PUB/")
 echo "$spoof" | grep -qi "someone@evil.example" && fail "a client-sent X-P7y-User reaches the app"
 pass "a client-sent X-P7y-User is removed"
+
+# Internal only: not on the published API port
+[ "$(code "$P7Y_API/traefik/access")" = 404 ] || fail "/traefik/access answers on the published port"
+[ "$(code -H "X-Forwarded-Host: $NAME-own.$DOMAIN" "$P7Y_API/auth/app")" = 404 ] || fail "/auth/app answers on the published port"
+pass "the forwardAuth and the HTTP provider are not on the published port"
+
+# Asleep: an anonymous visitor does not wake it; the signed-in owner gets through the hop (the ticket survives /wake)
+api -X POST "$P7Y_API/sandboxes/p7y-$NAME/stop" >/dev/null || fail "stop"
+for i in $(seq 1 30); do
+  [ "$(api "$P7Y_API/sandboxes/p7y-$NAME" | "$PY" -c 'import json,sys;print(json.load(sys.stdin)["status"])')" != running ] && break; sleep 2
+done
+grep -v "__p7y_app" "$JAR" > "$JAR.2" && mv "$JAR.2" "$JAR"   # keep the Purgatory session, drop the app cookie
+loc=$(curl -sk -o /dev/null -w '%{redirect_url}' "$OWN/x?y=1")
+case "$loc" in "$UI/auth/app/start?rd="*) ;; *) fail "asleep, anonymous: not sent to sign-in ($loc)";; esac
+[ "$(api "$P7Y_API/sandboxes/p7y-$NAME" | "$PY" -c 'import json,sys;print(json.load(sys.stdin)["status"])')" != running ] || fail "an anonymous visitor woke it"
+pass "asleep: an anonymous visitor is sent to sign in, and nothing wakes"
+start=$(web -o /dev/null -w '%{redirect_url}' "$OWN/x?y=1")
+landing=$(web -o /dev/null -w '%{redirect_url}' "$start")
+back=$(web -o /dev/null -w '%{redirect_url}' "$landing")
+[ "$back" = "$OWN/x?y=1" ] || fail "asleep: the hop does not come back to the page ($back): the ticket was lost on /wake"
+page=$(web "$OWN/x?y=1")
+echo "$page" | grep -q "data-p7y-waiting\|waking up" || fail "asleep: the owner does not get the waking page"
+pass "asleep: the signed-in owner makes the hop and the sandbox wakes"
