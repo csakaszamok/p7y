@@ -73,7 +73,7 @@
       const a = apps.get(url) || {}
       const i = tcp.findIndex(t => firstLabel(t.address) === `${firstLabel(url)}-tcp`)
       const own = i >= 0 ? tcp.splice(i, 1)[0] : null
-      return { service: a.service || firstLabel(url), url, answers: a.answers ?? null, tcp: own }
+      return { service: a.service || firstLabel(url), url, answers: a.answers ?? null, ...(a.access ? { access: a.access } : {}), tcp: own }
     })
     for (const t of tcp) rows.push({ service: firstLabel(t.address).replace(/-tcp$/, ''), url: null, answers: null, tcp: t })
     return rows
@@ -133,9 +133,12 @@
     const hub = s.hub || { published: [], unlinked: [] }
     const onHub = r => r.url && hub.published.includes(r.url)
       ? ` ${hub.url ? `<a class="tag" href="${esc(hub.url)}" target="_blank" rel="noopener">On the Hub</a>` : '<span class="tag">On the Hub</span>'}` : ''
+    // Who may open it (p7y.access): no tag for public
+    const ACCESS_TAG = { owner: 'Owner only', domain: 'Your domain' }
+    const accessTag = r => ACCESS_TAG[r.access] ? ` <span class="tag" title="p7y.access: ${esc(r.access)}">${ACCESS_TAG[r.access]}</span>` : ''
     const body = rows.map(r => `<tr>
       <td>${esc(r.service)}</td>
-      <td>${r.url ? `<a href="${esc(ctx.protocol)}//${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.url)}">open ↗</a>${mark(r.answers)}${onHub(r)}` : '<span class="muted">—</span>'}</td>
+      <td>${r.url ? `<a href="${esc(ctx.protocol)}//${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.url)}">open ↗</a>${mark(r.answers)}${accessTag(r)}${onHub(r)}` : '<span class="muted">—</span>'}</td>
       ${ctx.simple ? '' : `<td>${r.tcp ? `<span class="tcp">${esc(r.tcp.address)}</span> ${copyButton(r.tcp.address)}` : ''}</td>
       <td>${r.tcp ? `<button class="link" data-connect="${esc(r.tcp.address)}" data-port="${esc(r.tcp.port ?? '')}" data-user="${esc(r.tcp.user ?? '')}"${extras.demo_password ? ` data-demo-password="${esc(extras.demo_password)}"` : ''}>Connect…</button>` : ''}</td>`}
     </tr>`)
@@ -213,6 +216,8 @@
     const lines = [
       ...(hub.unlinked || []).map(n => `${esc(n)}: published, but has no web address (publish a port on all interfaces)`),
       ...(hub.bad_image || []).map(n => `${esc(n)}: p7y.image is ignored: use a path inside the app, e.g. /shot.png`),
+      ...(s.apps || []).filter(a => a.access_invalid).map(a => `${esc(a.service)}: p7y.access is not public, domain or owner; only the owner can open it`),
+      ...(hub.owner_only || []).map(n => `${esc(n)}: published, but only its owner can open it: set p7y.access: domain`),
     ]
     return lines.length ? `<div class="warnings"><h3>Warnings</h3><ul>${lines.map(l => `<li>⚠ ${l}</li>`).join('')}</ul></div>` : ''
   }

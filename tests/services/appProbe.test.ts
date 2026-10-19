@@ -46,8 +46,8 @@ describe('appStatuses', () => {
     const probe = vi.fn(async (_h: string, port: number) => port === 8080)
     const links = [{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'public' as const }, { url: 'shop-inner-hermes-port9119.lvh.me', port: 9119, service: 'hermes', access: 'public' as const }]
     expect(await appStatuses('p7y-shop', links, { probe, now: () => t })).toEqual([
-      { url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', answers: true },
-      { url: 'shop-inner-hermes-port9119.lvh.me', port: 9119, service: 'hermes', answers: false },
+      { url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', answers: true, access: 'public' },
+      { url: 'shop-inner-hermes-port9119.lvh.me', port: 9119, service: 'hermes', answers: false, access: 'public' },
     ])
     expect(probe.mock.calls).toEqual([['p7y-shop', 8080], ['p7y-shop', 9119]])
     t = 9_000; await appStatuses('p7y-shop', links, { probe, now: () => t })
@@ -56,3 +56,16 @@ describe('appStatuses', () => {
     expect(probe).toHaveBeenCalledTimes(4)
   })
 })
+
+describe('appStatuses: app access', () => {
+  it("keeps each link's access (and an invalid label's mark)", async () => {
+    const { appStatuses, forgetAppStatuses } = await import('../../services/appProbe')
+    forgetAppStatuses()
+    const out = await appStatuses('p7y-acc', [
+      { url: 'a.lvh.me', port: 1, service: 'a', access: 'owner' as const, access_invalid: true as const },
+      { url: 'b.lvh.me', port: 2, service: 'b', access: 'public' as const },
+    ], { probe: async () => true, now: () => 1 })
+    expect(out.map(o => [o.access, o.access_invalid ?? false])).toEqual([['owner', true], ['public', false]])
+  })
+})
+

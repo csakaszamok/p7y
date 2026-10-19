@@ -20,7 +20,11 @@ vi.mock('../../../services/sandboxSsh', () => ({ sshKeyCount: vi.fn(() => 0), ha
 vi.mock('../../../services/resourceSettings', () => ({ limitsOf: vi.fn(() => null) }))
 vi.mock('../../../services/usageSampler', () => ({ usageOf: vi.fn(() => null) }))
 vi.mock('../../../services/diskUsage', () => ({ diskOf: vi.fn(() => null) }))
-vi.mock('../../../services/appLinks', () => ({ appLinks: vi.fn(async () => [{ url: 'up-inner-web-port8080.lvh.me', port: 8080, service: 'web' }]) }))
+vi.mock('../../../services/appLinks', () => ({
+  appLinks: vi.fn(async () => [{ url: 'up-inner-web-port8080.lvh.me', port: 8080, service: 'web' }]),
+  // What it had when it last ran: its p7y.access
+  rememberedApps: vi.fn((n: string) => n === 'p7y-down' ? [{ url: 'down-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'owner' }] : null),
+}))
 vi.mock('../../../services/appProbe', () => ({
   appStatuses: vi.fn(async (_n: string, links: Array<{ url: string; port: number }>) => links.map(l => ({ ...l, answers: false }))),
 }))
@@ -50,7 +54,7 @@ describe('GET /sandboxes/:name apps', () => {
   it('a sandbox that is not running: links unmeasured, and nothing is probed', async () => {
     vi.mocked(appStatuses).mockClear()
     const body = await (await get(req('p7y-down'))).json()
-    expect(body.apps).toEqual([{ url: 'down-inner-web-port8080.lvh.me', port: null, service: 'web', answers: null }])
+    expect(body.apps).toEqual([{ url: 'down-inner-web-port8080.lvh.me', port: null, service: 'web', answers: null, access: 'owner' }])
     expect(body).not.toHaveProperty('app_services')
     expect(appStatuses).not.toHaveBeenCalled()
   })
