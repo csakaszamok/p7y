@@ -80,6 +80,7 @@ nav:
   - Agents:
       - Let your agent deploy: agents.md
       - MCP: mcp.md
+      - Claude Code plugin: claude-plugin.md
       - Agent guide: agent-guide.md
   - Reference:
       - API: api.md
