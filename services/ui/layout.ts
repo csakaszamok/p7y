@@ -2,6 +2,7 @@ import { readSession, getCookie, SESSION_COOKIE, type Session } from '../session
 import { subAllowed } from '../allowlist'
 import { sandboxPrefix } from '../naming'
 import { repoInfo, type RepoInfo } from '../repoInfo'
+import { viewOf } from '../userPrefs'
 
 export function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
@@ -43,8 +44,14 @@ export function repoBadge(info: RepoInfo): string {
 
 export function renderPage(opts: { title: string; view: 'overview' | 'mine' | 'all' | 'tokens' | 'ssh-keys'; session: Session; body: string }): string {
   const { title, view, session, body } = opts
-  const link = (href: string, label: string, v: string) =>
-    `<a href="${href}"${v === view ? ' class="active"' : ''}>${label}</a>`
+  // Simple only hides (class adv), it does not restrict: the API and MCP stay the same
+  const mode = viewOf(session.sub, session.role)
+  const link = (href: string, label: string, v: string, adv = false) => {
+    const cls = [adv ? 'adv' : '', v === view ? 'active' : ''].filter(Boolean).join(' ')
+    return `<a${cls ? ` class="${cls}"` : ''} href="${href}">${label}</a>`
+  }
+  const modeButton = (m: 'simple' | 'advanced', label: string) =>
+    `<button type="button" data-mode-set="${m}" aria-pressed="${m === mode}">${label}</button>`
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,18 +61,19 @@ export function renderPage(opts: { title: string; view: 'overview' | 'mine' | 'a
 <link rel="stylesheet" href="/assets/style.css">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 </head>
-<body data-view="${view}" data-role="${session.role}" data-sub="${escapeHtml(session.sub)}" data-prefix="${escapeHtml(sandboxPrefix())}">
+<body data-view="${view}" data-mode="${mode}" data-role="${session.role}" data-sub="${escapeHtml(session.sub)}" data-prefix="${escapeHtml(sandboxPrefix())}">
 <header class="topbar">
   <span class="brand"><img src="/assets/logo.svg" alt="" width="20" height="20">Purgatory</span>
   <nav>
-    ${link('/overview', 'Overview', 'overview')}
+    ${link('/overview', 'Overview', 'overview', true)}
     ${link('/', 'My sandboxes', 'mine')}
     ${session.role === 'admin' ? link('/admin', 'All sandboxes', 'all') : ''}
-    ${link('/settings/tokens', 'Access tokens', 'tokens')}
-    ${link('/settings/ssh-keys', 'SSH keys', 'ssh-keys')}
+    ${link('/settings/tokens', 'Access tokens', 'tokens', true)}
+    ${link('/settings/ssh-keys', 'SSH keys', 'ssh-keys', true)}
   </nav>
   <span class="places" data-places hidden></span>
   ${repoBadge(repoInfo())}
+  <span class="mode-switch" role="group" aria-label="View">${modeButton('simple', 'Simple')}${modeButton('advanced', 'Advanced')}</span>
   <form method="post" action="/logout" class="who"><span>${escapeHtml(session.sub)}</span><button class="link">Sign out</button></form>
 </header>
 <main>${body}</main>
@@ -173,12 +181,12 @@ export const SANDBOX_VIEW_BODY = `
     <h2>New sandbox</h2>
     <label>Name<input name="name" required pattern="[a-z0-9][a-z0-9_-]{0,62}" placeholder="shop-demo"></label>
     <small class="muted" data-name-hint>lowercase letters, digits, - and _</small>
-    <label>Runtime<select name="runtime" data-runtimes></select></label>
+    <label class="adv">Runtime<select name="runtime" data-runtimes></select></label>
     <label>Template<select name="template" data-templates></select></label>
-    <details data-compose-section><summary>Compose <small class="muted">the stack inside the sandbox: edit the template's, or pick <b>empty</b> and paste your own</small></summary>
+    <details class="adv" data-compose-section><summary>Compose <small class="muted">the stack inside the sandbox: edit the template's, or pick <b>empty</b> and paste your own</small></summary>
       <textarea name="compose" data-compose-editor rows="24" spellcheck="false" autocomplete="off" aria-label="Compose" placeholder="Paste your docker compose file here"></textarea>
     </details>
-    <details><summary>Advanced</summary>
+    <details class="adv"><summary>Advanced</summary>
       <label>Sleep after no traffic for<input name="idle_timeout" value="30m" pattern="([1-9][0-9]*(s|m|h)|0|off)"></label>
       <label>Deep sleep after asleep for<input name="deep_sleep_after" value="7d" pattern="([1-9][0-9]*(m|h|d)|0|off)"></label>
       <label>CPUs<input name="cpus" inputmode="decimal" placeholder="2"></label>

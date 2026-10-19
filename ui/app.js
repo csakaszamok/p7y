@@ -2,6 +2,8 @@
 const view = document.body.dataset.view
 const isAdmin = document.body.dataset.role === 'admin'
 const me = document.body.dataset.sub
+// Simple or Advanced (body data-mode): Simple only hides things, the API is the same
+const simpleView = () => document.body.dataset.mode === 'simple'
 const $ = sel => document.querySelector(sel)
 // Shared with the details panel (ui/panel.js, loaded first)
 const { esc, remaining, countdown, statusLabel, statusClass, fmtBytes, meter } = window.P7yPanel
@@ -84,7 +86,9 @@ function renderRows() {
   const cols = view === 'all'
     ? ['Name', 'Owner', 'Status', 'Sleeps in', 'Deep sleep in', 'CPU · Mem', 'Template', 'Created']
     : ['Name', 'Status', 'Sleeps in', 'Deep sleep in', 'CPU · Mem', 'Template', 'Created']
-  $('[data-head]').innerHTML = `<tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr>`
+  // Simple view hides these (class adv, see style.css)
+  const ADV_COLS = ['Deep sleep in', 'CPU · Mem', 'Template']
+  $('[data-head]').innerHTML = `<tr>${cols.map(c => `<th${ADV_COLS.includes(c) ? ' class="adv"' : ''}>${c}</th>`).join('')}</tr>`
   const rows = [...filtered()]
   for (const name of pending) if (!rows.some(s => s.name === name)) rows.unshift({ name, status: 'starting', runtime: '', template: '', created_at: '' })
   $('[data-rows]').innerHTML = rows.length ? rows.map(s => `
@@ -95,9 +99,9 @@ function renderRows() {
         ? `<span class="status starting">${esc(ACTIONS[busy.get(s.name)].row)}</span>`
         : `<span class="status ${esc(statusClass(s))}">${esc(s.start_error ? 'failed to start' : statusLabel(s.status))}</span>`}</td>
       <td>${sleepCell(s)}</td>
-      <td>${deepSleepCell(s)}</td>
-      <td>${usageCell(s)}</td>
-      <td>${esc([s.runtime, s.template].filter(Boolean).join(' · '))}${s.compose === 'edited' ? ' <span class="muted">(edited)</span>' : ''}</td>
+      <td class="adv">${deepSleepCell(s)}</td>
+      <td class="adv">${usageCell(s)}</td>
+      <td class="adv">${esc([s.runtime, s.template].filter(Boolean).join(' · '))}${s.compose === 'edited' ? ' <span class="muted">(edited)</span>' : ''}</td>
       <td>${esc(age(s.created_at))}</td>
     </tr>`).join('') : `<tr><td class="muted" colspan="${cols.length}">No sandboxes yet — create one.</td></tr>`
 }
@@ -163,6 +167,18 @@ async function loadList() {
 }
 
 // ---------- panel tabs ----------
+// ---------- the Simple | Advanced switch (topbar, every page) ----------
+for (const b of document.querySelectorAll('[data-mode-set]')) b.addEventListener('click', async () => {
+  const mode = b.dataset.modeSet
+  if (mode === document.body.dataset.mode) return
+  try { await api('/me/view', { method: 'PUT', body: JSON.stringify({ view: mode }) }) } catch { return }
+  document.body.dataset.mode = mode
+  for (const o of document.querySelectorAll('[data-mode-set]')) o.setAttribute('aria-pressed', String(o.dataset.modeSet === mode))
+  // On a page Simple hides (Overview, Access tokens, SSH keys): to My sandboxes
+  if (document.querySelector('nav a.active.adv')) { location.href = '/'; return }
+  if (selected) { renderedJSON = null; void showPanel(selected) }
+})
+
 const TAB_KEY = 'p7y.panelTab'
 let panelTab = (() => { try { return localStorage.getItem(TAB_KEY) || 'apps' } catch { return 'apps' } })()
 function selectTab(tab, focus = false) {
@@ -358,7 +374,7 @@ async function showPanel(name) {
   }
   renderedName = name
   renderedJSON = sJSON
-  panel.innerHTML = P7yPanel.renderPanel(s, { isAdmin, me, shortName, tab: panelTab, protocol: location.protocol })
+  panel.innerHTML = P7yPanel.renderPanel(s, { isAdmin, me, shortName, tab: panelTab, protocol: location.protocol, simple: simpleView() })
   if (panelTab === 'registry') void loadRegistry(name)
   if (panelTab === 'files') void loadFiles(name)
   if (busy.has(name)) markBusy(panel, busy.get(name))

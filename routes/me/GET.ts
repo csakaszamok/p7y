@@ -2,6 +2,7 @@ import { requirePrincipal } from '../../services/principal'
 import { quotaStatus, serverLimit, serverUsed, runningStatus } from '../../services/quota'
 import { resourceDefaults } from '../../services/resources'
 import { hostResources } from '../../services/docker'
+import { viewOf } from '../../services/userPrefs'
 
 export const openapi = { mcp: { name: 'who_am_i' }, summary: 'Who am I', tags: ['auth'], security: [{ bearerAuth: [] }] }
 
@@ -17,5 +18,5 @@ export default async (req: Request): Promise<Response> => {
   const server_full = p.role !== 'admin' && server !== null && used >= server
   // The server's places for the topbar, for everyone: the sign-in page shows them publicly already
   const server_places = server === null ? null : { used, limit: server }
-  return Response.json({ ...p, ...(await quotaStatus(p)), ...(await runningStatus(p)), server_full, server_places, resources })
+  return Response.json({ ...p, ...(await quotaStatus(p)), ...(await runningStatus(p)), server_full, server_places, resources, view: viewOf(p.sub, p.role) })
 }
