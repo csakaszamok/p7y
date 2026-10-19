@@ -10,6 +10,16 @@ const ct = (name: string, ports: Array<[string, number]>, labels: Record<string,
 })
 
 describe('publicAppNames', () => {
+  it('each link carries its app access from p7y.access (invalid: owner, marked)', () => {
+    const m = publicAppNames('shop', [
+      ct('web', [['0.0.0.0', 8080]], { 'p7y.access': 'domain' }),
+      ct('api', [['0.0.0.0', 9000]], { 'p7y.access': 'privat' }),
+      ct('doc', [['0.0.0.0', 9001]]),
+    ])
+    expect([...m.values()].map(v => [v.service, v.access, v.access_invalid ?? false])).toEqual([
+      ['web', 'domain', false], ['api', 'owner', true], ['doc', 'public', false],
+    ])
+  })
   it('names only the ports published on all interfaces', () => {
     const names = publicAppNames('shop', [
       ct('web', [['0.0.0.0', 8080], ['::', 8080]]),
@@ -17,17 +27,17 @@ describe('publicAppNames', () => {
       ct('db', [['', 5432]]),
       ct('lan', [['10.0.0.5', 7000]]),
     ])
-    expect([...names]).toEqual([['shop-inner-web-port8080', { port: 8080, service: 'web' }], ['shop-inner-db-port5432', { port: 5432, service: 'db' }]])
+    expect([...names]).toEqual([['shop-inner-web-port8080', { port: 8080, service: 'web', access: 'public' }], ['shop-inner-db-port5432', { port: 5432, service: 'db', access: 'public' }]])
   })
 
   it('keeps a frpc.subdomain name when the container has at least one public port', () => {
-    expect([...publicAppNames('shop', [ct('portainer', [['127.0.0.1', 9443], ['0.0.0.0', 9000]], { 'frpc.subdomain': 'portainer' })])]).toEqual([['shop-portainer', { port: 9000, service: 'portainer' }]])
+    expect([...publicAppNames('shop', [ct('portainer', [['127.0.0.1', 9443], ['0.0.0.0', 9000]], { 'frpc.subdomain': 'portainer' })])]).toEqual([['shop-portainer', { port: 9000, service: 'portainer', access: 'public' }]])
     expect([...publicAppNames('shop', [ct('portainer', [['127.0.0.1', 9000]], { 'frpc.subdomain': 'portainer' })])]).toEqual([])
   })
 
   it('names an app without a compose service by its container name', () => {
     const plain: InnerContainer = { Names: ['/hermes'], Labels: {}, Ports: [{ IP: '0.0.0.0', PublicPort: 9119, PrivatePort: 9119, Type: 'tcp' }] }
-    expect([...publicAppNames('shop', [plain])]).toEqual([['shop-hermes-port9119', { port: 9119, service: 'hermes' }]])
+    expect([...publicAppNames('shop', [plain])]).toEqual([['shop-hermes-port9119', { port: 9119, service: 'hermes', access: 'public' }]])
   })
 })
 
@@ -47,7 +57,7 @@ describe('appLinks', () => {
 
   it('keeps what frps serves only for public ports (case-insensitive, by the first label)', async () => {
     const d = deps([ct('web', [['0.0.0.0', 8080]]), ct('hermes', [['127.0.0.1', 9119]]), ct('portainer', [['', 9000]], { 'frpc.subdomain': 'portainer' })])
-    expect(await appLinks('p7y-shop', d)).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web' }, { url: 'Shop-Portainer.LVH.me', port: 9000, service: 'portainer' }])
+    expect(await appLinks('p7y-shop', d)).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'public' }, { url: 'Shop-Portainer.LVH.me', port: 9000, service: 'portainer', access: 'public' }])
   })
 
   it('shows no link when the inner Docker cannot be asked', async () => {
@@ -58,7 +68,7 @@ describe('appLinks', () => {
   it('filters given domains afresh, whatever is cached', async () => {
     await appLinks('p7y-shop', deps([]))
     const d = deps([ct('web', [['0.0.0.0', 8080]])])
-    expect(await appLinks('p7y-shop', d, ['shop-inner-web-port8080.lvh.me'])).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web' }])
+    expect(await appLinks('p7y-shop', d, ['shop-inner-web-port8080.lvh.me'])).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'public' }])
   })
 
   it('asks again only after 10 s', async () => {
@@ -81,7 +91,7 @@ describe('apps remembered for a sleeping sandbox', () => {
   it('remembers the links a running sandbox answered with', async () => {
     const deps = d([ct('web', [['0.0.0.0', 8080]])], ['shop-inner-web-port8080.lvh.me'])
     await appLinks('p7y-shop', deps)
-    expect(deps.remember).toHaveBeenCalledWith('p7y-shop', [{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web' }])
+    expect(deps.remember).toHaveBeenCalledWith('p7y-shop', [{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'public' }])
   })
 
   it('keeps what it had when frps has nothing yet (just woken) or the inner Docker does not answer', async () => {
@@ -101,7 +111,7 @@ describe('apps remembered for a sleeping sandbox', () => {
       expect(rememberedApps('p7y-rem')).toBeNull()
       const { remember: _, ...deps } = d([ct('web', [['0.0.0.0', 8080]]), ct('api', [['0.0.0.0', 3000]])], ['shop-inner-web-port8080.lvh.me', 'shop-inner-api-port3000.lvh.me'])
       await appLinks('p7y-rem', deps)
-      expect(rememberedApps('p7y-rem')).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web' }, { url: 'shop-inner-api-port3000.lvh.me', port: 3000, service: 'api' }])
+      expect(rememberedApps('p7y-rem')).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'public' }, { url: 'shop-inner-api-port3000.lvh.me', port: 3000, service: 'api', access: 'public' }])
     } finally { fs.rmSync(dir, { recursive: true, force: true }); forgetSandboxDir() }
   })
 })

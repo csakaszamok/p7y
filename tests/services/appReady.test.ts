@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { appReady, type AppReadyDeps } from '../../services/appReady'
 
-const redmine = { url: 'shop-redmine.lvh.me', port: 3000, service: 'redmine' }
-const portainer = { url: 'shop-portainer.lvh.me', port: 9000, service: 'portainer' }
+const redmine = { url: 'shop-redmine.lvh.me', port: 3000, service: 'redmine', access: 'public' as const }
+const portainer = { url: 'shop-portainer.lvh.me', port: 9000, service: 'portainer', access: 'public' as const }
 
 function deps(over: Partial<AppReadyDeps> = {}): AppReadyDeps {
   return {

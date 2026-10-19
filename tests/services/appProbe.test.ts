@@ -44,7 +44,7 @@ describe('appStatuses', () => {
   it('probes each link on the sandbox host and remembers it for 10 s', async () => {
     let t = 0
     const probe = vi.fn(async (_h: string, port: number) => port === 8080)
-    const links = [{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web' }, { url: 'shop-inner-hermes-port9119.lvh.me', port: 9119, service: 'hermes' }]
+    const links = [{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'public' as const }, { url: 'shop-inner-hermes-port9119.lvh.me', port: 9119, service: 'hermes', access: 'public' as const }]
     expect(await appStatuses('p7y-shop', links, { probe, now: () => t })).toEqual([
       { url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', answers: true },
       { url: 'shop-inner-hermes-port9119.lvh.me', port: 9119, service: 'hermes', answers: false },
