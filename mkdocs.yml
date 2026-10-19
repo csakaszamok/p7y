@@ -82,6 +82,7 @@ nav:
       - SSH, terminal and logs: shell-and-logs.md
       - Files: files.md
       - Hub: hub.md
+      - App access: app-access.md
   - Agents:
       - Let your agent deploy: agents.md
       - MCP: mcp.md
@@ -127,6 +128,7 @@ plugins:
           - shell-and-logs.md
           - files.md
           - hub.md
+          - app-access.md
         Agents:
           - agents.md
           - mcp.md

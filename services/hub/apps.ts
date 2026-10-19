@@ -1,11 +1,12 @@
 import { frpcName, ALL_INTERFACES, type InnerContainer } from '../tcpNames'
+import { accessOfLabel } from '../appAccess/level'
 
 /** p7y.publish: "true" (any case) or "1" publishes; anything else does not. */
 export const publishes = (v: string | undefined) => v !== undefined && (v.toLowerCase() === 'true' || v === '1')
 
 /** An app a builder published with `p7y.publish: "true"` (or "1") on its container. id: its web address (host);
  * port: its port published in the sandbox (how Purgatory reaches it without waking anything); image: p7y.image. */
-export interface HubApp { id: string; url: string; title: string; description: string; service: string; port: number; image: string | null }
+export interface HubApp { id: string; url: string; title: string; description: string; service: string; port: number; image: string | null; access: 'public' | 'domain' }
 
 /** A path inside the app ("/shot.png"), never another site: Purgatory fetches it, so a URL would let a label steer it. */
 export function appImagePath(label: string | undefined): string | null {
@@ -22,15 +23,19 @@ const DNS_LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
  * (foxglove's frpc names, the lowest port published on all interfaces); a published container with no such port
  * has no web address and is listed in `unlinked` instead.
  */
-export function hubAppsOf(instance: string, containers: InnerContainer[], domain: string, scheme: 'http' | 'https'): { apps: HubApp[]; unlinked: string[]; badImage: string[] } {
+export function hubAppsOf(instance: string, containers: InnerContainer[], domain: string, scheme: 'http' | 'https'): { apps: HubApp[]; unlinked: string[]; badImage: string[]; ownerOnly: string[] } {
   const apps: HubApp[] = []
   const unlinked: string[] = []
   // Published with a p7y.image that is not a path inside the app (a URL, say): ignored, and said on the Apps tab
   const badImage: string[] = []
+  // Published but only its owner may open it (p7y.access: owner): not on the Hub, said on the Details tab
+  const ownerOnly: string[] = []
   const seen = new Set<string>()
   for (const ct of containers) {
     if (!publishes(ct.Labels['p7y.publish'])) continue
     const service = ct.Labels['com.docker.compose.service'] || (ct.Names[0] ?? '').replace(/^\//, '')
+    const access = accessOfLabel(ct.Labels['p7y.access']).access
+    if (access === 'owner') { ownerOnly.push(service); continue }
     if (ct.Labels['p7y.image']?.trim() && !appImagePath(ct.Labels['p7y.image'])) badImage.push(service)
     const ports = [...new Set(ct.Ports.filter(p => p.Type === 'tcp' && p.PublicPort && ALL_INTERFACES.has(p.IP ?? '')).map(p => p.PublicPort!))].sort((a, b) => a - b)
     if (!ports.length) { unlinked.push(service); continue }
@@ -48,7 +53,8 @@ export function hubAppsOf(instance: string, containers: InnerContainer[], domain
       service,
       port: ports[0],
       image: appImagePath(ct.Labels['p7y.image']),
+      access,
     })
   }
-  return { apps, unlinked, badImage }
+  return { apps, unlinked, badImage, ownerOnly }
 }

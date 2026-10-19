@@ -8,7 +8,7 @@ import { sshKeyCount, hasGeneratedKey } from '../../../services/sandboxSsh'
 import { limitsOf } from '../../../services/resourceSettings'
 import { usageOf } from '../../../services/usageSampler'
 import { diskOf } from '../../../services/diskUsage'
-import { appLinks } from '../../../services/appLinks'
+import { appLinks, rememberedApps } from '../../../services/appLinks'
 import { appStatuses } from '../../../services/appProbe'
 import { dockerAccessInfo } from '../../../services/dockerAccess'
 import { rememberedHub, refreshHub } from '../../../services/hub/list'
@@ -21,7 +21,7 @@ export const openapi = {
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],
   responses: {
-    200: { description: 'Sandbox record including TLS certs; apps: each link with answers true/false (null when not running)' },
+    200: { description: 'Sandbox record including TLS certs; apps: each link with answers true/false (null when not running) and access (p7y.access: public, domain or owner; access_invalid when its label is not one)' },
     401: { description: 'Unauthorized' },
     404: { description: 'Sandbox not found' }
   }
@@ -37,7 +37,7 @@ export default async (req: Request): Promise<Response> => {
     const { app_services, ...info } = sandbox
     const apps = sandbox.status === 'running'
       ? await appStatuses(name, await appLinks(name))
-      : sandbox.tunnel_urls.map(url => ({ url, port: null, service: app_services?.[url] ?? null, answers: null }))
+      : withRememberedAccess(name, sandbox.tunnel_urls.map(url => ({ url, port: null, service: app_services?.[url] ?? null, answers: null })))
     // Asleep: the ports it had when it last ran (a connection wakes it)
     const tcp = sandbox.status === 'running' ? await publicTcpPorts(name).catch(() => []) : rememberedTcpPorts(name) ?? []
     const tcp_urls = tcp.map(p => `${p.host}:443`)
@@ -49,7 +49,7 @@ export default async (req: Request): Promise<Response> => {
     const remembered = hubEnabled() && sandbox.status === 'running'
       ? await refreshHub(name).catch(() => rememberedHub(name))
       : rememberedHub(name)
-    const hub = { enabled: hubEnabled(), url: hubEnabled() ? hubUrl() : null, published: remembered?.apps.map(a => a.id) ?? [], unlinked: remembered?.unlinked ?? [], bad_image: remembered?.bad_image ?? [] }
+    const hub = { enabled: hubEnabled(), url: hubEnabled() ? hubUrl() : null, published: remembered?.apps.map(a => a.id) ?? [], unlinked: remembered?.unlinked ?? [], bad_image: remembered?.bad_image ?? [], owner_only: remembered?.owner_only ?? [] }
     // Not running: when it last ran (asleep: its container's stop time; deep sleep: remembered, or estimated)
     const last = await lastRunningOf(name, sandbox.status)
     const ssh = sandbox.ssh ? { address: `${rawNameOf(name) ?? name}-shell-tcp.${domain}:443`, user: 'root', keys: sshKeyCount(name), generated_key: hasGeneratedKey(name) } : null
@@ -60,3 +60,13 @@ export default async (req: Request): Promise<Response> => {
     return Response.json({ error: msg }, { status: 500 })
   }
 }
+
+/** Asleep: each app's p7y.access as it was when it last ran */
+function withRememberedAccess<T extends { url: string }>(name: string, apps: T[]): Array<T & { access?: string; access_invalid?: true }> {
+  const seen = new Map((rememberedApps(name) ?? []).map(l => [l.url, l]))
+  return apps.map(a => {
+    const l = seen.get(a.url)
+    return l ? { ...a, access: l.access, ...(l.access_invalid ? { access_invalid: true as const } : {}) } : a
+  })
+}
+

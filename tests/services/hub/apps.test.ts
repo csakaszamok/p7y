@@ -13,7 +13,7 @@ describe('hubAppsOf', () => {
       c('api', { 'p7y.publish': 'yes' }, [web(9000)]),
       c('db', {}, [web(5432)]),
     ], 'example.com', 'https')
-    expect(apps).toEqual([{ id: 'shop-inner-web-port8080.example.com', url: 'https://shop-inner-web-port8080.example.com', title: 'Stock room', description: 'Who took what', service: 'web', port: 8080, image: null }])
+    expect(apps).toEqual([{ id: 'shop-inner-web-port8080.example.com', url: 'https://shop-inner-web-port8080.example.com', title: 'Stock room', description: 'Who took what', service: 'web', port: 8080, image: null, access: 'public' }])
   })
   it('"1" publishes too (and "True", as YAML writers spell it); "yes", "0" and "false" do not', () => {
     const { apps } = hubAppsOf('shop', [
@@ -24,6 +24,15 @@ describe('hubAppsOf', () => {
       c('no', { 'p7y.publish': 'false' }, [web(8085)]),
     ], 'example.com', 'https')
     expect(apps.map(a => a.service)).toEqual(['one', 'cap'])
+  })
+  it('an owner-only app is not published (listed apart, for a warning); domain and public are, with their level', () => {
+    const r = hubAppsOf('shop', [
+      c('web', { 'p7y.publish': 'true', 'p7y.access': 'domain' }, [web(8080)]),
+      c('adm', { 'p7y.publish': 'true', 'p7y.access': 'owner' }, [web(8081)]),
+      c('doc', { 'p7y.publish': 'true' }, [web(8082)]),
+    ], 'example.com', 'https')
+    expect(r.apps.map(a => [a.service, a.access])).toEqual([['web', 'domain'], ['doc', 'public']])
+    expect(r.ownerOnly).toEqual(['adm'])
   })
   it('defaults the title to the service, uses frpc.subdomain, and the lowest port', () => {
     const { apps } = hubAppsOf('shop', [c('ui', { 'p7y.publish': 'true', 'frpc.subdomain': 'board' }, [web(9001), web(3000)])], 'example.com', 'http')

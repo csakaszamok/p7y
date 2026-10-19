@@ -62,6 +62,9 @@ services:
       # Who may sign in with OIDC (comma lists); without either, anyone with an account at the provider
       OIDC_ALLOWED_DOMAINS: ${OIDC_ALLOWED_DOMAINS:-}
       OIDC_ALLOWED_EMAILS: ${OIDC_ALLOWED_EMAILS:-}
+      # App access (docs: app-access.md): who opens an app without p7y.access; the key of its cookies and tickets
+      APPS_ACCESS_DEFAULT: ${APPS_ACCESS_DEFAULT:-public}
+      APP_ACCESS_SECRET: ${APP_ACCESS_SECRET:-}
       # The Hub (docs: hub.md): off unless true; viewers besides the builders by domain or address
       HUB_ENABLED: ${HUB_ENABLED:-false}
       HUB_HOST: ${HUB_HOST:-}
@@ -176,6 +179,9 @@ services:
 
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--providers.file.watch=true"
+      # The app access middleware of every sandbox (p7y.access), from Purgatory every 2 s
+      - "--providers.http.endpoint=http://p7y:3001/traefik/access"
+      - "--providers.http.pollInterval=2s"
       - "--entrypoints.web.http.middlewares=global-error-pages@file"
       - "--entrypoints.websecure.http.middlewares=global-error-pages@file"
     ports:

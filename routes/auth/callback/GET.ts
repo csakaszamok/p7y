@@ -2,6 +2,7 @@ import { finishLogin, LoginError, OIDC_FLOW_COOKIE } from '../../../services/oid
 import { cookieHeader, createSession, getCookie, publicUrl, SESSION_COOKIE, SESSION_MAX_AGE } from '../../../services/session'
 import { purgatorySignInRefusal } from '../../../services/allowlist'
 import { rememberName } from '../../../services/hub/names'
+import { nextAfterSignIn, NEXT_COOKIE } from '../../../services/appAccess/start'
 
 export default async (req: Request): Promise<Response> => {
   const headers = new Headers()
@@ -11,7 +12,10 @@ export default async (req: Request): Promise<Response> => {
     const { email, name } = await finishLogin(callbackUrl, getCookie(req, OIDC_FLOW_COOKIE), e => purgatorySignInRefusal(e))
     rememberName(email, name)
     headers.append('set-cookie', cookieHeader(SESSION_COOKIE, createSession(email, 'user'), SESSION_MAX_AGE))
-    headers.set('location', '/')
+    // Signed in for a sandbox app (p7y.access): back to it
+    const next = nextAfterSignIn(req)
+    headers.set('location', next ?? '/')
+    if (next) headers.append('set-cookie', cookieHeader(NEXT_COOKIE, '', 0))
   } catch (err) {
     const msg = err instanceof LoginError ? err.message : 'Sign-in failed, please try again'
     headers.set('location', `/login?error=${encodeURIComponent(msg)}`)

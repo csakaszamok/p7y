@@ -573,3 +573,22 @@ describe('pluginInstallCommand', () => {
     expect(() => P.pluginInstallCommand('https://p7y.example.com', 'p7y_x $(id)')).toThrow()
   })
 })
+
+describe('Apps: access', () => {
+  const withAccess = { ...running, apps: [
+    { url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', answers: true, access: 'owner' },
+    { url: 'shop-inner-web-port80.lvh.me', port: 80, service: 'web2', answers: true, access: 'domain' },
+    { url: 'shop-portainer.lvh.me', port: 9000, service: 'portainer', answers: true, access: 'public' },
+  ] }
+  it('a tag for owner-only and domain apps, none for public', () => {
+    const apps = panelOf(P.renderPanel(withAccess, { ...ctx, simple: true }), 'apps')
+    expect(apps).toContain('<span class="tag" title="p7y.access: owner">Owner only</span>')
+    expect(apps).toContain('<span class="tag" title="p7y.access: domain">Your domain</span>')
+    expect((apps.match(/class="tag"/g) ?? []).length).toBe(2)
+  })
+  it('Details warns about an invalid p7y.access and an owner-only app that is published', () => {
+    const d = panelOf(P.renderPanel({ ...withAccess, apps: [{ ...withAccess.apps[0], access_invalid: true }], hub: { published: [], unlinked: [], owner_only: ['adm'] } }, ctx), 'settings')
+    expect(d).toContain('web: p7y.access is not public, domain or owner; only the owner can open it')
+    expect(d).toContain('adm: published, but only its owner can open it: set p7y.access: domain')
+  })
+})
