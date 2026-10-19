@@ -17,10 +17,16 @@ const IDLE_TIMEOUT = /^[1-9][0-9]*(s|m|h)$/
 const NEVER_SESSION = '87600h'
 const isOff = (v: unknown) => v === 'off' || v === '0' || v === 0
 
-/** A requested idle_timeout → "off" (0 or off), the duration itself, or null if invalid. */
+const IDLE_DAYS = /^([1-9][0-9]*)d$/
+
+/** A requested idle_timeout → "off" (0 or off), the duration itself, or null if invalid. Days become hours:
+ * the value is Sablier's sessionDuration, a Go duration, which has no d. */
 export function normalizeIdleTimeout(v: unknown): string | null {
   if (isOff(v)) return 'off'
-  return typeof v === 'string' && IDLE_TIMEOUT.test(v) ? v : null
+  if (typeof v !== 'string') return null
+  const days = IDLE_DAYS.exec(v)
+  if (days) return `${Number(days[1]) * 24}h`
+  return IDLE_TIMEOUT.test(v) ? v : null
 }
 
 /** A requested deep_sleep_after → "off" (0 or off), the duration itself, or null if invalid. */
@@ -76,7 +82,7 @@ export function validateSleepSettings(body: unknown): Partial<SleepSettings> | s
   const out: Partial<SleepSettings> = {}
   if (idle_timeout !== undefined) {
     const v = normalizeIdleTimeout(idle_timeout)
-    if (v === null) return 'idle_timeout must look like 30s, 15m or 2h, or 0 / off for never'
+    if (v === null) return 'idle_timeout must look like 30s, 15m, 2h or 1d, or 0 / off for never'
     out.idle_timeout = v
   }
   if (deep_sleep_after !== undefined) {

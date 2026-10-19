@@ -20,7 +20,7 @@ export const openapi = {
         schema: {
           type: 'object',
           properties: {
-            idle_timeout: { type: 'string', pattern: '^([1-9][0-9]*(s|m|h)|0|off)$', example: '45m' },
+            idle_timeout: { type: 'string', pattern: '^([1-9][0-9]*(s|m|h|d)|0|off)$', example: '45m' },
             deep_sleep_after: { type: 'string', pattern: '^([1-9][0-9]*(m|h|d)|0|off)$', example: '14d' },
             disk: { type: 'string', example: '50g', description: 'Admin only: the disk use above which the sandbox is flagged (a warning, nothing is stopped). Default SANDBOX_DISK.' }
           }

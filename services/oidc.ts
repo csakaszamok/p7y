@@ -1,6 +1,5 @@
 import * as client from 'openid-client'
 import { signValue, verifyValue, publicUrl } from './session'
-import { signInAllowed } from './allowlist'
 
 export const OIDC_FLOW_COOKIE = 'p7y_oidc'
 const FLOW_TTL_SEC = 600
@@ -19,7 +18,8 @@ export function providerName(): string {
   return process.env.OIDC_PROVIDER_NAME ?? 'Google'
 }
 
-function redirectUri(): string {
+/** Purgatory's own callback address. */
+export function purgatoryRedirectUri(): string {
   return `${publicUrl()}/auth/callback`
 }
 
@@ -33,14 +33,15 @@ function config(): Promise<client.Configuration> {
   return configPromise
 }
 
-export async function beginLogin(): Promise<{ url: string; flow: string }> {
+export async function beginLogin(redirectUri: string): Promise<{ url: string; flow: string }> {
   const cfg = await config()
   const verifier = client.randomPKCECodeVerifier()
   const state = client.randomState()
   const nonce = client.randomNonce()
   const url = client.buildAuthorizationUrl(cfg, {
-    redirect_uri: redirectUri(),
-    scope: 'openid email',
+    redirect_uri: redirectUri,
+    // profile: the name, so the Hub can show owners by name
+    scope: 'openid email profile',
     code_challenge: await client.calculatePKCECodeChallenge(verifier),
     code_challenge_method: 'S256',
     state,
@@ -50,8 +51,11 @@ export async function beginLogin(): Promise<{ url: string; flow: string }> {
   return { url: url.href, flow }
 }
 
-/** @param callbackUrl the callback as the provider sees it (PUBLIC_URL + /auth/callback + query) */
-export async function finishLogin(callbackUrl: URL, flowValue: string | undefined): Promise<string> {
+/**
+ * @param callbackUrl the callback as the provider sees it (its redirect URI + query)
+ * @param allow null to let the e-mail in, else the message to refuse it with
+ */
+export async function finishLogin(callbackUrl: URL, flowValue: string | undefined, allow: (email: string) => string | null): Promise<{ email: string; name: string | null }> {
   const flow = verifyValue<Flow>(flowValue)
   if (!flow || flow.exp < Math.floor(Date.now() / 1000)) throw new LoginError('Sign-in expired, please try again')
   let claims: Record<string, unknown> | undefined
@@ -70,8 +74,10 @@ export async function finishLogin(callbackUrl: URL, flowValue: string | undefine
   if (!email) throw new LoginError('Your account has no e-mail address')
   if (!hasValidEmailShape(email)) throw new LoginError('Your account has no valid e-mail address')
   if (claims?.email_verified === false) throw new LoginError('Your e-mail address is not verified')
-  if (!signInAllowed(email)) throw new LoginError(`Your account (${email}) may not sign in here. Ask the administrator.`)
-  return email
+  const refusal = allow(email)
+  if (refusal) throw new LoginError(refusal)
+  const name = typeof claims?.name === 'string' && claims.name.trim() ? claims.name.trim() : null
+  return { email, name }
 }
 
 /**

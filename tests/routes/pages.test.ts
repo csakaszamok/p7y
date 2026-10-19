@@ -195,9 +195,9 @@ describe('pages', () => {
   // Most creates use the template's stack as it is: its compose is one click away, not a 24-line box to scroll past
   it('New sandbox: the compose is in a section that starts closed', async () => {
     const home = await (await index(r('/', as('alice@example.com', 'user')))).text()
-    const section = /<details data-compose-section>[\s\S]*?<\/details>/.exec(home)?.[0] ?? ''
+    const section = /<details[^>]*data-compose-section[^>]*>[\s\S]*?<\/details>/.exec(home)?.[0] ?? ''
     expect(section).toContain('data-compose-editor')
-    expect(section).not.toMatch(/<details data-compose-section open/)
+    expect(section).not.toMatch(/<details[^>]*data-compose-section[^>]*\bopen\b/)
   })
 
   it('the sandbox page has the TCP connect dialog', async () => {
@@ -229,5 +229,15 @@ describe('pages', () => {
     expect(logo.status).toBe(200)
     expect(logo.headers.get('content-type')).toMatch(/image\/svg\+xml/)
     expect(await logo.text()).toContain('<svg')
+  })
+})
+
+describe('Overview: the Hub feed link', () => {
+  it('has the Hub feed block (shown for the admin by app.js)', async () => {
+    const overview = (await import('../../routes/overview/GET')).default
+    const res = await overview(new Request('http://localhost/overview', { headers: { cookie: `p7y_session=${createSession('admin', 'admin')}` } }))
+    const body = await res.text()
+    expect(body).toContain('id="hub-feed" hidden')
+    expect(body).toContain('id="hub-feed-new"')
   })
 })

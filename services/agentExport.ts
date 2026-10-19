@@ -4,7 +4,8 @@ import { dockerHostName } from './dockerAccess'
 import { sandboxParent } from './sandboxPaths'
 
 /**
- * The files of an export: p7y.env, the sandbox's Docker client certificates, a README with the commands.
+ * The files of an export, in a .p7y folder for the project's folder: p7y.env, the sandbox's Docker client
+ * certificates, a README with the commands, and a .gitignore of * so that git leaves the folder out on its own.
  * The certificates are read first: the returned function only fills in the token, so a token is made
  * only for an export that can be built. `docker: false`: no Docker access (p7y.env and README only).
  */
@@ -18,7 +19,7 @@ export function prepareExport(
   const url = (process.env.PUBLIC_URL ?? `https://p7y.${domain}`).replace(/\/$/, '')
   const docker = dockerHostName(sandbox, domain)
   const registry = `registry.${domain}`
-  const dir = `p7y-${raw}`
+  const dir = '.p7y'
   const read = opts.readCert ?? ((f: string) => fs.readFileSync(`${opts.usersDir ?? sandboxParent(sandbox)}/${sandbox}/certs/client/${f}`, 'utf8'))
   const certs = withDocker ? { ca: read('ca.pem'), cert: read('cert.pem'), key: read('key.pem') } : null
   return (token, portainer) => {
@@ -38,23 +39,24 @@ export function prepareExport(
 
 Only the \`docker\` command line is needed on this machine (no Docker Desktop engine).
 
-macOS / Linux (in this folder):
+macOS / Linux (in your project's folder, the one this .p7y folder is in):
 
-    docker context create p7y-${raw} --docker "host=tcp://${docker}:443,ca=$PWD/docker/ca.pem,cert=$PWD/docker/cert.pem,key=$PWD/docker/key.pem"
+    docker context create p7y-${raw} --docker "host=tcp://${docker}:443,ca=$PWD/.p7y/docker/ca.pem,cert=$PWD/.p7y/docker/cert.pem,key=$PWD/.p7y/docker/key.pem"
     docker --context p7y-${raw} ps
 
-Windows PowerShell (in this folder):
+Windows PowerShell (in your project's folder):
 
-    docker context create p7y-${raw} --docker "host=tcp://${docker}:443,ca=$PWD\\docker\\ca.pem,cert=$PWD\\docker\\cert.pem,key=$PWD\\docker\\key.pem"
+    docker context create p7y-${raw} --docker "host=tcp://${docker}:443,ca=$PWD\\.p7y\\docker\\ca.pem,cert=$PWD\\.p7y\\docker\\cert.pem,key=$PWD\\.p7y\\docker\\key.pem"
     docker --context p7y-${raw} ps
 
 \`docker --context p7y-${raw} compose up -d --build\` builds and runs in the sandbox. Publish app ports on all
 interfaces (\`8080:8080\`) and let the app listen on 0.0.0.0: that gives it a public address; a port published
-on 127.0.0.1 stays private. Connecting wakes the sandbox.
+on 127.0.0.1 stays private. A Docker connection does not wake the sandbox: wake it first
+(\`curl -X POST -H "Authorization: Bearer $P7Y_TOKEN" ${url}/sandboxes/${sandbox}/start\`, or open one of its apps).
 
 ` : `## Docker in the sandbox
 
-Not in this export. In Purgatory: the sandbox → Access → Export for coding agents… with Docker access.
+Not in this export. In Purgatory: the sandbox → Let your agent deploy… → Download, with Docker access (not "Without the Docker keys").
 
 `
   const portainerSection = pt ? `## Portainer
@@ -70,7 +72,9 @@ revoke it. Delete it in Portainer: My account → Access tokens.
   const readme = `# Purgatory access: sandbox ${raw}
 
 This folder lets a coding agent (Claude Code, Codex…) or you use the sandbox's Docker and the Purgatory registry.
-**It is a secret** (a token and a Docker client key): keep it out of git and do not share it.
+Keep it in your project's folder, named \`.p7y\`. **It is a secret** (a token and a Docker client key): its own
+\`.gitignore\` keeps it out of git; do not share it. Add \`.p7y\` to your \`.dockerignore\`, so that a build
+(\`COPY . .\`) never copies it into an image.
 
 ${dockerSection}${portainerSection}## Registry
 
@@ -92,6 +96,7 @@ In Purgatory: the sandbox → Access → **Rotate Docker keys…** (the Docker k
 Access tokens → revoke the token of this export.${pt ? ' In Portainer: My account → Access tokens → delete its token.' : ''}
 `
   return [
+    { path: `${dir}/.gitignore`, data: '*\n' },
     { path: `${dir}/p7y.env`, data: env, mode: 0o600 },
     ...(certs ? [
       { path: `${dir}/docker/ca.pem`, data: certs.ca },

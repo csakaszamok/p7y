@@ -2,6 +2,8 @@
 const view = document.body.dataset.view
 const isAdmin = document.body.dataset.role === 'admin'
 const me = document.body.dataset.sub
+// Simple or Advanced (body data-mode): Simple only hides things, the API is the same
+const simpleView = () => document.body.dataset.mode === 'simple'
 const $ = sel => document.querySelector(sel)
 // Shared with the details panel (ui/panel.js, loaded first)
 const { esc, remaining, countdown, statusLabel, statusClass, fmtBytes, meter } = window.P7yPanel
@@ -84,7 +86,9 @@ function renderRows() {
   const cols = view === 'all'
     ? ['Name', 'Owner', 'Status', 'Sleeps in', 'Deep sleep in', 'CPU · Mem', 'Template', 'Created']
     : ['Name', 'Status', 'Sleeps in', 'Deep sleep in', 'CPU · Mem', 'Template', 'Created']
-  $('[data-head]').innerHTML = `<tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr>`
+  // Simple view hides these (class adv, see style.css)
+  const ADV_COLS = ['Deep sleep in', 'CPU · Mem', 'Template']
+  $('[data-head]').innerHTML = `<tr>${cols.map(c => `<th${ADV_COLS.includes(c) ? ' class="adv"' : ''}>${c}</th>`).join('')}</tr>`
   const rows = [...filtered()]
   for (const name of pending) if (!rows.some(s => s.name === name)) rows.unshift({ name, status: 'starting', runtime: '', template: '', created_at: '' })
   $('[data-rows]').innerHTML = rows.length ? rows.map(s => `
@@ -95,9 +99,9 @@ function renderRows() {
         ? `<span class="status starting">${esc(ACTIONS[busy.get(s.name)].row)}</span>`
         : `<span class="status ${esc(statusClass(s))}">${esc(s.start_error ? 'failed to start' : statusLabel(s.status))}</span>`}</td>
       <td>${sleepCell(s)}</td>
-      <td>${deepSleepCell(s)}</td>
-      <td>${usageCell(s)}</td>
-      <td>${esc([s.runtime, s.template].filter(Boolean).join(' · '))}${s.compose === 'edited' ? ' <span class="muted">(edited)</span>' : ''}</td>
+      <td class="adv">${deepSleepCell(s)}</td>
+      <td class="adv">${usageCell(s)}</td>
+      <td class="adv">${esc([s.runtime, s.template].filter(Boolean).join(' · '))}${s.compose === 'edited' ? ' <span class="muted">(edited)</span>' : ''}</td>
       <td>${esc(age(s.created_at))}</td>
     </tr>`).join('') : `<tr><td class="muted" colspan="${cols.length}">No sandboxes yet — create one.</td></tr>`
 }
@@ -136,6 +140,21 @@ async function loadOverview() {
 function initOverview() {
   loadOverview()
   setInterval(() => { if (!document.hidden) loadOverview() }, 10_000)
+  initHubFeed()
+}
+
+// The admin's Hub feed link: a new one each time (only its hash is kept), the old one stops working
+function initHubFeed() {
+  const feed = document.getElementById('hub-feed')
+  if (!feed || document.body.dataset.role !== 'admin') return
+  feed.hidden = false
+  const out = document.getElementById('hub-feed-url')
+  document.getElementById('hub-feed-new').onclick = async () => {
+    const res = await fetch('/hub/feed-key', { method: 'POST' })
+    if (res.status === 404) { out.textContent = 'The Hub is off (HUB_ENABLED=true turns it on).'; return }
+    if (!res.ok) { out.textContent = `Could not create it (${res.status})`; return }
+    out.textContent = (await res.json()).url
+  }
 }
 
 async function loadList() {
@@ -148,6 +167,18 @@ async function loadList() {
 }
 
 // ---------- panel tabs ----------
+// ---------- the Simple | Advanced switch (topbar, every page) ----------
+for (const b of document.querySelectorAll('[data-mode-set]')) b.addEventListener('click', async () => {
+  const mode = b.dataset.modeSet
+  if (mode === document.body.dataset.mode) return
+  try { await api('/me/view', { method: 'PUT', body: JSON.stringify({ view: mode }) }) } catch { return }
+  document.body.dataset.mode = mode
+  for (const o of document.querySelectorAll('[data-mode-set]')) o.setAttribute('aria-pressed', String(o.dataset.modeSet === mode))
+  // On a page Simple hides (Overview, Access tokens, SSH keys): to My sandboxes
+  if (document.querySelector('nav a.active.adv')) { location.href = '/'; return }
+  if (selected) { renderedJSON = null; void showPanel(selected) }
+})
+
 const TAB_KEY = 'p7y.panelTab'
 let panelTab = (() => { try { return localStorage.getItem(TAB_KEY) || 'apps' } catch { return 'apps' } })()
 function selectTab(tab, focus = false) {
@@ -252,13 +283,12 @@ async function makeFolder(form) {
 
 // ---------- export for coding agents ----------
 // A new token for the sandbox as p7y.env text, to the clipboard (or shown to copy by hand without one)
-async function copyEnv(name) {
-  const b = $('[data-panel] [data-act="copy-env"]')
+async function copyEnv(name, b = $('[data-panel] [data-act="copy-env"]'), opts = {}) {
   // It may wake the sandbox to make its Portainer token: seconds, not instant
   if (b) { b.disabled = true; b.textContent = 'Preparing…' }
   try {
     const res = await fetch(`/sandboxes/${encodeURIComponent(name)}/export`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-      body: JSON.stringify({ format: 'env', name: `copied ${new Date().toISOString().slice(0, 10)}`, expires_in: '90d' }) })
+      body: JSON.stringify({ format: 'env', name: opts.name || `copied ${new Date().toISOString().slice(0, 10)}`, expires_in: opts.expires_in || '90d' }) })
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
     const text = await res.text()
     const skipped = res.headers.get('X-P7y-Portainer')
@@ -269,12 +299,33 @@ async function copyEnv(name) {
       const dlg = $('[data-env-dialog]'), box = $('[data-env-text]')
       box.value = text; dlg.showModal(); box.select()
     }
-  } catch (e) { if (b) b.textContent = 'Copy as .env'; const err = $('[data-act-error]'); err.textContent = e.message; err.hidden = false } finally { if (b) b.disabled = false }
+  } catch (e) { if (b) b.textContent = 'Copy as .env'; const err = (b && b.closest('dialog') ? $('[data-export-error]') : null) || $('[data-act-error]'); err.textContent = e.message; err.hidden = false } finally { if (b) b.disabled = false }
+}
+// The window's Options (Advanced): the token's name and expiry, for the plugin's token, the zip and Copy as .env
+function exportOptions() {
+  const form = $('[data-export-form]')
+  return { name: form.elements.name.value.trim(), expires_in: form.elements.expires_in.value }
+}
+const EXPIRY_TEXT = { '30d': '30 days', '90d': '90 days', never: 'until revoked' }
+function showPluginExpiry() {
+  const span = $('[data-plugin-expiry]')
+  if (span) span.textContent = EXPIRY_TEXT[exportOptions().expires_in] || '90 days'
 }
 function openExportDialog(name) {
   const dlg = $('[data-export-dialog]')
   if (!dlg) return void location.reload()
   dlg.dataset.sandbox = name
+  // Simple: the plugin's two answers, the address and a token made on request (never one left from before)
+  const url = $('[data-plugin-url]')
+  if (url) url.textContent = location.origin
+  const tokenBtn = $('[data-plugin-token]'), tokenValue = $('[data-plugin-token-value]'), tokenCopy = $('[data-plugin-token-copy]')
+  if (tokenBtn) {
+    tokenBtn.hidden = false; tokenBtn.disabled = false; tokenBtn.textContent = 'Create token'; tokenValue.textContent = ''; tokenValue.hidden = true; tokenCopy.hidden = true
+    const cmd = $('[data-plugin-cmd]')
+    cmd.textContent = ''; cmd.hidden = true; $('[data-plugin-cmd-copy]').hidden = true
+    $('[data-plugin-cmd-wait]').hidden = false; $('[data-plugin-token-wait]').hidden = false
+  }
+  showPluginExpiry()
   let ready = false
   try { ready = JSON.parse(renderedJSON || '{}').docker_access?.state === 'ready' } catch { /* not rendered yet */ }
   $('[data-export-needs-certs]').hidden = ready
@@ -288,6 +339,40 @@ function openExportDialog(name) {
 function initExportDialog() {
   const form = $('[data-export-form]')
   if (!form) return
+  form.elements.expires_in.addEventListener('change', showPluginExpiry)
+  form.addEventListener('click', async ev => {
+    const env = ev.target.closest('[data-copy-env]')
+    if (env) return void copyEnv($('[data-export-dialog]').dataset.sandbox, env, exportOptions())
+    const copy = ev.target.closest('[data-copy-from]')
+    if (copy) {
+      const el = copy.closest('.copy-line')?.querySelector(copy.dataset.copyFrom)
+      if (!el?.textContent) return
+      try { await navigator.clipboard.writeText(el.textContent); copy.textContent = 'Copied'; setTimeout(() => { copy.textContent = 'Copy' }, 1500) }
+      catch { const r = document.createRange(); r.selectNodeContents(el); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r) }
+      return
+    }
+    const make = ev.target.closest('[data-plugin-token]')
+    if (!make) return
+    // A token for this sandbox only, for the plugin: shown once, like any new token
+    make.disabled = true; make.textContent = 'Creating…'
+    try {
+      const o = exportOptions()
+      const { token } = await api('/tokens', { method: 'POST', body: JSON.stringify({ name: o.name || 'Claude Code plugin', sandbox: $('[data-export-dialog]').dataset.sandbox, expires_in: o.expires_in }) })
+      const value = $('[data-plugin-token-value]')
+      value.textContent = token; value.hidden = false
+      $('[data-plugin-token-copy]').hidden = false
+      $('[data-plugin-token-wait]').hidden = true
+      // The whole install, ready to paste into a terminal
+      const cmd = $('[data-plugin-cmd]')
+      cmd.textContent = P7yPanel.pluginInstallCommand(location.origin, token); cmd.hidden = false
+      $('[data-plugin-cmd-copy]').hidden = false
+      $('[data-plugin-cmd-wait]').hidden = true
+      make.disabled = true; make.textContent = 'Token created'
+    } catch (e) {
+      make.disabled = false; make.textContent = 'Create token'
+      const err = $('[data-export-error]'); err.textContent = e.message; err.hidden = false
+    }
+  })
   form.addEventListener('submit', async ev => {
     const how = ev.submitter?.value
     if (!['download', 'plain', 'enable'].includes(how)) return
@@ -301,7 +386,8 @@ function initExportDialog() {
         await api(`/sandboxes/${encodeURIComponent(name)}/docker-keys`, { method: 'POST' })
         renderedJSON = null; void showPanel(name)
       }
-      const body = { ...Object.fromEntries(new FormData(form)), docker: how !== 'plain' }
+      const { no_docker, ...fields } = Object.fromEntries(new FormData(form))
+      const body = { ...fields, docker: how !== 'plain' && !no_docker }
       const res = await fetch(`/sandboxes/${encodeURIComponent(name)}/export`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) })
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
       const a = document.createElement('a')
@@ -349,7 +435,7 @@ async function showPanel(name) {
   }
   renderedName = name
   renderedJSON = sJSON
-  panel.innerHTML = P7yPanel.renderPanel(s, { isAdmin, me, shortName, tab: panelTab, protocol: location.protocol })
+  panel.innerHTML = P7yPanel.renderPanel(s, { isAdmin, me, shortName, tab: panelTab, protocol: location.protocol, simple: simpleView() })
   if (panelTab === 'registry') void loadRegistry(name)
   if (panelTab === 'files') void loadFiles(name)
   if (busy.has(name)) markBusy(panel, busy.get(name))

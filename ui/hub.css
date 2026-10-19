@@ -1,0 +1,53 @@
+* { box-sizing: border-box }
+body { margin: 0; font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f0f0f; color: #e8e8e8 }
+a { color: #7aa7ff }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 20px; background: #151515; border-bottom: 1px solid #242424 }
+.brand { display: inline-flex; align-items: center; gap: 8px; color: #fff; font-weight: 700; text-decoration: none; font-size: 17px }
+.who { display: flex; gap: 12px; align-items: center; margin: 0; color: #aaa }
+button { font: inherit; color: #e8e8e8; background: #252525; border: 1px solid #333; border-radius: 6px; padding: 6px 12px; cursor: pointer; transition: background-color .15s, border-color .15s, box-shadow .15s }
+button:hover { background: #2f2f2f; border-color: #444 }
+button:active { background: #383838 }
+button:focus-visible, .primary:focus-visible, #q:focus-visible { outline: 2px solid #f97316; outline-offset: 2px }
+button.link { background: none; border: none; color: #7aa7ff; padding: 0 }
+.primary { background: #ea580c; border: 1px solid #ea580c; color: #fff; text-decoration: none; border-radius: 6px; padding: 6px 14px; display: inline-block; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,.4); transition: background-color .15s, box-shadow .15s }
+.primary:hover { background: #f26d1f; border-color: #f26d1f; box-shadow: 0 3px 10px rgba(234,88,12,.35) }
+.primary:active { background: #c2410c; box-shadow: 0 1px 2px rgba(0,0,0,.4) }
+main { max-width: 900px; margin: 0 auto; padding: 20px 16px 40px }
+.tools { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px }
+#q { flex: 1 1 240px; font: inherit; color: #e8e8e8; background: #141414; border: 1px solid #333; border-radius: 6px; padding: 7px 10px }
+.seg { display: inline-flex }
+.seg button { border-radius: 0 } .seg button:first-child { border-radius: 6px 0 0 6px } .seg button:last-child { border-radius: 0 6px 6px 0 }
+.seg button.on { background: #3a2414; border-color: #ea580c; color: #fff }
+.apps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px }
+/* Cards: a resting elevation; on hover a lighter surface and a raised shadow */
+.app { display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; background: #171717; border: 1px solid #262626; border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.5), 0 1px 3px rgba(0,0,0,.3); transition: background-color .18s, border-color .18s, box-shadow .18s, transform .18s }
+.app:hover { background: #1e1e1e; border-color: #343434; box-shadow: 0 6px 18px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35); transform: translateY(-2px) }
+.app:focus-within { border-color: #4a2a14 }
+.app h2 { margin: 0 0 4px; font-size: 17px }
+.desc { margin: 0 0 6px; color: #cfcfcf; white-space: pre-line } /* a description's line breaks (YAML |) */ .meta { margin: 0; color: #888; font-size: 13px }
+.side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; min-width: 130px }
+.status { font-size: 13px } .status.run { color: #f59e0b } .status.sleep { color: #888 }
+.vote.on { border-color: #ea580c; color: #fff; background: #3a2414 } .vote.on:hover { background: #4a2d17 } .vote:disabled { cursor: default; opacity: .7 }
+.hint { color: #888; font-size: 12px }
+.empty { color: #aaa; text-align: center; padding: 40px 0 }
+.login .box { max-width: 360px; margin: 12vh auto; padding: 24px; background: #161616; border: 1px solid #262626; border-radius: 10px }
+.login h1 { display: flex; align-items: center; gap: 10px; font-size: 20px; margin-top: 0 }
+.login label { display: block; margin: 10px 0 2px } .login input { width: 100%; font: inherit; color: #e8e8e8; background: #141414; border: 1px solid #333; border-radius: 6px; padding: 7px }
+.wide { width: 100%; margin-top: 12px } .error { color: #f87171 }
+@media (max-width: 600px) { .app { flex-direction: column } .side { flex-direction: row; align-items: center; min-width: 0; flex-wrap: wrap } }
+@media (prefers-reduced-motion: reduce) { .app, button, .primary { transition: none } .app:hover { transform: none } }
+/* The whole card opens the app: the title's link stretches over it; the vote button stays clickable above */
+.app { position: relative; cursor: pointer }
+.app h2 a.stretch { color: inherit; text-decoration: none }
+.app h2 a.stretch::after { content: ''; position: absolute; inset: 0; border-radius: 12px }
+.app h2 a.stretch:focus-visible { outline: none }
+.app h2 a.stretch:focus-visible::after { outline: 2px solid #f97316; outline-offset: 2px }
+.app .vote { position: relative; z-index: 1 }
+.app:hover .primary { background: #f26d1f; border-color: #f26d1f; box-shadow: 0 3px 10px rgba(234,88,12,.35) }
+/* The card's image (16:9), or the title's letter on a colour */
+.thumb { flex: 0 0 160px; height: 90px; border-radius: 8px; overflow: hidden; background: #222; display: flex; align-items: center; justify-content: center }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block }
+.thumb.ph { color: rgba(255,255,255,.9); font-size: 38px; font-weight: 700 }
+.app .main { flex: 1 1 auto; min-width: 0 }
+@media (max-width: 600px) { .thumb { flex-basis: auto; width: 100%; height: auto; aspect-ratio: 16 / 9 } }

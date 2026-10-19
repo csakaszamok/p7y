@@ -2,7 +2,7 @@
 // module.exports in Node for the tests. ui/app.js renders it and handles the clicks.
 ;(function (root) {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
-  const TABS = [['apps', 'Apps'], ['access', 'Access'], ['files', 'Files'], ['resources', 'Resources'], ['registry', 'Registry'], ['settings', 'Settings']]
+  const TABS = [['apps', 'Apps'], ['access', 'Access'], ['files', 'Files'], ['resources', 'Resources'], ['registry', 'Registry'], ['settings', 'Details']]
 
   const statusLabel = s => ({ exited: 'asleep', created: 'asleep', deep_sleep: 'deep sleep', starting: 'creating…' }[s] || s)
   // A stopped sandbox whose last start failed is not asleep; "created" (recreated, never started) is asleep
@@ -84,9 +84,25 @@
   const table = (head, rows, cls = '') => `<table class="panel-table ${cls}">${head ? `<thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead>` : ''}<tbody>${rows.join('')}</tbody></table>`
   const kv = (k, v) => `<tr><td class="k">${k}</td><td>${v}</td></tr>`
 
+  // "3 weeks ago" from an ISO time, by the page's clock
+  function ago(iso, now) {
+    const sec = Math.max(0, ((now ?? Date.now()) - Date.parse(iso)) / 1000)
+    const n = (v, unit) => `${v} ${unit}${v === 1 ? '' : 's'} ago`
+    if (sec < 60) return 'just now'
+    if (sec < 3600) return `${Math.round(sec / 60)} min ago`
+    if (sec < 86400) return `${Math.round(sec / 3600)} h ago`
+    const d = sec / 86400
+    if (d < 14) return n(Math.round(d), 'day')
+    if (d < 60) return n(Math.round(d / 7), 'week')
+    if (d < 365) return n(Math.round(d / 30), 'month')
+    return n(Math.round(d / 365), 'year')
+  }
+
   function header(s, ctx) {
     const st = s.status
-    const buttons = st === 'running' ? '<button class="primary" data-act="terminal">Terminal</button><button data-act="logs">Logs</button><button data-act="stop">Sleep</button>'
+    // Simple: only Sleep or Wake (no Terminal, no Logs)
+    const buttons = ctx.simple ? (st === 'running' ? '<button data-act="stop">Sleep</button>' : st === 'starting' ? '' : '<button class="primary" data-act="start">Wake</button>')
+      : st === 'running' ? '<button class="primary" data-act="terminal">Terminal</button><button data-act="logs">Logs</button><button data-act="stop">Sleep</button>'
       : st === 'deep_sleep' ? '<button class="primary" data-act="start">Wake</button>'
       : st === 'starting' ? ''
       : '<button class="primary" data-act="start">Wake</button><button data-act="logs">Logs</button>'
@@ -94,8 +110,9 @@
     const line = st === 'running'
       ? (s.idle_timeout === 'off' ? 'Never sleeps' : `${s.stops_at ? `Sleeps in ${countdown(s.stops_at, ctx.now)}` : s.going_to_sleep ? 'Going to sleep…' : 'The idle countdown has not started yet'} · ${reset}`)
       : st === 'deep_sleep' ? 'In deep sleep · opening an app or Wake rebuilds it'
+      // Asleep: only what matters now; when it last ran and when deep sleep comes are on the Details tab
       : st === 'exited' || st === 'created'
-        ? [s.deep_sleep_after !== 'off' && s.deep_sleep_at ? `Deep sleep in ${countdown(s.deep_sleep_at, ctx.now)}` : '', s.start_error ? '' : 'opening an app wakes it'].filter(Boolean).join(' · ')
+        ? (s.start_error ? '' : 'Asleep · opening an app wakes it')
         : ''
     return `<div class="panel-head"><h2>${esc(ctx.shortName(s.name))}</h2><span class="status ${esc(statusClass(s))}">${esc(s.start_error ? 'failed to start' : statusLabel(st))}</span>
       <div class="actions head-actions">${buttons}</div></div>
@@ -103,24 +120,31 @@
       ${s.start_error ? `<p class="error panel-error">${esc(s.start_error)}</p>` : ''}`
   }
 
+  const AGENT_BUTTON = '<div class="actions agent-actions"><button class="primary" data-act="export">Let your agent deploy…</button></div>'
+
   function appsTab(s, ctx) {
     const extras = s.extras || {}
     const rows = appRows(s)
-    if (!rows.length) return '<p class="muted">No apps yet — publish a port on all interfaces (e.g. 8080:8080) to get a link.</p>'
+    // Let your agent deploy: here in both views, for the owner (the new token is theirs)
+    const agent = (s.owner || 'admin') === ctx.me ? AGENT_BUTTON : ''
+    if (!rows.length) return '<p class="muted">No apps yet — publish a port on all interfaces (e.g. 8080:8080) to get a link.</p>' + agent
     const mark = a => a === true ? ' <span class="ok" title="answering">✓</span><span class="sr-only">answering</span>'
       : a === false ? ' <span class="warn" title="not answering">⚠</span><span class="sr-only">not answering</span>' : ''
+    const hub = s.hub || { published: [], unlinked: [] }
+    const onHub = r => r.url && hub.published.includes(r.url)
+      ? ` ${hub.url ? `<a class="tag" href="${esc(hub.url)}" target="_blank" rel="noopener">On the Hub</a>` : '<span class="tag">On the Hub</span>'}` : ''
     const body = rows.map(r => `<tr>
       <td>${esc(r.service)}</td>
-      <td>${r.url ? `<a href="${esc(ctx.protocol)}//${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.url)}">open ↗</a>${mark(r.answers)}` : '<span class="muted">—</span>'}</td>
-      <td>${r.tcp ? `<span class="tcp">${esc(r.tcp.address)}</span> ${copyButton(r.tcp.address)}` : ''}</td>
-      <td>${r.tcp ? `<button class="link" data-connect="${esc(r.tcp.address)}" data-port="${esc(r.tcp.port ?? '')}" data-user="${esc(r.tcp.user ?? '')}"${extras.demo_password ? ` data-demo-password="${esc(extras.demo_password)}"` : ''}>Connect…</button>` : ''}</td>
+      <td>${r.url ? `<a href="${esc(ctx.protocol)}//${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.url)}">open ↗</a>${mark(r.answers)}${onHub(r)}` : '<span class="muted">—</span>'}</td>
+      ${ctx.simple ? '' : `<td>${r.tcp ? `<span class="tcp">${esc(r.tcp.address)}</span> ${copyButton(r.tcp.address)}` : ''}</td>
+      <td>${r.tcp ? `<button class="link" data-connect="${esc(r.tcp.address)}" data-port="${esc(r.tcp.port ?? '')}" data-user="${esc(r.tcp.user ?? '')}"${extras.demo_password ? ` data-demo-password="${esc(extras.demo_password)}"` : ''}>Connect…</button>` : ''}</td>`}
     </tr>`)
     const down = rows.filter(r => r.answers === false).map(r => r.service)
     const tip = !down.length ? ''
       : down.length === 1 ? `<p class="not-answering">⚠ ${esc(down[0])} is not answering — does it listen on 0.0.0.0 (not 127.0.0.1) inside its container?</p>`
       : `<p class="not-answering">⚠ ${down.map(esc).join(', ')} are not answering — do they listen on 0.0.0.0 (not 127.0.0.1) inside their containers?</p>`
     const asleep = s.status !== 'running' && rows.some(r => r.url) ? '<p class="muted">opening one wakes the sandbox</p>' : ''
-    return table(['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep
+    return table(ctx.simple ? ['App', 'Web'] : ['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep + agent
   }
 
   function accessTab(s, ctx) {
@@ -161,7 +185,7 @@
     }
     if ((s.owner || 'admin') === ctx.me) parts.push(table(['API', ''], [kv('Token', '<button data-act="token">Token for this sandbox…</button>')]))
     // What a coding agent needs, for the owner (the new token is theirs), whatever the Docker access state
-    if ((s.owner || 'admin') === ctx.me) parts.unshift('<div class="actions agent-actions"><button class="primary" data-act="export">Export for coding agents…</button><button data-act="copy-env">Copy as .env</button></div>')
+    if ((s.owner || 'admin') === ctx.me) parts.unshift(AGENT_BUTTON)
     return parts.length ? parts.join('') : '<p class="muted">Nothing to connect to here.</p>'
   }
 
@@ -183,17 +207,33 @@
     return `<tr><td>Disk</td><td${when}>${now}</td><td>${fmtBytes(d.limit)}</td></tr>`
   }
 
+  // What the owner may want to fix: published apps the Hub cannot show as asked
+  function warnings(s) {
+    const hub = s.hub || {}
+    const lines = [
+      ...(hub.unlinked || []).map(n => `${esc(n)}: published, but has no web address (publish a port on all interfaces)`),
+      ...(hub.bad_image || []).map(n => `${esc(n)}: p7y.image is ignored: use a path inside the app, e.g. /shot.png`),
+    ]
+    return lines.length ? `<div class="warnings"><h3>Warnings</h3><ul>${lines.map(l => `<li>⚠ ${l}</li>`).join('')}</ul></div>` : ''
+  }
+
   function settingsTab(s, ctx) {
     const created = parseCreated(s.created_at)
     const when = created ? `${esc(new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(created))} <span class="muted">(${relativeAge(created, ctx.now)})</span>` : esc(s.created_at || '—')
     const sleep = `${s.idle_timeout === 'off' ? 'never sleeps' : `after ${esc(s.idle_timeout || '—')} idle`} · ${s.deep_sleep_after === 'off' ? 'no deep sleep' : `deep sleep ${esc(s.deep_sleep_after || '—')} after`} <button class="link" data-act="sleep">Change…</button>`
     return table(null, [
-      ...(ctx.isAdmin ? [kv('Owner', esc(s.owner === 'admin' ? 'admin API' : s.owner))] : []),
-      kv('Runtime · Template', `${esc([s.runtime, s.template].filter(Boolean).join(' · ') || '—')}${s.compose === 'edited' ? ' <span class="muted">(edited)</span>' : ''}`),
+      ...(ctx.isAdmin && !ctx.simple ? [kv('Owner', esc(s.owner === 'admin' ? 'admin API' : s.owner))] : []),
+      ...(ctx.simple ? [] : [kv('Runtime · Template', `${esc([s.runtime, s.template].filter(Boolean).join(' · ') || '—')}${s.compose === 'edited' ? ' <span class="muted">(edited)</span>' : ''}`)]),
       kv('Created', when),
+      // When it last ran (~ when only estimated), the exact time on hover
+      kv('Last ran', s.status === 'running' ? 'now (running)'
+        : s.last_running_at ? `<span title="${esc(new Date(s.last_running_at).toLocaleString())}">${s.last_running_estimated ? '~' : ''}${esc(ago(s.last_running_at, ctx.now))}</span>`
+        : '<span class="muted">unknown</span>'),
+      ...((s.status === 'exited' || s.status === 'created') && s.deep_sleep_after !== 'off' && s.deep_sleep_at
+        ? [kv('Deep sleep', `in ${countdown(s.deep_sleep_at, ctx.now)}`)] : []),
       kv('Sleep', sleep),
-      kv('Compose', '<button class="link" data-act="compose">Starter stack…</button>'),
-    ]) + `<div class="danger-zone"><h3>Danger zone</h3><div class="actions">${s.status !== 'deep_sleep' ? '<button data-act="deep-sleep">Deep sleep now</button>' : ''}<button class="danger" data-act="delete">Archive…</button></div></div>`
+      ...(ctx.simple ? [] : [kv('Compose', '<button class="link" data-act="compose">Starter stack…</button>')]),
+    ]) + warnings(s) + `<div class="danger-zone"><h3>Danger zone</h3><div class="actions">${s.status !== 'deep_sleep' ? '<button data-act="deep-sleep">Deep sleep now</button>' : ''}<button class="danger" data-act="delete">Archive…</button></div></div>`
   }
 
   /** The Registry tab: the sandbox's images, their scan results, and whether they can be pulled without a login. */
@@ -266,6 +306,10 @@
       <p class="muted" data-files-status hidden></p>`
   }
 
+  /** The tabs shown: Simple has only Apps and Details */
+  const SIMPLE_TABS = ['apps', 'settings']
+  const tabsOf = ctx => ctx.simple ? TABS.filter(([id]) => SIMPLE_TABS.includes(id)) : TABS
+
   /** Right after a click, from the list's row: the new sandbox's name and status at once, never the previous one's
    * details while its own load (on a slow or busy server that takes seconds) */
   function loadingPanel(s, ctx) {
@@ -274,8 +318,9 @@
   }
 
   function renderPanel(s, ctx) {
-    const tab = TABS.some(([id]) => id === ctx.tab) ? ctx.tab : 'apps'
-    const tabs = TABS.map(([id, label]) => `<button role="tab" id="tab-${id}" aria-selected="${id === tab}" aria-controls="tabpanel-${id}" tabindex="${id === tab ? 0 : -1}" data-tab="${id}">${label}</button>`).join('')
+    const shown = tabsOf(ctx)
+    const tab = shown.some(([id]) => id === ctx.tab) ? ctx.tab : 'apps'
+    const tabs = shown.map(([id, label]) => `<button role="tab" id="tab-${id}" aria-selected="${id === tab}" aria-controls="tabpanel-${id}" tabindex="${id === tab ? 0 : -1}" data-tab="${id}">${label}</button>`).join('')
     const body = {
       apps: appsTab(s, ctx),
       access: accessTab(s, ctx),
@@ -287,7 +332,7 @@
     }
     return `${header(s, ctx)}
       <div class="tabs" role="tablist" aria-label="Sandbox details">${tabs}</div>
-      ${TABS.map(([id]) => `<div role="tabpanel" id="tabpanel-${id}" aria-labelledby="tab-${id}" data-tabpanel="${id}"${id === tab ? '' : ' hidden'}>${body[id]}</div><!--/${id}-->`).join('')}
+      ${shown.map(([id]) => `<div role="tabpanel" id="tabpanel-${id}" aria-labelledby="tab-${id}" data-tabpanel="${id}"${id === tab ? '' : ' hidden'}>${body[id]}</div><!--/${id}-->`).join('')}
       <p class="error" data-act-error hidden></p>`
   }
 
@@ -384,7 +429,19 @@
     return out
   }
 
-  const api = { loadingPanel, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  /**
+   * What a user pastes into a terminal to install the Claude Code plugin with this Purgatory's address and a token.
+   * Only plain URL and token characters go in: nothing a shell would read as more than one argument.
+   */
+  function pluginInstallCommand(url, token) {
+    const u = String(url).replace(/\/+$/, '')
+    if (!/^https?:\/\/[A-Za-z0-9.:-]+$/.test(u)) throw new Error(`not an address: ${u}`)
+    if (!/^p7y_[A-Za-z0-9_-]+$/.test(token)) throw new Error('not a token')
+    return 'claude plugin marketplace add p7y-dev/p7y\n' +
+      `claude plugin install p7y@p7y --scope user --config p7y_url=${u} --config p7y_token=${token}`
+  }
+
+  const api = { loadingPanel, pluginInstallCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

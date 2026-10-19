@@ -24,6 +24,22 @@ label.check input { width: auto }
 .topbar nav a { color: #aaa; text-decoration: none }
 .topbar nav a.active { color: #fff; font-weight: 600 }
 .who { display: flex; gap: 12px; align-items: center; margin: 0; color: #aaa }
+/* Simple | Advanced: Simple hides what is marked adv (it does not restrict anything) */
+body[data-mode="simple"] .adv { display: none !important }
+body:not([data-mode="simple"]) .simple-only { display: none !important }
+/* Let your agent deploy (Simple): the Claude Code plugin, or the zip for other agents */
+.agent-way { border: 1px solid #2a2a2a; border-radius: 8px; padding: 10px 14px; margin: 10px 0 }
+.agent-way h3 { margin: 0 0 6px; font-size: 14px }
+.agent-way ol { margin: 0; padding-left: 18px }
+.agent-way li { margin: 6px 0 }
+.copy-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 }
+.copy-line code { overflow-wrap: anywhere }
+.plugin-cmd { flex: 1 1 100%; margin: 4px 0 0; padding: 8px 10px; background: #111; border: 1px solid #2a2a2a; border-radius: 6px; font: 12px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere }
+.plugin-other { margin-top: 10px }
+.plugin-other summary { cursor: pointer; color: #aaa; font-size: 13px }
+.mode-switch { display: inline-flex; border: 1px solid #2c2c2c; border-radius: 999px; overflow: hidden; flex: none }
+.mode-switch button { background: none; border: 0; border-radius: 0; color: #aaa; padding: 3px 10px; font-size: 12px; cursor: pointer }
+.mode-switch button[aria-pressed="true"] { background: #2a2a2a; color: #fff }
 /* My sandboxes: the running line beside New sandbox, on one line (the details on hover) */
 .quota { white-space: nowrap }
 /* the Files tab: the four folders, the path, the tools, the list; a dashed outline while files are dragged over */
@@ -261,3 +277,9 @@ a.ov-card:hover { border-color: #ea580c; transform: translateY(-1px) }
   .repo-badge .name { display: none }
   .who { margin-left: auto }
 }
+/* Apps tab: an app published to the Hub */
+.tag { font-size: 12px; padding: 1px 6px; border: 1px solid #ea580c; border-radius: 10px; color: #f0a060; text-decoration: none; margin-left: 4px }
+/* Details tab: things the owner may want to fix */
+.warnings h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #f59e0b; margin: 16px 0 6px }
+.warnings ul { margin: 0; padding-left: 0; list-style: none }
+.warnings li { margin: 4px 0; color: #e8c27a }

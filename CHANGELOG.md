@@ -4,6 +4,29 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-19
+
+Upgrading from 0.7: download the new `docker-compose.yml` (and see `env.example` for the new, optional Hub settings), then `docker compose pull && docker compose up -d`. The Hub stays off unless `HUB_ENABLED=true`; with single sign-on it also needs `https://hub.<HOST_DOMAIN>/auth/callback` at the provider.
+
+### Added
+
+- *Sleep after no traffic* (`idle_timeout`) takes days too, as the deep sleep time does: `1d` is kept as `24h` (Sablier's durations have no days).
+- **Tutorials** in the docs ([Tutorials](https://p7y-dev.github.io/p7y/latest/tutorials/)), for people who just want their app online: with Claude Code and the p7y plugin, with any agent and the zip, and sharing an app on the Hub. The plugin's deploy skill also knows the Hub's labels.
+- **The `.p7y` folder**: an export for coding agents (and the Claude Code plugin's deploy skill) puts a project's sandbox access in a `.p7y` folder in the project's root: `p7y.env`, the Docker keys, a README, and a `.gitignore` of `*`, so git leaves it out without changing the project's own `.gitignore`. The zip used to hold a `p7y-<sandbox>/` folder; agents still read that. In the Simple view, **Let your agent deploy…** offers the Claude Code plugin (**Create token** makes a token for the sandbox and a two-line command with it to paste into a terminal: `claude plugin marketplace add …`, `claude plugin install … --config …`) or the zip for other agents, which the agent unpacks itself.
+- **Claude Code plugin** ([docs](https://p7y-dev.github.io/p7y/latest/claude-plugin/)): `/plugin marketplace add p7y-dev/p7y`, `/plugin install p7y@p7y`. It asks for your Purgatory's address and a token (kept in the system's secure storage), connects its MCP server, and adds a deploy skill (`/p7y:deploy`): *put my app online* picks or creates a sandbox, wakes it, deploys with Docker, checks the app answers and gives its address. Also in the Claude desktop app's Code tab; Claude chat and Cowork get only the skill.
+- **Simple and Advanced views** ([docs](https://p7y-dev.github.io/p7y/latest/web-ui/#simple-and-advanced)): a switch in the top bar, remembered per account. Simple, the default for users, shows only what someone who wants an app online needs: the apps' web addresses, **Let your agent deploy…**, Wake/Sleep, when it last ran and the sleep times. Advanced, the default for the admin, is the UI as it was. **Let your agent deploy…** (on the Apps tab in both, and on Access in Advanced; it replaces *Export for coding agents…* and *Copy as .env*) is the same window in both views: the Claude Code plugin or a zip for other agents; Advanced adds its **Options** (token name and expiry, a zip without the Docker keys, **Copy as .env**), Simple uses a token for 90 days. Simple only hides; permissions, the API and MCP are the same. `PUT /me/view`, and `view` in `GET /me`.
+- **When a sandbox last ran**: a sandbox that is asleep or in deep sleep says so on its panel's Details tab (*Last ran: 3 weeks ago*) and its apps on the Hub (*asleep · ran 3 weeks ago*); `GET /sandboxes/:name` gives `last_running_at`. Asleep, it is when its container stopped; Purgatory now keeps that time when it takes a sandbox into deep sleep. A sandbox already in deep sleep before this upgrade gets an estimate (`~`, `last_running_estimated`).
+- **The Hub** ([docs](https://p7y-dev.github.io/p7y/latest/hub/)): the apps builders publish with a `p7y.publish: "true"` label (or `"1"`), at their own address `hub.<HOST_DOMAIN>`, for colleagues who only use them: search, *Popular* and *New*, whether an app runs or sleeps, **Open** (an asleep app wakes). Viewers sign in with the same single sign-on but only to the Hub (`HUB_ALLOWED_DOMAINS`, `HUB_ALLOWED_EMAILS`); everyone signed in can vote once per app, their own too. A card shows the app's image: `p7y.image` (a path inside the app) or its page's og:image, fetched in the background without waking anything; else the title's letter. An RSS and a JSON feed with a secret key (*Overview → Create feed link*). Off unless `HUB_ENABLED=true`; with single sign-on, add `https://hub.<HOST_DOMAIN>/auth/callback` at the provider. A published app has an *On the Hub* marker on the *Apps* tab.
+
+### Changed
+
+- The sandbox panel's **Settings** tab is called **Details**, and it says when an asleep sandbox goes into deep sleep and when it last ran; the panel's header keeps only what matters now (*Sleeps in …*, *Asleep*, *In deep sleep*).
+- Single sign-on asks the provider for `profile` too (`openid email profile`): the Hub shows owners by name. An account that may use only the Hub is sent there by Purgatory's sign-in.
+
+### Fixed
+
+- The README in an export for coding agents said that connecting with Docker wakes the sandbox; it does not: wake it first.
+
 ## [0.7.3] - 2026-10-19
 
 Upgrading from 0.7.2: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d`.

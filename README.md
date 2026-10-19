@@ -16,7 +16,7 @@ Think of it as a self-hosted Vercel for the apps your team and its agents spin u
 - **Its own Docker daemon** for every sandbox (with a Portainer UI if you want one)
 - **A public URL for every app**, and TLS addresses for Postgres, Redis and SSH
 - **Sleeps when idle, wakes on the next request**; a delete archives, nothing is lost
-- **Made for agents:** tokens limited to one sandbox, an [agent guide](docs/agent-guide.md) and an MCP server
+- **Made for agents:** tokens limited to one sandbox, an [agent guide](docs/agent-guide.md), an MCP server and a [Claude Code plugin](https://p7y-dev.github.io/p7y/latest/claude-plugin/) (`/plugin marketplace add p7y-dev/p7y`)
 
 **[Why Purgatory, and how it compares](https://p7y-dev.github.io/p7y/latest/comparison/)** with a laptop, a cloud PaaS, a shared Docker host, Coolify and a VM for everyone · **[How it works](https://p7y-dev.github.io/p7y/latest/architecture.html)**: the components (Docker-in-Docker, frp, Traefik, Sablier), a sandbox's lifecycle and the path of a request
 
@@ -75,7 +75,7 @@ More in [how it compares](https://p7y-dev.github.io/p7y/latest/comparison/).
 
 ## Documentation
 
-**[p7y-dev.github.io/p7y](https://p7y-dev.github.io/p7y/latest/)**: [install](https://p7y-dev.github.io/p7y/latest/install/), [configuration](https://p7y-dev.github.io/p7y/latest/configuration/), [let your agent deploy](https://p7y-dev.github.io/p7y/latest/agents/), [MCP](https://p7y-dev.github.io/p7y/latest/mcp/), [API](https://p7y-dev.github.io/p7y/latest/api/), and [`llms-full.txt`](https://p7y-dev.github.io/p7y/latest/llms-full.txt) for agents.
+**[p7y-dev.github.io/p7y](https://p7y-dev.github.io/p7y/latest/)**: [tutorials](https://p7y-dev.github.io/p7y/latest/tutorials/), [install](https://p7y-dev.github.io/p7y/latest/install/), [configuration](https://p7y-dev.github.io/p7y/latest/configuration/), [let your agent deploy](https://p7y-dev.github.io/p7y/latest/agents/), [MCP](https://p7y-dev.github.io/p7y/latest/mcp/), [API](https://p7y-dev.github.io/p7y/latest/api/), and [`llms-full.txt`](https://p7y-dev.github.io/p7y/latest/llms-full.txt) for agents.
 
 > **Security:** where [sysbox](https://github.com/nestybox/sysbox) is installed, sandboxes run without a privileged container; without it they fall back to the privileged `dind`, which suits a team that trusts each other, not hostile code. On a shared server install sysbox and set `ALLOWED_RUNTIMES=sysbox` ([details](https://p7y-dev.github.io/p7y/latest/security/)).
 

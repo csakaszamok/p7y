@@ -102,7 +102,9 @@ describe('renderPanel', () => {
     expect(asleep).toContain('data-act="start"')
     expect(asleep).not.toContain('data-act="terminal"')
     expect(asleep).not.toContain('data-act="keep-awake"')
-    expect(asleep).toMatch(/Deep sleep in <span data-until=[^>]*>[^<]*<\/span> · opening an app wakes it/)
+    // The header says only what matters now; when deep sleep comes is on the Details tab
+    expect(asleep).toContain('<p class="panel-sub">Asleep · opening an app wakes it</p>')
+    expect(panelOf(asleep, 'settings')).toMatch(/Deep sleep<\/td><td>in <span data-until=[^>]*>[^<]*<\/span>/)
     expect(panelOf(asleep, 'apps')).toContain('opening one wakes the sandbox')
     const deep = P.renderPanel({ ...running, status: 'deep_sleep' }, ctx)
     expect(deep).toContain('In deep sleep · opening an app or Wake rebuilds it')
@@ -207,17 +209,22 @@ describe('agent access in the panel', () => {
   })
 })
 
-describe('export band', () => {
-  it('Export and Copy as .env sit at the top of Access for the owner, whatever the state', () => {
+describe('Let your agent deploy: the same in both views', () => {
+  it('on the Apps tab in Simple and Advanced, for the owner', () => {
+    for (const c of [ctx, { ...ctx, simple: true }]) {
+      expect(panelOf(P.renderPanel(running, c), 'apps')).toContain('data-act="export">Let your agent deploy…</button>')
+      expect(panelOf(P.renderPanel(running, { ...c, me: 'bob', isAdmin: false }), 'apps')).not.toContain('data-act="export"')
+    }
+  })
+  it('Advanced: also at the top of Access, whatever the Docker state; Copy as .env is in its window now', () => {
     for (const docker_access of [{ host: 'x', state: 'ready' }, { host: 'x', state: 'needs-certs' }, undefined]) {
       const access = panelOf(P.renderPanel({ ...running, docker_access }, ctx), 'access')
-      expect(access.indexOf('data-act="export"')).toBeGreaterThan(-1)
+      expect(access).toContain('data-act="export">Let your agent deploy…</button>')
       expect(access.indexOf('data-act="export"')).toBeLessThan(access.indexOf('<table'))
-      expect(access).toContain('data-act="copy-env"')
+      expect(access).not.toContain('data-act="copy-env"')
     }
     const other = panelOf(P.renderPanel({ ...running, docker_access: { host: 'x', state: 'ready' } }, { ...ctx, me: 'bob', isAdmin: false }), 'access')
     expect(other).not.toContain('data-act="export"')
-    expect(other).not.toContain('data-act="copy-env"')
   })
 })
 
@@ -450,11 +457,120 @@ describe('the Files tab', () => {
   })
 })
 
+describe('Apps: the Hub', () => {
+  it('marks the apps on the Hub, with a link to it, and names published ones that have no web address', () => {
+    const s = { ...running, hub: { enabled: true, url: 'https://hub.lvh.me', published: ['shop-portainer.lvh.me'], unlinked: ['worker'] } }
+    const apps = panelOf(P.renderPanel(s, ctx), 'apps')
+    expect(apps).toContain('<a class="tag" href="https://hub.lvh.me" target="_blank" rel="noopener">On the Hub</a>')
+    expect(apps.match(/On the Hub/g)).toHaveLength(1)
+    // Warnings are on the Details tab, not among the apps
+    expect(apps).not.toContain('has no web address')
+    expect(panelOf(P.renderPanel(s, ctx), 'settings')).toContain('worker: published, but has no web address (publish a port on all interfaces)')
+  })
+  it('shows nothing about the Hub without it', () => {
+    expect(panelOf(P.renderPanel(running, ctx), 'apps')).not.toContain('On the Hub')
+  })
+})
+
+describe('Apps: an unusable p7y.image', () => {
+  it('says why the image is ignored', () => {
+    const s = { ...running, hub: { enabled: true, url: 'https://hub.lvh.me', published: [], unlinked: [], bad_image: ['web'] } }
+    const details = panelOf(P.renderPanel(s, ctx), 'settings')
+    expect(details).toContain('<h3>Warnings</h3>')
+    expect(details).toContain('web: p7y.image is ignored: use a path inside the app, e.g. /shot.png')
+    expect(panelOf(P.renderPanel(running, ctx), 'settings')).not.toContain('Warnings')
+  })
+})
+
+describe('Details: when it last ran', () => {
+  const asleep = { ...running, status: 'exited', stops_at: null, deep_sleep_at: '2026-10-11T15:00:00Z', last_running_at: '2026-09-13T15:00:00Z', last_running_estimated: false }
+  it('asleep: "Last ran 3 weeks ago" on the Details tab, the exact time on hover; not in the header', () => {
+    const html = P.renderPanel(asleep, ctx)
+    expect(panelOf(html, 'settings')).toMatch(/Last ran<\/td><td><span title="[^"]*2026[^"]*">3 weeks ago<\/span>/)
+    expect(html.slice(0, html.indexOf('role="tablist"'))).not.toContain('Last ran')
+  })
+  it('deep sleep with an estimate: "~"', () => {
+    const html = P.renderPanel({ ...asleep, status: 'deep_sleep', deep_sleep_at: null, last_running_at: '2026-08-04T15:00:00Z', last_running_estimated: true }, ctx)
+    expect(panelOf(html, 'settings')).toContain('>~2 months ago</span>')
+  })
+  it('always on the Details tab: "now (running)" while it runs, "unknown" when it is not known', () => {
+    expect(panelOf(P.renderPanel(running, ctx), 'settings')).toMatch(/Last ran<\/td><td>now \(running\)<\/td>/)
+    expect(panelOf(P.renderPanel({ ...asleep, last_running_at: null }, ctx), 'settings')).toMatch(/Last ran<\/td><td><span class="muted">unknown<\/span><\/td>/)
+  })
+  it('the tab is called Details', () => {
+    expect(P.TABS.find(([id]: string[]) => id === 'settings')[1]).toBe('Details')
+  })
+})
+
 describe('header: going to sleep', () => {
   it('running with its session just expired: "Going to sleep…", not "not started yet"', () => {
     const html = P.renderPanel({ ...running, stops_at: null, going_to_sleep: true }, ctx)
     expect(html).toContain('Going to sleep…')
     expect(html).not.toContain('The idle countdown has not started yet')
+  })
+})
+
+describe('Simple view', () => {
+  const simple = { ...ctx, simple: true }
+  const asleep = { ...running, status: 'exited' }
+
+  it('only the Apps and Details tabs', () => {
+    const html = P.renderPanel(running, simple)
+    expect([...html.matchAll(/data-tab="(\w+)"/g)].map(m => m[1])).toEqual(['apps', 'settings'])
+    expect(html).not.toContain('data-tabpanel="access"')
+  })
+  it('a tab only Advanced has falls back to Apps', () => {
+    expect(P.renderPanel(running, { ...simple, tab: 'files' })).toContain('aria-selected="true" aria-controls="tabpanel-apps"')
+  })
+  it('the header: Sleep or Wake only, no Terminal or Logs', () => {
+    const head = P.renderPanel(running, simple).split('<div class="tabs"')[0]
+    expect(head).toContain('data-act="stop"')
+    expect(head).not.toContain('data-act="terminal"')
+    expect(head).not.toContain('data-act="logs"')
+    const sleeping = P.renderPanel(asleep, simple).split('<div class="tabs"')[0]
+    expect(sleeping).toContain('data-act="start"')
+    expect(sleeping).not.toContain('data-act="logs"')
+  })
+  it('Apps: App and Web only, the Hub tag kept, and the agent button for the owner', () => {
+    const apps = panelOf(P.renderPanel({ ...running, hub: { published: ['shop-inner-web-port80.lvh.me'], unlinked: [] } }, simple), 'apps')
+    expect(apps).toContain('<th>App</th><th>Web</th></tr>')
+    expect(apps).not.toContain('data-connect')
+    expect(apps).not.toContain('-tcp.lvh.me')
+    expect(apps).toContain('On the Hub')
+    expect(apps).toContain('data-act="export">Let your agent deploy…</button>')
+    expect(panelOf(P.renderPanel(running, { ...simple, me: 'someone-else' }), 'apps')).not.toContain('data-act="export"')
+  })
+  it('the agent button also with no apps yet', () => {
+    expect(panelOf(P.renderPanel({ ...running, apps: [], tunnel_urls: [], tcp_addresses: [] }, simple), 'apps')).toContain('data-act="export"')
+  })
+  it('Details: no Owner, Runtime · Template or Compose; sleep, last ran and the danger zone stay', () => {
+    const d = panelOf(P.renderPanel(running, simple), 'settings')
+    expect(d).not.toContain('Owner')
+    expect(d).not.toContain('Runtime · Template')
+    expect(d).not.toContain('data-act="compose"')
+    expect(d).toContain('Last ran')
+    expect(d).toContain('data-act="sleep"')
+    expect(d).toContain('Danger zone')
+  })
+  it('Advanced (no ctx.simple) keeps every tab and the TCP columns', () => {
+    const html = P.renderPanel(running, ctx)
+    expect([...html.matchAll(/data-tab="(\w+)"/g)].map(m => m[1])).toEqual(['apps', 'access', 'files', 'resources', 'registry', 'settings'])
+    expect(panelOf(html, 'apps')).toContain('data-connect')
+  })
+})
+
+describe('pluginInstallCommand', () => {
+  it('two lines for a terminal: add the marketplace, install for the user with the address and the token', () => {
+    expect(P.pluginInstallCommand('https://p7y.example.com', 'p7y_abc123')).toBe(
+      'claude plugin marketplace add p7y-dev/p7y\n' +
+      'claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.com --config p7y_token=p7y_abc123')
+  })
+  it('drops a trailing slash of the address (the MCP is <address>/mcp)', () => {
+    expect(P.pluginInstallCommand('https://p7y.example.com/', 'p7y_x')).toContain('p7y_url=https://p7y.example.com --config')
+  })
+  it('refuses what could break out of the command line', () => {
+    expect(() => P.pluginInstallCommand('https://p7y.example.com; rm -rf ~', 'p7y_x')).toThrow()
+    expect(() => P.pluginInstallCommand('https://p7y.example.com', 'p7y_x $(id)')).toThrow()
   })
 })
 

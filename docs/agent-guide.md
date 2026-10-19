@@ -61,10 +61,10 @@ docker --context p7y-shop ps
 
 Only TLS with these certificates gets in: Purgatory passes the connection through without opening it. Keep the key as secret as the token.
 
-If the user gave you an export folder instead (`p7y-<sandbox>/` with `p7y.env`, `docker/` and a README), the certificates are in its `docker/` and `p7y.env` has `P7Y_DOCKER_HOST`:
+If the user gave you an export instead, it is a `.p7y` folder for the project's root folder (from the zip `p7y-<sandbox>.zip`; an older export is a `p7y-<sandbox>/` folder): `p7y.env`, `docker/` with the certificates, a README, and a `.gitignore` of `*` that keeps the folder out of git. `p7y.env` has `P7Y_DOCKER_HOST`. Unpack a zip into the project's root and delete the zip (it holds a token); add `.p7y` to `.dockerignore`, so that a build never copies the keys into an image:
 
 ```sh
-docker context create p7y-shop --docker "host=$P7Y_DOCKER_HOST,ca=$PWD/p7y-shop/docker/ca.pem,cert=$PWD/p7y-shop/docker/cert.pem,key=$PWD/p7y-shop/docker/key.pem"
+docker context create p7y-shop --docker "host=$P7Y_DOCKER_HOST,ca=$PWD/.p7y/docker/ca.pem,cert=$PWD/.p7y/docker/cert.pem,key=$PWD/.p7y/docker/key.pem"
 ```
 
 ## 3. Deploy an app

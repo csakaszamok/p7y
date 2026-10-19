@@ -30,6 +30,12 @@ data/registry-gc.json
 data/registry-notify.secret
 data/registry-scans.json
 data/disk-usage.json
+# The Hub: the feed key's hash, voters' and owners' e-mails and names
+data/hub-feed.key
+data/hub-votes.json
+data/hub-names.json
+data/hub-images/
+data/user-prefs.json
 dynamic/tls.yml
 # written by p7y-init from the image
 dynamic/errors.yml
