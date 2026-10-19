@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-10-19
+
+Upgrading from 0.9.0: download the new `docker-compose.yml` (it passes the new sleep limits to Purgatory), then `docker compose pull && docker compose up -d`.
+
 ### Added
 
 - **Sleep limits** for users' sandboxes: `SANDBOX_MAX_IDLE_TIMEOUT` and `SANDBOX_MAX_DEEP_SLEEP_AFTER` (e.g. `2h`, `1d`; unset: no limit, as before). A longer value, or never, is refused with *at most 2h on this server*; a template's longer default is cut to the limit; the admin is not limited. Together with `SANDBOX_MAX_CPUS` / `SANDBOX_MAX_MEMORY` this keeps a shared server (a workshop) from being held by sandboxes that never sleep.
