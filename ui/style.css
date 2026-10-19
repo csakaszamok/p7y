@@ -34,6 +34,9 @@ body:not([data-mode="simple"]) .simple-only { display: none !important }
 .agent-way li { margin: 6px 0 }
 .copy-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 }
 .copy-line code { overflow-wrap: anywhere }
+.plugin-cmd { flex: 1 1 100%; margin: 4px 0 0; padding: 8px 10px; background: #111; border: 1px solid #2a2a2a; border-radius: 6px; font: 12px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere }
+.plugin-other { margin-top: 10px }
+.plugin-other summary { cursor: pointer; color: #aaa; font-size: 13px }
 .mode-switch { display: inline-flex; border: 1px solid #2c2c2c; border-radius: 999px; overflow: hidden; flex: none }
 .mode-switch button { background: none; border: 0; border-radius: 0; color: #aaa; padding: 3px 10px; font-size: 12px; cursor: pointer }
 .mode-switch button[aria-pressed="true"] { background: #2a2a2a; color: #fff }

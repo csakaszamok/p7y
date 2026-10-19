@@ -310,7 +310,12 @@ function openExportDialog(name) {
   const url = $('[data-plugin-url]')
   if (url) url.textContent = location.origin
   const tokenBtn = $('[data-plugin-token]'), tokenValue = $('[data-plugin-token-value]'), tokenCopy = $('[data-plugin-token-copy]')
-  if (tokenBtn) { tokenBtn.hidden = false; tokenBtn.disabled = false; tokenBtn.textContent = 'Create token'; tokenValue.textContent = ''; tokenValue.hidden = true; tokenCopy.hidden = true }
+  if (tokenBtn) {
+    tokenBtn.hidden = false; tokenBtn.disabled = false; tokenBtn.textContent = 'Create token'; tokenValue.textContent = ''; tokenValue.hidden = true; tokenCopy.hidden = true
+    const cmd = $('[data-plugin-cmd]')
+    cmd.textContent = ''; cmd.hidden = true; $('[data-plugin-cmd-copy]').hidden = true
+    $('[data-plugin-cmd-wait]').hidden = false; $('[data-plugin-token-wait]').hidden = false
+  }
   let ready = false
   try { ready = JSON.parse(renderedJSON || '{}').docker_access?.state === 'ready' } catch { /* not rendered yet */ }
   $('[data-export-needs-certs]').hidden = ready
@@ -342,7 +347,13 @@ function initExportDialog() {
       const value = $('[data-plugin-token-value]')
       value.textContent = token; value.hidden = false
       $('[data-plugin-token-copy]').hidden = false
-      make.hidden = true
+      $('[data-plugin-token-wait]').hidden = true
+      // The whole install, ready to paste into a terminal
+      const cmd = $('[data-plugin-cmd]')
+      cmd.textContent = P7yPanel.pluginInstallCommand(location.origin, token); cmd.hidden = false
+      $('[data-plugin-cmd-copy]').hidden = false
+      $('[data-plugin-cmd-wait]').hidden = true
+      make.disabled = true; make.textContent = 'Token created'
     } catch (e) {
       make.disabled = false; make.textContent = 'Create token'
       const err = $('[data-export-error]'); err.textContent = e.message; err.hidden = false
