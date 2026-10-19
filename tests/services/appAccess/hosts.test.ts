@@ -1,45 +1,38 @@
 import { describe, it, expect } from 'vitest'
 import { accessOfHost, sandboxAccess } from '../../../services/appAccess/hosts'
 
-const links = [
-  { url: 'shop-web.example.com', port: 8080, service: 'web', access: 'domain' as const },
-  { url: 'shop-doc.example.com', port: 9001, service: 'doc', access: 'public' as const },
-]
-const deps = {
+// Each app's level by its link name (the first label of its address), as read from the containers' labels
+const map = { 'shop-web': 'public' as const, 'shop-dom': 'domain' as const }
+const deps = (over: Record<string, unknown> = {}) => ({
   sandboxOf: (h: string) => h.startsWith('shop-') ? 'p7y-shop' : null,
   ownerOf: () => 'bob@example.com',
-  links: async () => links,
+  accessMap: () => map,
+  fresh: async () => null,
   env: {} as NodeJS.ProcessEnv,
-}
+  ...over,
+})
 
 describe('accessOfHost', () => {
   it('an app host: its own level and the sandbox owner', async () => {
-    expect(await accessOfHost('shop-web.example.com', deps)).toEqual({ sandbox: 'p7y-shop', owner: 'bob@example.com', access: 'domain' })
-    expect(await accessOfHost('SHOP-DOC.example.com:443', deps)).toEqual({ sandbox: 'p7y-shop', owner: 'bob@example.com', access: 'public' })
+    expect(await accessOfHost('shop-dom.example.com', deps())).toEqual({ sandbox: 'p7y-shop', owner: 'bob@example.com', access: 'domain' })
+    expect(await accessOfHost('SHOP-WEB.example.com:443', deps())).toEqual({ sandbox: 'p7y-shop', owner: 'bob@example.com', access: 'public' })
   })
-  it('a host of the sandbox without a known app: the most restrictive of its apps (closed)', async () => {
-    expect((await accessOfHost('shop-new.example.com', deps))!.access).toBe('domain')
+  it('an address of the sandbox whose app is not known: read the labels afresh', async () => {
+    expect((await accessOfHost('shop-own.example.com', deps({ fresh: async () => ({ ...map, 'shop-own': 'owner' }) })))!.access).toBe('owner')
+    expect((await accessOfHost('shop-new.example.com', deps({ fresh: async () => ({ ...map, 'shop-new': 'public' }) })))!.access).toBe('public')
   })
-  it('no links known at all: the default', async () => {
-    expect((await accessOfHost('shop-x.example.com', { ...deps, links: async () => null, env: { APPS_ACCESS_DEFAULT: 'owner' } as NodeJS.ProcessEnv }))!.access).toBe('owner')
+  // The cause of a leak found by the load test: frps had registered the public app, not yet the owner one
+  it('still not known: closed (owner), never the level of the other apps', async () => {
+    expect((await accessOfHost('shop-own.example.com', deps({ fresh: async () => map })))!.access).toBe('owner')
+    expect((await accessOfHost('shop-own.example.com', deps({ accessMap: () => null, fresh: async () => null })))!.access).toBe('owner')
   })
   it('not a sandbox host: null', async () => {
-    expect(await accessOfHost('p7y.example.com', deps)).toBeNull()
+    expect(await accessOfHost('p7y.example.com', deps())).toBeNull()
   })
-  it('sandboxAccess: the most restrictive of its links', () => {
-    expect(sandboxAccess('p7y-shop', links, {} as NodeJS.ProcessEnv)).toBe('domain')
-    expect(sandboxAccess('p7y-shop', [], { APPS_ACCESS_DEFAULT: 'domain' } as NodeJS.ProcessEnv)).toBe('domain')
-  })
-})
-
-describe('accessOfHost: never open because the live answer is empty (C2)', () => {
-  const own = [{ url: 'shop-own.example.com', port: 8083, service: 'own', access: 'owner' as const }]
-  const base = { sandboxOf: () => 'p7y-shop', ownerOf: () => 'bob@example.com', env: {} as NodeJS.ProcessEnv }
-  it('live links empty (frps not registered yet, inner Docker failing): what it had when it last ran', async () => {
-    expect((await accessOfHost('shop-own.example.com', { ...base, links: async () => [], remembered: () => own }))!.access).toBe('owner')
-  })
-  it('a host not among the live links: the strictest of the live and the remembered ones', async () => {
-    const live = [{ url: 'shop-pub.example.com', port: 8081, service: 'pub', access: 'public' as const }]
-    expect((await accessOfHost('shop-new.example.com', { ...base, links: async () => live, remembered: () => own }))!.access).toBe('owner')
+  it('sandboxAccess: the strictest of its apps; nothing known: null (unknown)', () => {
+    expect(sandboxAccess(map)).toBe('domain')
+    expect(sandboxAccess({ a: 'public' })).toBe('public')
+    expect(sandboxAccess(null)).toBeNull()
+    expect(sandboxAccess({})).toBeNull()
   })
 })

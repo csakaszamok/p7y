@@ -5,6 +5,8 @@ vi.mock('../../../services/appLinks', () => ({
   appLinks: vi.fn(async (n: string) => { calls.push(`read ${n}`); return [] }),
   forgetAppLinks: vi.fn((n: string) => { calls.push(`forget ${n}`) }),
   rememberedApps: vi.fn(() => null),
+  rememberedAccess: vi.fn(() => null),
+  freshAccess: vi.fn(async () => null),
 }))
 vi.mock('../../../services/docker', () => ({ listManagedContainers: vi.fn(async () => [{ name: 'p7y-a', status: 'running' }, { name: 'p7y-b', status: 'exited' }]) }))
 

@@ -87,7 +87,7 @@ async function user(i) {
     const appCookie = await time('owner app sign-in hop', async () => {
       const toStart = await fetch(`${own}/x`, { redirect: 'manual' })
       const start = toStart.headers.get('location') ?? ''
-      if (!start.startsWith(`${P7Y_URL}/auth/app/start?`)) fail(sub, 'hop', `not sent to sign-in (${toStart.status} ${start})`)
+      if (!start.startsWith(`${P7Y_URL}/auth/app/start?`)) fail(sub, 'hop', `not sent to sign-in (${toStart.status} ${start}) ${(await toStart.text()).slice(0, 120).replace(/s+/g, ' ')}`)
       const toLanding = await fetch(start, { redirect: 'manual', headers: { cookie } })
       const landing = toLanding.headers.get('location') ?? ''
       if (!landing.startsWith(`${own}/__p7y/auth?`)) fail(sub, 'hop', `no ticket (${toLanding.status} ${landing})`)

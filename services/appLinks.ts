@@ -16,7 +16,11 @@ export interface AppLinkDeps {
   now: () => number
   /** Keeps the links a running sandbox answered with, for showing them while it sleeps. */
   remember: (name: string, links: AppLink[]) => void
+  /** Keeps every app's level (link name → p7y.access) from the labels, whatever frps serves yet */
+  rememberAccess: (name: string, access: AccessMap) => void
 }
+/** Each app's level by its link name (the first label of its address), from its container's p7y.access */
+export type AccessMap = Record<string, Access>
 
 /** Link names (no domain, lowercase) → host port and app name (compose service, else container name),
  * for TCP ports published on all interfaces. A port bound to 127.0.0.1 (or any one address) has no name. */
@@ -57,6 +61,26 @@ function rememberApps(name: string, links: AppLink[]): void {
   rememberLastSeen(dirOf(name), 'apps', links)
 }
 
+const accessMapOf = (allowed: Map<string, { access: Access }>): AccessMap => Object.fromEntries([...allowed].map(([n, v]) => [n, v.access]))
+
+/** Every app's level as last read from the labels; for a sandbox not read since 0.9, from its remembered links. */
+export function rememberedAccess(name: string): AccessMap | null {
+  const m = lastSeen(dirOf(name), 'access')
+  if (m && typeof m === 'object' && !Array.isArray(m)) return m as AccessMap
+  const links = rememberedApps(name)
+  return links ? Object.fromEntries(links.map(l => [l.url.toLowerCase().split('.')[0], l.access])) : null
+}
+
+/** Every app's level now, from the inner Docker's labels (no frps): for an address not known yet. */
+export async function freshAccess(name: string, deps: Partial<AppLinkDeps> = {}): Promise<AccessMap | null> {
+  const d = { ...defaults, ...deps }
+  try {
+    const map = accessMapOf(publicAppNames(d.instance(name), await d.containers(name)))
+    if (Object.keys(map).length) d.rememberAccess(name, map)
+    return map
+  } catch { return null }
+}
+
 /** The app links a sandbox had when it last ran (null if never seen running since this was added). */
 export function rememberedApps(name: string): AppLink[] | null {
   const links = lastSeen(dirOf(name), 'apps')
@@ -70,6 +94,7 @@ const defaults: AppLinkDeps = {
   instance: name => fs.readFileSync(`${sandboxParent(name)}/${name}/instance-name`, 'utf8').trim(),
   now: Date.now,
   remember: rememberApps,
+  rememberAccess: (name, access) => rememberLastSeen(dirOf(name), 'access', access),
 }
 const TTL_MS = 10_000
 const cache = new Map<string, { at: number; links: AppLink[] }>()
@@ -87,6 +112,8 @@ export async function appLinks(name: string, deps: Partial<AppLinkDeps> = {}, se
   try {
     const [domains, containers] = await Promise.all([d.domains(name), d.containers(name)])
     const allowed = publicAppNames(d.instance(name), containers)
+    // Every app's level from the labels, also those frps does not serve yet
+    if (allowed.size) d.rememberAccess(name, accessMapOf(allowed))
     for (const url of domains) {
       const hit = allowed.get(url.toLowerCase().split('.')[0])
       if (hit) links.push({ url, ...hit })
@@ -94,7 +121,8 @@ export async function appLinks(name: string, deps: Partial<AppLinkDeps> = {}, se
     // Not an empty answer: frps has none until frpc registers, right after a wake (or when it cannot be asked)
     if (links.length) d.remember(name, links)
   } catch { links = [] }
-  cache.set(name, { at: d.now(), links })
+  // An empty answer is not kept: right after a create or a wake frps has no proxy yet, and the next ask must see it
+  if (links.length) cache.set(name, { at: d.now(), links }); else cache.delete(name)
   return links
 }
 
