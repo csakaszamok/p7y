@@ -49,7 +49,7 @@ export default async (req: Request): Promise<Response> => {
     const remembered = hubEnabled() && sandbox.status === 'running'
       ? await refreshHub(name).catch(() => rememberedHub(name))
       : rememberedHub(name)
-    const hub = { enabled: hubEnabled(), url: hubEnabled() ? hubUrl() : null, published: remembered?.apps.map(a => a.id) ?? [], unlinked: remembered?.unlinked ?? [], bad_image: remembered?.bad_image ?? [] }
+    const hub = { enabled: hubEnabled(), url: hubEnabled() ? hubUrl() : null, published: remembered?.apps.map(a => a.id) ?? [], unlinked: remembered?.unlinked ?? [], bad_image: remembered?.bad_image ?? [], owner_only: remembered?.owner_only ?? [] }
     // Not running: when it last ran (asleep: its container's stop time; deep sleep: remembered, or estimated)
     const last = await lastRunningOf(name, sandbox.status)
     const ssh = sandbox.ssh ? { address: `${rawNameOf(name) ?? name}-shell-tcp.${domain}:443`, user: 'root', keys: sshKeyCount(name), generated_key: hasGeneratedKey(name) } : null

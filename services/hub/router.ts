@@ -12,7 +12,7 @@ import { hubPage, hubLoginPage } from './page'
 import { html, redirect } from '../ui/layout'
 import { checkAdminLogin, sameOrigin } from '../principal'
 import { beginLogin, finishLogin, oidcEnabled, providerName, LoginError } from '../oidc'
-import { hubAllowed } from '../allowlist'
+import { hubAllowed, signInAllowed } from '../allowlist'
 import { getCookie, SESSION_MAX_AGE } from '../session'
 
 const ASSETS: Record<string, [string, string]> = {
@@ -88,7 +88,7 @@ export async function handleHub(req: Request, deps: Deps = {}): Promise<Response
     if (!viewer) return Response.json({ error: 'Unauthorized' }, { status: 401 })
     const counts = voteCounts()
     const mine = votedBy(viewer.sub)
-    const list = await entries()
+    const list = (await entries()).filter(e => visibleTo(e, viewer.sub))
     // The cards' images: fetched in the background, never in the way of the list
     ;(deps.refresh ?? (l => { refreshImages(l).catch(err => console.error('[hub] images:', err)) }))(list)
     const apps = list.map(({ sandbox: _s, service: _v, port: _p, image: _i, ...e }) => {
@@ -109,10 +109,15 @@ export async function handleHub(req: Request, deps: Deps = {}): Promise<Response
   if (vote && (req.method === 'PUT' || req.method === 'DELETE')) {
     if (!viewer) return Response.json({ error: 'Unauthorized' }, { status: 401 })
     if (!sameOrigin(req)) return Response.json({ error: 'Cross-site request rejected' }, { status: 403 })
-    const app = (await entries()).find(e => e.id === vote[1])
+    const app = (await entries()).find(e => e.id === vote[1] && visibleTo(e, viewer.sub))
     if (!app) return Response.json({ error: 'No such app on the Hub' }, { status: 404 })
     if (req.method === 'PUT') addVote(app.id, viewer.sub); else removeVote(app.id, viewer.sub)
     return Response.json({ votes: voteCounts()[app.id] ?? 0, voted: req.method === 'PUT' })
   }
   return notFound()
+}
+
+/** A domain app shows to viewers who can sign in to Purgatory itself; Hub-only viewers see public apps only. */
+export function visibleTo(app: { access?: 'public' | 'domain' }, viewerSub: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  return app.access !== 'domain' || signInAllowed(viewerSub, env)
 }
