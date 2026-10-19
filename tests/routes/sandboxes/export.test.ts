@@ -33,11 +33,14 @@ describe('POST /sandboxes/:name/export', () => {
     expect(res.headers.get('content-disposition')).toBe('attachment; filename="p7y-shop.zip"')
     expect(createToken).toHaveBeenCalledWith('u@example.com', 'laptop agent', '30d', expect.any(Date), 'p7y-shop')
     const text = Buffer.from(await res.arrayBuffer()).toString('latin1')
-    for (const f of ['p7y-shop/p7y.env', 'p7y-shop/docker/ca.pem', 'p7y-shop/docker/cert.pem', 'p7y-shop/docker/key.pem', 'p7y-shop/README.md']) expect(text).toContain(f)
+    // A .p7y folder for the project's folder, kept out of git by its own .gitignore
+    for (const f of ['.p7y/.gitignore', '.p7y/p7y.env', '.p7y/docker/ca.pem', '.p7y/docker/cert.pem', '.p7y/docker/key.pem', '.p7y/README.md']) expect(text).toContain(f)
+    expect(text).not.toContain('p7y-shop/p7y.env')
     expect(text).toContain('P7Y_TOKEN=p7y_newtokenvalue')
     expect(text).toContain('P7Y_DOCKER_HOST=tcp://shop-docker.lvh.me:443')
     expect(text).toContain('P7Y_REGISTRY=registry.lvh.me')
     expect(text).toContain('docker context create p7y-shop')
+    expect(text).toContain('ca=$PWD/.p7y/docker/ca.pem')
     expect(text).toContain('PEM key.pem')
   })
   it('not with a token limited to the sandbox (403); 409 before Docker access is enabled', async () => {
@@ -64,8 +67,8 @@ describe('POST /sandboxes/:name/export, without Docker access or as text', () =>
     const res = await post(reqWith('p7y-old', { docker: false }))
     expect(res.status).toBe(200)
     const text = Buffer.from(await res.arrayBuffer()).toString('latin1')
-    expect(text).toContain('p7y-old/p7y.env')
-    expect(text).toContain('p7y-old/README.md')
+    expect(text).toContain('.p7y/p7y.env')
+    expect(text).toContain('.p7y/README.md')
     expect(text).not.toContain('docker/key.pem')
     expect(text).not.toContain('P7Y_DOCKER_HOST')
   })
@@ -99,5 +102,14 @@ describe('POST /sandboxes/:name/export, Portainer token', () => {
     const env = await res.text()
     expect(env).not.toContain('P7Y_PORTAINER_TOKEN')
     expect(env).toContain('# Portainer: not included (Portainer is private to the sandbox)')
+  })
+})
+
+describe('the .p7y folder', () => {
+  it('ignores itself in git: its .gitignore is a single *', async () => {
+    const { prepareExport } = await import('../../../services/agentExport')
+    const files = prepareExport('p7y-shop')('p7y_tok')
+    expect(files.find(f => f.path === '.p7y/.gitignore')?.data).toBe('*\n')
+    expect(files.every(f => f.path.startsWith('.p7y/'))).toBe(true)
   })
 })
