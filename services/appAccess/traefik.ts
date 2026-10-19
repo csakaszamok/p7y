@@ -12,7 +12,7 @@ export interface TraefikDeps { sandboxes: () => string[]; links: (name: string) 
 const defaults: TraefikDeps = { sandboxes: () => listSandboxDirs().map(e => e.name), links: rememberedApps, env: process.env }
 
 const NOOP = { headers: { customRequestHeaders: { 'X-P7y-User': '' } } }
-const AUTH = { forwardAuth: { address: 'http://p7y:3000/auth/app', trustForwardHeader: true, authResponseHeaders: ['X-P7y-User', 'Cookie'] } }
+const AUTH = { forwardAuth: { address: 'http://p7y:3001/auth/app', trustForwardHeader: true, authResponseHeaders: ['X-P7y-User', 'Cookie'] } }
 
 export function traefikAccessConfig(deps: Partial<TraefikDeps> = {}) {
   const d = { ...defaults, ...deps }

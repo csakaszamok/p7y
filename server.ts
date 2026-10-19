@@ -1,6 +1,7 @@
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { startDeepSleepScheduler } from "./services/deepSleep";
 import { startAccessRefresher } from "./services/appAccess/traefik";
+import { internalOnly, INTERNAL_PORT } from "./services/appAccess/internal";
 import { startSessionWatch } from "./services/sessionWatch";
 import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
 import { openSignInWarning } from "./services/allowlist";
@@ -205,8 +206,10 @@ ensureKeyPair();
 // The registry reads its notification secret from the data dir when it starts
 notifySecret();
 
-const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+async function handle(req: IncomingMessage, res: ServerResponse, internal: boolean): Promise<void> {
   let path = (req.url ?? "/").split("?")[0];
+  // The forwardAuth and the HTTP provider only on the internal port; nothing else there
+  if (internalOnly(path) !== internal) { res.writeHead(404).end("Not Found"); return; }
   const method = req.method ?? "GET";
 
   if (path.includes("..")) { res.writeHead(400).end("Bad Request"); return; }
@@ -276,8 +279,11 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     console.error(`Handler hiba [${path}]:`, err);
     if (!res.headersSent) res.writeHead(500).end(String(err));
   }
-});
+}
+const server = createServer((req, res) => handle(req, res, false));
 server.listen(3000, () => console.log("Listening on :3000"));
+// Only for Traefik on the internal network (not published): app access
+createServer((req, res) => handle(req, res, true)).listen(INTERNAL_PORT, () => console.log(`Listening on :${INTERNAL_PORT} (internal: app access)`));
 
 // Browser terminals: /sandboxes/:name/terminal upgraded to a websocket (checked before the upgrade)
 attachTerminals(server);

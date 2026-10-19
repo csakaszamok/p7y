@@ -10,7 +10,7 @@ describe('the middlewares Traefik reads', () => {
       env: {} as NodeJS.ProcessEnv,
     })
     expect(cfg.http.middlewares['access-p7y-a']).toEqual({ headers: { customRequestHeaders: { 'X-P7y-User': '' } } })
-    expect(cfg.http.middlewares['access-p7y-b']).toEqual({ forwardAuth: { address: 'http://p7y:3000/auth/app', trustForwardHeader: true, authResponseHeaders: ['X-P7y-User', 'Cookie'] } })
+    expect(cfg.http.middlewares['access-p7y-b']).toEqual({ forwardAuth: { address: 'http://p7y:3001/auth/app', trustForwardHeader: true, authResponseHeaders: ['X-P7y-User', 'Cookie'] } })
     // Never seen running: by the default (public here)
     expect(cfg.http.middlewares['access-p7y-c']).toEqual({ headers: { customRequestHeaders: { 'X-P7y-User': '' } } })
   })
