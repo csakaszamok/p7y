@@ -102,7 +102,9 @@ describe('renderPanel', () => {
     expect(asleep).toContain('data-act="start"')
     expect(asleep).not.toContain('data-act="terminal"')
     expect(asleep).not.toContain('data-act="keep-awake"')
-    expect(asleep).toMatch(/Deep sleep in <span data-until=[^>]*>[^<]*<\/span> · opening an app wakes it/)
+    // The header says only what matters now; when deep sleep comes is on the Details tab
+    expect(asleep).toContain('<p class="panel-sub">Asleep · opening an app wakes it</p>')
+    expect(panelOf(asleep, 'settings')).toMatch(/Deep sleep<\/td><td>in <span data-until=[^>]*>[^<]*<\/span>/)
     expect(panelOf(asleep, 'apps')).toContain('opening one wakes the sandbox')
     const deep = P.renderPanel({ ...running, status: 'deep_sleep' }, ctx)
     expect(deep).toContain('In deep sleep · opening an app or Wake rebuilds it')
@@ -470,20 +472,23 @@ describe('Apps: an unusable p7y.image', () => {
   })
 })
 
-describe('header: when it last ran', () => {
+describe('Details: when it last ran', () => {
   const asleep = { ...running, status: 'exited', stops_at: null, deep_sleep_at: '2026-10-11T15:00:00Z', last_running_at: '2026-09-13T15:00:00Z', last_running_estimated: false }
-  it('asleep: "Last ran 3 weeks ago", the exact time on hover', () => {
+  it('asleep: "Last ran 3 weeks ago" on the Details tab, the exact time on hover; not in the header', () => {
     const html = P.renderPanel(asleep, ctx)
-    expect(html).toMatch(/<span title="[^"]*2026[^"]*">Last ran 3 weeks ago<\/span>/)
+    expect(panelOf(html, 'settings')).toMatch(/Last ran<\/td><td><span title="[^"]*2026[^"]*">3 weeks ago<\/span>/)
+    expect(html.slice(0, html.indexOf('role="tablist"'))).not.toContain('Last ran')
   })
   it('deep sleep with an estimate: "~"', () => {
     const html = P.renderPanel({ ...asleep, status: 'deep_sleep', deep_sleep_at: null, last_running_at: '2026-08-04T15:00:00Z', last_running_estimated: true }, ctx)
-    expect(html).toContain('>Last ran ~2 months ago</span>')
-    expect(html).toContain('In deep sleep')
+    expect(panelOf(html, 'settings')).toContain('>~2 months ago</span>')
   })
   it('nothing while it runs, or when unknown', () => {
     expect(P.renderPanel(running, ctx)).not.toContain('Last ran')
     expect(P.renderPanel({ ...asleep, last_running_at: null }, ctx)).not.toContain('Last ran')
+  })
+  it('the tab is called Details', () => {
+    expect(P.TABS.find(([id]: string[]) => id === 'settings')[1]).toBe('Details')
   })
 })
 
