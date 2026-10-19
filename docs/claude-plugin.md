@@ -11,12 +11,21 @@ In Claude Code:
 /plugin install p7y@p7y
 ```
 
-Claude Code asks for two things:
+Claude Code asks where to install it: **user** (every folder of yours; usually what you want), **project** (this repository, for everyone who uses it, through its `.claude/settings.json`) or **local** (this folder, only you). Then it asks for two things, which a sandbox's **Let your agent deploy…** shows, ready to copy:
 
 - **Purgatory address**: as in your browser, e.g. `https://p7y.example.com`;
-- **Purgatory access token**: in Purgatory, **Access tokens → + New token** (it starts with `p7y_`). Claude Code keeps it in your system's secure storage, not in a file. A token limited to one sandbox keeps the agent away from your others.
+- **Purgatory access token**: **Create token** there makes one for that sandbox only (it starts with `p7y_` and is shown once). Claude Code keeps it in your system's secure storage, not in a file.
 
 Change them later with `/plugin` → p7y. Updates come with Purgatory's releases (`/plugin marketplace update p7y`).
+
+### Which token
+
+- **For one sandbox** (the default): the safest; the agent can use that sandbox and nothing else, and cannot create sandboxes. For another project with another sandbox, download that sandbox's zip into it (below): the agent uses the `.p7y` folder's own token for it.
+- **For all your sandboxes** (Advanced view → **Access tokens** → **+ New token**): handy with many sandboxes; the agent picks the sandbox by the project's name, asks when it is not clear, and creates one when there is none.
+
+## The `.p7y` folder
+
+The plugin ties each project to its sandbox with a `.p7y` folder in the project's root folder: the sandbox's name, its Docker keys (and, from an export, a token). The agent writes it the first time it deploys a project, or unpacks it from an export zip. It holds secrets, and it keeps itself out of git: its own `.gitignore` is a single `*`. Add `.p7y` to `.dockerignore` too, so that a build never copies it into an image; the agent does when it writes one.
 
 ## Use
 

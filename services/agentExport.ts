@@ -73,7 +73,8 @@ revoke it. Delete it in Portainer: My account → Access tokens.
 
 This folder lets a coding agent (Claude Code, Codex…) or you use the sandbox's Docker and the Purgatory registry.
 Keep it in your project's folder, named \`.p7y\`. **It is a secret** (a token and a Docker client key): its own
-\`.gitignore\` keeps it out of git; do not share it or copy it into an image.
+\`.gitignore\` keeps it out of git; do not share it. Add \`.p7y\` to your \`.dockerignore\`, so that a build
+(\`COPY . .\`) never copies it into an image.
 
 ${dockerSection}${portainerSection}## Registry
 

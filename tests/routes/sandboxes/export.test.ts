@@ -41,6 +41,7 @@ describe('POST /sandboxes/:name/export', () => {
     expect(text).toContain('P7Y_REGISTRY=registry.lvh.me')
     expect(text).toContain('docker context create p7y-shop')
     expect(text).toContain('ca=$PWD/.p7y/docker/ca.pem')
+    expect(text).toContain('Add `.p7y` to your `.dockerignore`')
     expect(text).toContain('PEM key.pem')
   })
   it('not with a token limited to the sandbox (403); 409 before Docker access is enabled', async () => {
