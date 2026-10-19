@@ -1,7 +1,7 @@
 import { defaultRuntime, runtimeMissing, runtimeAllowed } from '../../services/defaultRuntime'
 import { sandboxService } from '../../services/sandbox'
 import { reserveSandboxSlot } from '../../services/quota'
-import { normalizeIdleTimeout, normalizeDeepSleepAfter } from '../../services/sleepSettings'
+import { normalizeIdleTimeout, normalizeDeepSleepAfter, sleepLimitError } from '../../services/sleepSettings'
 import { requirePrincipal } from '../../services/principal'
 import { listTemplates, loadTemplate } from '../../services/templateLoader'
 import { listRuntimes } from '../../services/runtimeLoader'
@@ -97,6 +97,9 @@ export default async (req: Request): Promise<Response> => {
   if (deep === null) {
     return Response.json({ error: 'deep_sleep_after must look like 30m, 12h or 7d, or 0 / off for never' }, { status: 400 })
   }
+  // The server's limits for users (SANDBOX_MAX_IDLE_TIMEOUT, SANDBOX_MAX_DEEP_SLEEP_AFTER); a template's default is cut to them
+  const tooLong = sleepLimitError({ idle_timeout: idle, deep_sleep_after: deep }, p.role)
+  if (tooLong) return Response.json({ error: tooLong }, { status: 400 })
 
   if (runtime !== undefined && typeof runtime !== 'string') {
     return Response.json({ error: 'runtime must be a string' }, { status: 400 })

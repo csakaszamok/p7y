@@ -709,7 +709,13 @@ async function submitSleep(ev) {
   const btn = ev.submitter
   btn.disabled = true
   try {
-    await api(`/sandboxes/${encodeURIComponent(name)}`, { method: 'PATCH', body: JSON.stringify({ idle_timeout: data.idle_timeout, deep_sleep_after: data.deep_sleep_after }) })
+    // Only what was changed: a sandbox may keep a value from before the server's limit (SANDBOX_MAX_*), which
+    // must not stop a change of the other one
+    const was = JSON.parse(renderedJSON || '{}')
+    const changes = {}
+    if (data.idle_timeout !== (was.idle_timeout || '')) changes.idle_timeout = data.idle_timeout
+    if (data.deep_sleep_after !== (was.deep_sleep_after || '')) changes.deep_sleep_after = data.deep_sleep_after
+    if (Object.keys(changes).length) await api(`/sandboxes/${encodeURIComponent(name)}`, { method: 'PATCH', body: JSON.stringify(changes) })
     $('[data-sleep-dialog]').close()
     await loadList()
     if (selected === name) { renderedJSON = null; showPanel(name) }
@@ -774,8 +780,9 @@ async function submitNew(ev) {
   const sshKeys = (data.ssh_keys || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean)
   if (sshKeys.length) body.ssh_keys = sshKeys
   if (form.create_inner_stack.checked && data.compose !== undefined && data.compose !== loadedCompose.text) body.compose = data.compose
-  if (data.idle_timeout) body.idle_timeout = data.idle_timeout
-  if (data.deep_sleep_after) body.deep_sleep_after = data.deep_sleep_after
+  // Only when changed from the form's default: otherwise the server's default, cut to its limit for users
+  if (data.idle_timeout && data.idle_timeout !== form.idle_timeout.defaultValue) body.idle_timeout = data.idle_timeout
+  if (data.deep_sleep_after && data.deep_sleep_after !== form.deep_sleep_after.defaultValue) body.deep_sleep_after = data.deep_sleep_after
   const full = `${prefix}-${data.name}`
   // Reset now, not when the create finishes (that can take a minute): a dialog opened meanwhile
   // must not lose what is being typed. A failed create puts the submitted values back.

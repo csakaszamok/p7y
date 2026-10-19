@@ -35,6 +35,41 @@ export function normalizeDeepSleepAfter(v: unknown): string | null {
   return typeof v === 'string' && parseDuration(v, 'mhd') !== null ? v : null
 }
 
+/**
+ * How long a user's sandbox may stay awake without traffic, and asleep before deep sleep, at most:
+ * SANDBOX_MAX_IDLE_TIMEOUT and SANDBOX_MAX_DEEP_SLEEP_AFTER (unset: no limit). The admin is not limited.
+ */
+type SleepKind = 'idle_timeout' | 'deep_sleep_after'
+const LIMIT_VAR: Record<SleepKind, string> = { idle_timeout: 'SANDBOX_MAX_IDLE_TIMEOUT', deep_sleep_after: 'SANDBOX_MAX_DEEP_SLEEP_AFTER' }
+function limitOf(kind: SleepKind, env: NodeJS.ProcessEnv): { text: string; ms: number } | null {
+  const text = env[LIMIT_VAR[kind]]?.trim()
+  const ms = text ? parseDuration(text, kind === 'idle_timeout' ? 'smhd' : 'mhd') : null
+  return text && ms ? { text, ms } : null
+}
+const msOf = (kind: SleepKind, v: string) => parseDuration(v, kind === 'idle_timeout' ? 'smh' : 'mhd')
+
+/** Why these sleep settings are not allowed for this role here, or null. Values as normalized (off, 24h, 7d). */
+export function sleepLimitError(s: Partial<Record<SleepKind, string>>, role: 'user' | 'admin', env: NodeJS.ProcessEnv = process.env): string | null {
+  if (role === 'admin') return null
+  for (const kind of ['idle_timeout', 'deep_sleep_after'] as SleepKind[]) {
+    const v = s[kind], lim = limitOf(kind, env)
+    if (v === undefined || !lim) continue
+    if (v === 'off') return `${kind}: never is not allowed on this server: at most ${lim.text}`
+    const ms = msOf(kind, v)
+    if (ms !== null && ms > lim.ms) return `${kind}: at most ${lim.text} on this server`
+  }
+  return null
+}
+
+/** A template's default for a user's new sandbox, cut to the server's limit. */
+export function cappedSleepDefault(kind: SleepKind, value: string, owner: string, env: NodeJS.ProcessEnv = process.env): string {
+  const lim = limitOf(kind, env)
+  if (owner === 'admin' || !lim) return value
+  const ms = value === 'off' ? Infinity : msOf(kind, value) ?? Infinity
+  if (ms <= lim.ms) return value
+  return kind === 'idle_timeout' ? normalizeIdleTimeout(lim.text) ?? value : lim.text
+}
+
 /** The Sablier sessionDuration label value for an idle_timeout. */
 export const sessionDurationOf = (idle: string) => idle === 'off' ? NEVER_SESSION : idle
 // Legacy (Leander-era) sandboxes carry leander.deep_sleep_after instead.
