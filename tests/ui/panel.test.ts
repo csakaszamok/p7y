@@ -462,3 +462,10 @@ describe('Apps: the Hub', () => {
     expect(panelOf(P.renderPanel(running, ctx), 'apps')).not.toContain('On the Hub')
   })
 })
+
+describe('Apps: an unusable p7y.image', () => {
+  it('says why the image is ignored', () => {
+    const s = { ...running, hub: { enabled: true, url: 'https://hub.lvh.me', published: [], unlinked: [], bad_image: ['web'] } }
+    expect(panelOf(P.renderPanel(s, ctx), 'apps')).toContain('web: p7y.image is ignored: use a path inside the app, e.g. /shot.png')
+  })
+})

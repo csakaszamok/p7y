@@ -129,3 +129,15 @@ describe('refreshImages', () => {
     expect(imageOf('shop-web.example.com', deps)!.version).toBe(before)
   })
 })
+
+describe('refreshImages: a changed image that cannot be fetched', () => {
+  it('drops the old image, so the card shows the letter rather than an image the label no longer names', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hubimg-'))
+    const routes: Record<string, Fetched> = { '/shot.png': png }
+    const deps = { dir, now: () => 0, get: async (_s: string, _p: number, p: string) => routes[p] ?? { status: 404, body: Buffer.alloc(0) } }
+    await refreshImages([entry({ image: '/shot.png' })], deps)
+    expect(imageOf('shop-web.example.com', deps)).not.toBeNull()
+    await refreshImages([entry({ image: '/gone.png' })], deps)
+    expect(imageOf('shop-web.example.com', deps)).toBeNull()
+  })
+})

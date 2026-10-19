@@ -64,8 +64,8 @@ describe('GET /sandboxes/:name hub', () => {
   it('says which apps are on the Hub and which published ones have no web address', async () => {
     vi.stubEnv('HUB_ENABLED', 'true')
     const body = await (await get(req('p7y-up'))).json()
-    expect(body.hub).toEqual({ enabled: true, url: 'http://hub.lvh.me', published: ['up-inner-web-port8080.lvh.me'], unlinked: ['worker'] })
+    expect(body.hub).toEqual({ enabled: true, url: 'http://hub.lvh.me', published: ['up-inner-web-port8080.lvh.me'], unlinked: ['worker'], bad_image: [] })
     vi.stubEnv('HUB_ENABLED', 'false')
-    expect((await (await get(req('p7y-down'))).json()).hub).toEqual({ enabled: false, url: null, published: [], unlinked: [] })
+    expect((await (await get(req('p7y-down'))).json()).hub).toEqual({ enabled: false, url: null, published: [], unlinked: [], bad_image: [] })
   })
 })

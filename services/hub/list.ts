@@ -18,6 +18,8 @@ export interface HubEntry extends HubApp {
 export interface Remembered {
   apps: Array<HubApp & { updated_at: string }>
   unlinked: string[]
+  /** Published services whose p7y.image is not a path inside the app */
+  bad_image?: string[]
   /** Every app ever seen here, kept when it is missing: one that comes back keeps its date (not "new" again) */
   seen?: Record<string, { updated_at: string; title: string; description: string }>
   /** Since when the running sandbox's daemon has listed no containers */
@@ -76,7 +78,7 @@ async function liveApps(name: string, d: HubListDeps, prev: Remembered | null): 
     return gone
   }
   const https = (process.env.PUBLIC_URL ?? '').startsWith('https://')
-  const { apps, unlinked } = hubAppsOf(d.instance(name), containers, (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase(), https ? 'https' : 'http')
+  const { apps, unlinked, badImage } = hubAppsOf(d.instance(name), containers, (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase(), https ? 'https' : 'http')
   const now = new Date(d.now()).toISOString()
   const seen = { ...(prev?.seen ?? Object.fromEntries((prev?.apps ?? []).map(a => [a.id, { updated_at: a.updated_at, title: a.title, description: a.description }]))) }
   const merged = apps.map(a => {
@@ -85,7 +87,7 @@ async function liveApps(name: string, d: HubListDeps, prev: Remembered | null): 
     seen[a.id] = { updated_at, title: a.title, description: a.description }
     return { ...a, updated_at }
   })
-  const next = { apps: merged, unlinked, seen }
+  const next = { apps: merged, unlinked, bad_image: badImage, seen }
   rememberLastSeen(d.dir(name), 'hub', next)
   return next
 }
