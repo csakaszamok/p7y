@@ -54,7 +54,8 @@ describe('validateSleepSettings', () => {
 
   it('rejects bad values, unknown shapes and an empty change', () => {
     expect(validateSleepSettings({ idle_timeout: '0m' })).toMatch(/idle_timeout/)
-    expect(validateSleepSettings({ idle_timeout: '2d' })).toMatch(/idle_timeout/)
+    expect(validateSleepSettings({ idle_timeout: '2w' })).toMatch(/idle_timeout/)
+    expect(validateSleepSettings({ idle_timeout: '1d' })).toEqual({ idle_timeout: '24h' })
     expect(validateSleepSettings({ deep_sleep_after: '10s' })).toMatch(/deep_sleep_after/)
     expect(validateSleepSettings({})).toMatch(/nothing to change/)
     expect(validateSleepSettings(null)).toMatch(/JSON object/)
@@ -133,6 +134,11 @@ describe('never sleeping: 0 or off', () => {
     expect(normalizeIdleTimeout('45m')).toBe('45m')
     expect(normalizeIdleTimeout('0')).toBe('off')
     expect(normalizeIdleTimeout('0m')).toBeNull()
+    // Days, as hours: Sablier reads a Go duration, which has no d
+    expect(normalizeIdleTimeout('1d')).toBe('24h')
+    expect(normalizeIdleTimeout('7d')).toBe('168h')
+    expect(normalizeIdleTimeout('0d')).toBeNull()
+    expect(normalizeIdleTimeout('1.5d')).toBeNull()
     expect(normalizeDeepSleepAfter('7d')).toBe('7d')
     expect(normalizeDeepSleepAfter(0)).toBe('off')
     expect(normalizeDeepSleepAfter('10s')).toBeNull()

@@ -69,3 +69,15 @@ describe('renderPage: Simple / Advanced', () => {
     })
   })
 })
+
+describe('sleep settings fields', () => {
+  // Both the New sandbox form and the Sleep settings dialog
+  const patterns = [...SANDBOX_VIEW_BODY.matchAll(/<input name="idle_timeout"[^>]*pattern="([^"]+)"/g)].map(m => new RegExp(`^(?:${m[1]})$`))
+  it('Sleep after no traffic takes days too', () => {
+    expect(patterns.length).toBe(2)
+    for (const p of patterns) {
+      for (const ok of ['30m', '2h', '1d', '0', 'off']) expect(p.test(ok), ok).toBe(true)
+      for (const bad of ['0m', '1.5d', '1w']) expect(p.test(bad), bad).toBe(false)
+    }
+  })
+})
