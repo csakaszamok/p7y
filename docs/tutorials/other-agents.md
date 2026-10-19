@@ -8,6 +8,8 @@ For Codex, Cursor, Claude Code without the plugin, or any agent that can run com
 
 In Purgatory, click your sandbox, then **Let your agent deploy…** → **Download** (in the Advanced view: the **Access** tab → **Export for coding agents…**). You get `p7y-<sandbox>.zip`.
 
+![Let your agent deploy: Download, under Other agents](../media/tutorial-agent.png){ width="360" }
+
 It holds a token for this sandbox and its keys: treat it like a password. Do not email it or commit it.
 
 ## 2. Hand it to the agent

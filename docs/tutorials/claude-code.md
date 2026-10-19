@@ -9,14 +9,23 @@ You have an app on your computer (a website, a dashboard, a small tool) and you 
 1. Open your Purgatory address in the browser and sign in.
 2. Click **+ New sandbox**, give it a short name (for example `shop`), keep the template and click **Create**. It takes 10–30 seconds.
 
+    ![The New sandbox window: a name and a template](../media/tutorial-new.png){ width="560" }
+
 A sandbox is your own small server: your app runs there, not on your computer.
 
 !!! tip "Simple or Advanced"
     The switch at the top right changes how much the screen shows. **Simple** is enough for everything here.
 
+    ![The Simple | Advanced switch in the top bar](../media/tutorial-switch.png){ width="420" }
+
 ## 2. Install the p7y plugin in Claude Code (once)
 
 1. In Purgatory, click your sandbox, then **Let your agent deploy…**.
+
+    ![A sandbox's panel in the Simple view: its apps and Let your agent deploy…](../media/tutorial-panel.png){ width="420" }
+
+    ![Let your agent deploy: the plugin's commands, the address and Create token; or the zip for other agents](../media/tutorial-agent.png){ width="360" }
+
 2. In Claude Code, run the two commands shown there, one after the other (**Copy** puts each on the clipboard):
 
     ```
