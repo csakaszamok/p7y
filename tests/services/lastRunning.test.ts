@@ -13,8 +13,13 @@ describe('lastRunning', () => {
   it('asleep: when its container stopped, exactly', () => {
     expect(lastRunning({ status: 'exited', finishedAt: '2026-10-01T10:00:00.123Z' }, dir())).toEqual({ at: '2026-10-01T10:00:00.123Z', estimated: false })
   })
-  it('a container that never ran: unknown', () => {
+  it('recreated while asleep and never started: about when it last showed its apps, else unknown', () => {
     expect(lastRunning({ status: 'created', finishedAt: '0001-01-01T00:00:00Z' }, dir())).toEqual({ at: null, estimated: false })
+    const d = dir()
+    fs.writeFileSync(path.join(d, 'apps.json'), '[]')
+    const t = new Date('2026-08-15T12:00:00Z')
+    fs.utimesSync(path.join(d, 'apps.json'), t, t)
+    expect(lastRunning({ status: 'created', finishedAt: '0001-01-01T00:00:00Z' }, d)).toEqual({ at: '2026-08-15T12:00:00.000Z', estimated: true })
   })
   it('deep sleep: what was remembered when it was taken down', () => {
     const d = dir()
