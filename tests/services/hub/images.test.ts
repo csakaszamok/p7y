@@ -49,7 +49,7 @@ describe('imageKind', () => {
 
 const entry = (extra: Partial<HubEntry> = {}): HubEntry => ({
   id: 'shop-web.example.com', url: 'https://shop-web.example.com', title: 'Shop', description: '', service: 'web', port: 8080, image: null,
-  owner: 'anna@example.com', owner_name: null, sandbox: 'p7y-shop', status: 'running', updated_at: '2026-10-20T10:00:00.000Z', ...extra,
+  owner: 'anna@example.com', owner_name: null, sandbox: 'p7y-shop', status: 'running', updated_at: '2026-10-20T10:00:00.000Z', last_ran_at: null, last_ran_estimated: false, ...extra,
 })
 const page = (html: string): Fetched => ({ status: 200, body: Buffer.from(html) })
 const png: Fetched = { status: 200, body: PNG }

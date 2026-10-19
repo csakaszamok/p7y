@@ -17,7 +17,7 @@ beforeEach(() => {
   fs.rmSync(path.join(dir, 'votes.json'), { force: true })
 })
 
-const app: HubEntry = { id: 'shop-web.example.com', url: 'https://shop-web.example.com', title: 'Shop', description: '', service: 'web', port: 80, image: null, owner: 'anna@example.com', owner_name: 'Anna', sandbox: 'p7y-shop', status: 'running', updated_at: '2026-10-20T10:00:00.000Z' }
+const app: HubEntry = { id: 'shop-web.example.com', url: 'https://shop-web.example.com', title: 'Shop', description: '', service: 'web', port: 80, image: null, owner: 'anna@example.com', owner_name: 'Anna', sandbox: 'p7y-shop', status: 'running', updated_at: '2026-10-20T10:00:00.000Z', last_ran_at: null, last_ran_estimated: false }
 const deps = { entries: async () => [app] }
 const as = (sub: string) => ({ cookie: `p7y_hub=${createHubSession(sub, null)}` })
 const get = (p: string, headers: Record<string, string> = {}) => handleHub(new Request(`https://hub.example.com${p}`, { headers }), deps)

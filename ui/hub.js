@@ -55,7 +55,13 @@ function render() {
     main.append(text('p', 'meta', `${a.owner_name ?? a.owner} · ${ago(a.updated_at)}`))
     const side = text('div', 'side')
     const [label, cls] = STATUS[a.status] ?? STATUS.asleep
-    side.append(text('span', `status ${cls}`, label))
+    const status = text('span', `status ${cls}`, label)
+    // Asleep: when it last ran (~ when only estimated), the exact time on hover
+    if (a.status !== 'running' && a.last_ran_at) {
+      status.textContent += ` · ran ${a.last_ran_estimated ? '~' : ''}${ago(a.last_ran_at)}`
+      status.title = new Date(a.last_ran_at).toLocaleString()
+    }
+    side.append(status)
     const vote = text('button', `vote${a.voted ? ' on' : ''}`, `👍 ${a.votes}`)
     vote.title = a.voted ? 'Take your vote back' : 'Vote'
     vote.setAttribute('aria-pressed', String(a.voted))

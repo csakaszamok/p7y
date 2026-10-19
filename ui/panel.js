@@ -84,6 +84,20 @@
   const table = (head, rows, cls = '') => `<table class="panel-table ${cls}">${head ? `<thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead>` : ''}<tbody>${rows.join('')}</tbody></table>`
   const kv = (k, v) => `<tr><td class="k">${k}</td><td>${v}</td></tr>`
 
+  // "3 weeks ago" from an ISO time, by the page's clock
+  function ago(iso, now) {
+    const sec = Math.max(0, ((now ?? Date.now()) - Date.parse(iso)) / 1000)
+    const n = (v, unit) => `${v} ${unit}${v === 1 ? '' : 's'} ago`
+    if (sec < 60) return 'just now'
+    if (sec < 3600) return `${Math.round(sec / 60)} min ago`
+    if (sec < 86400) return `${Math.round(sec / 3600)} h ago`
+    const d = sec / 86400
+    if (d < 14) return n(Math.round(d), 'day')
+    if (d < 60) return n(Math.round(d / 7), 'week')
+    if (d < 365) return n(Math.round(d / 30), 'month')
+    return n(Math.round(d / 365), 'year')
+  }
+
   function header(s, ctx) {
     const st = s.status
     const buttons = st === 'running' ? '<button class="primary" data-act="terminal">Terminal</button><button data-act="logs">Logs</button><button data-act="stop">Sleep</button>'
@@ -97,9 +111,14 @@
       : st === 'exited' || st === 'created'
         ? [s.deep_sleep_after !== 'off' && s.deep_sleep_at ? `Deep sleep in ${countdown(s.deep_sleep_at, ctx.now)}` : '', s.start_error ? '' : 'opening an app wakes it'].filter(Boolean).join(' · ')
         : ''
+    // Not running: when it last ran (~ when only estimated), the exact time on hover
+    const lastRan = st !== 'running' && s.last_running_at
+      ? `<span title="${esc(new Date(s.last_running_at).toLocaleString())}">Last ran ${s.last_running_estimated ? '~' : ''}${esc(ago(s.last_running_at, ctx.now))}</span>`
+      : ''
+    const sub = [lastRan, line].filter(Boolean).join(' · ')
     return `<div class="panel-head"><h2>${esc(ctx.shortName(s.name))}</h2><span class="status ${esc(statusClass(s))}">${esc(s.start_error ? 'failed to start' : statusLabel(st))}</span>
       <div class="actions head-actions">${buttons}</div></div>
-      ${line ? `<p class="panel-sub">${line}</p>` : ''}
+      ${sub ? `<p class="panel-sub">${sub}</p>` : ''}
       ${s.start_error ? `<p class="error panel-error">${esc(s.start_error)}</p>` : ''}`
   }
 

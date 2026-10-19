@@ -469,3 +469,20 @@ describe('Apps: an unusable p7y.image', () => {
     expect(panelOf(P.renderPanel(s, ctx), 'apps')).toContain('web: p7y.image is ignored: use a path inside the app, e.g. /shot.png')
   })
 })
+
+describe('header: when it last ran', () => {
+  const asleep = { ...running, status: 'exited', stops_at: null, deep_sleep_at: '2026-10-11T15:00:00Z', last_running_at: '2026-09-13T15:00:00Z', last_running_estimated: false }
+  it('asleep: "Last ran 3 weeks ago", the exact time on hover', () => {
+    const html = P.renderPanel(asleep, ctx)
+    expect(html).toMatch(/<span title="[^"]*2026[^"]*">Last ran 3 weeks ago<\/span>/)
+  })
+  it('deep sleep with an estimate: "~"', () => {
+    const html = P.renderPanel({ ...asleep, status: 'deep_sleep', deep_sleep_at: null, last_running_at: '2026-08-04T15:00:00Z', last_running_estimated: true }, ctx)
+    expect(html).toContain('>Last ran ~2 months ago</span>')
+    expect(html).toContain('In deep sleep')
+  })
+  it('nothing while it runs, or when unknown', () => {
+    expect(P.renderPanel(running, ctx)).not.toContain('Last ran')
+    expect(P.renderPanel({ ...asleep, last_running_at: null }, ctx)).not.toContain('Last ran')
+  })
+})
