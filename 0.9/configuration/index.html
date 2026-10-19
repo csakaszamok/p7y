@@ -1695,6 +1695,11 @@
 <td>How far a user can raise their sandbox's limits; the admin can go up to the host</td>
 </tr>
 <tr>
+<td><code>SANDBOX_MAX_IDLE_TIMEOUT</code>, <code>SANDBOX_MAX_DEEP_SLEEP_AFTER</code></td>
+<td>— (no limit)</td>
+<td>How long a user's sandbox may stay awake without traffic, and asleep before deep sleep, at most (e.g. <code>2h</code>, <code>1d</code>); with a limit, <em>never</em> (<code>off</code>) is not allowed either. A template's longer default is cut to it; a sandbox that already has a longer value keeps it until it is changed. The admin is not limited</td>
+</tr>
+<tr>
 <td><code>SANDBOX_DISK</code></td>
 <td><code>20g</code></td>
 <td>Disk use above which a sandbox is flagged; a warning only, see <a href="../resources/#disk">Disk</a></td>
