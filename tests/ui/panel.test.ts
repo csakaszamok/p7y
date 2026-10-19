@@ -484,6 +484,8 @@ describe('header: when it last ran', () => {
   it('nothing while it runs, or when unknown', () => {
     expect(P.renderPanel(running, ctx)).not.toContain('Last ran')
     expect(P.renderPanel({ ...asleep, last_running_at: null }, ctx)).not.toContain('Last ran')
+  })
+})
 
 describe('header: going to sleep', () => {
   it('running with its session just expired: "Going to sleep…", not "not started yet"', () => {
