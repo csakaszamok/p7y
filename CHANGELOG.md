@@ -6,6 +6,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Fixed
 
+- **Export for coding agents** always showed *Enable Docker access and export* beside *Download*, also for sandboxes whose Docker access was ready: a button's style overrode `hidden`. Pressing it made new Docker keys (earlier exports stopped working) and restarted the sandbox, its apps unreachable for a few seconds. Hidden buttons now stay hidden everywhere in the UI.
 - A sandbox recreated while asleep (by an upgrade's migration) and not started since never went into deep sleep and showed no *Deep sleep in*: its container has no stop time. Deep sleep now counts from when it was recreated, so it never comes earlier than it should; such sandboxes that have waited longer than `deep_sleep_after` go into deep sleep at the first check after the upgrade (their data stays).
 - A sandbox whose idle time had just run out showed *not counting yet* for a few minutes while still running: Sablier drops an expired session at once but stops the containers a few minutes later. It now shows *going to sleep…* (`going_to_sleep` in the API).
 
