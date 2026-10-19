@@ -120,3 +120,28 @@ describe('deepSleepNow', () => {
     expect(getSandboxState).not.toHaveBeenCalled() // no "is it due" check: the user asked for it
   })
 })
+
+// A container recreated while asleep (a migration) and never started: status "created", no FinishedAt
+describe('isDeepSleepDue: recreated, never started', () => {
+  const created = (over: Partial<SandboxStateLike> = {}) => state({ status: 'created', finishedAt: '0001-01-01T00:00:00Z', createdAt: '2026-10-03T12:00:00Z', ...over })
+  it('counts from when the container was created', () => {
+    expect(isDeepSleepDue(created(), NOW)).toBe(true)
+    expect(isDeepSleepDue(created({ createdAt: '2026-10-03T12:00:01Z' }), NOW)).toBe(false)
+  })
+  it('never without a creation time, or with deep sleep off', () => {
+    expect(isDeepSleepDue(created({ createdAt: undefined }), NOW)).toBe(false)
+    expect(isDeepSleepDue(created({ deepSleepAfter: 'off' }), NOW)).toBe(false)
+  })
+})
+
+describe('deep sleep log', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+  it('says since when it has not run (the creation time for one never started), not Docker’s empty time', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.mocked(listManagedContainers).mockResolvedValue([meta('leander-a')])
+    vi.mocked(getSandboxState).mockResolvedValue(state({ status: 'created', finishedAt: '0001-01-01T00:00:00Z', createdAt: '2026-10-01T09:00:00Z' }))
+    await runDeepSleepOnce(NOW)
+    expect(log).toHaveBeenCalledWith('[deep-sleep] leander-a asleep since 2026-10-01T09:00:00.000Z, down')
+    log.mockRestore()
+  })
+})
