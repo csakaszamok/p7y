@@ -1,5 +1,6 @@
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { startDeepSleepScheduler } from "./services/deepSleep";
+import { startAccessRefresher } from "./services/appAccess/traefik";
 import { startSessionWatch } from "./services/sessionWatch";
 import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
 import { openSignInWarning } from "./services/allowlist";
@@ -300,6 +301,8 @@ startTcpGateway({
   .then(() => console.log(`[tcp] gateway on :${tcpPort} (certificate: ${tcpCreds.source})`))
   .catch(err => console.error("[tcp] gateway failed to start:", err));
 startDeepSleepScheduler();
+// p7y.access of the running sandboxes' apps, read every 10 s (Traefik reads the middlewares every 2 s)
+startAccessRefresher();
 // A running sandbox without a Sablier session (started outside p7y) would never sleep: open its session
 startSessionWatch();
 startUsageSampler();
