@@ -6,11 +6,12 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Added
 
-- **When a sandbox last ran**: a sandbox that is asleep or in deep sleep says so on its panel (*Last ran 3 weeks ago*) and its apps on the Hub (*asleep · ran 3 weeks ago*); `GET /sandboxes/:name` gives `last_running_at`. Asleep, it is when its container stopped; Purgatory now keeps that time when it takes a sandbox into deep sleep. A sandbox already in deep sleep before this upgrade gets an estimate (`~`, `last_running_estimated`).
+- **When a sandbox last ran**: a sandbox that is asleep or in deep sleep says so on its panel's Details tab (*Last ran: 3 weeks ago*) and its apps on the Hub (*asleep · ran 3 weeks ago*); `GET /sandboxes/:name` gives `last_running_at`. Asleep, it is when its container stopped; Purgatory now keeps that time when it takes a sandbox into deep sleep. A sandbox already in deep sleep before this upgrade gets an estimate (`~`, `last_running_estimated`).
 - **The Hub** ([docs](https://p7y-dev.github.io/p7y/latest/hub/)): the apps builders publish with a `p7y.publish: "true"` label, at their own address `hub.<HOST_DOMAIN>`, for colleagues who only use them: search, *Popular* and *New*, whether an app runs or sleeps, **Open** (an asleep app wakes). Viewers sign in with the same single sign-on but only to the Hub (`HUB_ALLOWED_DOMAINS`, `HUB_ALLOWED_EMAILS`); everyone signed in can vote once per app, their own too. A card shows the app's image: `p7y.image` (a path inside the app) or its page's og:image, fetched in the background without waking anything; else the title's letter. An RSS and a JSON feed with a secret key (*Overview → Create feed link*). Off unless `HUB_ENABLED=true`; with single sign-on, add `https://hub.<HOST_DOMAIN>/auth/callback` at the provider. A published app has an *On the Hub* marker on the *Apps* tab.
 
 ### Changed
 
+- The sandbox panel's **Settings** tab is called **Details**, and it says when an asleep sandbox goes into deep sleep and when it last ran; the panel's header keeps only what matters now (*Sleeps in …*, *Asleep*, *In deep sleep*).
 - Single sign-on asks the provider for `profile` too (`openid email profile`): the Hub shows owners by name. An account that may use only the Hub is sent there by Purgatory's sign-in.
 
 ### Fixed

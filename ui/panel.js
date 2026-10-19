@@ -2,7 +2,7 @@
 // module.exports in Node for the tests. ui/app.js renders it and handles the clicks.
 ;(function (root) {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
-  const TABS = [['apps', 'Apps'], ['access', 'Access'], ['files', 'Files'], ['resources', 'Resources'], ['registry', 'Registry'], ['settings', 'Settings']]
+  const TABS = [['apps', 'Apps'], ['access', 'Access'], ['files', 'Files'], ['resources', 'Resources'], ['registry', 'Registry'], ['settings', 'Details']]
 
   const statusLabel = s => ({ exited: 'asleep', created: 'asleep', deep_sleep: 'deep sleep', starting: 'creating…' }[s] || s)
   // A stopped sandbox whose last start failed is not asleep; "created" (recreated, never started) is asleep
@@ -108,17 +108,13 @@
     const line = st === 'running'
       ? (s.idle_timeout === 'off' ? 'Never sleeps' : `${s.stops_at ? `Sleeps in ${countdown(s.stops_at, ctx.now)}` : s.going_to_sleep ? 'Going to sleep…' : 'The idle countdown has not started yet'} · ${reset}`)
       : st === 'deep_sleep' ? 'In deep sleep · opening an app or Wake rebuilds it'
+      // Asleep: only what matters now; when it last ran and when deep sleep comes are on the Details tab
       : st === 'exited' || st === 'created'
-        ? [s.deep_sleep_after !== 'off' && s.deep_sleep_at ? `Deep sleep in ${countdown(s.deep_sleep_at, ctx.now)}` : '', s.start_error ? '' : 'opening an app wakes it'].filter(Boolean).join(' · ')
+        ? (s.start_error ? '' : 'Asleep · opening an app wakes it')
         : ''
-    // Not running: when it last ran (~ when only estimated), the exact time on hover
-    const lastRan = st !== 'running' && s.last_running_at
-      ? `<span title="${esc(new Date(s.last_running_at).toLocaleString())}">Last ran ${s.last_running_estimated ? '~' : ''}${esc(ago(s.last_running_at, ctx.now))}</span>`
-      : ''
-    const sub = [lastRan, line].filter(Boolean).join(' · ')
     return `<div class="panel-head"><h2>${esc(ctx.shortName(s.name))}</h2><span class="status ${esc(statusClass(s))}">${esc(s.start_error ? 'failed to start' : statusLabel(st))}</span>
       <div class="actions head-actions">${buttons}</div></div>
-      ${sub ? `<p class="panel-sub">${sub}</p>` : ''}
+      ${line ? `<p class="panel-sub">${line}</p>` : ''}
       ${s.start_error ? `<p class="error panel-error">${esc(s.start_error)}</p>` : ''}`
   }
 
@@ -215,6 +211,11 @@
       ...(ctx.isAdmin ? [kv('Owner', esc(s.owner === 'admin' ? 'admin API' : s.owner))] : []),
       kv('Runtime · Template', `${esc([s.runtime, s.template].filter(Boolean).join(' · ') || '—')}${s.compose === 'edited' ? ' <span class="muted">(edited)</span>' : ''}`),
       kv('Created', when),
+      // Not running: when it last ran (~ when only estimated), the exact time on hover
+      ...(s.status !== 'running' && s.last_running_at
+        ? [kv('Last ran', `<span title="${esc(new Date(s.last_running_at).toLocaleString())}">${s.last_running_estimated ? '~' : ''}${esc(ago(s.last_running_at, ctx.now))}</span>`)] : []),
+      ...((s.status === 'exited' || s.status === 'created') && s.deep_sleep_after !== 'off' && s.deep_sleep_at
+        ? [kv('Deep sleep', `in ${countdown(s.deep_sleep_at, ctx.now)}`)] : []),
       kv('Sleep', sleep),
       kv('Compose', '<button class="link" data-act="compose">Starter stack…</button>'),
     ]) + `<div class="danger-zone"><h3>Danger zone</h3><div class="actions">${s.status !== 'deep_sleep' ? '<button data-act="deep-sleep">Deep sleep now</button>' : ''}<button class="danger" data-act="delete">Archive…</button></div></div>`
