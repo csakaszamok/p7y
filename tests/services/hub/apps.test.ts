@@ -15,6 +15,16 @@ describe('hubAppsOf', () => {
     ], 'example.com', 'https')
     expect(apps).toEqual([{ id: 'shop-inner-web-port8080.example.com', url: 'https://shop-inner-web-port8080.example.com', title: 'Stock room', description: 'Who took what', service: 'web', port: 8080, image: null }])
   })
+  it('"1" publishes too (and "True", as YAML writers spell it); "yes", "0" and "false" do not', () => {
+    const { apps } = hubAppsOf('shop', [
+      c('one', { 'p7y.publish': '1' }, [web(8081)]),
+      c('cap', { 'p7y.publish': 'True' }, [web(8082)]),
+      c('yes', { 'p7y.publish': 'yes' }, [web(8083)]),
+      c('zero', { 'p7y.publish': '0' }, [web(8084)]),
+      c('no', { 'p7y.publish': 'false' }, [web(8085)]),
+    ], 'example.com', 'https')
+    expect(apps.map(a => a.service)).toEqual(['one', 'cap'])
+  })
   it('defaults the title to the service, uses frpc.subdomain, and the lowest port', () => {
     const { apps } = hubAppsOf('shop', [c('ui', { 'p7y.publish': 'true', 'frpc.subdomain': 'board' }, [web(9001), web(3000)])], 'example.com', 'http')
     expect(apps[0]).toMatchObject({ id: 'shop-board.example.com', url: 'http://shop-board.example.com', title: 'ui', description: '' })

@@ -1,6 +1,9 @@
 import { frpcName, ALL_INTERFACES, type InnerContainer } from '../tcpNames'
 
-/** An app a builder published with `p7y.publish: "true"` on its container. id: its web address (host);
+/** p7y.publish: "true" (any case) or "1" publishes; anything else does not. */
+export const publishes = (v: string | undefined) => v !== undefined && (v.toLowerCase() === 'true' || v === '1')
+
+/** An app a builder published with `p7y.publish: "true"` (or "1") on its container. id: its web address (host);
  * port: its port published in the sandbox (how Purgatory reaches it without waking anything); image: p7y.image. */
 export interface HubApp { id: string; url: string; title: string; description: string; service: string; port: number; image: string | null }
 
@@ -26,7 +29,7 @@ export function hubAppsOf(instance: string, containers: InnerContainer[], domain
   const badImage: string[] = []
   const seen = new Set<string>()
   for (const ct of containers) {
-    if (ct.Labels['p7y.publish'] !== 'true') continue
+    if (!publishes(ct.Labels['p7y.publish'])) continue
     const service = ct.Labels['com.docker.compose.service'] || (ct.Names[0] ?? '').replace(/^\//, '')
     if (ct.Labels['p7y.image']?.trim() && !appImagePath(ct.Labels['p7y.image'])) badImage.push(service)
     const ports = [...new Set(ct.Ports.filter(p => p.Type === 'tcp' && p.PublicPort && ALL_INTERFACES.has(p.IP ?? '')).map(p => p.PublicPort!))].sort((a, b) => a - b)
