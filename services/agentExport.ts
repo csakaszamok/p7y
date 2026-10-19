@@ -56,7 +56,7 @@ on 127.0.0.1 stays private. A Docker connection does not wake the sandbox: wake 
 
 ` : `## Docker in the sandbox
 
-Not in this export. In Purgatory: the sandbox → Access → Export for coding agents… with Docker access.
+Not in this export. In Purgatory: the sandbox → Let your agent deploy… → Download, with Docker access (not "Without the Docker keys").
 
 `
   const portainerSection = pt ? `## Portainer

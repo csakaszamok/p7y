@@ -6,7 +6,7 @@ For Codex, Cursor, Claude Code without the plugin, or any agent that can run com
 
 ## 1. Download the zip
 
-In Purgatory, click your sandbox, then **Let your agent deploy…** → **Download** (in the Advanced view: the **Access** tab → **Export for coding agents…**). You get `p7y-<sandbox>.zip`.
+In Purgatory, click your sandbox, then **Let your agent deploy…** → **Download**; in the Advanced view the same window also has **Options** (the token's name and expiry, a zip without the Docker keys, **Copy as .env**). You get `p7y-<sandbox>.zip`.
 
 ![Let your agent deploy: Download, under Other agents](../media/tutorial-agent.png){ width="360" }
 

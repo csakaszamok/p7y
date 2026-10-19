@@ -283,13 +283,12 @@ async function makeFolder(form) {
 
 // ---------- export for coding agents ----------
 // A new token for the sandbox as p7y.env text, to the clipboard (or shown to copy by hand without one)
-async function copyEnv(name) {
-  const b = $('[data-panel] [data-act="copy-env"]')
+async function copyEnv(name, b = $('[data-panel] [data-act="copy-env"]'), opts = {}) {
   // It may wake the sandbox to make its Portainer token: seconds, not instant
   if (b) { b.disabled = true; b.textContent = 'Preparing…' }
   try {
     const res = await fetch(`/sandboxes/${encodeURIComponent(name)}/export`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-      body: JSON.stringify({ format: 'env', name: `copied ${new Date().toISOString().slice(0, 10)}`, expires_in: '90d' }) })
+      body: JSON.stringify({ format: 'env', name: opts.name || `copied ${new Date().toISOString().slice(0, 10)}`, expires_in: opts.expires_in || '90d' }) })
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
     const text = await res.text()
     const skipped = res.headers.get('X-P7y-Portainer')
@@ -300,7 +299,17 @@ async function copyEnv(name) {
       const dlg = $('[data-env-dialog]'), box = $('[data-env-text]')
       box.value = text; dlg.showModal(); box.select()
     }
-  } catch (e) { if (b) b.textContent = 'Copy as .env'; const err = $('[data-act-error]'); err.textContent = e.message; err.hidden = false } finally { if (b) b.disabled = false }
+  } catch (e) { if (b) b.textContent = 'Copy as .env'; const err = (b && b.closest('dialog') ? $('[data-export-error]') : null) || $('[data-act-error]'); err.textContent = e.message; err.hidden = false } finally { if (b) b.disabled = false }
+}
+// The window's Options (Advanced): the token's name and expiry, for the plugin's token, the zip and Copy as .env
+function exportOptions() {
+  const form = $('[data-export-form]')
+  return { name: form.elements.name.value.trim(), expires_in: form.elements.expires_in.value }
+}
+const EXPIRY_TEXT = { '30d': '30 days', '90d': '90 days', never: 'until revoked' }
+function showPluginExpiry() {
+  const span = $('[data-plugin-expiry]')
+  if (span) span.textContent = EXPIRY_TEXT[exportOptions().expires_in] || '90 days'
 }
 function openExportDialog(name) {
   const dlg = $('[data-export-dialog]')
@@ -316,6 +325,7 @@ function openExportDialog(name) {
     cmd.textContent = ''; cmd.hidden = true; $('[data-plugin-cmd-copy]').hidden = true
     $('[data-plugin-cmd-wait]').hidden = false; $('[data-plugin-token-wait]').hidden = false
   }
+  showPluginExpiry()
   let ready = false
   try { ready = JSON.parse(renderedJSON || '{}').docker_access?.state === 'ready' } catch { /* not rendered yet */ }
   $('[data-export-needs-certs]').hidden = ready
@@ -329,7 +339,10 @@ function openExportDialog(name) {
 function initExportDialog() {
   const form = $('[data-export-form]')
   if (!form) return
+  form.elements.expires_in.addEventListener('change', showPluginExpiry)
   form.addEventListener('click', async ev => {
+    const env = ev.target.closest('[data-copy-env]')
+    if (env) return void copyEnv($('[data-export-dialog]').dataset.sandbox, env, exportOptions())
     const copy = ev.target.closest('[data-copy-from]')
     if (copy) {
       const el = copy.closest('.copy-line')?.querySelector(copy.dataset.copyFrom)
@@ -343,7 +356,8 @@ function initExportDialog() {
     // A token for this sandbox only, for the plugin: shown once, like any new token
     make.disabled = true; make.textContent = 'Creating…'
     try {
-      const { token } = await api('/tokens', { method: 'POST', body: JSON.stringify({ name: 'Claude Code plugin', sandbox: $('[data-export-dialog]').dataset.sandbox, expires_in: '90d' }) })
+      const o = exportOptions()
+      const { token } = await api('/tokens', { method: 'POST', body: JSON.stringify({ name: o.name || 'Claude Code plugin', sandbox: $('[data-export-dialog]').dataset.sandbox, expires_in: o.expires_in }) })
       const value = $('[data-plugin-token-value]')
       value.textContent = token; value.hidden = false
       $('[data-plugin-token-copy]').hidden = false
@@ -372,7 +386,8 @@ function initExportDialog() {
         await api(`/sandboxes/${encodeURIComponent(name)}/docker-keys`, { method: 'POST' })
         renderedJSON = null; void showPanel(name)
       }
-      const body = { ...Object.fromEntries(new FormData(form)), docker: how !== 'plain' }
+      const { no_docker, ...fields } = Object.fromEntries(new FormData(form))
+      const body = { ...fields, docker: how !== 'plain' && !no_docker }
       const res = await fetch(`/sandboxes/${encodeURIComponent(name)}/export`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) })
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
       const a = document.createElement('a')

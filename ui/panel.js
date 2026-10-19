@@ -120,11 +120,13 @@
       ${s.start_error ? `<p class="error panel-error">${esc(s.start_error)}</p>` : ''}`
   }
 
+  const AGENT_BUTTON = '<div class="actions agent-actions"><button class="primary" data-act="export">Let your agent deploy…</button></div>'
+
   function appsTab(s, ctx) {
     const extras = s.extras || {}
     const rows = appRows(s)
-    // Simple: the agent export here (Access is Advanced only), for the owner
-    const agent = ctx.simple && (s.owner || 'admin') === ctx.me ? '<div class="actions agent-actions"><button class="primary" data-act="export">Let your agent deploy…</button></div>' : ''
+    // Let your agent deploy: here in both views, for the owner (the new token is theirs)
+    const agent = (s.owner || 'admin') === ctx.me ? AGENT_BUTTON : ''
     if (!rows.length) return '<p class="muted">No apps yet — publish a port on all interfaces (e.g. 8080:8080) to get a link.</p>' + agent
     const mark = a => a === true ? ' <span class="ok" title="answering">✓</span><span class="sr-only">answering</span>'
       : a === false ? ' <span class="warn" title="not answering">⚠</span><span class="sr-only">not answering</span>' : ''
@@ -183,7 +185,7 @@
     }
     if ((s.owner || 'admin') === ctx.me) parts.push(table(['API', ''], [kv('Token', '<button data-act="token">Token for this sandbox…</button>')]))
     // What a coding agent needs, for the owner (the new token is theirs), whatever the Docker access state
-    if ((s.owner || 'admin') === ctx.me) parts.unshift('<div class="actions agent-actions"><button class="primary" data-act="export">Export for coding agents…</button><button data-act="copy-env">Copy as .env</button></div>')
+    if ((s.owner || 'admin') === ctx.me) parts.unshift(AGENT_BUTTON)
     return parts.length ? parts.join('') : '<p class="muted">Nothing to connect to here.</p>'
   }
 

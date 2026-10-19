@@ -209,17 +209,22 @@ describe('agent access in the panel', () => {
   })
 })
 
-describe('export band', () => {
-  it('Export and Copy as .env sit at the top of Access for the owner, whatever the state', () => {
+describe('Let your agent deploy: the same in both views', () => {
+  it('on the Apps tab in Simple and Advanced, for the owner', () => {
+    for (const c of [ctx, { ...ctx, simple: true }]) {
+      expect(panelOf(P.renderPanel(running, c), 'apps')).toContain('data-act="export">Let your agent deploy…</button>')
+      expect(panelOf(P.renderPanel(running, { ...c, me: 'bob', isAdmin: false }), 'apps')).not.toContain('data-act="export"')
+    }
+  })
+  it('Advanced: also at the top of Access, whatever the Docker state; Copy as .env is in its window now', () => {
     for (const docker_access of [{ host: 'x', state: 'ready' }, { host: 'x', state: 'needs-certs' }, undefined]) {
       const access = panelOf(P.renderPanel({ ...running, docker_access }, ctx), 'access')
-      expect(access.indexOf('data-act="export"')).toBeGreaterThan(-1)
+      expect(access).toContain('data-act="export">Let your agent deploy…</button>')
       expect(access.indexOf('data-act="export"')).toBeLessThan(access.indexOf('<table'))
-      expect(access).toContain('data-act="copy-env"')
+      expect(access).not.toContain('data-act="copy-env"')
     }
     const other = panelOf(P.renderPanel({ ...running, docker_access: { host: 'x', state: 'ready' } }, { ...ctx, me: 'bob', isAdmin: false }), 'access')
     expect(other).not.toContain('data-act="export"')
-    expect(other).not.toContain('data-act="copy-env"')
   })
 })
 
@@ -547,10 +552,10 @@ describe('Simple view', () => {
     expect(d).toContain('data-act="sleep"')
     expect(d).toContain('Danger zone')
   })
-  it('Advanced (no ctx.simple) is unchanged', () => {
+  it('Advanced (no ctx.simple) keeps every tab and the TCP columns', () => {
     const html = P.renderPanel(running, ctx)
     expect([...html.matchAll(/data-tab="(\w+)"/g)].map(m => m[1])).toEqual(['apps', 'access', 'files', 'resources', 'registry', 'settings'])
-    expect(panelOf(html, 'apps')).not.toContain('Let your agent deploy')
+    expect(panelOf(html, 'apps')).toContain('data-connect')
   })
 })
 
