@@ -1,6 +1,6 @@
 import { requirePrincipal } from '../../../services/principal'
 import { getOwnedSandbox } from '../../../services/access'
-import { validateSleepSettings, updateSleepSettings, sleepSettingsOf } from '../../../services/sleepSettings'
+import { validateSleepSettings, updateSleepSettings, sleepSettingsOf, sleepLimitError } from '../../../services/sleepSettings'
 import { checkLimits, resourceDefaults } from '../../../services/resources'
 import { applyLimits, limitsOf } from '../../../services/resourceSettings'
 import { hostResources } from '../../../services/docker'
@@ -54,6 +54,9 @@ export default async (req: Request): Promise<Response> => {
   if (wantsDisk && (disk === null || disk < 1024 ** 3)) return Response.json({ error: 'disk must look like 20g, at least 1g' }, { status: 400 })
   const changes = wantsSleep ? validateSleepSettings({ idle_timeout: b.idle_timeout, deep_sleep_after: b.deep_sleep_after }) : null
   if (typeof changes === 'string') return Response.json({ error: changes }, { status: 400 })
+  // The server's limits for users (SANDBOX_MAX_IDLE_TIMEOUT, SANDBOX_MAX_DEEP_SLEEP_AFTER)
+  const tooLong = changes ? sleepLimitError(changes, p.role) : null
+  if (tooLong) return Response.json({ error: tooLong }, { status: 400 })
   const def = resourceDefaults()
   const lim = wantsLimits ? checkLimits({ cpus: b.cpus, memory: b.memory }, p.role, { ceiling: def.ceiling, host: await hostResources() }) : null
   if (lim && !lim.ok) return Response.json({ error: lim.error }, { status: lim.status })

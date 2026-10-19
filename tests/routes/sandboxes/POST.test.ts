@@ -63,6 +63,16 @@ describe('POST /sandboxes', () => {
     expect(res.status).toBe(503)
   })
 
+  it('sleep limits: a user may not create above them (the admin may)', async () => {
+    vi.stubEnv('SANDBOX_MAX_IDLE_TIMEOUT', '2h')
+    try {
+      const over = await handler(jsonReq({ name: 'lim1', idle_timeout: 'off' }, 'Bearer p7y_user'))
+      expect(over.status).toBe(400)
+      expect((await over.json()).error).toMatch(/never is not allowed on this server: at most 2h/)
+      expect((await handler(jsonReq({ name: 'lim2', idle_timeout: 'off' }))).status).toBe(201)
+    } finally { vi.unstubAllEnvs(); vi.stubEnv('ADMIN_TOKEN', 'admin-secret') }
+  })
+
   it('passes a valid idle_timeout through to the service', async () => {
     const res = await handler(jsonReq({ name: 'idle', idle_timeout: '15m' }))
     expect(res.status).toBe(201)
