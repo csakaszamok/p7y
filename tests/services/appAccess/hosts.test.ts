@@ -31,3 +31,15 @@ describe('accessOfHost', () => {
     expect(sandboxAccess('p7y-shop', [], { APPS_ACCESS_DEFAULT: 'domain' } as NodeJS.ProcessEnv)).toBe('domain')
   })
 })
+
+describe('accessOfHost: never open because the live answer is empty (C2)', () => {
+  const own = [{ url: 'shop-own.example.com', port: 8083, service: 'own', access: 'owner' as const }]
+  const base = { sandboxOf: () => 'p7y-shop', ownerOf: () => 'bob@example.com', env: {} as NodeJS.ProcessEnv }
+  it('live links empty (frps not registered yet, inner Docker failing): what it had when it last ran', async () => {
+    expect((await accessOfHost('shop-own.example.com', { ...base, links: async () => [], remembered: () => own }))!.access).toBe('owner')
+  })
+  it('a host not among the live links: the strictest of the live and the remembered ones', async () => {
+    const live = [{ url: 'shop-pub.example.com', port: 8081, service: 'pub', access: 'public' as const }]
+    expect((await accessOfHost('shop-new.example.com', { ...base, links: async () => live, remembered: () => own }))!.access).toBe('owner')
+  })
+})

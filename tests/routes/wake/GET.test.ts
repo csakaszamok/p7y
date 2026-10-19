@@ -146,5 +146,12 @@ describe('GET /wake: app access', () => {
     await handler(req('as-web.lvh.me'))
     expect(wakeByHost).toHaveBeenCalledTimes(2)
   })
+  it('the landing of an asleep app keeps its query: the ticket reaches the decision (no redirect loop)', async () => {
+    const { decide } = await import('../../../services/appAccess/decide')
+    vi.mocked(decide).mockClear()
+    // replacepath: X-Replaced-Path is the path alone, the query stays on the request
+    await handler(new Request('http://localhost/wake?ticket=t1&rd=%2Fx', { headers: { host: 'own-web.lvh.me', 'x-replaced-path': '/__p7y/auth' } }))
+    expect(vi.mocked(decide).mock.calls[0][0].uri).toBe('/__p7y/auth?ticket=t1&rd=%2Fx')
+  })
 })
 
