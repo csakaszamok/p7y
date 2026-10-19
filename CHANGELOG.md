@@ -23,6 +23,15 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 - The README in an export for coding agents said that connecting with Docker wakes the sandbox; it does not: wake it first.
 
+## [0.7.3] - 2026-10-19
+
+Upgrading from 0.7.2: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d`.
+
+### Fixed
+
+- Two sandboxes created with the same name at the same moment (two users typing the same name) both went ahead and worked on one sandbox, the second user getting the first one's. Now one is created and the other is refused: *Sandbox already exists*.
+- After clicking another sandbox in the list, its panel kept showing the previous sandbox's details until the new ones arrived, for seconds on a slow or busy server. It now shows the clicked sandbox's name and status at once, its details loading.
+
 ## [0.7.2] - 2026-10-19
 
 Upgrading from 0.7.1: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d`.
