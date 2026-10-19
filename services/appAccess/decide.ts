@@ -18,7 +18,8 @@ export const startUrl = (target: string, env: NodeJS.ProcessEnv = process.env) =
 export function withoutAppCookie(cookie: string): string {
   return cookie.split(';').map(c => c.trim()).filter(c => c && !c.startsWith(`${APP_COOKIE}=`)).join('; ')
 }
-const cookieValue = (cookie: string) => cookie.split(';').map(c => c.trim()).find(c => c.startsWith(`${APP_COOKIE}=`))?.slice(APP_COOKIE.length + 1)
+/** Every __p7y_app sent: a sibling app can set a junk one for the whole domain, which the browser sends first */
+const cookieValues = (cookie: string) => cookie.split(';').map(c => c.trim()).filter(c => c.startsWith(`${APP_COOKIE}=`)).map(c => c.slice(APP_COOKIE.length + 1))
 /** A path on this host only: "/…", not "//…" or "/\…" (another host) */
 const localPath = (p: string | null) => p && p.startsWith('/') && !p.startsWith('//') && !p.startsWith('/\\') ? p : '/'
 
@@ -38,7 +39,7 @@ export async function decide(r: { host: string; proto: string; uri: string; cook
     }
     return { status: 302, headers: { Location: startUrl(`${proto}://${host}/`, d.env), 'Cache-Control': 'no-store' } }
   }
-  const viewer = readAppCookie(cookieValue(r.cookie), host)
+  const viewer = cookieValues(r.cookie).map(v => readAppCookie(v, host)).find(v => v && mayOpen(a.access, v, a.owner, d.env)) ?? null
   if (viewer && mayOpen(a.access, viewer, a.owner, d.env)) {
     return { status: 200, headers: { Cookie: withoutAppCookie(r.cookie), 'X-P7y-User': viewer.sub } }
   }

@@ -56,6 +56,13 @@ describe('/auth/app', () => {
   it('a host that is no sandbox app: 404', async () => {
     expect((await decide(req('nope.example.com'), deps)).status).toBe(404)
   })
+  // A sibling app can set a junk __p7y_app for the whole domain, sent before the real one: not a lockout
+  it('a junk __p7y_app before the real one does not shadow it', async () => {
+    const c = appCookieValue('shop-own.example.com', bob)
+    const r = await decide(req('shop-own.example.com', '/', `__p7y_app=junk; __p7y_app=${c}; theirs=1`), deps)
+    expect(r.status).toBe(200)
+    expect(r.headers['X-P7y-User']).toBe('bob@example.com')
+  })
   it('withoutAppCookie', () => {
     expect(withoutAppCookie('__p7y_app=x')).toBe('')
     expect(withoutAppCookie('a=1;__p7y_app=x;  b=2')).toBe('a=1; b=2')
