@@ -123,7 +123,7 @@ app's service, then deploy again:
 
 ```yaml
     labels:
-      p7y.publish: "true"            # exactly "true"
+      p7y.publish: "true"            # "true" or "1"
       p7y.title: "Stock room"        # optional, up to 80 characters
       p7y.description: "Who took what from the stock room"   # optional, up to 280
       p7y.image: "/screenshot.png"   # optional: a path the app itself serves (PNG, JPEG, WebP, GIF; up to 2 MB)
