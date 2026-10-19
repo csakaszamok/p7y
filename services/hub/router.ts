@@ -12,7 +12,7 @@ import { hubPage, hubLoginPage } from './page'
 import { html, redirect } from '../ui/layout'
 import { checkAdminLogin, sameOrigin } from '../principal'
 import { beginLogin, finishLogin, oidcEnabled, providerName, LoginError } from '../oidc'
-import { hubAllowed, signInAllowed } from '../allowlist'
+import { hubAllowed, subAllowed } from '../allowlist'
 import { getCookie, SESSION_MAX_AGE } from '../session'
 
 const ASSETS: Record<string, [string, string]> = {
@@ -119,5 +119,5 @@ export async function handleHub(req: Request, deps: Deps = {}): Promise<Response
 
 /** A domain app shows to viewers who can sign in to Purgatory itself; Hub-only viewers see public apps only. */
 export function visibleTo(app: { access?: 'public' | 'domain' }, viewerSub: string, env: NodeJS.ProcessEnv = process.env): boolean {
-  return app.access !== 'domain' || signInAllowed(viewerSub, env)
+  return app.access !== 'domain' || subAllowed(viewerSub, viewerSub === 'admin' ? 'admin' : 'user', env)
 }

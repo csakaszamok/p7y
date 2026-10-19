@@ -79,6 +79,9 @@ describe('handleHub: app access', () => {
     expect(await list('anna@example.com')).toEqual(['shop-web.example.com', 'shop-dom.example.com'])
     expect(await list('peter@example.com')).toEqual(['shop-web.example.com'])
   })
+  it('the admin sees domain apps too (the admin opens every app)', async () => {
+    expect(await list('admin')).toEqual(['shop-web.example.com', 'shop-dom.example.com'])
+  })
   it('a Hub-only viewer cannot vote for a domain app (404)', async () => {
     const r = await handleHub(new Request('https://hub.example.com/api/hub/apps/shop-dom.example.com/vote', { method: 'PUT', headers: { origin: 'https://hub.example.com', host: 'hub.example.com', ...as('peter@example.com') } }), d)
     expect(r.status).toBe(404)
