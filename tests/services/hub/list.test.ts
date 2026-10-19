@@ -98,3 +98,19 @@ describe('hubEntries: apps that are briefly missing', () => {
     expect(await hubEntries(deps([meta('p7y-down', 'running')]))).toEqual([])
   })
 })
+
+describe('hubEntries: when an asleep app last ran', () => {
+  it('asks only for sandboxes that are not running, and carries it on each of their apps', async () => {
+    containers = { 'p7y-ran': [web('web', { 'p7y.publish': 'true' })] }
+    const asked: string[] = []
+    const lastRan = async (n: string, status: string) => { asked.push(`${n}:${status}`); return { at: '2026-09-01T08:00:00.000Z', estimated: false } }
+    forgetHubList()
+    const up = await hubEntries({ ...deps([meta('p7y-ran', 'running')]), lastRan })
+    expect(up[0]).toMatchObject({ last_ran_at: null, last_ran_estimated: false })
+    expect(asked).toEqual([])
+    forgetHubList()
+    const down = await hubEntries({ ...deps([meta('p7y-ran', 'exited')]), lastRan })
+    expect(down[0]).toMatchObject({ status: 'asleep', last_ran_at: '2026-09-01T08:00:00.000Z', last_ran_estimated: false })
+    expect(asked).toEqual(['p7y-ran:exited'])
+  })
+})

@@ -5,7 +5,7 @@ import type { HubEntry } from '../../../services/hub/list'
 const entry = (i: number, extra: Partial<HubEntry> = {}): HubEntry => ({
   id: `app${i}.example.com`, url: `https://app${i}.example.com`, title: `App ${i}`, description: 'd', service: 'web', port: 80, image: null,
   owner: 'anna@example.com', owner_name: 'Anna', sandbox: 'p7y-shop', status: 'running',
-  updated_at: new Date(Date.UTC(2026, 9, 1, 0, i)).toISOString(), ...extra,
+  updated_at: new Date(Date.UTC(2026, 9, 1, 0, i)).toISOString(), last_ran_at: null, last_ran_estimated: false, ...extra,
 })
 const hub = { url: 'https://hub.example.com', title: 'Example Ltd' }
 

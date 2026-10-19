@@ -7,6 +7,7 @@ import { sandboxParent } from '../sandboxPaths'
 import { sandboxService } from '../sandbox'
 import type { SandboxMeta } from '../docker'
 import type { InnerContainer } from '../tcpNames'
+import { lastRunningOf, type LastRunning } from '../lastRunning'
 
 export interface HubEntry extends HubApp {
   owner: string
@@ -14,6 +15,9 @@ export interface HubEntry extends HubApp {
   sandbox: string
   status: 'running' | 'asleep' | 'deep_sleep'
   updated_at: string
+  /** Not running: when its sandbox last ran (estimated: from what it last showed), else null */
+  last_ran_at: string | null
+  last_ran_estimated: boolean
 }
 export interface Remembered {
   apps: Array<HubApp & { updated_at: string }>
@@ -32,6 +36,7 @@ export interface HubListDeps {
   dir(name: string): string
   now(): number
   nameOf(email: string): string | null
+  lastRan(name: string, status: string): Promise<LastRunning>
 }
 
 const defaults: HubListDeps = {
@@ -41,6 +46,7 @@ const defaults: HubListDeps = {
   dir: name => `${sandboxParent(name)}/${name}`,
   now: Date.now,
   nameOf: email => rememberedNameOf(email),
+  lastRan: (name, status) => lastRunningOf(name, status),
 }
 
 const TTL_MS = 30_000
@@ -109,7 +115,10 @@ export async function hubEntries(deps: Partial<HubListDeps> = {}): Promise<HubEn
     if (s.status === 'running') {
       try { r = await liveApps(s.name, d, prev) } catch { r = prev } // its daemon does not answer: what it last showed
     }
-    return (r?.apps ?? []).map(a => ({ ...a, owner: s.owner, owner_name: d.nameOf(s.owner), sandbox: s.name, status: statusOf(s.status) }))
+    const apps = r?.apps ?? []
+    // Asked only for a sandbox that is not running and has apps here (its container's state is read)
+    const last = apps.length && s.status !== 'running' ? await d.lastRan(s.name, s.status).catch(() => null) : null
+    return apps.map(a => ({ ...a, owner: s.owner, owner_name: d.nameOf(s.owner), sandbox: s.name, status: statusOf(s.status), last_ran_at: last?.at ?? null, last_ran_estimated: last?.estimated ?? false }))
   }))
   const entries = perSandbox.flat().sort((a, b) => b.updated_at.localeCompare(a.updated_at))
   cache = { at: d.now(), entries }

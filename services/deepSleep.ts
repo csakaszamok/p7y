@@ -4,6 +4,7 @@ import { composeDown } from './compose'
 import { removeProjectContainers, nudgeTraefik } from './project'
 import { parseDuration } from './duration'
 import { sandboxParent } from './sandboxPaths'
+import { rememberLastRunning } from './lastRunning'
 
 export type SandboxStateLike = SandboxState
 
@@ -39,6 +40,9 @@ async function takeDown(name: string): Promise<void> {
 
 /** Deep sleep on request (the "Deep sleep" button): right away, also for a running sandbox. */
 export async function deepSleepNow(name: string): Promise<void> {
+  // Its containers go: keep when it last ran (now, if it was running)
+  const state = await getSandboxState(name).catch(() => null)
+  if (state) rememberLastRunning(`${sandboxParent(name)}/${name}`, state.status === 'running' ? new Date().toISOString() : state.finishedAt)
   await takeDown(name)
   console.log(`[deep-sleep] ${name} put into deep sleep on request`)
 }
@@ -47,6 +51,8 @@ async function deepSleepSandbox(name: string, now: Date): Promise<void> {
   // Re-check: Sablier may have started it since the scan.
   const state = await getSandboxState(name)
   if (!state || !isDeepSleepDue(state, now)) return
+  // Its container, and with it Docker's FinishedAt, goes: keep when it last ran
+  rememberLastRunning(`${sandboxParent(name)}/${name}`, state.finishedAt)
   await takeDown(name)
   console.log(state.staleNetwork
     ? `[deep-sleep] ${name} points at a removed network, down (the next request rebuilds it)`

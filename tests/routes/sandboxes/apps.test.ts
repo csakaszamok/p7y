@@ -33,6 +33,9 @@ vi.mock('../../../services/hub/list', () => ({
     ? { apps: [{ id: 'up-inner-web-port8080.lvh.me', url: 'http://up-inner-web-port8080.lvh.me', title: 'Web', description: '', service: 'web', updated_at: '' }], unlinked: ['worker'] }
     : null),
 }))
+vi.mock('../../../services/lastRunning', () => ({
+  lastRunningOf: vi.fn(async (_n: string, status: string) => status === 'running' ? { at: null, estimated: false } : { at: '2026-09-01T08:00:00.000Z', estimated: true }),
+}))
 const { appStatuses } = await import('../../../services/appProbe')
 const { default: get } = await import('../../../routes/sandboxes/[name]/GET')
 const req = (n: string) => new Request(`http://localhost/sandboxes/${n}`, { headers: { Authorization: 'Bearer admin-secret' } })
@@ -67,5 +70,14 @@ describe('GET /sandboxes/:name hub', () => {
     expect(body.hub).toEqual({ enabled: true, url: 'http://hub.lvh.me', published: ['up-inner-web-port8080.lvh.me'], unlinked: ['worker'], bad_image: [] })
     vi.stubEnv('HUB_ENABLED', 'false')
     expect((await (await get(req('p7y-down'))).json()).hub).toEqual({ enabled: false, url: null, published: [], unlinked: [], bad_image: [] })
+  })
+})
+
+describe('GET /sandboxes/:name last running', () => {
+  it('says when a sandbox that is not running last ran (and whether that is an estimate); nothing while it runs', async () => {
+    const down = await (await get(req('p7y-down'))).json()
+    expect(down).toMatchObject({ last_running_at: '2026-09-01T08:00:00.000Z', last_running_estimated: true })
+    const up = await (await get(req('p7y-up'))).json()
+    expect(up).toMatchObject({ last_running_at: null, last_running_estimated: false })
   })
 })
