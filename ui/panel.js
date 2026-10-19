@@ -100,7 +100,9 @@
 
   function header(s, ctx) {
     const st = s.status
-    const buttons = st === 'running' ? '<button class="primary" data-act="terminal">Terminal</button><button data-act="logs">Logs</button><button data-act="stop">Sleep</button>'
+    // Simple: only Sleep or Wake (no Terminal, no Logs)
+    const buttons = ctx.simple ? (st === 'running' ? '<button data-act="stop">Sleep</button>' : st === 'starting' ? '' : '<button class="primary" data-act="start">Wake</button>')
+      : st === 'running' ? '<button class="primary" data-act="terminal">Terminal</button><button data-act="logs">Logs</button><button data-act="stop">Sleep</button>'
       : st === 'deep_sleep' ? '<button class="primary" data-act="start">Wake</button>'
       : st === 'starting' ? ''
       : '<button class="primary" data-act="start">Wake</button><button data-act="logs">Logs</button>'
@@ -121,7 +123,9 @@
   function appsTab(s, ctx) {
     const extras = s.extras || {}
     const rows = appRows(s)
-    if (!rows.length) return '<p class="muted">No apps yet — publish a port on all interfaces (e.g. 8080:8080) to get a link.</p>'
+    // Simple: the agent export here (Access is Advanced only), for the owner
+    const agent = ctx.simple && (s.owner || 'admin') === ctx.me ? '<div class="actions agent-actions"><button class="primary" data-act="export">Let your agent deploy…</button></div>' : ''
+    if (!rows.length) return '<p class="muted">No apps yet — publish a port on all interfaces (e.g. 8080:8080) to get a link.</p>' + agent
     const mark = a => a === true ? ' <span class="ok" title="answering">✓</span><span class="sr-only">answering</span>'
       : a === false ? ' <span class="warn" title="not answering">⚠</span><span class="sr-only">not answering</span>' : ''
     const hub = s.hub || { published: [], unlinked: [] }
@@ -130,15 +134,15 @@
     const body = rows.map(r => `<tr>
       <td>${esc(r.service)}</td>
       <td>${r.url ? `<a href="${esc(ctx.protocol)}//${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.url)}">open ↗</a>${mark(r.answers)}${onHub(r)}` : '<span class="muted">—</span>'}</td>
-      <td>${r.tcp ? `<span class="tcp">${esc(r.tcp.address)}</span> ${copyButton(r.tcp.address)}` : ''}</td>
-      <td>${r.tcp ? `<button class="link" data-connect="${esc(r.tcp.address)}" data-port="${esc(r.tcp.port ?? '')}" data-user="${esc(r.tcp.user ?? '')}"${extras.demo_password ? ` data-demo-password="${esc(extras.demo_password)}"` : ''}>Connect…</button>` : ''}</td>
+      ${ctx.simple ? '' : `<td>${r.tcp ? `<span class="tcp">${esc(r.tcp.address)}</span> ${copyButton(r.tcp.address)}` : ''}</td>
+      <td>${r.tcp ? `<button class="link" data-connect="${esc(r.tcp.address)}" data-port="${esc(r.tcp.port ?? '')}" data-user="${esc(r.tcp.user ?? '')}"${extras.demo_password ? ` data-demo-password="${esc(extras.demo_password)}"` : ''}>Connect…</button>` : ''}</td>`}
     </tr>`)
     const down = rows.filter(r => r.answers === false).map(r => r.service)
     const tip = !down.length ? ''
       : down.length === 1 ? `<p class="not-answering">⚠ ${esc(down[0])} is not answering — does it listen on 0.0.0.0 (not 127.0.0.1) inside its container?</p>`
       : `<p class="not-answering">⚠ ${down.map(esc).join(', ')} are not answering — do they listen on 0.0.0.0 (not 127.0.0.1) inside their containers?</p>`
     const asleep = s.status !== 'running' && rows.some(r => r.url) ? '<p class="muted">opening one wakes the sandbox</p>' : ''
-    return table(['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep
+    return table(ctx.simple ? ['App', 'Web'] : ['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep + agent
   }
 
   function accessTab(s, ctx) {
@@ -216,8 +220,8 @@
     const when = created ? `${esc(new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(created))} <span class="muted">(${relativeAge(created, ctx.now)})</span>` : esc(s.created_at || '—')
     const sleep = `${s.idle_timeout === 'off' ? 'never sleeps' : `after ${esc(s.idle_timeout || '—')} idle`} · ${s.deep_sleep_after === 'off' ? 'no deep sleep' : `deep sleep ${esc(s.deep_sleep_after || '—')} after`} <button class="link" data-act="sleep">Change…</button>`
     return table(null, [
-      ...(ctx.isAdmin ? [kv('Owner', esc(s.owner === 'admin' ? 'admin API' : s.owner))] : []),
-      kv('Runtime · Template', `${esc([s.runtime, s.template].filter(Boolean).join(' · ') || '—')}${s.compose === 'edited' ? ' <span class="muted">(edited)</span>' : ''}`),
+      ...(ctx.isAdmin && !ctx.simple ? [kv('Owner', esc(s.owner === 'admin' ? 'admin API' : s.owner))] : []),
+      ...(ctx.simple ? [] : [kv('Runtime · Template', `${esc([s.runtime, s.template].filter(Boolean).join(' · ') || '—')}${s.compose === 'edited' ? ' <span class="muted">(edited)</span>' : ''}`)]),
       kv('Created', when),
       // When it last ran (~ when only estimated), the exact time on hover
       kv('Last ran', s.status === 'running' ? 'now (running)'
@@ -226,7 +230,7 @@
       ...((s.status === 'exited' || s.status === 'created') && s.deep_sleep_after !== 'off' && s.deep_sleep_at
         ? [kv('Deep sleep', `in ${countdown(s.deep_sleep_at, ctx.now)}`)] : []),
       kv('Sleep', sleep),
-      kv('Compose', '<button class="link" data-act="compose">Starter stack…</button>'),
+      ...(ctx.simple ? [] : [kv('Compose', '<button class="link" data-act="compose">Starter stack…</button>')]),
     ]) + warnings(s) + `<div class="danger-zone"><h3>Danger zone</h3><div class="actions">${s.status !== 'deep_sleep' ? '<button data-act="deep-sleep">Deep sleep now</button>' : ''}<button class="danger" data-act="delete">Archive…</button></div></div>`
   }
 
@@ -300,9 +304,14 @@
       <p class="muted" data-files-status hidden></p>`
   }
 
+  /** The tabs shown: Simple has only Apps and Details */
+  const SIMPLE_TABS = ['apps', 'settings']
+  const tabsOf = ctx => ctx.simple ? TABS.filter(([id]) => SIMPLE_TABS.includes(id)) : TABS
+
   function renderPanel(s, ctx) {
-    const tab = TABS.some(([id]) => id === ctx.tab) ? ctx.tab : 'apps'
-    const tabs = TABS.map(([id, label]) => `<button role="tab" id="tab-${id}" aria-selected="${id === tab}" aria-controls="tabpanel-${id}" tabindex="${id === tab ? 0 : -1}" data-tab="${id}">${label}</button>`).join('')
+    const shown = tabsOf(ctx)
+    const tab = shown.some(([id]) => id === ctx.tab) ? ctx.tab : 'apps'
+    const tabs = shown.map(([id, label]) => `<button role="tab" id="tab-${id}" aria-selected="${id === tab}" aria-controls="tabpanel-${id}" tabindex="${id === tab ? 0 : -1}" data-tab="${id}">${label}</button>`).join('')
     const body = {
       apps: appsTab(s, ctx),
       access: accessTab(s, ctx),
@@ -314,7 +323,7 @@
     }
     return `${header(s, ctx)}
       <div class="tabs" role="tablist" aria-label="Sandbox details">${tabs}</div>
-      ${TABS.map(([id]) => `<div role="tabpanel" id="tabpanel-${id}" aria-labelledby="tab-${id}" data-tabpanel="${id}"${id === tab ? '' : ' hidden'}>${body[id]}</div><!--/${id}-->`).join('')}
+      ${shown.map(([id]) => `<div role="tabpanel" id="tabpanel-${id}" aria-labelledby="tab-${id}" data-tabpanel="${id}"${id === tab ? '' : ' hidden'}>${body[id]}</div><!--/${id}-->`).join('')}
       <p class="error" data-act-error hidden></p>`
   }
 

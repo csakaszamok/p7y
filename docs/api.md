@@ -39,6 +39,7 @@
 | `DELETE` | `/ssh-keys/:id` | Delete one of your keys (it stops working at once) |
 | `GET` | `/templates/:name` | A template's `compose.yaml` as written (`compose`), to show or edit before a create |
 | `GET` | `/me` | Who you are signed in as, your running sandboxes and limit, and `server_places`: the sandbox places on the server, `used` and `limit` (`null` without a server limit) |
+| `PUT` | `/me/view` | The web UI's view for this account: `{"view": "simple"}` or `"advanced"` (`GET /me` returns it as `view`) |
 | `GET` | `/tokens` | List your personal access tokens (`hint`: the token's start and end, e.g. `p7y_aB3x…9fQz`; null for tokens made before hints) |
 | `POST` | `/tokens` | Mint a personal access token (`name`, optional `expires_in` like `30d`/`90d`/`never`) |
 | `DELETE` | `/tokens/:id` | Revoke a personal access token |

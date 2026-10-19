@@ -44,3 +44,17 @@ describe('GET /me server_places', () => {
     expect((await (await me(req('p7y_u'))).json()).server_places).toBeNull()
   })
 })
+
+describe('the Simple / Advanced view', () => {
+  it('GET /me says which view the caller has; PUT /me/view changes it, and only to simple or advanced', async () => {
+    const fs = await import('node:fs'); const os = await import('node:os'); const path = await import('node:path')
+    vi.stubEnv('USER_PREFS_FILE', path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'prefs-')), 'p.json'))
+    expect((await (await me(req('p7y_u'))).json()).view).toBe('simple')
+    expect((await (await me(req('admin-secret'))).json()).view).toBe('advanced')
+    const { default: put } = await import('../../routes/me/view/PUT')
+    const set = (view: unknown) => put(new Request('http://localhost/me/view', { method: 'PUT', headers: { Authorization: 'Bearer p7y_u', 'Content-Type': 'application/json' }, body: JSON.stringify({ view }) }))
+    expect((await set('advanced')).status).toBe(200)
+    expect((await (await me(req('p7y_u'))).json()).view).toBe('advanced')
+    expect((await set('expert')).status).toBe(400)
+  })
+})

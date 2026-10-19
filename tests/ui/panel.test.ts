@@ -504,3 +504,52 @@ describe('header: going to sleep', () => {
     expect(html).not.toContain('The idle countdown has not started yet')
   })
 })
+
+describe('Simple view', () => {
+  const simple = { ...ctx, simple: true }
+  const asleep = { ...running, status: 'exited' }
+
+  it('only the Apps and Details tabs', () => {
+    const html = P.renderPanel(running, simple)
+    expect([...html.matchAll(/data-tab="(\w+)"/g)].map(m => m[1])).toEqual(['apps', 'settings'])
+    expect(html).not.toContain('data-tabpanel="access"')
+  })
+  it('a tab only Advanced has falls back to Apps', () => {
+    expect(P.renderPanel(running, { ...simple, tab: 'files' })).toContain('aria-selected="true" aria-controls="tabpanel-apps"')
+  })
+  it('the header: Sleep or Wake only, no Terminal or Logs', () => {
+    const head = P.renderPanel(running, simple).split('<div class="tabs"')[0]
+    expect(head).toContain('data-act="stop"')
+    expect(head).not.toContain('data-act="terminal"')
+    expect(head).not.toContain('data-act="logs"')
+    const sleeping = P.renderPanel(asleep, simple).split('<div class="tabs"')[0]
+    expect(sleeping).toContain('data-act="start"')
+    expect(sleeping).not.toContain('data-act="logs"')
+  })
+  it('Apps: App and Web only, the Hub tag kept, and the agent button for the owner', () => {
+    const apps = panelOf(P.renderPanel({ ...running, hub: { published: ['shop-inner-web-port80.lvh.me'], unlinked: [] } }, simple), 'apps')
+    expect(apps).toContain('<th>App</th><th>Web</th></tr>')
+    expect(apps).not.toContain('data-connect')
+    expect(apps).not.toContain('-tcp.lvh.me')
+    expect(apps).toContain('On the Hub')
+    expect(apps).toContain('data-act="export">Let your agent deploy…</button>')
+    expect(panelOf(P.renderPanel(running, { ...simple, me: 'someone-else' }), 'apps')).not.toContain('data-act="export"')
+  })
+  it('the agent button also with no apps yet', () => {
+    expect(panelOf(P.renderPanel({ ...running, apps: [], tunnel_urls: [], tcp_addresses: [] }, simple), 'apps')).toContain('data-act="export"')
+  })
+  it('Details: no Owner, Runtime · Template or Compose; sleep, last ran and the danger zone stay', () => {
+    const d = panelOf(P.renderPanel(running, simple), 'settings')
+    expect(d).not.toContain('Owner')
+    expect(d).not.toContain('Runtime · Template')
+    expect(d).not.toContain('data-act="compose"')
+    expect(d).toContain('Last ran')
+    expect(d).toContain('data-act="sleep"')
+    expect(d).toContain('Danger zone')
+  })
+  it('Advanced (no ctx.simple) is unchanged', () => {
+    const html = P.renderPanel(running, ctx)
+    expect([...html.matchAll(/data-tab="(\w+)"/g)].map(m => m[1])).toEqual(['apps', 'access', 'files', 'resources', 'registry', 'settings'])
+    expect(panelOf(html, 'apps')).not.toContain('Let your agent deploy')
+  })
+})
