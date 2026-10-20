@@ -1,6 +1,7 @@
 import { pageSession, redirect, html, escapeHtml } from '../../../../services/ui/layout'
 import { getOwnedSandbox } from '../../../../services/access'
 import { rawNameOf } from '../../../../services/naming'
+import { faviconTag, logoImg, titleSuffix } from '../../../../services/ui/brand'
 
 /** The browser terminal page; the websocket on this same path is handled in server.ts (upgrade). */
 export default async (req: Request): Promise<Response> => {
@@ -12,11 +13,11 @@ export default async (req: Request): Promise<Response> => {
   const short = escapeHtml(rawNameOf(name) ?? name)
   return html(`<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${short} — terminal — Purgatory</title>
-<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<title>${short} — terminal${titleSuffix()}</title>
+${faviconTag()}
 <link rel="stylesheet" href="/assets/xterm.css"><link rel="stylesheet" href="/assets/style.css">
 </head><body class="terminal-page" data-sandbox="${escapeHtml(name)}">
-<header class="topbar"><span class="brand"><img src="/assets/logo.svg" alt="" width="20" height="20">${short}</span>
+<header class="topbar"><span class="brand">${logoImg(20)}${short}</span>
 <span class="muted" data-term-status>connecting…</span><button class="link" data-term-reconnect hidden>Reconnect</button></header>
 <div data-term></div>
 <script src="/assets/xterm.js"></script><script src="/assets/addon-fit.js"></script><script src="/assets/terminal.js"></script>

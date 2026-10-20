@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **Own name and logo, no GitHub card**: `UI_TITLE` replaces *Purgatory* at the top left, on the sign-in page and in the tab titles, `UI_LOGO` the logo (an `https://` address or an image file such as `/app/data/logo.png`), `none` hides either; `GITHUB_LINK=off` takes the GitHub card out of the topbar.
+
 ## [0.10.1] - 2026-10-20
 
 Upgrading from 0.10.0: `docker compose pull && docker compose up -d`.
