@@ -49,7 +49,7 @@ describe('project_dir_link', () => {
     const body = JSON.parse(text)
     expect(body.url).toMatch(/^https:\/\/p7y\.example\.com\/project-dir\/[A-Za-z0-9_-]{40,}$/)
     expect(body.expires_in).toBe(300)
-    expect(body.command).toBe(`curl -sf "${body.url}" | tar -x -C <project folder>`)
+    expect(body.command).toBe(`curl -sf "${body.url}" | tar -x -C "<project folder>"`)
     expect(body.context_commands[0]).toBe("docker context rm -f p7y-shop")
     expect(body.context_commands[1]).toContain('docker context create p7y-shop --docker "host=tcp://shop-docker.lvh.me:443,ca=<project folder>/.p7y/docker/ca.pem')
   })

@@ -65,7 +65,7 @@ describe('POST /device/poll', () => {
     expect(b.status).toBe('approved')
     expect(b.sandbox).toBe('p7y-shop')
     expect(b.url).toMatch(/^https:\/\/p7y\.example\.com\/project-dir\/[A-Za-z0-9_-]{40,}$/)
-    expect(b.command).toBe(`curl -sf "${b.url}" | tar -x -C <project folder>`)
+    expect(b.command).toBe(`curl -sf "${b.url}" | tar -x -C "<project folder>"`)
     expect(b.context_commands).toHaveLength(2)
     const again = await pollOf(d.device_code)
     expect(again.status).toBe(410)

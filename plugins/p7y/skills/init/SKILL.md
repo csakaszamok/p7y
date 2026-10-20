@@ -16,15 +16,19 @@ you do in plain words. **Never print** `.p7y/p7y.env` (it holds the token) or a 
 ## 1. What and where
 
 - The address: the first argument. Without `http://` or `https://`, put `https://` in front; drop a trailing `/`.
-- The sandbox: the second argument, as the user sees it (`shop`) or the full name (`p7y-shop`).
+- The sandbox: the second argument, as the user sees it (`shop`) or the full name (`p7y-shop`). It must match
+  `^[a-z0-9][a-z0-9_-]{0,62}$` (lower case letters, digits, `-`, `_`) before it goes into a command; otherwise
+  ask the user for the name again.
 - Either missing: ask the user for it (*the address of your Purgatory, as in your browser*, *the sandbox's
   name*). Do not guess.
 - The project's root folder: the folder you work in (where Claude Code was started). For the commands below it
   is absolute, with forward slashes: in Git Bash (Claude Code's Bash tool on Windows) `pwd -W` (`C:/Users/…`),
-  elsewhere `pwd`. It replaces `<project folder>`.
+  elsewhere `pwd`. It replaces `<project folder>`, always inside double quotes (`"C:/Users/Ann/My shop"`):
+  a folder name with a space must not break the unpack.
 - `curl`, `tar` and `docker` (the command line only) must be installed; if one is not, say so and stop. On
   Windows, if curl fails with `CRYPT_E_REVOCATION_OFFLINE`, add `--ssl-no-revoke` (Windows' curl checks
-  certificate revocation and fails when it cannot); in PowerShell call `curl.exe`, not `curl`.
+  certificate revocation and fails when it cannot), and from then on add it to **every** curl, `command` in
+  step 4 too (its `-sf` hides that error); in PowerShell call `curl.exe`, not `curl`.
 
 **A `.p7y/p7y.env` already there:** read only its address and sandbox, never the whole file:
 
@@ -32,8 +36,10 @@ you do in plain words. **Never print** `.p7y/p7y.env` (it holds the token) or a 
 grep -E '^P7Y_(URL|SANDBOX)=' .p7y/p7y.env
 ```
 
-The same Purgatory and sandbox: go on (the new folder replaces it, with a new token). Another one: tell the
-user which one it is tied to now and ask before replacing it.
+Compare by host name (`https://P7Y.example.com/` and `p7y.example.com` are the same Purgatory: ignore the
+scheme, the case and a trailing `/`) and by the sandbox's name without its `p7y-` (`p7y-shop` and `shop` are the
+same). The same Purgatory and sandbox: go on (the new folder replaces it, with a new token). Another one: tell
+the user which one it is tied to now and ask before replacing it.
 
 ## 2. Ask for a code
 
@@ -54,19 +60,21 @@ Tell the user, with the link and the code as they are:
 
 ## 3. Wait for the approval
 
-`POST /device/poll` every `interval` seconds, in one bash command that waits up to about 2 minutes (a command
-that runs longer is cut off), with the device code inline:
+`POST /device/poll` every `interval` seconds, in one bash command that stops after about 90 seconds (a Bash
+tool command is cut off at 2 minutes, and an approved answer cut off with it is lost), with the device code
+inline:
 
 ```sh
-DC='<device_code>'; out=still-pending
-for i in $(seq 1 40); do
-  r=$(curl -sS -X POST -H "Content-Type: application/json" -d "{\"device_code\":\"$DC\"}" "<address>/device/poll")
-  case "$r" in *'"pending"'*|'') sleep 3 ;; *) out=$r; break ;; esac
+DC='<device_code>'; out=still-pending; end=$((SECONDS + 90))
+for i in $(seq 1 30); do
+  r=$(curl -sS --max-time 10 -X POST -H "Content-Type: application/json" -d "{\"device_code\":\"$DC\"}" "<address>/device/poll")
+  case "$r" in *'"pending"'*|'') [ "$SECONDS" -ge "$end" ] && break; sleep 3 ;; *) out=$r; break ;; esac
 done
 echo "$out"
 ```
 
-`still-pending` (or curl errors only): run it again, until 10 minutes have passed since step 2 (then the code has expired). Then:
+`still-pending` (or curl errors only): run the same command again, **up to 7 times in all** (the code expires
+after 10 minutes); still pending after the 7th: tell the user the code ran out and stop. Then:
 
 - `{"status":"denied"}`: the user said no. Say so and stop.
 - `{"status":"expired"}`: the code expired (10 minutes) or was already used. Say so and stop; the user can run
@@ -76,17 +84,22 @@ echo "$out"
 
 ## 4. Unpack and connect
 
-Run them yourself, with the project's root folder for `<project folder>`:
+Run them yourself, with the project's root folder, absolute, put inside the quotes of `"<project folder>"`
+(and in `context_commands`, where the path is already inside a quoted argument):
 
-1. `command`: `curl -sf "<url>" | tar -x -C <project folder>`. It writes `.p7y/.gitignore`, `.p7y/p7y.env`
+1. `command`: `curl -sf "<url>" | tar -x -C "<project folder>"` (with `--ssl-no-revoke` after `curl` if step 2
+   needed it). It writes `.p7y/.gitignore`, `.p7y/p7y.env`
    (with a new token for this sandbox only, valid 90 days), `.p7y/README.md` and
    `.p7y/docker/{ca,cert,key}.pem`. An error 410 or an empty download: the link expired or was used; run
    `/p7y:init` again.
-2. `context_commands`, in order: the docker context `p7y-<sandbox>` is removed, then created from those files.
-3. Check it with a compose command (not only `ps`: it can work with a key that compose cannot read):
+2. `context_commands`, in order: the docker context is removed, then created from those files. Its name is
+   the one in these commands (`docker context create p7y-shop …`: `p7y-shop`); use that name below, never
+   one you built from the argument (`p7y-shop` given would make a wrong `p7y-p7y-shop`).
+3. Check it with a compose command (not only `ps`: it can work with a key that compose cannot read), with that
+   context name:
 
 ```sh
-docker --context p7y-<sandbox> compose ls
+docker --context <context> compose ls
 ```
 
 A TLS error: never repair or guess at a key; tell the user and stop. Docker access not on (the answer says so):

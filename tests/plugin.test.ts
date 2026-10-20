@@ -70,6 +70,22 @@ describe('the Claude Code plugin', () => {
     expect(frontmatter(md)['argument-hint']).toBe('<purgatory address> <sandbox>')
   })
 
+  // A Bash tool command is cut off at 2 minutes: an approved answer (told once) must not be lost to that
+  it('init polls in runs well under 2 minutes', () => {
+    const md = fs.readFileSync(path.join(pluginDir, 'skills/init/SKILL.md'), 'utf8')
+    const rounds = Number(/seq 1 (\d+)/.exec(md)?.[1])
+    const sleep = Number(/sleep (\d+)/.exec(md)?.[1])
+    expect(rounds * sleep).toBeGreaterThan(0)
+    expect(rounds * sleep).toBeLessThanOrEqual(90)
+  })
+
+  // A project folder with a space in it must not break the unpack after the single-use link is spent
+  it('the skills quote the project folder', () => {
+    for (const f of files(path.join(pluginDir, 'skills')).filter(f => f.endsWith('.md'))) {
+      expect(fs.readFileSync(f, 'utf8'), f).not.toMatch(/-C <project folder>/)
+    }
+  })
+
   it('no skill uses the plugin\'s old settings or MCP tools', () => {
     for (const f of files(path.join(pluginDir, 'skills'))) {
       const text = fs.readFileSync(f, 'utf8')

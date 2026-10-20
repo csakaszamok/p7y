@@ -109,12 +109,14 @@ docker --context p7y-<sandbox> compose ls
   `p7y.env` without the token, so unpack **only the three keys**, never the whole `command`:
 
   ```sh
-  curl -sf "<url>" | tar -x -C <project folder> .p7y/docker/ca.pem .p7y/docker/cert.pem .p7y/docker/key.pem
+  curl -sf "<url>" | tar -x -C "<project folder>" .p7y/docker/ca.pem .p7y/docker/cert.pem .p7y/docker/key.pem
   ```
 
-  Then run `context_commands` in order, with the project's root folder for `<project folder>` (the context is
-  removed, then created from those files), and check with `compose ls` again. A docker context keeps its own
-  copies of the files, so fixing a file alone changes nothing. Never repair or guess at a key. An error 410 (or
+  The project's root folder, absolute, goes inside the quotes (a folder name may have a space); with
+  `--ssl-no-revoke` after `curl` if other calls needed it. Then run `context_commands` in order, with the
+  project's root folder for `<project folder>` (the context is removed, then created from those files), and
+  check with `compose ls` again. A docker context keeps its own copies of the files, so fixing a file alone
+  changes nothing. Never repair or guess at a key. An error 410 (or
   an empty download): the link has expired or was used; ask for a new one. 409: Docker access is not on.
 - `docker` (the command line; the engine is the sandbox's) and `curl` must be installed on this machine; if one
   is not, say so and stop.

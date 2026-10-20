@@ -63,7 +63,7 @@ export function projectLinkAnswer(sandbox: string, linkToken: string): { url: st
   return {
     url,
     expires_in: PROJECT_LINK_TTL_MS / 1000,
-    command: `curl -sf "${url}" | tar -x -C <project folder>`,
+    command: `curl -sf "${url}" | tar -x -C "<project folder>"`,
     context_commands: [
       `docker context rm -f ${ctx}`,
       `docker context create ${ctx} --docker "host=tcp://${dockerHostName(sandbox)}:443,ca=${dir}/ca.pem,cert=${dir}/cert.pem,key=${dir}/key.pem"`,
