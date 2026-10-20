@@ -17,6 +17,17 @@
     if (h > 0) return `${h} h ${m} min`
     return `${m}:${String(s % 60).padStart(2, '0')}`
   }
+  /**
+   * The sandbox list's free-text filter: every word must appear somewhere in the sandbox's name, owner,
+   * status, template, runtime or its apps (service or address); case does not matter.
+   */
+  function matchesFilter(s, text) {
+    const words = String(text || '').toLowerCase().split(/\s+/).filter(Boolean)
+    if (!words.length) return true
+    const hay = [s.name, s.owner, s.status, statusLabel(s.status), s.start_error ? 'failed' : '', s.template, s.runtime,
+      ...(s.apps || []).flatMap(a => [a.service, a.url])].filter(Boolean).join(' ').toLowerCase()
+    return words.every(w => hay.includes(w))
+  }
   const countdown = (iso, now) => `<span data-until="${esc(iso)}">${esc(remaining(iso, now))}</span>`
 
   const GB = 1024 ** 3
@@ -453,7 +464,7 @@
       `claude plugin install p7y@p7y --scope user --config p7y_url=${u} --config p7y_token=${token}`
   }
 
-  const api = { loadingPanel, pluginInstallCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  const api = { matchesFilter, loadingPanel, pluginInstallCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

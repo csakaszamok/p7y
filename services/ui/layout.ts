@@ -194,9 +194,9 @@ export const SANDBOX_VIEW_BODY = `
   <div class="list">
     <div class="list-head">
       <h1 data-title></h1>
-      <div class="filters" data-admin-only hidden>
-        <input type="search" placeholder="Filter by name or owner…" data-filter-text>
-        <select data-filter-status><option value="">All statuses</option><option>running</option><option>exited</option><option>deep_sleep</option></select>
+      <div class="filters" data-filters hidden>
+        <input type="search" placeholder="Filter…" aria-label="Filter" data-filter-text>
+        <select data-filter-status aria-label="Status"><option value="">All statuses</option><option value="running">running</option><option value="exited">asleep</option><option value="deep_sleep">deep sleep</option></select>
       </div>
       <span class="muted quota" data-quota></span>
       <button class="primary" data-new>+ New sandbox</button>

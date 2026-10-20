@@ -276,6 +276,10 @@ a.ov-card:hover { border-color: #ea580c; transform: translateY(-1px) }
   .topbar nav a { white-space: nowrap }
   .repo-badge .name { display: none }
   .who { margin-left: auto }
+  /* The list filter gets its own row */
+  .list-head { flex-wrap: wrap }
+  .filters { order: 3; flex-basis: 100% }
+  .filters input { flex: 1; width: auto; min-width: 0 }
 }
 /* Apps tab: an app published to the Hub */
 .tag { font-size: 12px; padding: 1px 6px; border: 1px solid #ea580c; border-radius: 10px; color: #f0a060; text-decoration: none; margin-left: 4px }

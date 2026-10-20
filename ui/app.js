@@ -74,12 +74,11 @@ function filtered() {
   // An admin's /sandboxes response includes everyone's sandboxes; "My
   // sandboxes" must only ever show the admin's own, or they could act on
   // someone else's sandbox believing it is theirs.
-  if (view === 'mine') return isAdmin ? sandboxes.filter(s => s.owner === document.body.dataset.sub) : sandboxes
-  if (view !== 'all') return sandboxes
-  const text = ($('[data-filter-text]').value || '').toLowerCase()
+  const list = view === 'mine' && isAdmin ? sandboxes.filter(s => s.owner === document.body.dataset.sub) : sandboxes
+  if (view !== 'mine' && view !== 'all') return list
+  const text = $('[data-filter-text]').value
   const status = $('[data-filter-status]').value
-  return sandboxes.filter(s =>
-    (!text || s.name.includes(text) || (s.owner || '').toLowerCase().includes(text)) && (!status || s.status === status))
+  return list.filter(s => P7yPanel.matchesFilter(s, text) && (!status || (s.status === 'created' ? 'exited' : s.status) === status))
 }
 
 function renderRows() {
@@ -90,6 +89,7 @@ function renderRows() {
   const ADV_COLS = ['Deep sleep in', 'CPU · Mem', 'Template']
   $('[data-head]').innerHTML = `<tr>${cols.map(c => `<th${ADV_COLS.includes(c) ? ' class="adv"' : ''}>${c}</th>`).join('')}</tr>`
   const rows = [...filtered()]
+  const filtering = !!($('[data-filter-text]')?.value.trim() || $('[data-filter-status]')?.value)
   for (const name of pending) if (!rows.some(s => s.name === name)) rows.unshift({ name, status: 'starting', runtime: '', template: '', created_at: '' })
   $('[data-rows]').innerHTML = rows.length ? rows.map(s => `
     <tr data-name="${esc(s.name)}" class="${s.name === selected ? 'selected' : ''}">
@@ -103,7 +103,7 @@ function renderRows() {
       <td class="adv">${usageCell(s)}</td>
       <td class="adv">${esc([s.runtime, s.template].filter(Boolean).join(' · '))}${s.compose === 'edited' ? ' <span class="muted">(edited)</span>' : ''}</td>
       <td>${esc(age(s.created_at))}</td>
-    </tr>`).join('') : `<tr><td class="muted" colspan="${cols.length}">No sandboxes yet — create one.</td></tr>`
+    </tr>`).join('') : `<tr><td class="muted" colspan="${cols.length}">${filtering ? 'No sandbox matches the filter.' : 'No sandboxes yet — create one.'}</td></tr>`
 }
 
 async function loadQuota() {
@@ -834,14 +834,16 @@ function initSandboxes() {
   // Defaults and ceilings for the resource fields, in every view (loadQuota only runs in "mine")
   api('/me').then(m => { meInfo = m; showResourceHint() }).catch(() => {})
   $('[data-title]').textContent = view === 'all' ? 'All sandboxes' : 'My sandboxes'
+  // The filter, in both lists: free text (name, status, template, apps; the owner too in All sandboxes) and status
+  $('[data-filters]').hidden = false
+  $('[data-filter-text]').placeholder = view === 'all' ? 'Filter by name, owner, app…' : 'Filter by name, status, app…'
+  $('[data-filter-text]').addEventListener('input', renderRows)
+  $('[data-filter-status]').addEventListener('change', renderRows)
   if (view === 'all') {
-    $('[data-admin-only]').hidden = false
-    $('[data-filter-text]').addEventListener('input', renderRows)
     // From the Overview: /admin?status=running, /admin?owner=…
     const q = new URLSearchParams(location.search)
     if (q.get('owner')) $('[data-filter-text]').value = q.get('owner')
     if (q.get('status')) $('[data-filter-status]').value = q.get('status')
-    $('[data-filter-status]').addEventListener('change', renderRows)
   }
   $('[data-rows]').addEventListener('click', e => { const tr = e.target.closest('tr[data-name]'); if (tr) showPanel(tr.dataset.name) })
   $('[data-connect-login]')?.addEventListener('click', e => {

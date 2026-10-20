@@ -620,3 +620,22 @@ describe('loadingPanel', () => {
     expect(P.loadingPanel({ name: 'p7y-<x>', status: 'running' }, ctx)).not.toContain('<x>')
   })
 })
+
+describe('matchesFilter (the sandbox list filter)', () => {
+  const shop = { name: 'p7y-shop', owner: 'anna@example.com', status: 'exited', template: 'starter', runtime: 'sysbox', apps: [{ service: 'web', url: 'shop-web.lvh.me' }] }
+  it('matches everything without text', () => {
+    expect(P.matchesFilter(shop, '')).toBe(true)
+    expect(P.matchesFilter(shop, '   ')).toBe(true)
+  })
+  it('finds a word in the name, owner, status (as shown), template, runtime or an app; case does not matter', () => {
+    for (const q of ['SHOP', 'anna', 'asleep', 'exited', 'starter', 'sysbox', 'web', 'shop-web.lvh']) expect(P.matchesFilter(shop, q), q).toBe(true)
+    expect(P.matchesFilter(shop, 'blog')).toBe(false)
+  })
+  it('every word must match', () => {
+    expect(P.matchesFilter(shop, 'shop asleep')).toBe(true)
+    expect(P.matchesFilter(shop, 'shop running')).toBe(false)
+  })
+  it('a failed start is found as failed', () => {
+    expect(P.matchesFilter({ ...shop, start_error: 'boom' }, 'failed')).toBe(true)
+  })
+})
