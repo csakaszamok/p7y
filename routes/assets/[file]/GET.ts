@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { customLogoFile } from '../../../services/ui/brand'
 
 const ASSETS: Record<string, string> = {
   'app.js': 'text/javascript; charset=utf-8',
@@ -17,6 +18,11 @@ const ASSETS: Record<string, string> = {
 
 export default async (req: Request): Promise<Response> => {
   const file = new URL(req.url).pathname.split('/')[2]
+  if (file === 'custom-logo') {
+    // UI_LOGO as a file in the container
+    const logo = customLogoFile()
+    return logo ? new Response(logo.body, { headers: { 'Content-Type': logo.type, 'Cache-Control': 'no-cache' } }) : new Response('Not found', { status: 404 })
+  }
   const type = ASSETS[file]
   if (!type) return new Response('Not found', { status: 404 })
   const body = fs.readFileSync(path.join(process.cwd(), 'ui', file))

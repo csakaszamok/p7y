@@ -1,15 +1,16 @@
 import { escapeHtml } from '../ui/layout'
 import type { HubSession } from './session'
+import { faviconTag, logoImg } from '../ui/brand'
 
 const head = (title: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title>
-<link rel="icon" href="/assets/logo.svg"><link rel="stylesheet" href="/assets/hub.css"></head>`
+${faviconTag()}<link rel="stylesheet" href="/assets/hub.css"></head>`
 
 /** The Hub: no Purgatory navigation, no sandboxes; the list comes from /api/hub (ui/hub.js). */
 export function hubPage(opts: { title: string; viewer: HubSession }): string {
   const who = escapeHtml(opts.viewer.name ?? opts.viewer.sub)
   return `${head(`${opts.title} — Hub`)}<body>
-<header class="top"><a class="brand" href="/"><img src="/assets/logo.svg" alt="" width="22" height="22"> ${escapeHtml(opts.title)}</a>
+<header class="top"><a class="brand" href="/">${logoImg(22)} ${escapeHtml(opts.title)}</a>
 <form method="post" action="/logout" class="who"><span>${who}</span><button class="link">Sign out</button></form></header>
 <main>
 <div class="tools"><input id="q" type="search" placeholder="Search apps…" aria-label="Search apps">
@@ -23,7 +24,7 @@ export function hubPage(opts: { title: string; viewer: HubSession }): string {
 
 export function hubLoginPage(opts: { title: string; error: string | null; sso: string | null }): string {
   return `${head(`${opts.title} — Hub`)}<body class="login"><main class="box">
-<h1><img src="/assets/logo.svg" alt="" width="28" height="28"> ${escapeHtml(opts.title)}</h1>
+<h1>${logoImg(28)} ${escapeHtml(opts.title)}</h1>
 ${opts.error ? `<p class="error">${escapeHtml(opts.error)}</p>` : ''}
 ${opts.sso ? `<a class="primary wide" href="/auth/oidc">Sign in with ${escapeHtml(opts.sso)}</a>` : ''}
 <details${opts.sso ? '' : ' open'}><summary>Administrator</summary>

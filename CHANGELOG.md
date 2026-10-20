@@ -4,6 +4,11 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **Own name and logo, no GitHub card**: `UI_TITLE` replaces *Purgatory* at the top left, on the sign-in page and in the tab titles, `UI_LOGO` the logo (an `https://` address or an image file such as `/app/data/logo.png`), `none` hides either; `GITHUB_LINK=off` takes the GitHub card out of the topbar.
+- **Filter in My sandboxes** too, not only in All sandboxes: free text (every word must match the name, status, template, runtime, an app's service or address, and the owner) and a status list (running, asleep, deep sleep).
+
 ## [0.10.1] - 2026-10-20
 
 Upgrading from 0.10.0: `docker compose pull && docker compose up -d`.

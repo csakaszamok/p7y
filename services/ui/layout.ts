@@ -3,6 +3,7 @@ import { subAllowed } from '../allowlist'
 import { sandboxPrefix } from '../naming'
 import { repoInfo, type RepoInfo } from '../repoInfo'
 import { viewOf } from '../userPrefs'
+import { brandTitle, faviconTag, githubLinkEnabled, logoImg, titleSuffix } from './brand'
 
 export function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
@@ -50,6 +51,8 @@ export function renderPage(opts: { title: string; view: 'overview' | 'mine' | 'a
     const cls = [adv ? 'adv' : '', v === view ? 'active' : ''].filter(Boolean).join(' ')
     return `<a${cls ? ` class="${cls}"` : ''} href="${href}">${label}</a>`
   }
+  const name = brandTitle()
+  const brand = name || logoImg(20) ? `<span class="brand">${logoImg(20)}${name ? escapeHtml(name) : ''}</span>` : ''
   const modeButton = (m: 'simple' | 'advanced', label: string) =>
     `<button type="button" data-mode-set="${m}" aria-pressed="${m === mode}">${label}</button>`
   return `<!DOCTYPE html>
@@ -57,13 +60,13 @@ export function renderPage(opts: { title: string; view: 'overview' | 'mine' | 'a
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(title)} — Purgatory</title>
+<title>${escapeHtml(title)}${titleSuffix()}</title>
 <link rel="stylesheet" href="/assets/style.css">
-<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+${faviconTag()}
 </head>
 <body data-view="${view}" data-mode="${mode}" data-role="${session.role}" data-sub="${escapeHtml(session.sub)}" data-prefix="${escapeHtml(sandboxPrefix())}">
 <header class="topbar">
-  <span class="brand"><img src="/assets/logo.svg" alt="" width="20" height="20">Purgatory</span>
+  ${brand}
   <nav>
     ${link('/overview', 'Overview', 'overview', true)}
     ${link('/', 'My sandboxes', 'mine')}
@@ -72,7 +75,7 @@ export function renderPage(opts: { title: string; view: 'overview' | 'mine' | 'a
     ${link('/settings/ssh-keys', 'SSH keys', 'ssh-keys', true)}
   </nav>
   <span class="places" data-places hidden></span>
-  ${repoBadge(repoInfo())}
+  ${githubLinkEnabled() ? repoBadge(repoInfo()) : ''}
   <span class="mode-switch" role="group" aria-label="View">${modeButton('simple', 'Simple')}${modeButton('advanced', 'Advanced')}</span>
   <form method="post" action="/logout" class="who"><span>${escapeHtml(session.sub)}</span><button class="link">Sign out</button></form>
 </header>
@@ -191,9 +194,9 @@ export const SANDBOX_VIEW_BODY = `
   <div class="list">
     <div class="list-head">
       <h1 data-title></h1>
-      <div class="filters" data-admin-only hidden>
-        <input type="search" placeholder="Filter by name or owner…" data-filter-text>
-        <select data-filter-status><option value="">All statuses</option><option>running</option><option>exited</option><option>deep_sleep</option></select>
+      <div class="filters" data-filters hidden>
+        <input type="search" placeholder="Filter…" aria-label="Filter" data-filter-text>
+        <select data-filter-status aria-label="Status"><option value="">All statuses</option><option value="running">running</option><option value="exited">asleep</option><option value="deep_sleep">deep sleep</option></select>
       </div>
       <span class="muted quota" data-quota></span>
       <button class="primary" data-new>+ New sandbox</button>
