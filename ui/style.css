@@ -133,6 +133,7 @@ body.login .capacity.warn p { color: #f97316 }
 body.login .capacity.warn .bar span { background: #f97316 }
 body.login .capacity.full p { color: #ef4444 }
 body.login .capacity.full .bar span { background: #ef4444 }
+body.login .user-code { margin: 14px 0 6px; font: 600 1.9em ui-monospace, Consolas, monospace; letter-spacing: .12em }
 @media (max-width: 800px) { .split { flex-direction: column } .panel { position: static; width: 100% } }
 
 /* Starter stack viewer */
