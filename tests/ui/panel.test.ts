@@ -38,6 +38,21 @@ describe('appRows', () => {
   })
 })
 
+describe('appRows names', () => {
+  // Three compose projects, each with a service called web: the project tells them apart
+  it('the same service in several projects: project / service; a name of its own stays as it is', () => {
+    const s = {
+      tunnel_urls: ['zp-first-first-web-1-port8082.lvh.me', 'zp-hello-hello-web-1-port8080.lvh.me', 'zp-inner-http-echo-port5678.lvh.me'],
+      apps: [
+        { url: 'zp-first-first-web-1-port8082.lvh.me', port: 8082, service: 'web', project: 'first', answers: true },
+        { url: 'zp-hello-hello-web-1-port8080.lvh.me', port: 8080, service: 'web', project: 'hello', answers: true },
+        { url: 'zp-inner-http-echo-port5678.lvh.me', port: 5678, service: 'http-echo', project: 'inner', answers: true },
+      ],
+    }
+    expect(P.appRows(s).map((r: { service: string }) => r.service)).toEqual(['first / web', 'hello / web', 'http-echo'])
+  })
+})
+
 describe('renderPanel', () => {
   it('a running sandbox: header buttons, sleep line with Reset, four tabs, Apps open', () => {
     const html = P.renderPanel(running, ctx)

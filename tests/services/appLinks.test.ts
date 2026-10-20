@@ -27,11 +27,11 @@ describe('publicAppNames', () => {
       ct('db', [['', 5432]]),
       ct('lan', [['10.0.0.5', 7000]]),
     ])
-    expect([...names]).toEqual([['shop-inner-web-port8080', { port: 8080, service: 'web', access: 'public' }], ['shop-inner-db-port5432', { port: 5432, service: 'db', access: 'public' }]])
+    expect([...names]).toEqual([['shop-inner-web-port8080', { port: 8080, service: 'web', project: 'inner', access: 'public' }], ['shop-inner-db-port5432', { port: 5432, service: 'db', project: 'inner', access: 'public' }]])
   })
 
   it('keeps a frpc.subdomain name when the container has at least one public port', () => {
-    expect([...publicAppNames('shop', [ct('portainer', [['127.0.0.1', 9443], ['0.0.0.0', 9000]], { 'frpc.subdomain': 'portainer' })])]).toEqual([['shop-portainer', { port: 9000, service: 'portainer', access: 'public' }]])
+    expect([...publicAppNames('shop', [ct('portainer', [['127.0.0.1', 9443], ['0.0.0.0', 9000]], { 'frpc.subdomain': 'portainer' })])]).toEqual([['shop-portainer', { port: 9000, service: 'portainer', project: 'inner', access: 'public' }]])
     expect([...publicAppNames('shop', [ct('portainer', [['127.0.0.1', 9000]], { 'frpc.subdomain': 'portainer' })])]).toEqual([])
   })
 
@@ -58,7 +58,7 @@ describe('appLinks', () => {
 
   it('keeps what frps serves only for public ports (case-insensitive, by the first label)', async () => {
     const d = deps([ct('web', [['0.0.0.0', 8080]]), ct('hermes', [['127.0.0.1', 9119]]), ct('portainer', [['', 9000]], { 'frpc.subdomain': 'portainer' })])
-    expect(await appLinks('p7y-shop', d)).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'public' }, { url: 'Shop-Portainer.LVH.me', port: 9000, service: 'portainer', access: 'public' }])
+    expect(await appLinks('p7y-shop', d)).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', project: 'inner', access: 'public' }, { url: 'Shop-Portainer.LVH.me', port: 9000, service: 'portainer', project: 'inner', access: 'public' }])
   })
 
   it('shows no link when the inner Docker cannot be asked', async () => {
@@ -69,7 +69,7 @@ describe('appLinks', () => {
   it('filters given domains afresh, whatever is cached', async () => {
     await appLinks('p7y-shop', deps([]))
     const d = deps([ct('web', [['0.0.0.0', 8080]])])
-    expect(await appLinks('p7y-shop', d, ['shop-inner-web-port8080.lvh.me'])).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'public' }])
+    expect(await appLinks('p7y-shop', d, ['shop-inner-web-port8080.lvh.me'])).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', project: 'inner', access: 'public' }])
   })
 
   // App access: every app's level from its container's labels, also before frps registers it (no partial knowledge)
@@ -108,7 +108,7 @@ describe('apps remembered for a sleeping sandbox', () => {
   it('remembers the links a running sandbox answered with', async () => {
     const deps = d([ct('web', [['0.0.0.0', 8080]])], ['shop-inner-web-port8080.lvh.me'])
     await appLinks('p7y-shop', deps)
-    expect(deps.remember).toHaveBeenCalledWith('p7y-shop', [{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'public' }])
+    expect(deps.remember).toHaveBeenCalledWith('p7y-shop', [{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', project: 'inner', access: 'public' }])
   })
 
   it('keeps what it had when frps has nothing yet (just woken) or the inner Docker does not answer', async () => {
@@ -128,7 +128,7 @@ describe('apps remembered for a sleeping sandbox', () => {
       expect(rememberedApps('p7y-rem')).toBeNull()
       const { remember: _, ...deps } = d([ct('web', [['0.0.0.0', 8080]]), ct('api', [['0.0.0.0', 3000]])], ['shop-inner-web-port8080.lvh.me', 'shop-inner-api-port3000.lvh.me'])
       await appLinks('p7y-rem', deps)
-      expect(rememberedApps('p7y-rem')).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'public' }, { url: 'shop-inner-api-port3000.lvh.me', port: 3000, service: 'api', access: 'public' }])
+      expect(rememberedApps('p7y-rem')).toEqual([{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', project: 'inner', access: 'public' }, { url: 'shop-inner-api-port3000.lvh.me', port: 3000, service: 'api', project: 'inner', access: 'public' }])
     } finally { fs.rmSync(dir, { recursive: true, force: true }); forgetSandboxDir() }
   })
 })
