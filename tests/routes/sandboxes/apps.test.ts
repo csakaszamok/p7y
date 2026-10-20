@@ -5,6 +5,7 @@ vi.mock('../../../services/sandbox', () => ({
   sandboxService: {
     getSandbox: vi.fn(async (n: string) => ({
       name: n, owner: 'admin', status: n === 'p7y-up' ? 'running' : 'exited', template: 't', created_at: '', extras: {},
+      ca_cert: 'CA PEM', client_cert: 'CERT PEM', client_key: 'KEY PEM',
       tunnel_urls: n === 'p7y-up' ? ['up-inner-web-port8080.lvh.me'] : ['down-inner-web-port8080.lvh.me'],
       ...(n === 'p7y-up' ? {} : { app_services: { 'down-inner-web-port8080.lvh.me': 'web' } }),
     })),
@@ -84,4 +85,15 @@ describe('GET /sandboxes/:name last running', () => {
     const up = await (await get(req('p7y-up'))).json()
     expect(up).toMatchObject({ last_running_at: null, last_running_estimated: false })
   })
+  // The private key must not pass through an agent's model (it goes into its context and transcript)
+  it('the Docker keys only when asked for (include_keys=true)', async () => {
+    const plain = await (await get(req('p7y-up'))).json()
+    expect(plain).not.toHaveProperty('client_key')
+    expect(plain).not.toHaveProperty('client_cert')
+    expect(plain).not.toHaveProperty('ca_cert')
+    expect(plain.docker_access).toBeDefined()
+    const keys = await (await get(new Request('http://localhost/sandboxes/p7y-up?include_keys=true', { headers: { Authorization: 'Bearer admin-secret' } }))).json()
+    expect(keys).toMatchObject({ ca_cert: 'CA PEM', client_cert: 'CERT PEM', client_key: 'KEY PEM' })
+  })
 })
+

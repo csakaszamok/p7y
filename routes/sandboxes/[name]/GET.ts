@@ -20,8 +20,9 @@ export const openapi = {
   summary: 'Get sandbox details',
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],
+  parameters: [{ name: 'include_keys', in: 'query', required: false, description: "true: also the Docker client certificates and private key (ca_cert, client_cert, client_key). Leave it out for an agent: the Claude Code plugin's setup_project_dir writes them to disk without them passing through the model", schema: { type: 'boolean' } }],
   responses: {
-    200: { description: 'Sandbox record including TLS certs; apps: each link with answers true/false (null when not running) and access (p7y.access: public, domain or owner; access_invalid when its label is not one)' },
+    200: { description: 'Sandbox record (the Docker client keys only with include_keys=true); apps: each link with answers true/false (null when not running) and access (p7y.access: public, domain or owner; access_invalid when its label is not one)' },
     401: { description: 'Unauthorized' },
     404: { description: 'Sandbox not found' }
   }
@@ -34,7 +35,10 @@ export default async (req: Request): Promise<Response> => {
   try {
     const sandbox = await getOwnedSandbox(p, name)
     // Whether each app answers (only a running sandbox is asked; never through Traefik/Sablier)
-    const { app_services, ...info } = sandbox
+    // The Docker client keys only when asked for: a private key in an answer goes into an agent's context and transcript
+    const withKeys = new URL(req.url).searchParams.get('include_keys') === 'true'
+    const { app_services, ca_cert, client_cert, client_key, ...info } = sandbox as typeof sandbox & { ca_cert?: string; client_cert?: string; client_key?: string }
+    if (withKeys) Object.assign(info, { ca_cert, client_cert, client_key })
     const apps = sandbox.status === 'running'
       ? await appStatuses(name, await appLinks(name))
       : withRememberedAccess(name, sandbox.tunnel_urls.map(url => ({ url, port: null, service: app_services?.[url] ?? null, answers: null })))
