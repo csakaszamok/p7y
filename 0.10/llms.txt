@@ -1,0 +1,48 @@
+# Purgatory (p7y)
+
+> Self-hosted sandboxes for your team and their AI agents
+
+Purgatory (p7y) gives each user of a team their own Docker daemon on demand: a sandbox with Portainer, a public URL for every app, sleep when idle and wake on the next request, archive on delete. A REST API and an MCP server (at /mcp) let coding agents create, wake and deploy to sandboxes.
+
+## Getting started
+
+- [Install](https://p7y-dev.github.io/p7y/0.10/install/index.md)
+- [First sandbox](https://p7y-dev.github.io/p7y/0.10/first-sandbox/index.md)
+- [Configuration](https://p7y-dev.github.io/p7y/0.10/configuration/index.md)
+- [HTTPS](https://p7y-dev.github.io/p7y/0.10/https/index.md)
+
+## Tutorials
+
+- [Tutorials](https://p7y-dev.github.io/p7y/0.10/tutorials/index.md)
+- [With Claude Code](https://p7y-dev.github.io/p7y/0.10/tutorials/claude-code/index.md)
+- [With any agent](https://p7y-dev.github.io/p7y/0.10/tutorials/other-agents/index.md)
+- [Share on the Hub](https://p7y-dev.github.io/p7y/0.10/tutorials/hub/index.md)
+
+## Using Purgatory
+
+- [Web UI and sign-in](https://p7y-dev.github.io/p7y/0.10/web-ui/index.md)
+- [Runtimes and templates](https://p7y-dev.github.io/p7y/0.10/runtimes-templates/index.md)
+- [Sleep and wake](https://p7y-dev.github.io/p7y/0.10/sleep-wake/index.md)
+- [CPU, memory and disk](https://p7y-dev.github.io/p7y/0.10/resources/index.md)
+- [Deep sleep](https://p7y-dev.github.io/p7y/0.10/deep-sleep/index.md)
+- [Delete = archive](https://p7y-dev.github.io/p7y/0.10/archive/index.md)
+- [Isolation and TCP addresses](https://p7y-dev.github.io/p7y/0.10/networking/index.md)
+- [SSH, terminal and logs](https://p7y-dev.github.io/p7y/0.10/shell-and-logs/index.md)
+- [Files](https://p7y-dev.github.io/p7y/0.10/files/index.md)
+- [Hub](https://p7y-dev.github.io/p7y/0.10/hub/index.md)
+- [App access](https://p7y-dev.github.io/p7y/0.10/app-access/index.md)
+
+## Agents
+
+- [Let your agent deploy](https://p7y-dev.github.io/p7y/0.10/agents/index.md)
+- [MCP](https://p7y-dev.github.io/p7y/0.10/mcp/index.md)
+- [Claude Code plugin](https://p7y-dev.github.io/p7y/0.10/claude-plugin/index.md)
+- [Agent guide](https://p7y-dev.github.io/p7y/0.10/agent-guide/index.md)
+
+## Reference
+
+- [API](https://p7y-dev.github.io/p7y/0.10/api/index.md)
+- [Security](https://p7y-dev.github.io/p7y/0.10/security/index.md)
+- [Upgrading](https://p7y-dev.github.io/p7y/0.10/upgrading/index.md)
+- [Comparison](https://p7y-dev.github.io/p7y/0.10/comparison/index.md)
+
