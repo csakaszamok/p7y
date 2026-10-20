@@ -70,7 +70,7 @@ function withRememberedAccess<T extends { url: string }>(name: string, apps: T[]
   const seen = new Map((rememberedApps(name) ?? []).map(l => [l.url, l]))
   return apps.map(a => {
     const l = seen.get(a.url)
-    return l ? { ...a, access: l.access, ...(l.access_invalid ? { access_invalid: true as const } : {}) } : a
+    return l ? { ...a, ...(l.project ? { project: l.project } : {}), access: l.access, ...(l.access_invalid ? { access_invalid: true as const } : {}) } : a
   })
 }
 
