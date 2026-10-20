@@ -8,7 +8,13 @@ description: Deploy or update the user's app in their Purgatory (p7y) sandbox an
 The user may not be technical. Do the work yourself, say what you are doing in plain words, and finish with
 the app's address. Never print a token or a Docker key, and never put them in git or in an image.
 
-The `p7y` MCP server (from this plugin) is the Purgatory API. Its tools are named below.
+The `p7y` MCP server (from this plugin) is the Purgatory API; `p7y-local`, its helper on this machine, has one
+tool, `setup_project_dir`. The tools are named below.
+
+**Never copy a key or a certificate yourself**: not from a tool's answer, not with Write or an editor, not
+character by character. Copied by hand they get garbled (a wrong character in a key still looks like a key), and
+in an answer they go into your context and the transcript. Only `setup_project_dir` or an export zip puts them
+on disk. Do not ask `get_sandbox` for `include_keys`.
 
 ## 1. The project's `.p7y` folder
 
@@ -29,7 +35,7 @@ Look for it first:
   that `.p7y/.gitignore` is there, and delete the zip (it holds a token); tell the user you did. An older zip
   holds a `p7y-<name>/` folder instead: put its files in `.p7y/` and write the `.gitignore`.
 - **A `.p7y` folder one level down** (unpacked into a subfolder): move it to the project's root.
-- **None of these:** go on with step 2, and write the `.p7y` folder at the end of step 3.
+- **None of these:** go on with step 2; `setup_project_dir` writes the `.p7y` folder in step 3.
 
 If `.p7y` is not in the project's `.gitignore`, it does not have to be: the folder's own `.gitignore` keeps it
 out. Never delete or empty that file.
@@ -62,20 +68,27 @@ sandbox to sleep without asking.
 Docker access on but restarts the sandbox, and its apps are unreachable for about 30 seconds. A token limited
 to one sandbox may not do it: then the user turns it on in Purgatory (the sandbox → Access → Enable).
 
-No `.p7y` yet: write it now. `.p7y/.gitignore` with the line `*` first, then `.p7y/docker/ca.pem`,
-`cert.pem`, `key.pem` from `get_sandbox`'s `ca_cert`, `client_cert`, `client_key` (unchanged), and
-`.p7y/p7y.env` with `P7Y_URL`, `P7Y_SANDBOX` and `P7Y_DOCKER_HOST=tcp://<docker_access.host>:443` (no token:
-the plugin has it).
-
-Then a Docker context, with the full path of the project's folder (backslashes on Windows):
+Then **`setup_project_dir`** with `sandbox` (its full name) and `project_dir` (the project's root, absolute). It
+fetches the keys and writes `.p7y` itself (`.gitignore`, `p7y.env` with `P7Y_URL`, `P7Y_SANDBOX`,
+`P7Y_DOCKER_HOST`, and `docker/*.pem`), checks that the key matches the certificate and the CA signed it, adds
+`.p7y` to `.dockerignore`, and creates the docker context (`p7y-<sandbox>`, removed first). Its answer has the
+files, the certificate's fingerprint and the context name, never the key. Then check the connection with a
+compose command, not only `ps` (`ps` can work with a key that compose cannot read):
 
 ```sh
-docker context create p7y-<sandbox> --docker "host=<P7Y_DOCKER_HOST>,ca=<project>/.p7y/docker/ca.pem,cert=<project>/.p7y/docker/cert.pem,key=<project>/.p7y/docker/key.pem"
-docker --context p7y-<sandbox> ps
+docker --context p7y-<sandbox> compose ls
 ```
 
-If the context exists, use it; after new keys or a moved project folder, remove it and create it again.
-`docker` must be installed on this machine; if it is not, say so and stop.
+- **`.p7y` came from an export zip:** run `setup_project_dir` anyway when `p7y-local` is there (it checks the
+  keys and makes the context); without it, create the context from the zip's files (`.p7y/README.md` has the
+  command), never by copying keys.
+- **No `setup_project_dir` tool** (the helper needs Node.js 18+ on this machine): ask the user for the export zip
+  (Purgatory, the sandbox → **Let your agent deploy…** → **Download**) and set it up from that, as in step 1.
+- **New keys** (`rotate_docker_keys`), a moved project folder, or **any TLS error** (`tls: failed to parse
+  private key`, a bad certificate): run `setup_project_dir` again. It writes the files and creates the context
+  again: a docker context keeps its own copies of the files, so fixing a file alone changes nothing. Never repair
+  or guess at a key.
+- `docker` must be installed on this machine; if `setup_project_dir` says it is not, say so and stop.
 
 ## 4. Deploy
 
@@ -106,7 +119,10 @@ The build runs in the sandbox; it is the same command for an update.
 
 ## 5. Check and hand over
 
-`get_sandbox` again: `apps` lists each app with its `url` and `answers`. Wait a few seconds after the start.
+`get_sandbox` again: `apps` lists each app with its `url` and `answers`. A new app shows there a few seconds
+after `compose up` (first only in `tcp_urls`): ask every 3 s for up to about 30 s, until it is listed with
+`answers: true`. Rely on `answers`, not on your own `curl` (on Windows the built-in curl fails with
+`CRYPT_E_REVOCATION_OFFLINE` unless given `--ssl-no-revoke`).
 
 - `answers: true`: give the user the `https://` address. It works for anyone with the link; when nobody
   uses it for a while (30 minutes by default) the sandbox sleeps, and the next visit wakes it in a few seconds.

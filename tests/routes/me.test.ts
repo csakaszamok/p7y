@@ -58,3 +58,13 @@ describe('the Simple / Advanced view', () => {
     expect((await set('expert')).status).toBe(400)
   })
 })
+
+describe('GET /me: the address', () => {
+  // An agent writes it into the project's .p7y/p7y.env; the plugin's settings are not readable to it
+  it("says Purgatory's own address", async () => {
+    vi.stubEnv('PUBLIC_URL', 'https://p7y.example.com/')
+    try {
+      expect((await (await me(req('admin-secret'))).json()).url).toBe('https://p7y.example.com')
+    } finally { vi.stubEnv('PUBLIC_URL', '') }
+  })
+})

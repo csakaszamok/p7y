@@ -4,6 +4,15 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **`GET /sandboxes/:name` (`get_sandbox`) no longer gives the Docker client certificates and private key** unless asked for with `?include_keys=true` (`include_keys: true` over MCP). A key in an answer goes into an agent's context and transcript, and an agent copying it by hand garbled it: a user's deploy failed with *tls: failed to parse private key*. A script that reads `ca_cert`, `client_cert` or `client_key` adds the parameter.
+
+### Added
+
+- **`setup_project_dir`** in the Claude Code plugin: a small helper on the user's machine (`p7y-local`, Node.js 18+) fetches a sandbox's keys and writes the project's `.p7y` folder itself, checks the key against the certificate and the CA, adds `.p7y` to `.dockerignore`, and creates the docker context again; the model gets the files and the certificate's fingerprint, never the key. The deploy skill uses it, checks Docker with `compose ls`, runs it again after new keys or any TLS error, and waits for a new app to show in `apps`.
+- `GET /me` (`who_am_i`) gives Purgatory's own address, `url`.
+
 ## [0.9.1] - 2026-10-19
 
 Upgrading from 0.9.0: download the new `docker-compose.yml` (it passes the new sleep limits to Purgatory), then `docker compose pull && docker compose up -d`.

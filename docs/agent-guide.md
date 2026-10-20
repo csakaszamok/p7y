@@ -33,7 +33,7 @@ The answer includes:
 
 - `status`: `running`, `exited` (asleep) or `deep_sleep`;
 - `docker_access`: `host`, the address of the sandbox's Docker daemon (for example `shop-docker.example.com`), and `state`: `ready`, or `needs-certs` for a sandbox created before Docker access existed (the user enables it once: **Access → Enable**, which restarts the sandbox); and, while the sandbox is not running, `hint`: a Docker connection does not wake it, so start it first (`docker` would only get EOF);
-- `ca_cert`, `client_cert`, `client_key`: the Docker client certificates (PEM);
+- with `?include_keys=true` only: `ca_cert`, `client_cert`, `client_key`, the Docker client certificates and private key (PEM). Write them to files with a program (below), never by copying them through a model: copied by hand a key gets garbled (and still looks like a key), and in an answer it goes into the model's context and transcript. The [Claude Code plugin](claude-plugin.md)'s `setup_project_dir` does all of this on the user's machine;
 - `tunnel_urls`: the app addresses.
 
 If `status` is not `running`, wake the sandbox and poll until it is:
@@ -54,10 +54,15 @@ Save the three certificates as files exactly as they are (they end their lines w
 
 ```sh
 mkdir -p ~/.p7y/shop
-# ca.pem = ca_cert, cert.pem = client_cert, key.pem = client_key from GET /sandboxes/p7y-shop
+# Straight to files, not through the model (jq: a JSON tool)
+for f in ca_cert:ca client_cert:cert client_key:key; do
+  curl -s -H "Authorization: Bearer $P7Y_TOKEN" "$P7Y_URL/sandboxes/p7y-shop?include_keys=true" | jq -r ".${f%%:*}" > ~/.p7y/shop/${f##*:}.pem
+done
 docker context create p7y-shop --docker "host=tcp://shop-docker.example.com:443,ca=$HOME/.p7y/shop/ca.pem,cert=$HOME/.p7y/shop/cert.pem,key=$HOME/.p7y/shop/key.pem"
 docker --context p7y-shop ps
 ```
+
+A context keeps its own copies of the files: after new keys (or a fix to a file) run `docker context rm -f p7y-shop` and create it again. Check it with a compose command, `docker --context p7y-shop compose ls`: `ps` can work with a key that compose cannot read (`tls: failed to parse private key`). On a TLS error fetch the keys again; do not repair a key file.
 
 Only TLS with these certificates gets in: Purgatory passes the connection through without opening it. Keep the key as secret as the token.
 
