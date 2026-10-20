@@ -9,22 +9,22 @@ import { sandboxParent } from './sandboxPaths'
 /** How long a link works, from when it was made */
 export const PROJECT_LINK_TTL_MS = 5 * 60_000
 
-const links = new Map<string, { sandbox: string; expires: number }>()
+const links = new Map<string, { sandbox: string; withToken: { owner: string } | null; expires: number }>()
 
-/** A new link's token for the sandbox's folder */
-export function issueProjectLink(sandbox: string, now = Date.now()): string {
+/** A new link's token for the sandbox's folder; withToken: the download also makes a sandbox token for the owner */
+export function issueProjectLink(sandbox: string, now = Date.now(), withToken?: { owner: string }): string {
   for (const [t, l] of links) if (l.expires <= now) links.delete(t)
   const token = crypto.randomBytes(32).toString('base64url')
-  links.set(token, { sandbox, expires: now + PROJECT_LINK_TTL_MS })
+  links.set(token, { sandbox, withToken: withToken ?? null, expires: now + PROJECT_LINK_TTL_MS })
   return token
 }
 
-/** The sandbox the token is for, once; null when unknown, used or expired */
-export function takeProjectLink(token: string, now = Date.now()): string | null {
+/** The link's sandbox (and whom its token is for), once; null when unknown, used or expired */
+export function takeProjectLink(token: string, now = Date.now()): { sandbox: string; withToken: { owner: string } | null } | null {
   const l = links.get(token)
   if (!l) return null
   links.delete(token)
-  return l.expires > now ? l.sandbox : null
+  return l.expires > now ? { sandbox: l.sandbox, withToken: l.withToken } : null
 }
 
 /** The key, the certificate and the CA belong together; throws why not */
