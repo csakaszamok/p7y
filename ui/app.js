@@ -131,14 +131,20 @@ async function loadQuota() {
 // ---------- overview ----------
 async function loadOverview() {
   try {
-    const [sum, list] = await Promise.all([api('/sandboxes/summary'), api('/sandboxes')])
+    const [sum, list, users] = await Promise.all([api('/sandboxes/summary'), api('/sandboxes'), isAdmin ? api('/users').then(r => r.users).catch(() => []) : []])
     // The admin's /sandboxes is everyone's: the server view; a user's is their own
     $('[data-ov-scope]').textContent = isAdmin ? 'the whole server' : 'your sandboxes'
-    $('[data-overview]').innerHTML = P7yPanel.overviewHtml(sum, list, { isAdmin, shortName })
+    $('[data-overview]').innerHTML = P7yPanel.overviewHtml(sum, list, { isAdmin, shortName }) + P7yPanel.usersTable(users)
   } catch (e) { if (e.message !== 'signed out') $('[data-overview]').innerHTML = `<p class="error">${esc(e.message)}</p>` }
 }
 function initOverview() {
   loadOverview()
+  // Users table: forget a row (asked first; the account and its sandboxes stay)
+  $('[data-overview]').addEventListener('click', async e => {
+    const b = e.target.closest('[data-user-delete]'); if (!b) return
+    if (!await confirmDialog(`Forget the stats of ${b.dataset.userDelete}? The account and its sandboxes stay.`, 'Delete')) return
+    try { await api(`/users/${encodeURIComponent(b.dataset.userDelete)}`, { method: 'DELETE' }); loadOverview() } catch (err) { if (err.message !== 'signed out') console.error(err) }
+  })
   setInterval(() => { if (!document.hidden) loadOverview() }, 10_000)
   initHubFeed()
 }

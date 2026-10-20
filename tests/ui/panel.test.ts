@@ -639,3 +639,40 @@ describe('matchesFilter (the sandbox list filter)', () => {
     expect(P.matchesFilter({ ...shop, start_error: 'boom' }, 'failed')).toBe(true)
   })
 })
+
+describe('usersTable (Overview, admin)', () => {
+  const now = Date.parse('2026-10-20T12:00:00Z')
+  const users = [
+    { sub: 'anna@example.com', first_seen: '2026-10-01T10:00:00Z', last_seen: '2026-10-20T11:00:00Z', last_sign_in: '2026-10-18T12:00:00Z', sign_ins: 4, sandboxes_created: 2, last_sandbox_created: '2026-10-02T10:00:00Z', sandboxes_now: 1, last_api_use: '2026-10-19T12:00:00Z' },
+    { sub: 'bob@example.com', first_seen: '2026-10-10T10:00:00Z', last_seen: '2026-10-10T10:00:00Z', last_sign_in: '2026-10-10T10:00:00Z', sign_ins: 1, sandboxes_created: 0, last_sandbox_created: null, sandboxes_now: 0, last_api_use: null },
+    { sub: 'carl@example.com', first_seen: null, last_seen: null, last_sign_in: null, sign_ins: 0, sandboxes_created: 0, last_sandbox_created: null, sandboxes_now: 1, last_api_use: null },
+    { sub: '<b>x</b>@example.com', first_seen: '2026-10-10T10:00:00Z', last_seen: '2026-10-10T10:00:00Z', last_sign_in: null, sign_ins: 0, sandboxes_created: 0, last_sandbox_created: null, sandboxes_now: 0, last_api_use: null },
+  ]
+  const html = P.usersTable(users, now)
+  const row = (sub: string) => html.split(`<tr data-user="${sub}">`)[1]?.split('</tr>')[0] ?? ''
+
+  it('one row per account: last seen, sign-ins, sandboxes now / created, last API use', () => {
+    const a = row('anna@example.com')
+    expect(a).toContain('1 h ago')
+    expect(a).toContain('>4<')
+    expect(a).toContain('1 / 2')
+    expect(a).toContain('1 d ago')
+  })
+  it('marks who signed in but never created a sandbox', () => {
+    expect(row('bob@example.com')).toContain('no sandbox yet')
+    expect(row('anna@example.com')).not.toContain('no sandbox yet')
+  })
+  it('an owner from before the stats: no dates, not marked', () => {
+    const c = row('carl@example.com')
+    expect(c).toContain('—')
+    expect(c).not.toContain('no sandbox yet')
+  })
+  it('escapes the account name and has a delete button per row', () => {
+    expect(html).not.toContain('<b>x</b>')
+    expect(html).toContain('&lt;b&gt;x&lt;/b&gt;@example.com')
+    expect(html).toMatch(/<button[^>]*data-user-delete="anna@example\.com"/)
+  })
+  it('nothing to show: no table', () => {
+    expect(P.usersTable([], now)).toBe('')
+  })
+})
