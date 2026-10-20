@@ -301,31 +301,18 @@ async function copyEnv(name, b = $('[data-panel] [data-act="copy-env"]'), opts =
     }
   } catch (e) { if (b) b.textContent = 'Copy as .env'; const err = (b && b.closest('dialog') ? $('[data-export-error]') : null) || $('[data-act-error]'); err.textContent = e.message; err.hidden = false } finally { if (b) b.disabled = false }
 }
-// The window's Options (Advanced): the token's name and expiry, for the plugin's token, the zip and Copy as .env
+// The window's Options (Advanced): the token's name and expiry, for the zip and Copy as .env
 function exportOptions() {
   const form = $('[data-export-form]')
   return { name: form.elements.name.value.trim(), expires_in: form.elements.expires_in.value }
-}
-const EXPIRY_TEXT = { '30d': '30 days', '90d': '90 days', never: 'until revoked' }
-function showPluginExpiry() {
-  const span = $('[data-plugin-expiry]')
-  if (span) span.textContent = EXPIRY_TEXT[exportOptions().expires_in] || '90 days'
 }
 function openExportDialog(name) {
   const dlg = $('[data-export-dialog]')
   if (!dlg) return void location.reload()
   dlg.dataset.sandbox = name
-  // Simple: the plugin's two answers, the address and a token made on request (never one left from before)
-  const url = $('[data-plugin-url]')
-  if (url) url.textContent = location.origin
-  const tokenBtn = $('[data-plugin-token]'), tokenValue = $('[data-plugin-token-value]'), tokenCopy = $('[data-plugin-token-copy]')
-  if (tokenBtn) {
-    tokenBtn.hidden = false; tokenBtn.disabled = false; tokenBtn.textContent = 'Create token'; tokenValue.textContent = ''; tokenValue.hidden = true; tokenCopy.hidden = true
-    const cmd = $('[data-plugin-cmd]')
-    cmd.textContent = ''; cmd.hidden = true; $('[data-plugin-cmd-copy]').hidden = true
-    $('[data-plugin-cmd-wait]').hidden = false; $('[data-plugin-token-wait]').hidden = false
-  }
-  showPluginExpiry()
+  // The line to paste into Claude Code in the project's folder
+  const initLine = $('[data-init-cmd]')
+  try { initLine.textContent = P7yPanel.initCommand(location.origin, shortName(name)) } catch { initLine.textContent = '' }
   let ready = false
   try { ready = JSON.parse(renderedJSON || '{}').docker_access?.state === 'ready' } catch { /* not rendered yet */ }
   $('[data-export-needs-certs]').hidden = ready
@@ -339,7 +326,6 @@ function openExportDialog(name) {
 function initExportDialog() {
   const form = $('[data-export-form]')
   if (!form) return
-  form.elements.expires_in.addEventListener('change', showPluginExpiry)
   form.addEventListener('click', async ev => {
     const env = ev.target.closest('[data-copy-env]')
     if (env) return void copyEnv($('[data-export-dialog]').dataset.sandbox, env, exportOptions())
@@ -350,27 +336,6 @@ function initExportDialog() {
       try { await navigator.clipboard.writeText(el.textContent); copy.textContent = 'Copied'; setTimeout(() => { copy.textContent = 'Copy' }, 1500) }
       catch { const r = document.createRange(); r.selectNodeContents(el); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r) }
       return
-    }
-    const make = ev.target.closest('[data-plugin-token]')
-    if (!make) return
-    // A token for this sandbox only, for the plugin: shown once, like any new token
-    make.disabled = true; make.textContent = 'Creating…'
-    try {
-      const o = exportOptions()
-      const { token } = await api('/tokens', { method: 'POST', body: JSON.stringify({ name: o.name || 'Claude Code plugin', sandbox: $('[data-export-dialog]').dataset.sandbox, expires_in: o.expires_in }) })
-      const value = $('[data-plugin-token-value]')
-      value.textContent = token; value.hidden = false
-      $('[data-plugin-token-copy]').hidden = false
-      $('[data-plugin-token-wait]').hidden = true
-      // The whole install, ready to paste into a terminal
-      const cmd = $('[data-plugin-cmd]')
-      cmd.textContent = P7yPanel.pluginInstallCommand(location.origin, token); cmd.hidden = false
-      $('[data-plugin-cmd-copy]').hidden = false
-      $('[data-plugin-cmd-wait]').hidden = true
-      make.disabled = true; make.textContent = 'Token created'
-    } catch (e) {
-      make.disabled = false; make.textContent = 'Create token'
-      const err = $('[data-export-error]'); err.textContent = e.message; err.hidden = false
     }
   })
   form.addEventListener('submit', async ev => {

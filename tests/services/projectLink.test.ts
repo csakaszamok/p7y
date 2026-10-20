@@ -10,7 +10,7 @@ describe('the project folder link', () => {
   it('works once, for 5 minutes from when it was made', () => {
     const a = issueProjectLink('p7y-shop', T)
     expect(a).toMatch(/^[A-Za-z0-9_-]{40,}$/)
-    expect(takeProjectLink(a, T + 299_000)).toBe('p7y-shop')
+    expect(takeProjectLink(a, T + 299_000)).toEqual({ sandbox: 'p7y-shop', withToken: null })
     expect(takeProjectLink(a, T + 299_500)).toBeNull() // used
     const b = issueProjectLink('p7y-shop', T)
     expect(takeProjectLink(b, T + 300_001)).toBeNull() // expired

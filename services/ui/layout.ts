@@ -106,7 +106,7 @@ const TOKEN_DIALOG = `
   <form method="dialog"><div class="actions"><button class="primary">Done</button></div></form>
 </dialog>`
 
-// Let your agent deploy, the same in both views: the Claude Code plugin (a token and the command to install it),
+// Let your agent deploy, the same in both views: the Claude Code plugin (installed once, then /p7y:init approved in the browser),
 // or a zip for other agents (a new token for the sandbox, its Docker client keys and a README); Advanced adds Options
 const EXPORT_DIALOG = `
 <dialog data-export-dialog>
@@ -115,26 +115,23 @@ const EXPORT_DIALOG = `
     <section class="agent-way" data-way="claude">
       <h3>Claude Code <small class="muted">recommended</small></h3>
       <ol>
-        <li><button type="button" data-plugin-token>Create token</button> <small class="muted">for this sandbox only, valid <span data-plugin-expiry>90 days</span>; shown once</small></li>
-        <li>Copy this and paste it into a terminal (in VS Code: Terminal → New Terminal), once:
-          <div class="copy-line"><pre class="plugin-cmd" data-plugin-cmd hidden></pre><button type="button" class="primary" data-copy-from="[data-plugin-cmd]" data-plugin-cmd-copy hidden>Copy</button></div>
-          <small class="muted" data-plugin-cmd-wait>the command appears here with your token</small></li>
-        <li>In your project's folder, ask Claude Code: <em>deploy this app</em></li>
+        <li>Once on this computer, in a terminal (in VS Code: Terminal → New Terminal):
+          <div class="copy-line"><code>claude plugin marketplace add p7y-dev/p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+          <div class="copy-line"><code>claude plugin install p7y@p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+          <details class="plugin-other"><summary>In Claude Code instead:</summary>
+            <div class="copy-line"><code>/plugin marketplace add p7y-dev/p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+            <div class="copy-line"><code>/plugin install p7y@p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+          </details></li>
+        <li>In Claude Code, in your project's folder, paste this, then approve in the browser page it opens:
+          <div class="copy-line"><code data-init-cmd></code><button type="button" class="primary" data-copy-from="[data-init-cmd]">Copy</button></div></li>
       </ol>
-      <details class="plugin-other"><summary>Other ways: in Claude Code itself</summary>
-        <p class="muted">Run these in Claude Code (in a terminal; the VS Code panel has no <code>/plugin</code>), then answer its two questions:</p>
-        <div class="copy-line"><code>/plugin marketplace add p7y-dev/p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
-        <div class="copy-line"><code>/plugin install p7y@p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
-        <div class="copy-line">Address <code data-plugin-url></code><button type="button" class="link" data-copy-from="[data-plugin-url]">Copy</button></div>
-        <div class="copy-line">Token <code data-plugin-token-value hidden></code><button type="button" class="link" data-copy-from="[data-plugin-token-value]" data-plugin-token-copy hidden>Copy</button><small class="muted" data-plugin-token-wait>Create token above</small></div>
-      </details>
     </section>
     <section class="agent-way" data-way="other">
       <h3>Other agents <small class="muted">Codex, Cursor…</small></h3>
       <p class="muted">Download the zip below, then tell your agent: <em>set up the p7y zip from my Downloads in this project and deploy</em>. It holds a token and keys: the agent puts them in a <code>.p7y</code> folder that git leaves out.</p>
     </section>
     <details class="adv export-options"><summary>Options</summary>
-      <p class="muted">For the token above and the zip. The zip holds a <code>.p7y</code> folder for your project's folder: a new token for this sandbox, its Docker client keys and a README with the commands; its own .gitignore keeps it out of git.</p>
+      <p class="muted">For the zip and Copy as .env. The zip holds a <code>.p7y</code> folder for your project's folder: a new token for this sandbox, its Docker client keys and a README with the commands; its own .gitignore keeps it out of git.</p>
       <label>Token name<input name="name" maxlength="80" placeholder="laptop agent"></label>
       <label>Expires<select name="expires_in" data-export-expiry><option value="30d">in 30 days</option><option value="90d" selected>in 90 days</option><option value="never">never</option></select></label>
       <label class="check"><input type="checkbox" name="no_docker"> Without the Docker keys (the zip: p7y.env and the README only)</label>

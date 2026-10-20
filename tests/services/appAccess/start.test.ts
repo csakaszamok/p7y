@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import os from 'node:os'; import path from 'node:path'; import fs from 'node:fs'
 import { startResponse, nextAfterSignIn } from '../../../services/appAccess/start'
-import { redeemTicket, _resetSign } from '../../../services/appAccess/sign'
+import { redeemTicket, signNext, _resetSign } from '../../../services/appAccess/sign'
 
 const levels: Record<string, 'public' | 'domain' | 'owner'> = { 'shop-pub.example.com': 'public', 'shop-dom.example.com': 'domain', 'shop-own.example.com': 'owner' }
 const deps = (viewer: { sub: string; role: 'user' | 'admin' } | null) => ({
@@ -47,6 +47,14 @@ describe('/auth/app/start', () => {
     expect(nextAfterSignIn(next(encodeURIComponent('/auth/app/start?rd=https%3A%2F%2Fevil-app.example.com%2F')))).toBeNull()
     expect(nextAfterSignIn(next(encodeURIComponent('/auth/app/start?rd=x\r\nSet-Cookie: a=b')))).toBeNull()
     expect(nextAfterSignIn(next('garbage'))).toBeNull()
+  })
+  it('after sign-in: also back to /activate (the /p7y:init approval), signed, no control characters', async () => {
+    const next = (v: string) => new Request('https://p7y.example.com/', { headers: { cookie: `p7y_next=${v}` } })
+    expect(nextAfterSignIn(next(signNext('/activate?code=BCDF-GHJK')))).toBe('/activate?code=BCDF-GHJK')
+    expect(nextAfterSignIn(next(signNext('/activate?code=x\r\nSet-Cookie: a=b')))).toBeNull()
+    expect(nextAfterSignIn(next(signNext('/activatex?code=1')))).toBeNull()
+    expect(nextAfterSignIn(next(signNext('//evil.example.com/activate?')))).toBeNull()
+    expect(nextAfterSignIn(next(encodeURIComponent('/activate?code=BCDF-GHJK')))).toBeNull()
   })
   it('a public app: straight back to it, no ticket (the app itself would receive it)', async () => {
     const r = await startResponse(at('https://shop-pub.example.com/a'), deps({ sub: 'bob@example.com', role: 'user' }))

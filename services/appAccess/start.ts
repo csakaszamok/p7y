@@ -49,9 +49,12 @@ export async function startResponse(req: Request, deps: Partial<StartDeps> = {})
   return new Response(null, { status: 302, headers: { location: landing.toString(), 'cache-control': 'no-store' } })
 }
 
-/** Where to go after signing in: only back to /auth/app/start, from the signed cookie start set, nowhere else. */
+// The /p7y:init approval page sends the visitor through sign-in too
+const ACTIVATE = '/activate?'
+
+/** Where to go after signing in: only back to /auth/app/start or /activate, from the signed cookie they set, nowhere else. */
 export function nextAfterSignIn(req: Request): string | null {
   const v = readNext(getCookie(req, NEXT_COOKIE))
   // No control characters: the value becomes a Location header
-  return v && v.startsWith(START) && !/[\u0000-\u001f\u007f]/.test(v) ? v : null
+  return v && (v.startsWith(START) || v.startsWith(ACTIVATE)) && !/[\u0000-\u001f\u007f]/.test(v) ? v : null
 }
