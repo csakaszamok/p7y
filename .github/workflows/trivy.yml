@@ -1,0 +1,60 @@
+name: Trivy
+
+# The repository (package-lock.json, Dockerfile, compose and runtime files) on every push and PR;
+# the published image weekly, since a new CVE can appear in an image that did not change.
+# Findings go to the Security tab (code scanning).
+on:
+  push:
+    branches: [main, 'release/**']
+  pull_request:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repo:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-repo.sarif
+      # A fork's PR gets a read-only token: no upload there, the log has the findings
+      - uses: github/codeql-action/upload-sarif@ce5e7eeac396d720fe2d802714996c8ce561e311 # v3.39.0
+        if: always() && github.event.pull_request.head.repo.fork != true
+        with:
+          sarif_file: trivy-repo.sarif
+          category: trivy-repo
+
+  image:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/${{ github.repository }}:latest
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-image.sarif
+      - uses: github/codeql-action/upload-sarif@ce5e7eeac396d720fe2d802714996c8ce561e311 # v3.39.0
+        if: always()
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image

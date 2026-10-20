@@ -1,0 +1,27 @@
+# Weekly update PRs. They go to the newest series' branch (CONTRIBUTING.md: Branches and releases), not to main:
+# move target-branch with it when a new release/x.y starts. Security-update PRs (repo settings) always go to main.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: release/0.10
+    schedule: { interval: weekly }
+    groups:
+      # One PR for the minor and patch updates; majors one by one
+      npm-minor:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: release/0.10
+    schedule: { interval: weekly }
+    groups:
+      actions:
+        patterns: ['*']
+  - package-ecosystem: docker
+    directory: /
+    target-branch: release/0.10
+    schedule: { interval: weekly }
+  - package-ecosystem: pip
+    directory: /docs
+    target-branch: release/0.10
+    schedule: { interval: monthly }
