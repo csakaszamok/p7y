@@ -5,6 +5,9 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { sandboxParent } from './sandboxPaths'
+import { dockerHostName } from './dockerAccess'
+import { publicUrl } from './session'
+import { rawNameOf } from './naming'
 
 /** How long a link works, from when it was made */
 export const PROJECT_LINK_TTL_MS = 5 * 60_000
@@ -50,6 +53,22 @@ export function projectDirFiles(s: ProjectDirSandbox, url: string): Array<{ name
     { name: '.p7y/docker/cert.pem', data: s.client_cert },
     { name: '.p7y/docker/key.pem', data: s.client_key, mode: 0o600 },
   ]
+}
+
+/** What project_dir_link and /device/poll answer for a link: its url, the unpack command and the docker context commands */
+export function projectLinkAnswer(sandbox: string, linkToken: string): { url: string; expires_in: number; command: string; context_commands: string[] } {
+  const url = `${publicUrl()}/project-dir/${linkToken}`
+  const ctx = `p7y-${rawNameOf(sandbox) ?? sandbox}`
+  const dir = '<project folder>/.p7y/docker'
+  return {
+    url,
+    expires_in: PROJECT_LINK_TTL_MS / 1000,
+    command: `curl -sf "${url}" | tar -x -C <project folder>`,
+    context_commands: [
+      `docker context rm -f ${ctx}`,
+      `docker context create ${ctx} --docker "host=tcp://${dockerHostName(sandbox)}:443,ca=${dir}/ca.pem,cert=${dir}/cert.pem,key=${dir}/key.pem"`,
+    ],
+  }
 }
 
 /** The sandbox's Docker client keys, as its export reads them */
