@@ -453,18 +453,17 @@
   }
 
   /**
-   * What a user pastes into a terminal to install the Claude Code plugin with this Purgatory's address and a token.
-   * Only plain URL and token characters go in: nothing a shell would read as more than one argument.
+   * The line a user pastes into Claude Code to link a project folder to a sandbox (it opens a browser page to approve).
+   * Only plain URL and name characters go in: nothing that reads as more than one word.
    */
-  function pluginInstallCommand(url, token) {
+  function initCommand(url, sandboxShort) {
     const u = String(url).replace(/\/+$/, '')
     if (!/^https?:\/\/[A-Za-z0-9.:-]+$/.test(u)) throw new Error(`not an address: ${u}`)
-    if (!/^p7y_[A-Za-z0-9_-]+$/.test(token)) throw new Error('not a token')
-    return 'claude plugin marketplace add p7y-dev/p7y\n' +
-      `claude plugin install p7y@p7y --scope user --config p7y_url=${u} --config p7y_token=${token}`
+    if (!/^[a-z0-9][a-z0-9_-]{0,62}$/.test(sandboxShort)) throw new Error('not a sandbox name')
+    return `/p7y:init ${u} ${sandboxShort}`
   }
 
-  const api = { matchesFilter, loadingPanel, pluginInstallCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  const api = { matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

@@ -574,18 +574,18 @@ describe('Simple view', () => {
   })
 })
 
-describe('pluginInstallCommand', () => {
-  it('two lines for a terminal: add the marketplace, install for the user with the address and the token', () => {
-    expect(P.pluginInstallCommand('https://p7y.example.com', 'p7y_abc123')).toBe(
-      'claude plugin marketplace add p7y-dev/p7y\n' +
-      'claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.com --config p7y_token=p7y_abc123')
+describe('initCommand', () => {
+  it('the /p7y:init line with the address and the sandbox', () => {
+    expect(P.initCommand('https://p7y.example.com', 'shop')).toBe('/p7y:init https://p7y.example.com shop')
   })
-  it('drops a trailing slash of the address (the MCP is <address>/mcp)', () => {
-    expect(P.pluginInstallCommand('https://p7y.example.com/', 'p7y_x')).toContain('p7y_url=https://p7y.example.com --config')
+  it('drops a trailing slash of the address', () => {
+    expect(P.initCommand('https://p7y.example.com/', 'shop')).toBe('/p7y:init https://p7y.example.com shop')
   })
-  it('refuses what could break out of the command line', () => {
-    expect(() => P.pluginInstallCommand('https://p7y.example.com; rm -rf ~', 'p7y_x')).toThrow()
-    expect(() => P.pluginInstallCommand('https://p7y.example.com', 'p7y_x $(id)')).toThrow()
+  it('refuses what could break out of the line', () => {
+    expect(() => P.initCommand('https://p7y.example.com; rm -rf ~', 'shop')).toThrow()
+    expect(() => P.initCommand('https://p7y.example.com', 'shop $(id)')).toThrow()
+    expect(() => P.initCommand('https://p7y.example.com', 'Shop')).toThrow()
+    expect(() => P.initCommand('https://p7y.example.com', '')).toThrow()
   })
 })
 
