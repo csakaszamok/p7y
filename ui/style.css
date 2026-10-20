@@ -124,6 +124,8 @@ body.login .card { position: relative; z-index: 1; background: rgba(20,15,12,.72
 body.login .logo { display: block; margin-bottom: 12px; filter: drop-shadow(0 0 8px rgba(255,120,30,.45)) }
 body.login h1 { margin: 0 }
 body.login form button { margin-top: 14px }
+body.login .actions { display: flex; flex-wrap: wrap; gap: 8px }
+body.login .approve-warn { margin: 14px 0 0; padding: 10px 12px; border: 1px solid rgba(249,115,22,.55); border-left-width: 4px; border-radius: 8px; background: rgba(249,115,22,.1); color: #fdba74; font-weight: 600; font-size: .92em }
 body.login .capacity { margin: 14px 0 }
 body.login .capacity p { margin: 0 0 6px; color: #888; font-size: .9em }
 body.login .capacity .bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,.08); overflow: hidden }

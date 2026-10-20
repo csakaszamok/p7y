@@ -26,7 +26,7 @@ A sandbox is your own small server: your app runs there, not on your computer.
 
     ![Let your agent deploy: the install lines and the /p7y:init line to copy; or the zip for other agents](../media/tutorial-agent.png){ width="360" }
 
-2. Under **1**, click **Copy** next to each of the two lines, open a terminal (in VS Code: **Terminal → New Terminal**; on Windows also PowerShell, on a Mac the Terminal app), paste them one after the other and press Enter after each:
+2. In the window's step **1**, click **Copy** next to each of the two lines, open a terminal (in VS Code: **Terminal → New Terminal**; on Windows also PowerShell, on a Mac the Terminal app), paste them one after the other and press Enter after each:
 
     ```
     claude plugin marketplace add p7y-dev/p7y
@@ -43,7 +43,7 @@ You install the plugin once. Each project then gets its sandbox in the next step
 
 ## 3. Connect the project and deploy
 
-1. Open your app's folder in Claude Code. In Purgatory, under **2**, click **Copy** and paste the line into Claude Code. It looks like this:
+1. Open your app's folder in Claude Code. In Purgatory, in the window's step **2**, click **Copy** and paste the line into Claude Code. It looks like this:
 
     ```
     /p7y:init https://p7y.example.com shop

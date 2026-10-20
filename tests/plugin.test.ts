@@ -79,6 +79,11 @@ describe('the Claude Code plugin', () => {
     expect(rounds * sleep).toBeLessThanOrEqual(90)
   })
 
+  it('init checks the address before it goes into a command', () => {
+    const md = fs.readFileSync(path.join(pluginDir, 'skills/init/SKILL.md'), 'utf8')
+    expect(md).toContain('^https?://[A-Za-z0-9.:-]+$')
+  })
+
   // A project folder with a space in it must not break the unpack after the single-use link is spent
   it('the skills quote the project folder', () => {
     for (const f of files(path.join(pluginDir, 'skills')).filter(f => f.endsWith('.md'))) {

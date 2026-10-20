@@ -311,7 +311,8 @@ function openExportDialog(name) {
   if (!dlg) return void location.reload()
   dlg.dataset.sandbox = name
   // The line to paste into Claude Code in the project's folder
-  $('[data-init-cmd]').textContent = P7yPanel.initCommand(location.origin, shortName(name))
+  const initLine = $('[data-init-cmd]')
+  try { initLine.textContent = P7yPanel.initCommand(location.origin, shortName(name)) } catch { initLine.textContent = '' }
   let ready = false
   try { ready = JSON.parse(renderedJSON || '{}').docker_access?.state === 'ready' } catch { /* not rendered yet */ }
   $('[data-export-needs-certs]').hidden = ready

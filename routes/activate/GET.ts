@@ -44,7 +44,7 @@ export default async (req: Request): Promise<Response> => {
       approve = ''
     } else {
       const options = own.map(s => {
-        const note = dockerAccessState(s.name) !== 'ready' ? ' (enables Docker access: it restarts, ~30 s)' : ''
+        const note = dockerAccessState(s.name) === 'ready' ? '' : s.status === 'deep_sleep' ? ' (enables Docker access)' : ' (enables Docker access: it restarts, ~30 s)'
         return `<option value="${escapeHtml(s.name)}">${escapeHtml(short(s.name))}${note}</option>`
       }).join('')
       choice = `<p>${what('one of your sandboxes', 'that')}</p><label>Sandbox<select name="sandbox" required>${options}</select></label>`
@@ -56,6 +56,7 @@ export default async (req: Request): Promise<Response> => {
     <input type="hidden" name="code" value="${escapeHtml(pretty)}">
     ${choice}
     ${restarts ? '<p class="muted">The sandbox restarts to turn on Docker access (~30 s).</p>' : ''}
+    <p class="approve-warn">Approve only if you just ran /p7y:init yourself and Claude Code shows this same code. Never approve a code someone sent you.</p>
     <div class="actions">${approve ? `<button class="primary" name="decision" value="approve">${approve}</button>` : ''}<button name="decision" value="deny" formnovalidate>Deny</button></div>
   </form>`)
 }

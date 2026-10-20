@@ -70,6 +70,18 @@ describe('/activate', () => {
     expect(html).toContain('>Deny<')
   })
 
+  it('the pending page warns to approve only a code you started yourself', async () => {
+    const { user_code } = startDevice('shop')
+    expect(await (await page(user_code, cookie('alice@example.com'))).text())
+      .toContain('Approve only if you just ran /p7y:init yourself and Claude Code shows this same code. Never approve a code someone sent you.')
+  })
+
+  it('the picker notes a restart only for a sandbox that is awake', async () => {
+    const { user_code } = startDevice(null)
+    const html = await (await page(user_code, cookie('alice@example.com'))).text()
+    expect(html).toMatch(/>off \(enables Docker access\)</)
+  })
+
   it("someone else's sandbox: a select of my own, without that name", async () => {
     const { user_code } = startDevice('p7y-secret')
     const html = await (await page(user_code, cookie('alice@example.com'))).text()

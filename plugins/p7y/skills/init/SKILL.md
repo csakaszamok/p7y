@@ -16,6 +16,8 @@ you do in plain words. **Never print** `.p7y/p7y.env` (it holds the token) or a 
 ## 1. What and where
 
 - The address: the first argument. Without `http://` or `https://`, put `https://` in front; drop a trailing `/`.
+  It must match `^https?://[A-Za-z0-9.:-]+$` before it goes into a command; otherwise ask the user for the
+  address again.
 - The sandbox: the second argument, as the user sees it (`shop`) or the full name (`p7y-shop`). It must match
   `^[a-z0-9][a-z0-9_-]{0,62}$` (lower case letters, digits, `-`, `_`) before it goes into a command; otherwise
   ask the user for the name again.
@@ -68,14 +70,16 @@ inline:
 DC='<device_code>'; out=still-pending; end=$((SECONDS + 90))
 for i in $(seq 1 30); do
   r=$(curl -sS --max-time 10 -X POST -H "Content-Type: application/json" -d "{\"device_code\":\"$DC\"}" "<address>/device/poll")
-  case "$r" in *'"pending"'*|'') [ "$SECONDS" -ge "$end" ] && break; sleep 3 ;; *) out=$r; break ;; esac
+  case "$r" in *'"approved"'*|*'"denied"'*|*'"expired"'*|*'"error"'*) out=$r; break ;; *) [ "$SECONDS" -ge "$end" ] && break; sleep 3 ;; esac
 done
 echo "$out"
 ```
 
-`still-pending` (or curl errors only): run the same command again, **up to 7 times in all** (the code expires
+`still-pending` (an answer that is not one of the JSON statuses below, such as a proxy's 502 HTML page or
+empty output, counts as pending too): run the same command again, **up to 7 times in all** (the code expires
 after 10 minutes); still pending after the 7th: tell the user the code ran out and stop. Then:
 
+- `{"error":"…"}` (400): the request was refused. Show the error and stop; do not poll again.
 - `{"status":"denied"}`: the user said no. Say so and stop.
 - `{"status":"expired"}`: the code expired (10 minutes) or was already used. Say so and stop; the user can run
   `/p7y:init` again.
