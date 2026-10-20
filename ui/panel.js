@@ -73,8 +73,15 @@
       const a = apps.get(url) || {}
       const i = tcp.findIndex(t => firstLabel(t.address) === `${firstLabel(url)}-tcp`)
       const own = i >= 0 ? tcp.splice(i, 1)[0] : null
-      return { service: a.service || firstLabel(url), url, answers: a.answers ?? null, ...(a.access ? { access: a.access } : {}), tcp: own }
+      return { service: a.service || firstLabel(url), project: a.project, url, answers: a.answers ?? null, ...(a.access ? { access: a.access } : {}), tcp: own }
     })
+    // A service name in more than one compose project (web in each): the project in front tells them apart
+    const projectsOf = new Map()
+    for (const r of rows) if (r.project) projectsOf.set(r.service, new Set([...(projectsOf.get(r.service) || []), r.project]))
+    for (const r of rows) {
+      if (r.project && projectsOf.get(r.service).size > 1) r.service = `${r.project} / ${r.service}`
+      delete r.project
+    }
     for (const t of tcp) rows.push({ service: firstLabel(t.address).replace(/-tcp$/, ''), url: null, answers: null, tcp: t })
     return rows
   }

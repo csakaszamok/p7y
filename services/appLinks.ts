@@ -6,9 +6,10 @@ import { rememberLastSeen, lastSeen } from './lastSeen'
 import { frpsApiAuth } from './frpsApi'
 import { accessOfLabel, type Access } from './appAccess/level'
 
-/** access: who opens it (p7y.access, else the default); access_invalid: its label is not a level (so: owner) */
-export interface AppLink { url: string; port: number; service: string; access: Access; access_invalid?: true }
-type AppName = { port: number; service: string; access: Access; access_invalid?: true }
+/** project: its compose project (tells apart services of the same name); access: who opens it (p7y.access, else
+ * the default); access_invalid: its label is not a level (so: owner) */
+export interface AppLink { url: string; port: number; service: string; project?: string; access: Access; access_invalid?: true }
+type AppName = { port: number; service: string; project?: string; access: Access; access_invalid?: true }
 export interface AppLinkDeps {
   domains: (name: string) => Promise<string[]>
   containers: (name: string) => Promise<InnerContainer[]>
@@ -29,10 +30,11 @@ export function publicAppNames(instance: string, containers: InnerContainer[]): 
   for (const c of containers) {
     const ports = [...new Set(c.Ports.filter(p => p.Type === 'tcp' && p.PublicPort && ALL_INTERFACES.has(p.IP ?? '')).map(p => p.PublicPort!))].sort((a, b) => a - b)
     const service = c.Labels['com.docker.compose.service'] || (c.Names[0] ?? '').replace(/^\//, '')
+    const project = c.Labels['com.docker.compose.project']
     const a = accessOfLabel(c.Labels['p7y.access'])
     for (const port of ports) {
       const name = frpcName(instance, c.Labels, c.Names[0] ?? '', port).toLowerCase()
-      if (!out.has(name)) out.set(name, { port, service, access: a.access, ...(a.invalid ? { access_invalid: true as const } : {}) })
+      if (!out.has(name)) out.set(name, { port, service, ...(project ? { project } : {}), access: a.access, ...(a.invalid ? { access_invalid: true as const } : {}) })
     }
   }
   return out
