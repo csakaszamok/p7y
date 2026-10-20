@@ -38,3 +38,22 @@ describe('firstFile', () => {
     expect(await firstFile(chunked(dir))).toBeNull()
   })
 })
+
+describe('tarFiles', () => {
+  it('several files in one archive, each readable back, with its mode', async () => {
+    const { tarFiles } = await import('../../services/tar')
+    const { readTarEntries } = await import('../../services/tarReader')
+    const { Readable } = await import('node:stream')
+    const archive = tarFiles([
+      { name: '.p7y/.gitignore', data: '*\n' },
+      { name: '.p7y/docker/key.pem', data: 'KEY', mode: 0o600 },
+    ])
+    expect(archive.length % 512).toBe(0)
+    const seen: Array<[string, string]> = []
+    await readTarEntries(Readable.from([archive]), async e => { seen.push([e.path, String(await e.read())]) }, { gzip: false })
+    expect(seen).toEqual([['.p7y/.gitignore', '*\n'], ['.p7y/docker/key.pem', 'KEY']])
+    // the key's mode: 0600 in its header (octal at offset 100)
+    const second = archive.indexOf(Buffer.from('.p7y/docker/key.pem'))
+    expect(archive.subarray(second + 100, second + 107).toString()).toBe('0000600')
+  })
+})

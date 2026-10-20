@@ -10,7 +10,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Added
 
-- **`setup_project_dir`** in the Claude Code plugin: a small helper on the user's machine (`p7y-local`, Node.js 18+) fetches a sandbox's keys and writes the project's `.p7y` folder itself, checks the key against the certificate and the CA, adds `.p7y` to `.dockerignore`, and creates the docker context again; the model gets the files and the certificate's fingerprint, never the key. The deploy skill uses it, checks Docker with `compose ls`, runs it again after new keys or any TLS error, and waits for a new app to show in `apps`.
+- **`project_dir_link`** (`POST /sandboxes/:name/project-link`): a link that works once, for 5 minutes, to the project's `.p7y` folder as a tar (`.gitignore`, `p7y.env`, the Docker keys, checked against each other first). The agent unpacks it with `curl -sf "<link>" | tar -x -C <project>`, so a key never passes through the model; a used or expired link answers 410. A token limited to one sandbox may ask for it. The Claude Code plugin's deploy skill uses it, creates the docker context again (it keeps copies of the files), checks Docker with `compose ls`, gets a new link after new keys or any TLS error, and waits for a new app to show in `apps`.
 - `GET /me` (`who_am_i`) gives Purgatory's own address, `url`.
 
 ## [0.9.1] - 2026-10-19

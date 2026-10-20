@@ -27,11 +27,6 @@
       "type": "http",
       "url": "${user_config.p7y_url}/mcp",
       "headers": { "Authorization": "Bearer ${user_config.p7y_token}" }
-    },
-    "p7y-local": {
-      "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/p7y-local.mjs"],
-      "env": { "P7Y_URL": "${user_config.p7y_url}", "P7Y_TOKEN": "${user_config.p7y_token}" }
     }
   }
 }
