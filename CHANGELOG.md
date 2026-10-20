@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-20
+
+Upgrading from 0.9: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version). Claude Code plugin users: `/plugin marketplace update p7y`; the plugin no longer runs a helper on the user's machine.
+
 ### Changed
 
 - **`GET /sandboxes/:name` (`get_sandbox`) no longer gives the Docker client certificates and private key** unless asked for with `?include_keys=true` (`include_keys: true` over MCP). A key in an answer goes into an agent's context and transcript, and an agent copying it by hand garbled it: a user's deploy failed with *tls: failed to parse private key*. A script that reads `ca_cert`, `client_cert` or `client_key` adds the parameter.
