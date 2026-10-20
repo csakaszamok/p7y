@@ -18,7 +18,7 @@ export function probeHttp(host: string, port: number, timeoutMs = 2000): Promise
   })
 }
 
-export interface AppStatus { url: string; port: number | null; service: string | null; answers: boolean | null; access?: 'public' | 'domain' | 'owner'; access_invalid?: true }
+export interface AppStatus { url: string; port: number | null; service: string | null; answers: boolean | null; project?: string; access?: 'public' | 'domain' | 'owner'; access_invalid?: true }
 const TTL_MS = 10_000
 const cache = new Map<string, { at: number; key: string; apps: AppStatus[] }>()
 
@@ -33,7 +33,7 @@ export async function appStatuses(
   const key = links.map(l => `${l.url}:${l.port}`).join(',')
   const hit = cache.get(name)
   if (hit && hit.key === key && now() - hit.at < TTL_MS) return hit.apps
-  const apps = await Promise.all(links.map(async l => ({ url: l.url, port: l.port, service: l.service, answers: await probe(name, l.port),
+  const apps = await Promise.all(links.map(async l => ({ url: l.url, port: l.port, service: l.service, answers: await probe(name, l.port), ...(l.project ? { project: l.project } : {}),
     ...(l.access ? { access: l.access } : {}), ...(l.access_invalid ? { access_invalid: true as const } : {}) })))
   cache.set(name, { at: now(), key, apps })
   return apps

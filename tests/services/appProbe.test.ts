@@ -67,5 +67,15 @@ describe('appStatuses: app access', () => {
     ], { probe: async () => true, now: () => 1 })
     expect(out.map(o => [o.access, o.access_invalid ?? false])).toEqual([['owner', true], ['public', false]])
   })
+
+  it("keeps each link's compose project", async () => {
+    const { appStatuses, forgetAppStatuses } = await import('../../services/appProbe')
+    forgetAppStatuses()
+    const out = await appStatuses('p7y-proj', [
+      { url: 'a.lvh.me', port: 1, service: 'web', project: 'first', access: 'public' as const },
+      { url: 'b.lvh.me', port: 2, service: 'web', access: 'public' as const },
+    ], { probe: async () => true, now: () => 1 })
+    expect(out.map(o => o.project ?? null)).toEqual(['first', null])
+  })
 })
 
