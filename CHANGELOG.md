@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-10-20
+
+Upgrading from 0.10.0: `docker compose pull && docker compose up -d`.
+
 ### Fixed
 
 - **Apps of the same name in different compose projects** (a `web` service in each) are told apart: the Apps tab shows them as `first / web`, `hello / web`; a name of its own stays as it is. `GET /sandboxes/:name` gives each app's compose `project`.
