@@ -7,7 +7,7 @@
 | `POST` | `/sandboxes` | Create a sandbox (`name`; optional `runtime` like `dind`, `template` like `starter`, `compose` (your own compose text instead of the template's; its `before_script` and defaults still apply), `idle_timeout` like `30m`, `deep_sleep_after` like `7d` or `off`, `ssh_keys` (extra SSH public keys for this sandbox only), `cpus` like `2`, `memory` like `4g`, `create_inner_stack: false` for no template stack) |
 | `GET` | `/sandboxes` | List all sandboxes |
 | `GET` | `/sandboxes/summary` | How many sandboxes: `quota`, `total`, `free`, `running`, `asleep`, `deep_sleep`, `archived`; your own (and `server_full`), or for the admin the whole server, `by_owner`, `server_limit` / `server_used` and `resources` (not with a token limited to one sandbox) |
-| `GET` | `/sandboxes/:name` | Get sandbox details |
+| `GET` | `/sandboxes/:name` | Get sandbox details; the Docker client certificates and key (`ca_cert`, `client_cert`, `client_key`) only with `?include_keys=true` |
 | `GET` | `/sandboxes/:name/compose` | The starter stack deployed into the sandbox (compose YAML), secrets masked (**Starter stack…** in the UI) |
 | `PATCH` | `/sandboxes/:name` | Change `idle_timeout` and/or `deep_sleep_after` (see [Sleep and wake](sleep-wake.md)), `cpus` and/or `memory` (see [CPU and memory](resources.md#cpu-and-memory)) |
 | `POST` | `/sandboxes/:name/start` | Wake a sandbox, also from deep sleep (**Wake** in the UI); 409 at the owner's limit with `reason` and `running`; `{"sleep": "<name>"}` puts that running one to sleep first |
@@ -15,6 +15,8 @@
 | `POST` | `/sandboxes/:name/deep-sleep` | Put a sandbox into deep sleep now, also a running one (**Deep sleep now** on the panel's **Details** tab) |
 | `POST` | `/sandboxes/:name/keep-awake` | Start a running sandbox's sleep countdown over (**Reset** next to *Sleeps in*); 409 if it is not running |
 | `POST` | `/sandboxes/:name/export` | A zip for coding agents: a new token for the sandbox, its Docker client keys, a README (owner/admin; not with a token limited to one sandbox); `docker: false` without the keys, `format: "env"` the p7y.env text |
+| `POST` | `/sandboxes/:name/project-link` | A single-use link (5 minutes) to the project's `.p7y` folder with the Docker client keys, checked first; answers `url`, `command` (`curl … \| tar -x`) and `context_commands`, never the keys |
+| `GET` | `/project-dir/:token` | The `.p7y` folder as a tar, once (no token: the link is the authorization); `410` when used or expired |
 | `POST` | `/sandboxes/:name/docker-keys` | New Docker access certificates (**Enable** / **Rotate Docker keys…**); restarts the sandbox |
 | `GET` | `/sandboxes/:name/registry` | The sandbox's images in the registry, with secret-scan results |
 | `DELETE` | `/sandboxes/:name/registry/:app/:digest` | Delete one version of an image |
@@ -38,7 +40,7 @@
 | `GET` | `/sandboxes/:name/logs/stream` | The sandbox's app logs as Server-Sent Events: the last 100 lines of every container, then live (token too) |
 | `DELETE` | `/ssh-keys/:id` | Delete one of your keys (it stops working at once) |
 | `GET` | `/templates/:name` | A template's `compose.yaml` as written (`compose`), to show or edit before a create |
-| `GET` | `/me` | Who you are signed in as, your running sandboxes and limit, and `server_places`: the sandbox places on the server, `used` and `limit` (`null` without a server limit) |
+| `GET` | `/me` | Who you are signed in as, Purgatory's own address (`url`), your running sandboxes and limit, and `server_places`: the sandbox places on the server, `used` and `limit` (`null` without a server limit) |
 | `PUT` | `/me/view` | The web UI's view for this account: `{"view": "simple"}` or `"advanced"` (`GET /me` returns it as `view`) |
 | `GET` | `/tokens` | List your personal access tokens (`hint`: the token's start and end, e.g. `p7y_aB3x…9fQz`; null for tokens made before hints) |
 | `POST` | `/tokens` | Mint a personal access token (`name`, optional `expires_in` like `30d`/`90d`/`never`) |

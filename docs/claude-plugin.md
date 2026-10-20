@@ -45,7 +45,7 @@ In your project's folder, ask in your own words, e.g. *deploy this app to my san
 
 The plugin has:
 
-- the **p7y MCP server**: your Purgatory's [MCP](mcp.md) at `<address>/mcp`, with your token: list, create, wake and put sandboxes to sleep, their apps and files;
+- the **p7y MCP server**: your Purgatory's [MCP](mcp.md) at `<address>/mcp`, with your token: list, create, wake and put sandboxes to sleep, their apps and files. Its `project_dir_link` gives a single-use link to the project's `.p7y` folder, which the agent unpacks with `curl … | tar -x`: the Docker keys go to the disk and never pass through the model (copied by a model a key gets garbled, and it would end up in the transcript);
 - the **deploy skill** (`/p7y:deploy`): the steps of the [agent guide](agent-guide.md) in short, for an agent that may be talking to someone who is not a developer.
 
 ## Where it works

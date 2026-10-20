@@ -4,6 +4,19 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-20
+
+Upgrading from 0.9: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version). Claude Code plugin users: `/plugin marketplace update p7y`; the plugin no longer runs a helper on the user's machine.
+
+### Changed
+
+- **`GET /sandboxes/:name` (`get_sandbox`) no longer gives the Docker client certificates and private key** unless asked for with `?include_keys=true` (`include_keys: true` over MCP). A key in an answer goes into an agent's context and transcript, and an agent copying it by hand garbled it: a user's deploy failed with *tls: failed to parse private key*. A script that reads `ca_cert`, `client_cert` or `client_key` adds the parameter.
+
+### Added
+
+- **`project_dir_link`** (`POST /sandboxes/:name/project-link`): a link that works once, for 5 minutes, to the project's `.p7y` folder as a tar (`.gitignore`, `p7y.env`, the Docker keys, checked against each other first). The agent unpacks it with `curl -sf "<link>" | tar -x -C <project>`, so a key never passes through the model; a used or expired link answers 410. A token limited to one sandbox may ask for it. The Claude Code plugin's deploy skill uses it, creates the docker context again (it keeps copies of the files), checks Docker with `compose ls`, gets a new link after new keys or any TLS error, and waits for a new app to show in `apps`.
+- `GET /me` (`who_am_i`) gives Purgatory's own address, `url`.
+
 ## [0.9.1] - 2026-10-19
 
 Upgrading from 0.9.0: download the new `docker-compose.yml` (it passes the new sleep limits to Purgatory), then `docker compose pull && docker compose up -d`.

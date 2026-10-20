@@ -48,6 +48,12 @@ describe('the Claude Code plugin', () => {
     })
   })
 
+  // Nothing runs on the user's machine but docker and curl: the keys come by a single-use link (project_dir_link)
+  it('has only the remote MCP server', () => {
+    expect(Object.keys(manifest.mcpServers)).toEqual(['p7y'])
+    expect(fs.existsSync(path.join(pluginDir, 'mcp'))).toBe(false)
+  })
+
   it('every skill has a name matching its folder and a description within the limit', () => {
     const skills = fs.readdirSync(path.join(pluginDir, 'skills'))
     expect(skills).toContain('deploy')
@@ -63,7 +69,7 @@ describe('the Claude Code plugin', () => {
     expect(toolNames.size).toBeGreaterThan(20)
     for (const f of files(path.join(pluginDir, 'skills')).filter(f => f.endsWith('.md'))) {
       const named = [...fs.readFileSync(f, 'utf8').matchAll(/`([a-z]+(?:_[a-z]+)+)`/g)].map(m => m[1])
-        .filter(n => /^(get|list|create|wake|sleep|set|keep|who|read|write|delete|restart|rotate|archive|deep|generate|add|revoke|sandbox)_/.test(n))
+        .filter(n => /^(get|list|create|wake|sleep|set|keep|who|read|write|delete|restart|rotate|archive|deep|generate|add|revoke|sandbox|project)_/.test(n))
       expect(named.length).toBeGreaterThan(0)
       for (const n of named) expect(toolNames, `${path.basename(path.dirname(f))}: ${n}`).toContain(n)
     }

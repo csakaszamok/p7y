@@ -44,6 +44,17 @@ export function tarFile(name: string, data: Buffer, o: { mode?: number; mtime?: 
   return Buffer.concat(parts)
 }
 
+/** Several files (names up to 100 bytes) as one tar archive. */
+export function tarFiles(files: Array<{ name: string; data: Buffer | string; mode?: number }>, mtime = Date.now() / 1000): Buffer {
+  const parts: Buffer[] = []
+  for (const f of files) {
+    if (Buffer.byteLength(f.name) > 100) throw new Error(`name over 100 bytes: ${f.name}`)
+    parts.push(...entry(f.name, Buffer.from(f.data), { mode: f.mode ?? 0o644, mtime, type: '0' }))
+  }
+  parts.push(Buffer.alloc(BLOCK * 2))
+  return Buffer.concat(parts)
+}
+
 /** Reads exactly n bytes at a time from a chunked stream; null at its end. */
 function reader(source: AsyncIterable<Uint8Array>) {
   const it = source[Symbol.asyncIterator]()

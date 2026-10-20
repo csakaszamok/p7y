@@ -33,7 +33,7 @@ The answer includes:
 
 - `status`: `running`, `exited` (asleep) or `deep_sleep`;
 - `docker_access`: `host`, the address of the sandbox's Docker daemon (for example `shop-docker.example.com`), and `state`: `ready`, or `needs-certs` for a sandbox created before Docker access existed (the user enables it once: **Access → Enable**, which restarts the sandbox); and, while the sandbox is not running, `hint`: a Docker connection does not wake it, so start it first (`docker` would only get EOF);
-- `ca_cert`, `client_cert`, `client_key`: the Docker client certificates (PEM);
+- with `?include_keys=true` only: `ca_cert`, `client_cert`, `client_key`, the Docker client certificates and private key (PEM). Write them to files with a program (below), never by copying them through a model: copied by hand a key gets garbled (and still looks like a key), and in an answer it goes into the model's context and transcript. A single-use link (below) puts them on disk without them passing through an answer;
 - `tunnel_urls`: the app addresses.
 
 If `status` is not `running`, wake the sandbox and poll until it is:
@@ -49,15 +49,22 @@ A request to an app address while the sandbox is not ready returns an HTML **wai
 
 ## 2. Connect the docker command line
 
-Save the three certificates as files exactly as they are (they end their lines with `
-`; write them unchanged), then make a Docker context for the sandbox:
+Ask for a single-use link to the project's `.p7y` folder (MCP: `project_dir_link`). Purgatory checks the keys first; the link works once, for 5 minutes:
+
+```http
+POST /sandboxes/p7y-shop/project-link
+→ { "url": "https://p7y.example.com/project-dir/…", "expires_in": 300,
+    "command": "curl -sf \"https://p7y.example.com/project-dir/…\" | tar -x -C <project folder>",
+    "context_commands": ["docker context rm -f p7y-shop", "docker context create p7y-shop --docker \"host=tcp://shop-docker.example.com:443,ca=<project folder>/.p7y/docker/ca.pem,…\""] }
+```
+
+Run `command`, then `context_commands`, with the project's root folder for `<project folder>`. The download writes `.p7y/.gitignore` (`*`: git leaves the folder out), `.p7y/p7y.env` (`P7Y_URL`, `P7Y_SANDBOX`, `P7Y_DOCKER_HOST`) and `.p7y/docker/{ca,cert,key}.pem`. On Windows: `curl.exe --ssl-no-revoke`; `tar` comes with Windows 10 and later. A used or expired link answers **410**: ask for a new one.
 
 ```sh
-mkdir -p ~/.p7y/shop
-# ca.pem = ca_cert, cert.pem = client_cert, key.pem = client_key from GET /sandboxes/p7y-shop
-docker context create p7y-shop --docker "host=tcp://shop-docker.example.com:443,ca=$HOME/.p7y/shop/ca.pem,cert=$HOME/.p7y/shop/cert.pem,key=$HOME/.p7y/shop/key.pem"
-docker --context p7y-shop ps
+docker --context p7y-shop compose ls
 ```
+
+A context keeps its own copies of the files: after new keys run both again, with a new link. Check it with a compose command, as above: `ps` can work with a key that compose cannot read (`tls: failed to parse private key`). On a TLS error get a new link; do not repair a key file. Add `.p7y` to `.dockerignore`, so that a build never copies the keys into an image.
 
 Only TLS with these certificates gets in: Purgatory passes the connection through without opening it. Keep the key as secret as the token.
 
