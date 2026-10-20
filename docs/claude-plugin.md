@@ -45,6 +45,8 @@ In your project's folder, ask in your own words, e.g. *deploy this app to my san
 
 The plugin has:
 
+- **p7y-local**, a small helper that runs on your machine (it needs Node.js 18 or newer): its `setup_project_dir` fetches a sandbox's Docker keys and writes them into the project's `.p7y` folder itself, checks them and sets up the docker context, so a key never passes through the model (copied by a model a key gets garbled, and it would end up in the transcript). Without Node.js the plugin still works; give the agent the sandbox's zip for the keys;
+
 - the **p7y MCP server**: your Purgatory's [MCP](mcp.md) at `<address>/mcp`, with your token: list, create, wake and put sandboxes to sleep, their apps and files;
 - the **deploy skill** (`/p7y:deploy`): the steps of the [agent guide](agent-guide.md) in short, for an agent that may be talking to someone who is not a developer.
 

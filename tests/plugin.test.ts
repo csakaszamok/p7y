@@ -8,8 +8,12 @@ const files = (dir: string): string[] => fs.readdirSync(dir, { withFileTypes: tr
   .flatMap(e => e.isDirectory() ? files(path.join(dir, e.name)) : [path.join(dir, e.name)])
 
 /** The MCP tool names the API has (each route's openapi.mcp.name) */
-const toolNames = new Set(files(path.join(root, 'routes')).filter(f => f.endsWith('.ts'))
-  .flatMap(f => [...fs.readFileSync(f, 'utf8').matchAll(/mcp: \{ name: '([a-z_]+)'/g)].map(m => m[1])))
+const toolNames = new Set([
+  ...files(path.join(root, 'routes')).filter(f => f.endsWith('.ts'))
+    .flatMap(f => [...fs.readFileSync(f, 'utf8').matchAll(/mcp: \{ name: '([a-z_]+)'/g)].map(m => m[1])),
+  // The plugin's local helper
+  ...[...fs.readFileSync(path.join(root, 'plugins/p7y/mcp/p7y-local.mjs'), 'utf8').matchAll(/name: '([a-z_]+)'/g)].map(m => m[1]),
+])
 
 function frontmatter(md: string): Record<string, string> {
   const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(md)
@@ -48,6 +52,16 @@ describe('the Claude Code plugin', () => {
     })
   })
 
+  // The keys are written to disk on the user's machine, never through the model
+  it('runs the local helper (setup_project_dir) with the same address and token', () => {
+    expect(manifest.mcpServers['p7y-local']).toEqual({
+      command: 'node',
+      args: ['${CLAUDE_PLUGIN_ROOT}/mcp/p7y-local.mjs'],
+      env: { P7Y_URL: '${user_config.p7y_url}', P7Y_TOKEN: '${user_config.p7y_token}' },
+    })
+    expect(fs.existsSync(path.join(pluginDir, 'mcp', 'p7y-local.mjs'))).toBe(true)
+  })
+
   it('every skill has a name matching its folder and a description within the limit', () => {
     const skills = fs.readdirSync(path.join(pluginDir, 'skills'))
     expect(skills).toContain('deploy')
@@ -63,7 +77,7 @@ describe('the Claude Code plugin', () => {
     expect(toolNames.size).toBeGreaterThan(20)
     for (const f of files(path.join(pluginDir, 'skills')).filter(f => f.endsWith('.md'))) {
       const named = [...fs.readFileSync(f, 'utf8').matchAll(/`([a-z]+(?:_[a-z]+)+)`/g)].map(m => m[1])
-        .filter(n => /^(get|list|create|wake|sleep|set|keep|who|read|write|delete|restart|rotate|archive|deep|generate|add|revoke|sandbox)_/.test(n))
+        .filter(n => /^(get|list|create|wake|sleep|set|keep|who|read|write|delete|restart|rotate|archive|deep|generate|add|revoke|sandbox|setup)_/.test(n))
       expect(named.length).toBeGreaterThan(0)
       for (const n of named) expect(toolNames, `${path.basename(path.dirname(f))}: ${n}`).toContain(n)
     }
