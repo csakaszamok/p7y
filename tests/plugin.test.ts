@@ -7,9 +7,9 @@ const json = (p: string) => JSON.parse(fs.readFileSync(path.join(root, p), 'utf8
 const files = (dir: string): string[] => fs.readdirSync(dir, { withFileTypes: true })
   .flatMap(e => e.isDirectory() ? files(path.join(dir, e.name)) : [path.join(dir, e.name)])
 
-/** The MCP tool names the API has (each route's openapi.mcp.name) */
-const toolNames = new Set(files(path.join(root, 'routes')).filter(f => f.endsWith('.ts'))
-  .flatMap(f => [...fs.readFileSync(f, 'utf8').matchAll(/mcp: \{ name: '([a-z_]+)'/g)].map(m => m[1])))
+/** The route file a `METHOD /path` names (`:name` → `[name]`), as the file router maps them */
+const routeFile = (method: string, p: string) =>
+  path.join(root, 'routes', ...p.split('/').filter(Boolean).map(s => s.startsWith(':') ? `[${s.slice(1)}]` : s), `${method}.ts`)
 
 function frontmatter(md: string): Record<string, string> {
   const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(md)
@@ -34,29 +34,19 @@ describe('the Claude Code plugin', () => {
     expect(manifest.version).toBe(json('package.json').version)
   })
 
-  it('asks for the Purgatory URL and a token (kept secret) and connects to its MCP with them', () => {
-    expect(manifest.userConfig.p7y_url).toMatchObject({ type: 'string', required: true })
-    expect(manifest.userConfig.p7y_token).toMatchObject({ type: 'string', required: true, sensitive: true })
-    for (const v of Object.values(manifest.userConfig) as Record<string, unknown>[]) {
-      expect(v.title).toBeTruthy()
-      expect(v.description).toBeTruthy()
-    }
-    expect(manifest.mcpServers.p7y).toEqual({
-      type: 'http',
-      url: '${user_config.p7y_url}/mcp',
-      headers: { Authorization: 'Bearer ${user_config.p7y_token}' },
-    })
+  // Each project's .p7y/p7y.env says which Purgatory, sandbox and token: the plugin keeps none
+  it('has no MCP server and asks nothing', () => {
+    expect(manifest.mcpServers).toBeUndefined()
+    expect(manifest.userConfig).toBeUndefined()
+    expect(fs.existsSync(path.join(pluginDir, 'mcp'))).toBe(false)
   })
 
-  // Nothing runs on the user's machine but docker and curl: the keys come by a single-use link (project_dir_link)
-  it('has only the remote MCP server', () => {
-    expect(Object.keys(manifest.mcpServers)).toEqual(['p7y'])
-    expect(fs.existsSync(path.join(pluginDir, 'mcp'))).toBe(false)
+  it('skills: init and deploy', () => {
+    expect(fs.readdirSync(path.join(pluginDir, 'skills')).sort()).toEqual(['deploy', 'init'])
   })
 
   it('every skill has a name matching its folder and a description within the limit', () => {
     const skills = fs.readdirSync(path.join(pluginDir, 'skills'))
-    expect(skills).toContain('deploy')
     for (const s of skills) {
       const fm = frontmatter(fs.readFileSync(path.join(pluginDir, 'skills', s, 'SKILL.md'), 'utf8'))
       expect(fm.name).toBe(s)
@@ -65,13 +55,25 @@ describe('the Claude Code plugin', () => {
     }
   })
 
-  it('the skills name only MCP tools the API has', () => {
-    expect(toolNames.size).toBeGreaterThan(20)
+  it('the skills call only routes the API has', () => {
     for (const f of files(path.join(pluginDir, 'skills')).filter(f => f.endsWith('.md'))) {
-      const named = [...fs.readFileSync(f, 'utf8').matchAll(/`([a-z]+(?:_[a-z]+)+)`/g)].map(m => m[1])
-        .filter(n => /^(get|list|create|wake|sleep|set|keep|who|read|write|delete|restart|rotate|archive|deep|generate|add|revoke|sandbox|project)_/.test(n))
-      expect(named.length).toBeGreaterThan(0)
-      for (const n of named) expect(toolNames, `${path.basename(path.dirname(f))}: ${n}`).toContain(n)
+      const calls = [...fs.readFileSync(f, 'utf8').matchAll(/`(GET|POST|PATCH|DELETE) (\/[^`\s]+)`/g)]
+      expect(calls.length, f).toBeGreaterThan(0)
+      for (const [, method, p] of calls) expect(fs.existsSync(routeFile(method, p)), `${path.basename(path.dirname(f))}: ${method} ${p}`).toBe(true)
+    }
+  })
+
+  it('init starts and polls a device approval', () => {
+    const md = fs.readFileSync(path.join(pluginDir, 'skills/init/SKILL.md'), 'utf8')
+    expect(md).toContain('`POST /device/code`')
+    expect(md).toContain('`POST /device/poll`')
+    expect(frontmatter(md)['argument-hint']).toBe('<purgatory address> <sandbox>')
+  })
+
+  it('no skill uses the plugin\'s old settings or MCP tools', () => {
+    for (const f of files(path.join(pluginDir, 'skills'))) {
+      const text = fs.readFileSync(f, 'utf8')
+      expect(text, f).not.toMatch(/userConfig|user_config|who_am_i/)
     }
   })
 

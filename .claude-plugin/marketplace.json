@@ -6,9 +6,9 @@
     {
       "name": "p7y",
       "source": "./plugins/p7y",
-      "description": "Deploy your app to your Purgatory sandbox and get its public address: the p7y MCP server and a deploy skill",
+      "description": "Deploy your app to a Purgatory sandbox: /p7y:init ties a project to its sandbox, then deploy",
       "category": "deployment",
-      "tags": ["docker", "sandbox", "deploy", "self-hosted", "mcp"]
+      "tags": ["docker", "sandbox", "deploy", "self-hosted"]
     }
   ]
 }
