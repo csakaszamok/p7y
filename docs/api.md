@@ -15,6 +15,8 @@
 | `POST` | `/sandboxes/:name/deep-sleep` | Put a sandbox into deep sleep now, also a running one (**Deep sleep now** on the panel's **Details** tab) |
 | `POST` | `/sandboxes/:name/keep-awake` | Start a running sandbox's sleep countdown over (**Reset** next to *Sleeps in*); 409 if it is not running |
 | `POST` | `/sandboxes/:name/export` | A zip for coding agents: a new token for the sandbox, its Docker client keys, a README (owner/admin; not with a token limited to one sandbox); `docker: false` without the keys, `format: "env"` the p7y.env text |
+| `POST` | `/sandboxes/:name/project-link` | A single-use link (5 minutes) to the project's `.p7y` folder with the Docker client keys, checked first; answers `url`, `command` (`curl … \| tar -x`) and `context_commands`, never the keys |
+| `GET` | `/project-dir/:token` | The `.p7y` folder as a tar, once (no token: the link is the authorization); `410` when used or expired |
 | `POST` | `/sandboxes/:name/docker-keys` | New Docker access certificates (**Enable** / **Rotate Docker keys…**); restarts the sandbox |
 | `GET` | `/sandboxes/:name/registry` | The sandbox's images in the registry, with secret-scan results |
 | `DELETE` | `/sandboxes/:name/registry/:app/:digest` | Delete one version of an image |

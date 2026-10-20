@@ -128,6 +128,8 @@ describe('sandbox-scoped tokens', () => {
       ['GET', '/me'], ['GET', '/templates'], ['GET', '/runtimes'], ['GET', '/sandboxes/'],
       // its files (the Files tab, and an agent over MCP)
       ['GET', '/sandboxes/p7y-shop/files'], ['DELETE', '/sandboxes/p7y-shop/files'], ['POST', '/sandboxes/p7y-shop/files/mkdir'], ['GET', '/sandboxes/p7y-shop/files/content'], ['PUT', '/sandboxes/p7y-shop/files/content'], ['GET', '/sandboxes/p7y-shop/files/text'], ['GET', '/sandboxes/p7y-shop/volumes'],
+      // a single-use link to the .p7y folder (get_sandbox gives it the keys anyway)
+      ['POST', '/sandboxes/p7y-shop/project-link'],
     ]
     for (const [m, p] of allowed) expect(scopedTokenAllows(m, p), `${m} ${p}`).toBe(true)
     const denied: Array<[string, string]> = [
@@ -185,6 +187,7 @@ describe('scoped-token allowlist against the real routes', () => {
       'sandboxes/[name]/files/text/GET.ts',
       'sandboxes/[name]/keep-awake/POST.ts',
       'sandboxes/[name]/logs/stream/GET.ts',
+      'sandboxes/[name]/project-link/POST.ts',
       'sandboxes/[name]/registry/GET.ts',
       'sandboxes/[name]/registry/[app]/[digest]/DELETE.ts',
       'sandboxes/[name]/restart/POST.ts',

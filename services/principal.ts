@@ -23,6 +23,8 @@ const SCOPED_ALLOWED: Array<[string, RegExp]> = [
   ['GET', /^\/sandboxes\/[^/]+$/],
   ['PATCH', /^\/sandboxes\/[^/]+$/],
   ['POST', /^\/sandboxes\/[^/]+\/(start|stop|restart|deep-sleep|keep-awake)$/],
+  // A single-use link to its .p7y folder (the Docker keys reach the disk, not the agent's model)
+  ['POST', /^\/sandboxes\/[^/]+\/project-link$/],
   ['GET', /^\/sandboxes\/[^/]+\/compose$/],
   ['GET', /^\/sandboxes\/[^/]+\/logs\/stream$/],
   ['GET', /^\/sandboxes\/[^/]+\/registry$/],
