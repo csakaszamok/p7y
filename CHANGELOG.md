@@ -10,6 +10,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Added
 
+- **Users on the admin's Overview**: every account that signs in, with when it was first and last seen, its last sign-in and how many, its sandboxes now and created, and its last API use; *no sandbox yet* marks who signed in but never created one. Kept in `data/user-stats.json` until the admin deletes a row (`GET /users`, `DELETE /users/:account`).
 - **`/p7y:init <address> <sandbox>`** in the Claude Code plugin: ties a project to a sandbox. Claude Code prints a link, the sandbox's owner approves it in the browser, and the project's `.p7y` folder (a token for that sandbox only, named `Claude Code init <date>`, and its Docker keys) goes straight to disk, never through the chat.
 - **`POST /device/code`, `POST /device/poll` and the `/activate` page**: the device approval behind it. Codes live 10 minutes and work once; the approved link is the single-use link of `project_dir_link`.
 - **Own name and logo, no GitHub card**: `UI_TITLE` replaces *Purgatory* at the top left, on the sign-in page and in the tab titles, `UI_LOGO` the logo (an `https://` address or an image file such as `/app/data/logo.png`), `none` hides either; `GITHUB_LINK=off` takes the GitHub card out of the topbar.

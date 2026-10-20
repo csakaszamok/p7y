@@ -48,6 +48,8 @@
 | `GET` | `/tokens` | List your personal access tokens (`hint`: the token's start and end, e.g. `p7y_aB3x…9fQz`; null for tokens made before hints) |
 | `POST` | `/tokens` | Mint a personal access token (`name`, optional `expires_in` like `30d`/`90d`/`never`) |
 | `DELETE` | `/tokens/:id` | Revoke a personal access token |
+| `GET` | `/users` | Accounts (admin): first and last seen, last sign-in, sign-ins, sandboxes now and created, last API use |
+| `DELETE` | `/users/:account` | Forget an account's stats row (admin); the account and its sandboxes stay |
 
 All endpoints require `Authorization: Bearer <ADMIN_TOKEN | personal token>` or a signed-in browser session. Users only see their own sandboxes.
 

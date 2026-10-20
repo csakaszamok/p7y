@@ -9,6 +9,7 @@ import { checkCompose } from '../../services/composeInput'
 import { parsePublicKey } from '../../services/sshKeys'
 import { checkLimits, resourceDefaults, clampToHost } from '../../services/resources'
 import { hostResources } from '../../services/docker'
+import { recordSandboxCreated } from '../../services/userStats'
 
 export const openapi = {
   mcp: { name: 'create_sandbox' },
@@ -163,6 +164,7 @@ export default async (req: Request): Promise<Response> => {
 
   try {
     const result = await sandboxService.createSandbox(trimmed, create_inner_stack ?? true, idle, deep, p.sub, templateName, runtimeName, compose as string | undefined, sshKeys, limits)
+    recordSandboxCreated(p.sub)
     return Response.json(result, { status: 201 })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'

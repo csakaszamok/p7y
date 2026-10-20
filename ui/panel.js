@@ -453,6 +453,20 @@
   }
 
   /**
+   * Overview's Users table (admin): one row per account, newest last seen first. An owner from before the stats were
+   * kept has no dates and no delete button (nothing stored to delete).
+   */
+  function usersTable(users, now = Date.now()) {
+    if (!users.length) return ''
+    const ago = iso => iso ? `<span title="${esc(iso)}">${esc(relativeAge(new Date(iso), now))}</span>` : '<span class="muted">—</span>'
+    const rows = users.map(u => {
+      const never = u.first_seen && !u.sandboxes_created && !u.sandboxes_now
+      return `<tr data-user="${esc(u.sub)}"><td>${esc(u.sub)}${never ? ' <span class="tag muted">no sandbox yet</span>' : ''}</td><td>${ago(u.last_seen)}</td><td class="ov-hide">${ago(u.last_sign_in)}</td><td>${u.sign_ins}</td><td>${u.sandboxes_now} / ${u.sandboxes_created}</td><td class="ov-hide">${ago(u.last_api_use)}</td><td class="ov-hide">${ago(u.first_seen)}</td><td>${u.first_seen ? `<button type="button" class="link" data-user-delete="${esc(u.sub)}" title="Forget this row (the account and its sandboxes stay)">Delete</button>` : ''}</td></tr>`
+    }).join('')
+    return `<section class="ov-box"><h2>Users</h2><div class="ov-tablewrap"><table class="ov-table"><thead><tr><th>Account</th><th>Last seen</th><th class="ov-hide">Last sign-in</th><th>Sign-ins</th><th title="Sandboxes now / created since the stats were kept">Sandboxes</th><th class="ov-hide">Last API use</th><th class="ov-hide">First seen</th><th></th></tr></thead><tbody>${rows}</tbody></table></div><p class="ov-note">Sandboxes: owned now / created. Kept until deleted here; an owner without dates has had sandboxes since before the stats were kept.</p></section>`
+  }
+
+  /**
    * The line a user pastes into Claude Code to link a project folder to a sandbox (it opens a browser page to approve).
    * Only plain URL and name characters go in: nothing that reads as more than one word.
    */
@@ -463,7 +477,7 @@
     return `/p7y:init ${u} ${sandboxShort}`
   }
 
-  const api = { matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

@@ -3,6 +3,7 @@ import { cookieHeader, createSession, getCookie, publicUrl, SESSION_COOKIE, SESS
 import { purgatorySignInRefusal } from '../../../services/allowlist'
 import { rememberName } from '../../../services/hub/names'
 import { nextAfterSignIn, NEXT_COOKIE } from '../../../services/appAccess/start'
+import { recordSignIn } from '../../../services/userStats'
 
 export default async (req: Request): Promise<Response> => {
   const headers = new Headers()
@@ -11,6 +12,7 @@ export default async (req: Request): Promise<Response> => {
     const callbackUrl = new URL(`${publicUrl()}/auth/callback${new URL(req.url).search}`)
     const { email, name } = await finishLogin(callbackUrl, getCookie(req, OIDC_FLOW_COOKIE), e => purgatorySignInRefusal(e))
     rememberName(email, name)
+    recordSignIn(email)
     headers.append('set-cookie', cookieHeader(SESSION_COOKIE, createSession(email, 'user'), SESSION_MAX_AGE))
     // Signed in for a sandbox app (p7y.access): back to it
     const next = nextAfterSignIn(req)

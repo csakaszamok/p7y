@@ -3,6 +3,7 @@ import { subAllowed } from '../allowlist'
 import { sandboxPrefix } from '../naming'
 import { repoInfo, type RepoInfo } from '../repoInfo'
 import { viewOf } from '../userPrefs'
+import { recordSeen } from '../userStats'
 import { brandTitle, faviconTag, githubLinkEnabled, logoImg, titleSuffix } from './brand'
 
 export function escapeHtml(s: string): string {
@@ -45,6 +46,7 @@ export function repoBadge(info: RepoInfo): string {
 
 export function renderPage(opts: { title: string; view: 'overview' | 'mine' | 'all' | 'tokens' | 'ssh-keys'; session: Session; body: string }): string {
   const { title, view, session, body } = opts
+  recordSeen(session.sub)
   // Simple only hides (class adv), it does not restrict: the API and MCP stay the same
   const mode = viewOf(session.sub, session.role)
   const link = (href: string, label: string, v: string, adv = false) => {
@@ -184,7 +186,7 @@ export const OVERVIEW_BODY = `
   <section id="hub-feed" hidden><h2>Hub feed</h2>
     <p class="muted">An RSS link for Slack, Teams, Linkwarden or an RSS reader. Creating a new one ends the old link.</p>
     <button id="hub-feed-new">Create feed link</button> <code id="hub-feed-url"></code></section>
-</div>`
+</div>${CONFIRM_DIALOG}`
 
 export const SANDBOX_VIEW_BODY = `
 <section class="split">
