@@ -18,9 +18,9 @@ COPY scripts/install-assets.sh ./assets/install-assets.sh
 COPY ui ./ui
 # Purgatory's own package.json (its version for the topbar); /app/package.json is the base image's
 COPY package.json ./p7y/package.json
-# The licence and the notice travel with the image (Apache-2.0, section 4)
+# The licence and the notice travel with the image (AGPL-3.0, sections 4 and 5)
 COPY LICENSE NOTICE ./p7y/
 
 LABEL org.opencontainers.image.source="https://github.com/p7y-dev/p7y" \
       org.opencontainers.image.description="Purgatory: self-hosted sandboxes, each with its own Docker daemon" \
-      org.opencontainers.image.licenses="Apache-2.0"
+      org.opencontainers.image.licenses="AGPL-3.0-only"
