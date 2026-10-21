@@ -11,6 +11,7 @@ import { refreshImages, imageOf } from './images'
 import { hubPage, hubLoginPage } from './page'
 import { html, redirect } from '../ui/layout'
 import { CUSTOM_LOGO, customLogoFile } from '../ui/brand'
+import { aboutPage } from '../ui/aboutPage'
 import { checkAdminLogin, sameOrigin } from '../principal'
 import { beginLogin, finishLogin, oidcEnabled, providerName, LoginError } from '../oidc'
 import { hubAllowed, subAllowed } from '../allowlist'
@@ -20,6 +21,8 @@ const ASSETS: Record<string, [string, string]> = {
   '/assets/hub.js': ['hub.js', 'text/javascript; charset=utf-8'],
   '/assets/hub.css': ['hub.css', 'text/css; charset=utf-8'],
   '/assets/logo.svg': ['logo.svg', 'image/svg+xml'],
+  // The About page's (license notices)
+  '/assets/style.css': ['style.css', 'text/css; charset=utf-8'],
 }
 const notFound = () => new Response('Not Found', { status: 404 })
 const VOTE = /^\/api\/hub\/apps\/([a-z0-9.-]+)\/vote$/
@@ -38,6 +41,7 @@ export async function handleHub(req: Request, deps: Deps = {}): Promise<Response
     const [file, type] = ASSETS[p]
     return new Response(fs.readFileSync(path.join(process.cwd(), 'ui', file)), { headers: { 'Content-Type': type, 'Cache-Control': 'no-cache' } })
   }
+  if (req.method === 'GET' && p === '/about') return html(aboutPage())
   if (req.method === 'GET' && p === CUSTOM_LOGO) {
     const logo = customLogoFile()
     return logo ? new Response(logo.body, { headers: { 'Content-Type': logo.type, 'Cache-Control': 'no-cache' } }) : notFound()

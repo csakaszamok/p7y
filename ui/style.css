@@ -289,3 +289,10 @@ a.ov-card:hover { border-color: #ea580c; transform: translateY(-1px) }
 .warnings h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #f59e0b; margin: 16px 0 6px }
 .warnings ul { margin: 0; padding-left: 0; list-style: none }
 .warnings li { margin: 4px 0; color: #e8c27a }
+/* The license notices (AGPL-3.0 5(d)): always reachable, never in the way */
+.about-link { color: #888; font-size: 12px; text-decoration: none }
+.about-link:hover { color: #ddd }
+.about-foot { position: fixed; bottom: 12px; left: 0; right: 0; text-align: center; margin: 0; font-size: 12px }
+.about-foot a { color: #888; text-decoration: none }
+.about-foot a:hover { color: #ddd }
+.card.about p { margin: 0 0 12px }
