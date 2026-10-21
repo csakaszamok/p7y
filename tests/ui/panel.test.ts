@@ -574,18 +574,18 @@ describe('Simple view', () => {
   })
 })
 
-describe('pluginInstallCommand', () => {
-  it('two lines for a terminal: add the marketplace, install for the user with the address and the token', () => {
-    expect(P.pluginInstallCommand('https://p7y.example.com', 'p7y_abc123')).toBe(
-      'claude plugin marketplace add p7y-dev/p7y\n' +
-      'claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.com --config p7y_token=p7y_abc123')
+describe('initCommand', () => {
+  it('the /p7y:init line with the address and the sandbox', () => {
+    expect(P.initCommand('https://p7y.example.com', 'shop')).toBe('/p7y:init https://p7y.example.com shop')
   })
-  it('drops a trailing slash of the address (the MCP is <address>/mcp)', () => {
-    expect(P.pluginInstallCommand('https://p7y.example.com/', 'p7y_x')).toContain('p7y_url=https://p7y.example.com --config')
+  it('drops a trailing slash of the address', () => {
+    expect(P.initCommand('https://p7y.example.com/', 'shop')).toBe('/p7y:init https://p7y.example.com shop')
   })
-  it('refuses what could break out of the command line', () => {
-    expect(() => P.pluginInstallCommand('https://p7y.example.com; rm -rf ~', 'p7y_x')).toThrow()
-    expect(() => P.pluginInstallCommand('https://p7y.example.com', 'p7y_x $(id)')).toThrow()
+  it('refuses what could break out of the line', () => {
+    expect(() => P.initCommand('https://p7y.example.com; rm -rf ~', 'shop')).toThrow()
+    expect(() => P.initCommand('https://p7y.example.com', 'shop $(id)')).toThrow()
+    expect(() => P.initCommand('https://p7y.example.com', 'Shop')).toThrow()
+    expect(() => P.initCommand('https://p7y.example.com', '')).toThrow()
   })
 })
 
@@ -618,5 +618,61 @@ describe('loadingPanel', () => {
   })
   it('escapes the name', () => {
     expect(P.loadingPanel({ name: 'p7y-<x>', status: 'running' }, ctx)).not.toContain('<x>')
+  })
+})
+
+describe('matchesFilter (the sandbox list filter)', () => {
+  const shop = { name: 'p7y-shop', owner: 'anna@example.com', status: 'exited', template: 'starter', runtime: 'sysbox', apps: [{ service: 'web', url: 'shop-web.lvh.me' }] }
+  it('matches everything without text', () => {
+    expect(P.matchesFilter(shop, '')).toBe(true)
+    expect(P.matchesFilter(shop, '   ')).toBe(true)
+  })
+  it('finds a word in the name, owner, status (as shown), template, runtime or an app; case does not matter', () => {
+    for (const q of ['SHOP', 'anna', 'asleep', 'exited', 'starter', 'sysbox', 'web', 'shop-web.lvh']) expect(P.matchesFilter(shop, q), q).toBe(true)
+    expect(P.matchesFilter(shop, 'blog')).toBe(false)
+  })
+  it('every word must match', () => {
+    expect(P.matchesFilter(shop, 'shop asleep')).toBe(true)
+    expect(P.matchesFilter(shop, 'shop running')).toBe(false)
+  })
+  it('a failed start is found as failed', () => {
+    expect(P.matchesFilter({ ...shop, start_error: 'boom' }, 'failed')).toBe(true)
+  })
+})
+
+describe('usersTable (Overview, admin)', () => {
+  const now = Date.parse('2026-10-20T12:00:00Z')
+  const users = [
+    { sub: 'anna@example.com', first_seen: '2026-10-01T10:00:00Z', last_seen: '2026-10-20T11:00:00Z', last_sign_in: '2026-10-18T12:00:00Z', sign_ins: 4, sandboxes_created: 2, last_sandbox_created: '2026-10-02T10:00:00Z', sandboxes_now: 1, last_api_use: '2026-10-19T12:00:00Z' },
+    { sub: 'bob@example.com', first_seen: '2026-10-10T10:00:00Z', last_seen: '2026-10-10T10:00:00Z', last_sign_in: '2026-10-10T10:00:00Z', sign_ins: 1, sandboxes_created: 0, last_sandbox_created: null, sandboxes_now: 0, last_api_use: null },
+    { sub: 'carl@example.com', first_seen: null, last_seen: null, last_sign_in: null, sign_ins: 0, sandboxes_created: 0, last_sandbox_created: null, sandboxes_now: 1, last_api_use: null },
+    { sub: '<b>x</b>@example.com', first_seen: '2026-10-10T10:00:00Z', last_seen: '2026-10-10T10:00:00Z', last_sign_in: null, sign_ins: 0, sandboxes_created: 0, last_sandbox_created: null, sandboxes_now: 0, last_api_use: null },
+  ]
+  const html = P.usersTable(users, now)
+  const row = (sub: string) => html.split(`<tr data-user="${sub}">`)[1]?.split('</tr>')[0] ?? ''
+
+  it('one row per account: last seen, sign-ins, sandboxes now / created, last API use', () => {
+    const a = row('anna@example.com')
+    expect(a).toContain('1 h ago')
+    expect(a).toContain('>4<')
+    expect(a).toContain('1 / 2')
+    expect(a).toContain('1 d ago')
+  })
+  it('marks who signed in but never created a sandbox', () => {
+    expect(row('bob@example.com')).toContain('no sandbox yet')
+    expect(row('anna@example.com')).not.toContain('no sandbox yet')
+  })
+  it('an owner from before the stats: no dates, not marked', () => {
+    const c = row('carl@example.com')
+    expect(c).toContain('—')
+    expect(c).not.toContain('no sandbox yet')
+  })
+  it('escapes the account name and has a delete button per row', () => {
+    expect(html).not.toContain('<b>x</b>')
+    expect(html).toContain('&lt;b&gt;x&lt;/b&gt;@example.com')
+    expect(html).toMatch(/<button[^>]*data-user-delete="anna@example\.com"/)
+  })
+  it('nothing to show: no table', () => {
+    expect(P.usersTable([], now)).toBe('')
   })
 })

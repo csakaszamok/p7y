@@ -3,7 +3,7 @@ services:
     # The released image: it carries the templates, runtimes and the files p7y-init installs.
     # To work on the code, add docker-compose.dev.yml (COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml,
     # and COMPOSE_PATH_SEPARATOR=: on Windows, in .env).
-    image: ghcr.io/p7y-dev/p7y:${P7Y_VERSION:-0.10.1}
+    image: ghcr.io/p7y-dev/p7y:${P7Y_VERSION:-0.10.2}
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
       # to localhost (P7Y_API_BIND=127.0.0.1) so everything goes through HTTPS.
@@ -28,6 +28,12 @@ services:
       DEFAULT_TEMPLATE: ${DEFAULT_TEMPLATE:-starter}
       # off: never ask GitHub for the star and fork counts in the topbar
       GITHUB_STATS: ${GITHUB_STATS:-on}
+      # off: no GitHub card in the topbar at all
+      GITHUB_LINK: ${GITHUB_LINK:-on}
+      # The name and logo at the top left, on the sign-in page and in the tab titles: none hides them;
+      # the logo can be an https:// address or an image file in the container (e.g. /app/data/logo.png)
+      UI_TITLE: ${UI_TITLE:-Purgatory}
+      UI_LOGO: ${UI_LOGO:-}
       # off: the public sign-in page does not show the sandbox places (taken / free)
       LOGIN_CAPACITY: ${LOGIN_CAPACITY:-on}
       SANDBOX_CPUS: ${SANDBOX_CPUS:-2}
@@ -123,7 +129,7 @@ services:
   # One-shot, on every up: copies this release's Sablier themes, error pages, registry config and
   # dynamic/errors.yml from the image, so they always match it (no files from a checkout).
   p7y-init:
-    image: ghcr.io/p7y-dev/p7y:${P7Y_VERSION:-0.10.1}
+    image: ghcr.io/p7y-dev/p7y:${P7Y_VERSION:-0.10.2}
     entrypoint: ["sh", "/app/assets/install-assets.sh"]
     volumes:
       - sablier_themes:/out/sablier-themes

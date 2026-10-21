@@ -24,34 +24,40 @@ A sandbox is your own small server: your app runs there, not on your computer.
 
     ![A sandbox's panel in the Simple view: its apps and Let your agent deploy…](../media/tutorial-panel.png){ width="420" }
 
-    ![Let your agent deploy: Create token, then the command to copy into a terminal; or the zip for other agents](../media/tutorial-agent.png){ width="360" }
+    ![Let your agent deploy: the install lines and the /p7y:init line to copy; or the zip for other agents](../media/tutorial-agent.png){ width="360" }
 
-2. Click **Create token**. It makes a token that works only for this sandbox, and shows it once.
-3. Below it appears a command with your address and the new token in it. Click **Copy**, open a terminal (in VS Code: **Terminal → New Terminal**; on Windows also PowerShell, on a Mac the Terminal app), paste it and press Enter:
+2. In the window's step **1**, click **Copy** next to each of the two lines, open a terminal (in VS Code: **Terminal → New Terminal**; on Windows also PowerShell, on a Mac the Terminal app), paste them one after the other and press Enter after each:
 
     ```
     claude plugin marketplace add p7y-dev/p7y
-    claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.com --config p7y_token=p7y_…
+    claude plugin install p7y@p7y
     ```
 
-    It installs the plugin for you (**user**: in all your projects) and gives it the address and the token; Claude Code keeps the token in your system's secure storage.
+    It installs the plugin for you, in all your projects. It asks for no address and no token.
 
 !!! note "Good to know"
     - `claude` not found? Claude Code is not installed for the terminal: see [Claude Code's setup](https://code.claude.com/docs/en/setup). An *unknown option* means an older Claude Code: run `claude update`.
-    - The pasted line can stay in the terminal's history, token included. The token works only for this sandbox, expires in 90 days, and you can revoke it in Purgatory (Advanced → **Access tokens**).
-    - Rather not paste a token? **Other ways** in the same window: run `claude` in a terminal, then `/plugin marketplace add p7y-dev/p7y` and `/plugin install p7y@p7y` in it, and paste the address and the token when it asks. (The Claude Code panel in VS Code has no `/plugin`.)
+    - Already in Claude Code? **In Claude Code instead** in the same window shows the same two lines as `/plugin marketplace add p7y-dev/p7y` and `/plugin install p7y@p7y`. (The Claude Code panel in VS Code has no `/plugin`: use the terminal.)
 
-You do this once. For another sandbox later, see [More projects](#more-projects) below.
+You install the plugin once. Each project then gets its sandbox in the next step.
 
-## 3. Deploy
+## 3. Connect the project and deploy
 
-Open your app's folder in Claude Code and say, in your own words:
+1. Open your app's folder in Claude Code. In Purgatory, in the window's step **2**, click **Copy** and paste the line into Claude Code. It looks like this:
 
-> Deploy this app.
+    ```
+    /p7y:init https://p7y.example.com shop
+    ```
+
+2. Claude Code prints a link. Open it in your browser (sign in if it asks). The page shows a code and your sandbox: check that the code is the one Claude Code printed, then click **Approve**. The code works once and expires in 10 minutes.
+
+    Behind the scenes, Claude Code gets a token for this sandbox only, and writes it in a `.p7y` folder in your project, next to the sandbox's keys. You never see or copy the token. It is a secret, and the folder keeps itself out of git on its own; leave it there. The token expires in 90 days (run `/p7y:init` again then), and you can revoke it in Purgatory (Advanced → **Access tokens**, named `Claude Code init <date>`).
+
+3. Now say, in your own words:
+
+    > Deploy this app.
 
 Claude Code wakes the sandbox, builds your app there, starts it and checks that it answers. At the end it gives you a link like `https://shop-web.example.com` (your sandbox's name first). Open it: that is your app, and it works for anyone you send it to.
-
-It also creates a `.p7y` folder in your project: it remembers which sandbox belongs to this project and holds its keys. It is a secret, and it keeps itself out of git on its own; leave it there.
 
 ## 4. Change and update
 
@@ -71,9 +77,8 @@ The same link shows the new version a few seconds later.
 
 ## More projects
 
-The token you created works for one sandbox. For a second project with its own sandbox:
+Each project is tied to one sandbox by its own `.p7y` folder. For a second project with its own sandbox (or on another Purgatory), do step 3 there: in Purgatory, on that sandbox, **Let your agent deploy…**, copy the `/p7y:init` line and paste it into Claude Code in that project. The plugin needs no new setup.
 
-- **Easiest:** in Purgatory, on the other sandbox, **Let your agent deploy…** → **Download**, then in that project say *set up the p7y zip from my Downloads in this project and deploy*. Claude Code puts it in that project's `.p7y` folder and uses it from then on.
-- **Many sandboxes:** give the plugin a token for all your sandboxes instead (switch to **Advanced** → **Access tokens** → **+ New token**, then in Claude Code `/plugin` → p7y → configure). Then Claude Code picks the sandbox by the project's name, asks when it is not sure, and creates one when there is none.
+Used the earlier plugin, which asked for an address and a token? Run `/plugin marketplace update p7y` once, then `/p7y:init` in each project.
 
 More details: [Claude Code plugin](../claude-plugin.md).

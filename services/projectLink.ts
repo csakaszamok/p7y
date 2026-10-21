@@ -5,26 +5,29 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { sandboxParent } from './sandboxPaths'
+import { dockerHostName } from './dockerAccess'
+import { publicUrl } from './session'
+import { rawNameOf } from './naming'
 
 /** How long a link works, from when it was made */
 export const PROJECT_LINK_TTL_MS = 5 * 60_000
 
-const links = new Map<string, { sandbox: string; expires: number }>()
+const links = new Map<string, { sandbox: string; withToken: { owner: string } | null; expires: number }>()
 
-/** A new link's token for the sandbox's folder */
-export function issueProjectLink(sandbox: string, now = Date.now()): string {
+/** A new link's token for the sandbox's folder; withToken: the download also makes a sandbox token for the owner */
+export function issueProjectLink(sandbox: string, now = Date.now(), withToken?: { owner: string }): string {
   for (const [t, l] of links) if (l.expires <= now) links.delete(t)
   const token = crypto.randomBytes(32).toString('base64url')
-  links.set(token, { sandbox, expires: now + PROJECT_LINK_TTL_MS })
+  links.set(token, { sandbox, withToken: withToken ?? null, expires: now + PROJECT_LINK_TTL_MS })
   return token
 }
 
-/** The sandbox the token is for, once; null when unknown, used or expired */
-export function takeProjectLink(token: string, now = Date.now()): string | null {
+/** The link's sandbox (and whom its token is for), once; null when unknown, used or expired */
+export function takeProjectLink(token: string, now = Date.now()): { sandbox: string; withToken: { owner: string } | null } | null {
   const l = links.get(token)
   if (!l) return null
   links.delete(token)
-  return l.expires > now ? l.sandbox : null
+  return l.expires > now ? { sandbox: l.sandbox, withToken: l.withToken } : null
 }
 
 /** The key, the certificate and the CA belong together; throws why not */
@@ -50,6 +53,22 @@ export function projectDirFiles(s: ProjectDirSandbox, url: string): Array<{ name
     { name: '.p7y/docker/cert.pem', data: s.client_cert },
     { name: '.p7y/docker/key.pem', data: s.client_key, mode: 0o600 },
   ]
+}
+
+/** What project_dir_link and /device/poll answer for a link: its url, the unpack command and the docker context commands */
+export function projectLinkAnswer(sandbox: string, linkToken: string): { url: string; expires_in: number; command: string; context_commands: string[] } {
+  const url = `${publicUrl()}/project-dir/${linkToken}`
+  const ctx = `p7y-${rawNameOf(sandbox) ?? sandbox}`
+  const dir = '<project folder>/.p7y/docker'
+  return {
+    url,
+    expires_in: PROJECT_LINK_TTL_MS / 1000,
+    command: `curl -sf "${url}" | tar -x -C "<project folder>"`,
+    context_commands: [
+      `docker context rm -f ${ctx}`,
+      `docker context create ${ctx} --docker "host=tcp://${dockerHostName(sandbox)}:443,ca=${dir}/ca.pem,cert=${dir}/cert.pem,key=${dir}/key.pem"`,
+    ],
+  }
 }
 
 /** The sandbox's Docker client keys, as its export reads them */

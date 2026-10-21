@@ -10,6 +10,7 @@ import { rememberName } from './names'
 import { refreshImages, imageOf } from './images'
 import { hubPage, hubLoginPage } from './page'
 import { html, redirect } from '../ui/layout'
+import { CUSTOM_LOGO, customLogoFile } from '../ui/brand'
 import { checkAdminLogin, sameOrigin } from '../principal'
 import { beginLogin, finishLogin, oidcEnabled, providerName, LoginError } from '../oidc'
 import { hubAllowed, subAllowed } from '../allowlist'
@@ -36,6 +37,10 @@ export async function handleHub(req: Request, deps: Deps = {}): Promise<Response
   if (req.method === 'GET' && ASSETS[p]) {
     const [file, type] = ASSETS[p]
     return new Response(fs.readFileSync(path.join(process.cwd(), 'ui', file)), { headers: { 'Content-Type': type, 'Cache-Control': 'no-cache' } })
+  }
+  if (req.method === 'GET' && p === CUSTOM_LOGO) {
+    const logo = customLogoFile()
+    return logo ? new Response(logo.body, { headers: { 'Content-Type': logo.type, 'Cache-Control': 'no-cache' } }) : notFound()
   }
   if (req.method === 'GET' && (p === '/feed.xml' || p === '/feed.json')) {
     if (!feedKeyValid(url.searchParams.get('key'))) return notFound()

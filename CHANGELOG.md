@@ -4,6 +4,22 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-10-21
+
+Upgrading from 0.10.1: download the new `docker-compose.yml` (it passes `UI_TITLE`, `UI_LOGO` and `GITHUB_LINK` to Purgatory), then `docker compose pull && docker compose up -d`. Claude Code plugin users: `/plugin marketplace update p7y`, then `/p7y:init` once in each project (Purgatory shows the line under **Let your agent deploy…**); the plugin no longer asks for an address or a token.
+
+### Changed
+
+- **The Claude Code plugin keeps no address and no token** any more, and no longer brings the MCP server: each project's `.p7y` folder says which Purgatory and which sandbox it belongs to, and the deploy skill works from `.p7y/p7y.env` with the REST API. **Let your agent deploy…** shows two install lines and the `/p7y:init` line, in place of **Create token** and the long `--config` command. Upgrading: `/plugin marketplace update p7y`, then `/p7y:init` once in each project. The server's own MCP endpoint stays.
+
+### Added
+
+- **Users on the admin's Overview**: every account that signs in, with when it was first and last seen, its last sign-in and how many, its sandboxes now and created, and its last API use; *no sandbox yet* marks who signed in but never created one. Kept in `data/user-stats.json` until the admin deletes a row (`GET /users`, `DELETE /users/:account`).
+- **`/p7y:init <address> <sandbox>`** in the Claude Code plugin: ties a project to a sandbox. Claude Code prints a link, the sandbox's owner approves it in the browser, and the project's `.p7y` folder (a token for that sandbox only, named `Claude Code init <date>`, and its Docker keys) goes straight to disk, never through the chat.
+- **`POST /device/code`, `POST /device/poll` and the `/activate` page**: the device approval behind it. Codes live 10 minutes and work once; the approved link is the single-use link of `project_dir_link`.
+- **Own name and logo, no GitHub card**: `UI_TITLE` replaces *Purgatory* at the top left, on the sign-in page and in the tab titles, `UI_LOGO` the logo (an `https://` address or an image file such as `/app/data/logo.png`), `none` hides either; `GITHUB_LINK=off` takes the GitHub card out of the topbar.
+- **Filter in My sandboxes** too, not only in All sandboxes: free text (every word must match the name, status, template, runtime, an app's service or address, and the owner) and a status list (running, asleep, deep sleep).
+
 ## [0.10.1] - 2026-10-20
 
 Upgrading from 0.10.0: `docker compose pull && docker compose up -d`.

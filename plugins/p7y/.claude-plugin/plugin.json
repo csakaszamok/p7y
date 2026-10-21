@@ -1,32 +1,10 @@
 {
   "name": "p7y",
-  "version": "0.10.1",
-  "description": "Deploy your app to your Purgatory sandbox and get its public address: the p7y MCP server and a deploy skill",
+  "version": "0.10.2",
+  "description": "Deploy your app to a Purgatory sandbox: /p7y:init ties a project to its sandbox, then deploy",
   "author": { "name": "p7y-dev", "url": "https://github.com/p7y-dev" },
   "homepage": "https://p7y-dev.github.io/p7y/latest/claude-plugin/",
   "repository": "https://github.com/p7y-dev/p7y",
   "license": "Apache-2.0",
-  "keywords": ["docker", "sandbox", "deploy", "self-hosted", "mcp"],
-  "userConfig": {
-    "p7y_url": {
-      "type": "string",
-      "title": "Purgatory address",
-      "description": "The address of your Purgatory, as in your browser, e.g. https://p7y.example.com",
-      "required": true
-    },
-    "p7y_token": {
-      "type": "string",
-      "title": "Purgatory access token",
-      "description": "In Purgatory: Access tokens → + New token (starts with p7y_)",
-      "required": true,
-      "sensitive": true
-    }
-  },
-  "mcpServers": {
-    "p7y": {
-      "type": "http",
-      "url": "${user_config.p7y_url}/mcp",
-      "headers": { "Authorization": "Bearer ${user_config.p7y_token}" }
-    }
-  }
+  "keywords": ["docker", "sandbox", "deploy", "self-hosted"]
 }

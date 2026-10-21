@@ -53,21 +53,18 @@ describe('renderPage: Simple / Advanced', () => {
       expect(options).toMatch(/<input type="checkbox" name="no_docker"/)
       expect(options).toMatch(/<button type="button"[^>]*data-copy-env[^>]*>Copy as \.env<\/button>/)
     })
-    it('Claude Code: Create token, then one command to copy into a terminal', () => {
-      // type=button: inside the form, it must not submit (download) it
-      expect(claude).toMatch(/<button type="button"[^>]*data-plugin-token[^>]*>Create token<\/button>/)
-      expect(claude).toContain('this sandbox only')
-      expect(claude).toMatch(/<pre[^>]*data-plugin-cmd[^>]*hidden/)
-      expect(claude).toMatch(/<button type="button"[^>]*data-copy-from="\[data-plugin-cmd\]"[^>]*hidden/)
-      expect(claude).toContain('Terminal → New Terminal')
-      expect(claude).toMatch(/deploy this app/)
+    it('Claude Code: install the plugin once, then the init line to copy', () => {
+      expect(claude).toContain('claude plugin install p7y@p7y')
+      expect(claude).not.toContain('--config')
+      expect(claude).not.toContain('data-plugin-token')
+      expect(claude).toMatch(/data-init-cmd/)
+      expect(claude).toMatch(/<button type="button"[^>]*data-copy-from="\[data-init-cmd\]"[^>]*>Copy<\/button>/)
+      expect(claude).toContain('approve in the browser page it opens')
     })
-    it('Claude Code, other ways: /plugin in Claude Code, with the address and the token to paste', () => {
+    it('Claude Code, in Claude Code instead: the /plugin commands', () => {
       const other = /<details[^>]*>[\s\S]*?<\/details>/.exec(claude)?.[0] ?? ''
       expect(other).toContain('<code>/plugin marketplace add p7y-dev/p7y</code>')
       expect(other).toContain('<code>/plugin install p7y@p7y</code>')
-      expect(other).toContain('data-plugin-url')
-      expect(other).toContain('data-plugin-token-value')
     })
     it('the zip keeps its Download button', () => {
       expect(dlg).toMatch(/<button class="primary" value="download" data-export-download>Download<\/button>/)

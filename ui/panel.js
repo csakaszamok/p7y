@@ -17,6 +17,17 @@
     if (h > 0) return `${h} h ${m} min`
     return `${m}:${String(s % 60).padStart(2, '0')}`
   }
+  /**
+   * The sandbox list's free-text filter: every word must appear somewhere in the sandbox's name, owner,
+   * status, template, runtime or its apps (service or address); case does not matter.
+   */
+  function matchesFilter(s, text) {
+    const words = String(text || '').toLowerCase().split(/\s+/).filter(Boolean)
+    if (!words.length) return true
+    const hay = [s.name, s.owner, s.status, statusLabel(s.status), s.start_error ? 'failed' : '', s.template, s.runtime,
+      ...(s.apps || []).flatMap(a => [a.service, a.url])].filter(Boolean).join(' ').toLowerCase()
+    return words.every(w => hay.includes(w))
+  }
   const countdown = (iso, now) => `<span data-until="${esc(iso)}">${esc(remaining(iso, now))}</span>`
 
   const GB = 1024 ** 3
@@ -442,18 +453,31 @@
   }
 
   /**
-   * What a user pastes into a terminal to install the Claude Code plugin with this Purgatory's address and a token.
-   * Only plain URL and token characters go in: nothing a shell would read as more than one argument.
+   * Overview's Users table (admin): one row per account, newest last seen first. An owner from before the stats were
+   * kept has no dates and no delete button (nothing stored to delete).
    */
-  function pluginInstallCommand(url, token) {
-    const u = String(url).replace(/\/+$/, '')
-    if (!/^https?:\/\/[A-Za-z0-9.:-]+$/.test(u)) throw new Error(`not an address: ${u}`)
-    if (!/^p7y_[A-Za-z0-9_-]+$/.test(token)) throw new Error('not a token')
-    return 'claude plugin marketplace add p7y-dev/p7y\n' +
-      `claude plugin install p7y@p7y --scope user --config p7y_url=${u} --config p7y_token=${token}`
+  function usersTable(users, now = Date.now()) {
+    if (!users.length) return ''
+    const ago = iso => iso ? `<span title="${esc(iso)}">${esc(relativeAge(new Date(iso), now))}</span>` : '<span class="muted">—</span>'
+    const rows = users.map(u => {
+      const never = u.first_seen && !u.sandboxes_created && !u.sandboxes_now
+      return `<tr data-user="${esc(u.sub)}"><td>${esc(u.sub)}${never ? ' <span class="tag muted">no sandbox yet</span>' : ''}</td><td>${ago(u.last_seen)}</td><td class="ov-hide">${ago(u.last_sign_in)}</td><td>${u.sign_ins}</td><td>${u.sandboxes_now} / ${u.sandboxes_created}</td><td class="ov-hide">${ago(u.last_api_use)}</td><td class="ov-hide">${ago(u.first_seen)}</td><td>${u.first_seen ? `<button type="button" class="link" data-user-delete="${esc(u.sub)}" title="Forget this row (the account and its sandboxes stay)">Delete</button>` : ''}</td></tr>`
+    }).join('')
+    return `<section class="ov-box"><h2>Users</h2><div class="ov-tablewrap"><table class="ov-table"><thead><tr><th>Account</th><th>Last seen</th><th class="ov-hide">Last sign-in</th><th>Sign-ins</th><th title="Sandboxes now / created since the stats were kept">Sandboxes</th><th class="ov-hide">Last API use</th><th class="ov-hide">First seen</th><th></th></tr></thead><tbody>${rows}</tbody></table></div><p class="ov-note">Sandboxes: owned now / created. Kept until deleted here; an owner without dates has had sandboxes since before the stats were kept.</p></section>`
   }
 
-  const api = { loadingPanel, pluginInstallCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  /**
+   * The line a user pastes into Claude Code to link a project folder to a sandbox (it opens a browser page to approve).
+   * Only plain URL and name characters go in: nothing that reads as more than one word.
+   */
+  function initCommand(url, sandboxShort) {
+    const u = String(url).replace(/\/+$/, '')
+    if (!/^https?:\/\/[A-Za-z0-9.:-]+$/.test(u)) throw new Error(`not an address: ${u}`)
+    if (!/^[a-z0-9][a-z0-9_-]{0,62}$/.test(sandboxShort)) throw new Error('not a sandbox name')
+    return `/p7y:init ${u} ${sandboxShort}`
+  }
+
+  const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

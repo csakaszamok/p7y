@@ -74,12 +74,11 @@ function filtered() {
   // An admin's /sandboxes response includes everyone's sandboxes; "My
   // sandboxes" must only ever show the admin's own, or they could act on
   // someone else's sandbox believing it is theirs.
-  if (view === 'mine') return isAdmin ? sandboxes.filter(s => s.owner === document.body.dataset.sub) : sandboxes
-  if (view !== 'all') return sandboxes
-  const text = ($('[data-filter-text]').value || '').toLowerCase()
+  const list = view === 'mine' && isAdmin ? sandboxes.filter(s => s.owner === document.body.dataset.sub) : sandboxes
+  if (view !== 'mine' && view !== 'all') return list
+  const text = $('[data-filter-text]').value
   const status = $('[data-filter-status]').value
-  return sandboxes.filter(s =>
-    (!text || s.name.includes(text) || (s.owner || '').toLowerCase().includes(text)) && (!status || s.status === status))
+  return list.filter(s => P7yPanel.matchesFilter(s, text) && (!status || (s.status === 'created' ? 'exited' : s.status) === status))
 }
 
 function renderRows() {
@@ -90,6 +89,7 @@ function renderRows() {
   const ADV_COLS = ['Deep sleep in', 'CPU · Mem', 'Template']
   $('[data-head]').innerHTML = `<tr>${cols.map(c => `<th${ADV_COLS.includes(c) ? ' class="adv"' : ''}>${c}</th>`).join('')}</tr>`
   const rows = [...filtered()]
+  const filtering = !!($('[data-filter-text]')?.value.trim() || $('[data-filter-status]')?.value)
   for (const name of pending) if (!rows.some(s => s.name === name)) rows.unshift({ name, status: 'starting', runtime: '', template: '', created_at: '' })
   $('[data-rows]').innerHTML = rows.length ? rows.map(s => `
     <tr data-name="${esc(s.name)}" class="${s.name === selected ? 'selected' : ''}">
@@ -103,7 +103,7 @@ function renderRows() {
       <td class="adv">${usageCell(s)}</td>
       <td class="adv">${esc([s.runtime, s.template].filter(Boolean).join(' · '))}${s.compose === 'edited' ? ' <span class="muted">(edited)</span>' : ''}</td>
       <td>${esc(age(s.created_at))}</td>
-    </tr>`).join('') : `<tr><td class="muted" colspan="${cols.length}">No sandboxes yet — create one.</td></tr>`
+    </tr>`).join('') : `<tr><td class="muted" colspan="${cols.length}">${filtering ? 'No sandbox matches the filter.' : 'No sandboxes yet — create one.'}</td></tr>`
 }
 
 async function loadQuota() {
@@ -131,14 +131,20 @@ async function loadQuota() {
 // ---------- overview ----------
 async function loadOverview() {
   try {
-    const [sum, list] = await Promise.all([api('/sandboxes/summary'), api('/sandboxes')])
+    const [sum, list, users] = await Promise.all([api('/sandboxes/summary'), api('/sandboxes'), isAdmin ? api('/users').then(r => r.users).catch(() => []) : []])
     // The admin's /sandboxes is everyone's: the server view; a user's is their own
     $('[data-ov-scope]').textContent = isAdmin ? 'the whole server' : 'your sandboxes'
-    $('[data-overview]').innerHTML = P7yPanel.overviewHtml(sum, list, { isAdmin, shortName })
+    $('[data-overview]').innerHTML = P7yPanel.overviewHtml(sum, list, { isAdmin, shortName }) + P7yPanel.usersTable(users)
   } catch (e) { if (e.message !== 'signed out') $('[data-overview]').innerHTML = `<p class="error">${esc(e.message)}</p>` }
 }
 function initOverview() {
   loadOverview()
+  // Users table: forget a row (asked first; the account and its sandboxes stay)
+  $('[data-overview]').addEventListener('click', async e => {
+    const b = e.target.closest('[data-user-delete]'); if (!b) return
+    if (!await confirmDialog(`Forget the stats of ${b.dataset.userDelete}? The account and its sandboxes stay.`, 'Delete')) return
+    try { await api(`/users/${encodeURIComponent(b.dataset.userDelete)}`, { method: 'DELETE' }); loadOverview() } catch (err) { if (err.message !== 'signed out') console.error(err) }
+  })
   setInterval(() => { if (!document.hidden) loadOverview() }, 10_000)
   initHubFeed()
 }
@@ -301,31 +307,18 @@ async function copyEnv(name, b = $('[data-panel] [data-act="copy-env"]'), opts =
     }
   } catch (e) { if (b) b.textContent = 'Copy as .env'; const err = (b && b.closest('dialog') ? $('[data-export-error]') : null) || $('[data-act-error]'); err.textContent = e.message; err.hidden = false } finally { if (b) b.disabled = false }
 }
-// The window's Options (Advanced): the token's name and expiry, for the plugin's token, the zip and Copy as .env
+// The window's Options (Advanced): the token's name and expiry, for the zip and Copy as .env
 function exportOptions() {
   const form = $('[data-export-form]')
   return { name: form.elements.name.value.trim(), expires_in: form.elements.expires_in.value }
-}
-const EXPIRY_TEXT = { '30d': '30 days', '90d': '90 days', never: 'until revoked' }
-function showPluginExpiry() {
-  const span = $('[data-plugin-expiry]')
-  if (span) span.textContent = EXPIRY_TEXT[exportOptions().expires_in] || '90 days'
 }
 function openExportDialog(name) {
   const dlg = $('[data-export-dialog]')
   if (!dlg) return void location.reload()
   dlg.dataset.sandbox = name
-  // Simple: the plugin's two answers, the address and a token made on request (never one left from before)
-  const url = $('[data-plugin-url]')
-  if (url) url.textContent = location.origin
-  const tokenBtn = $('[data-plugin-token]'), tokenValue = $('[data-plugin-token-value]'), tokenCopy = $('[data-plugin-token-copy]')
-  if (tokenBtn) {
-    tokenBtn.hidden = false; tokenBtn.disabled = false; tokenBtn.textContent = 'Create token'; tokenValue.textContent = ''; tokenValue.hidden = true; tokenCopy.hidden = true
-    const cmd = $('[data-plugin-cmd]')
-    cmd.textContent = ''; cmd.hidden = true; $('[data-plugin-cmd-copy]').hidden = true
-    $('[data-plugin-cmd-wait]').hidden = false; $('[data-plugin-token-wait]').hidden = false
-  }
-  showPluginExpiry()
+  // The line to paste into Claude Code in the project's folder
+  const initLine = $('[data-init-cmd]')
+  try { initLine.textContent = P7yPanel.initCommand(location.origin, shortName(name)) } catch { initLine.textContent = '' }
   let ready = false
   try { ready = JSON.parse(renderedJSON || '{}').docker_access?.state === 'ready' } catch { /* not rendered yet */ }
   $('[data-export-needs-certs]').hidden = ready
@@ -339,7 +332,6 @@ function openExportDialog(name) {
 function initExportDialog() {
   const form = $('[data-export-form]')
   if (!form) return
-  form.elements.expires_in.addEventListener('change', showPluginExpiry)
   form.addEventListener('click', async ev => {
     const env = ev.target.closest('[data-copy-env]')
     if (env) return void copyEnv($('[data-export-dialog]').dataset.sandbox, env, exportOptions())
@@ -350,27 +342,6 @@ function initExportDialog() {
       try { await navigator.clipboard.writeText(el.textContent); copy.textContent = 'Copied'; setTimeout(() => { copy.textContent = 'Copy' }, 1500) }
       catch { const r = document.createRange(); r.selectNodeContents(el); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r) }
       return
-    }
-    const make = ev.target.closest('[data-plugin-token]')
-    if (!make) return
-    // A token for this sandbox only, for the plugin: shown once, like any new token
-    make.disabled = true; make.textContent = 'Creating…'
-    try {
-      const o = exportOptions()
-      const { token } = await api('/tokens', { method: 'POST', body: JSON.stringify({ name: o.name || 'Claude Code plugin', sandbox: $('[data-export-dialog]').dataset.sandbox, expires_in: o.expires_in }) })
-      const value = $('[data-plugin-token-value]')
-      value.textContent = token; value.hidden = false
-      $('[data-plugin-token-copy]').hidden = false
-      $('[data-plugin-token-wait]').hidden = true
-      // The whole install, ready to paste into a terminal
-      const cmd = $('[data-plugin-cmd]')
-      cmd.textContent = P7yPanel.pluginInstallCommand(location.origin, token); cmd.hidden = false
-      $('[data-plugin-cmd-copy]').hidden = false
-      $('[data-plugin-cmd-wait]').hidden = true
-      make.disabled = true; make.textContent = 'Token created'
-    } catch (e) {
-      make.disabled = false; make.textContent = 'Create token'
-      const err = $('[data-export-error]'); err.textContent = e.message; err.hidden = false
     }
   })
   form.addEventListener('submit', async ev => {
@@ -834,14 +805,16 @@ function initSandboxes() {
   // Defaults and ceilings for the resource fields, in every view (loadQuota only runs in "mine")
   api('/me').then(m => { meInfo = m; showResourceHint() }).catch(() => {})
   $('[data-title]').textContent = view === 'all' ? 'All sandboxes' : 'My sandboxes'
+  // The filter, in both lists: free text (name, status, template, apps; the owner too in All sandboxes) and status
+  $('[data-filters]').hidden = false
+  $('[data-filter-text]').placeholder = view === 'all' ? 'Filter by name, owner, app…' : 'Filter by name, status, app…'
+  $('[data-filter-text]').addEventListener('input', renderRows)
+  $('[data-filter-status]').addEventListener('change', renderRows)
   if (view === 'all') {
-    $('[data-admin-only]').hidden = false
-    $('[data-filter-text]').addEventListener('input', renderRows)
     // From the Overview: /admin?status=running, /admin?owner=…
     const q = new URLSearchParams(location.search)
     if (q.get('owner')) $('[data-filter-text]').value = q.get('owner')
     if (q.get('status')) $('[data-filter-status]').value = q.get('status')
-    $('[data-filter-status]').addEventListener('change', renderRows)
   }
   $('[data-rows]').addEventListener('click', e => { const tr = e.target.closest('tr[data-name]'); if (tr) showPanel(tr.dataset.name) })
   $('[data-connect-login]')?.addEventListener('click', e => {

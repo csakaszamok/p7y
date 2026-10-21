@@ -24,7 +24,7 @@ Think of it as **a self-hosted Vercel or Railway for the whole team**: you hand 
 - **Its own Docker for everyone.** Every sandbox has its own Docker daemon: what an agent produces (`docker-compose.yml` with app, database, cache) runs as it is, and nobody sees or breaks anyone else's containers.
 - **A URL for every app, automatically.** Whatever a sandbox publishes gets `https://<name>-<app>.<domain>`; databases and SSH get a TLS address on port 443. No DNS, no proxy rules per app.
 - **Idle costs nothing.** A sandbox without traffic falls asleep and wakes on the next request; after a longer sleep its containers are freed. Twenty experiments, three in use: the server carries three.
-- **Made for coding agents.** **Let your agent deploy…** (the Claude Code plugin, or a zip for any agent) gives the agent a token for that one sandbox, Docker access from outside and a registry login; every pushed image is scanned for secrets before anyone can pull it anonymously.
+- **Made for coding agents.** **Let your agent deploy…** (the Claude Code plugin with `/p7y:init`, or a zip for any agent) gives the agent a token for that one sandbox, Docker access from outside and a registry login; every pushed image is scanned for secrets before anyone can pull it anonymously.
 - **Your server, your data, no bill per app.** One `docker compose up` on one Linux host, also inside a company network; no paid edition.
 - **Nothing is lost.** Delete archives the sandbox's configuration and data.
 

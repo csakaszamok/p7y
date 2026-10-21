@@ -12,6 +12,7 @@ const defaults: Record<string, string> = {
   REGISTRY_GC_FILE: path.join(dir, 'registry-gc.json'),
   REGISTRY_NOTIFY_SECRET_FILE: path.join(dir, 'registry-notify.secret'),
   DISK_USAGE_FILE: path.join(dir, 'disk-usage.json'),
+  USER_STATS_FILE: path.join(dir, 'user-stats.json'),
   // Sandbox directories: empty temp dirs unless a test points them elsewhere
   SANDBOXES_DIR: path.join(dir, 'sandboxes'),
   LEGACY_USERS_DIR: path.join(dir, 'users'),

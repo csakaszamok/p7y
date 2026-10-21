@@ -1,4 +1,5 @@
 import { pageSession } from '../ui/layout'
+import { titleSuffix } from '../ui/brand'
 import { getCookie, cookieHeader, publicUrl } from '../session'
 import { accessOfHost, type HostAccess } from './hosts'
 import { mayOpen, type Viewer } from './level'
@@ -15,7 +16,7 @@ export interface StartDeps { session: (req: Request) => Viewer | null; access: (
 const defaults: StartDeps = { session: req => pageSession(req), access: h => accessOfHost(h), env: process.env }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
-const page = (status: number, title: string, body: string) => new Response(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)} — Purgatory</title><link rel="stylesheet" href="/assets/style.css"></head><body class="login"><main class="card"><h1>${esc(title)}</h1>${body}</main></body></html>`,
+const page = (status: number, title: string, body: string) => new Response(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)}${titleSuffix()}</title><link rel="stylesheet" href="/assets/style.css"></head><body class="login"><main class="card"><h1>${esc(title)}</h1>${body}</main></body></html>`,
   { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } })
 const notAnApp = () => page(400, 'Not an app address', '<p>This link does not lead to an app here.</p>')
 
@@ -48,9 +49,12 @@ export async function startResponse(req: Request, deps: Partial<StartDeps> = {})
   return new Response(null, { status: 302, headers: { location: landing.toString(), 'cache-control': 'no-store' } })
 }
 
-/** Where to go after signing in: only back to /auth/app/start, from the signed cookie start set, nowhere else. */
+// The /p7y:init approval page sends the visitor through sign-in too
+const ACTIVATE = '/activate?'
+
+/** Where to go after signing in: only back to /auth/app/start or /activate, from the signed cookie they set, nowhere else. */
 export function nextAfterSignIn(req: Request): string | null {
   const v = readNext(getCookie(req, NEXT_COOKIE))
   // No control characters: the value becomes a Location header
-  return v && v.startsWith(START) && !/[\u0000-\u001f\u007f]/.test(v) ? v : null
+  return v && (v.startsWith(START) || v.startsWith(ACTIVATE)) && !/[\u0000-\u001f\u007f]/.test(v) ? v : null
 }

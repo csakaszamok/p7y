@@ -8,13 +8,13 @@ description: Deploy or update the user's app in their Purgatory (p7y) sandbox an
 The user may not be technical. Do the work yourself, say what you are doing in plain words, and finish with
 the app's address. Never print a token or a Docker key, and never put them in git or in an image.
 
-The `p7y` MCP server (from this plugin) is the Purgatory API; its tools are named below.
+The project's `.p7y` folder says which Purgatory, which sandbox and which token: you call Purgatory's REST API
+with `curl` from it (step 2). The plugin itself keeps no address and no token.
 
-**Never copy a key or a certificate yourself**: not from a tool's answer, not with Write or an editor, not
-character by character, and never print one (`cat key.pem`). Copied by hand they get garbled (a wrong character
-in a key still looks like a key), and in an answer they go into your context and the transcript. Only the
-download from `project_dir_link` (step 3) or an export zip puts them on disk. Do not ask `get_sandbox` for
-`include_keys`.
+**Never copy a key or a certificate yourself**: not from an answer, not with Write or an editor, not character
+by character, and never print one (`cat key.pem`). Copied by hand they get garbled (a wrong character in a key
+still looks like a key), and in an answer they go into your context and the transcript. Only `/p7y:init`, a
+single-use link (step 3) or an export zip puts them on disk. Never ask for `include_keys`.
 
 ## 1. The project's `.p7y` folder
 
@@ -22,74 +22,102 @@ A project is tied to its sandbox by a `.p7y` folder in the project's root folder
 
 ```
 .p7y/.gitignore     a single line: *   (git leaves the whole folder out)
-.p7y/p7y.env        P7Y_URL, P7Y_SANDBOX, P7Y_DOCKER_HOST, and P7Y_TOKEN if it came from an export
+.p7y/p7y.env        P7Y_URL, P7Y_TOKEN, P7Y_SANDBOX, P7Y_DOCKER_HOST, …
 .p7y/docker/        ca.pem, cert.pem, key.pem: the sandbox's Docker client keys
+.p7y/README.md      what the folder is, for the user
 ```
 
 Look for it first:
 
-- **`.p7y/p7y.env` is there:** its `P7Y_SANDBOX` is this project's sandbox. Do not ask which one.
+- **`.p7y/p7y.env` is there, with `P7Y_TOKEN`:** its `P7Y_SANDBOX` is this project's sandbox. Do not ask which
+  one. See what it holds without the token: `grep -E '^P7Y_(URL|SANDBOX|DOCKER_HOST)=' .p7y/p7y.env`; check
+  for the token with `grep -c '^P7Y_TOKEN=' .p7y/p7y.env`.
 - **Not there, but an export zip is** (`p7y-<name>.zip`, which holds a `.p7y` folder): in the project's
   folder, or the newest one in the user's Downloads folder (`~/Downloads`, on Windows
   `%USERPROFILE%\Downloads`) when the user says so. Unpack its `.p7y` folder into the project's root, check
   that `.p7y/.gitignore` is there, and delete the zip (it holds a token); tell the user you did. An older zip
   holds a `p7y-<name>/` folder instead: put its files in `.p7y/` and write the `.gitignore`.
 - **A `.p7y` folder one level down** (unpacked into a subfolder): move it to the project's root.
-- **None of these:** go on with step 2; the download in step 3 writes the `.p7y` folder.
+- **None of these, or a `p7y.env` without `P7Y_TOKEN`:** the project is not tied to a sandbox yet. Tell the
+  user, and stop: *In Purgatory, open the sandbox → **Let your agent deploy…**, copy the
+  `/p7y:init <address> <sandbox>` line it shows and paste it here* (that runs this plugin's `init` skill: a
+  link to approve in the browser, then the `.p7y` folder arrives by itself). Or **Download** the zip there and
+  say *set up the p7y zip from my Downloads in this project and deploy*. If the user already gave you the
+  address and the sandbox's name, do what the `init` skill says instead of asking.
 
 If `.p7y` is not in the project's `.gitignore`, it does not have to be: the folder's own `.gitignore` keeps it
 out. Never delete or empty that file.
 
-## 2. Pick the sandbox and the token
+## 2. The sandbox and the token
 
-Two tokens may be at hand: the plugin's (used by the MCP tools) and `P7Y_TOKEN` in `.p7y/p7y.env`.
+The sandbox is `P7Y_SANDBOX`; the token is `P7Y_TOKEN`, limited to that one sandbox. Never try to create a
+sandbox or turn on Docker keys with it (it may not): the user does that in Purgatory.
 
-- `who_am_i` says what the plugin's token can reach. With `sandbox` in the answer, it is limited to that one
-  sandbox: use it, and never try to create one (the token may not).
-- `.p7y/p7y.env` names a sandbox the plugin's token cannot reach (`get_sandbox` says not found): use the REST
-  API with `P7Y_URL` and `P7Y_TOKEN` from the file instead (`curl -H "Authorization: Bearer $P7Y_TOKEN"`,
-  `GET /sandboxes/<name>`, `POST /sandboxes/<name>/start`). Do not print the token.
-- No `.p7y`, a token for all of the user's sandboxes: `list_sandboxes`. One whose name matches the project, or
-  the only one: use it. Several: ask which one, by the names the user sees (without the `p7y-` prefix). None:
-  `list_templates`, then `create_sandbox` with a short name from the project (lowercase letters, digits, `-`)
-  and the `starter` template; tell the user its name.
-- No MCP tools and no `.p7y`: the plugin is not set up. Tell the user: in Purgatory, on the sandbox, **Let your
-  agent deploy…** shows the address and makes a token to give the plugin (`/plugin` → p7y → configure); or
-  **Download** the zip and say *set up the p7y zip from my Downloads in this project and deploy*.
+Call the API from bash (on Windows Claude Code's Bash tool is Git Bash: the same works). Every command is a new
+shell, so load the file at the start of each one; the token stays in a variable:
+
+```sh
+set -a; . ./.p7y/p7y.env; set +a
+curl -sf -H "Authorization: Bearer $P7Y_TOKEN" "$P7Y_URL/sandboxes/$P7Y_SANDBOX"
+```
+
+- **Never print the token**: never `cat` or `type` the file, never `echo $P7Y_TOKEN`, no `set -x`, never
+  write the token into a command or a file yourself.
+- On Windows, if curl fails with `CRYPT_E_REVOCATION_OFFLINE`, add `--ssl-no-revoke` (Windows' curl checks
+  certificate revocation and fails when it cannot). In PowerShell call `curl.exe`, not `curl`.
+- `-f` hides Purgatory's error message: when a call fails, run it again with `-sS` instead of `-sf` to read it.
+  401: the token has expired or was revoked: the user runs `/p7y:init` again. 404: the sandbox is gone.
+
+The calls (`:name` is `$P7Y_SANDBOX`):
+
+- `GET /sandboxes/:name`: `status`, `docker_access.state`, `apps` (each with `url` and `answers`), `hub`.
+- `POST /sandboxes/:name/start`: wakes it.
+- `POST /sandboxes/:name/project-link`: a single-use link to new copies of the Docker keys (step 3).
+- `PATCH /sandboxes/:name` with a JSON body (`-X PATCH -H "Content-Type: application/json" -d '{…}'`): sleep
+  settings (step 5).
 
 ## 3. Wake it and connect Docker
 
-`get_sandbox` gives `status`. If it is not `running`: `wake_sandbox`, then `get_sandbox` every few seconds until
-it is (a few seconds; about 30 s from deep sleep). A Docker connection does not wake it. A refusal that the
-running limit is reached: tell the user, and that putting another sandbox to sleep frees a place. Never put a
-sandbox to sleep without asking.
+`GET /sandboxes/:name` gives `status`. If it is not `running`: `POST /sandboxes/:name/start`, then
+`GET /sandboxes/:name` every few seconds until it is (a few seconds; about 30 s from deep sleep). A Docker
+connection does not wake it. A refusal that the running limit is reached: tell the user, and that putting
+another sandbox to sleep frees a place. Never put a sandbox to sleep without asking.
 
-`docker_access.state` must be `ready`. If it is `needs-certs`, ask the user first: `rotate_docker_keys` turns
-Docker access on but restarts the sandbox, and its apps are unreachable for about 30 seconds. A token limited
-to one sandbox may not do it: then the user turns it on in Purgatory (the sandbox → Access → Enable).
+`docker_access.state` must be `ready`. If it is `needs-certs`: the user turns Docker access on in Purgatory
+(the sandbox → Access → Enable). Tell them it restarts the sandbox and its apps are unreachable for about 30
+seconds; the token here may not do it.
 
-Then **`project_dir_link`** with the sandbox's full name. Purgatory checks the keys and answers `url` (a link
-that works **once**, for **5 minutes**), `command` and `context_commands`; never the keys. Run them yourself,
-with the project's root folder (absolute; forward slashes work on Windows too) for `<project folder>`:
-
-1. `command`: `curl -sf "<url>" | tar -x -C <project folder>`. It writes `.p7y/.gitignore`, `.p7y/p7y.env`
-   (`P7Y_URL`, `P7Y_SANDBOX`, `P7Y_DOCKER_HOST`) and `.p7y/docker/{ca,cert,key}.pem`. On Windows call
-   `curl.exe` (in PowerShell, `curl` is something else) with `--ssl-no-revoke` added; `tar` comes with Windows.
-   An error 410 (or an empty download): the link has expired or was used. Ask `project_dir_link` for a new one.
-2. `context_commands`, in order: the docker context is removed, then created from those files.
-3. Check the connection with a compose command, not only `ps` (`ps` can work with a key that compose cannot
-   read):
+The docker context is `p7y-<sandbox>`, with the sandbox's name as the user sees it (for `P7Y_SANDBOX=p7y-shop`:
+`p7y-shop`). Check it with a compose command, not only `ps` (`ps` can work with a key that compose
+cannot read):
 
 ```sh
 docker --context p7y-<sandbox> compose ls
 ```
 
-- **New keys** (`rotate_docker_keys`), a moved project folder, or **any TLS error** (`tls: failed to parse
-  private key`, a bad certificate): a new link, and all three steps again. A docker context keeps its own copies
-  of the files, so fixing a file alone changes nothing. Never repair or guess at a key.
-- **`.p7y` came from an export zip:** create the context from its files (`.p7y/README.md` has the command). A
-  download from a link replaces its `p7y.env` with one without `P7Y_TOKEN`: use a link only when the plugin's
-  token reaches the sandbox; otherwise new keys come with a new export zip.
+- **No such context** (another machine, a `.p7y` from a zip): create it from the folder's files, with the
+  project's root folder, absolute and with forward slashes (in Git Bash `pwd -W`, elsewhere `pwd`):
+
+  ```sh
+  set -a; . ./.p7y/p7y.env; set +a
+  docker context create p7y-<sandbox> --docker "host=$P7Y_DOCKER_HOST,ca=<project folder>/.p7y/docker/ca.pem,cert=<project folder>/.p7y/docker/cert.pem,key=<project folder>/.p7y/docker/key.pem"
+  ```
+
+- **Any TLS error** (`tls: failed to parse private key`, a bad certificate), or the user made **new keys** in
+  Purgatory: new copies of the keys. `POST /sandboxes/:name/project-link` answers `url` (a link that works
+  **once**, for **5 minutes**), `command` and `context_commands`; never the keys. Its download holds a
+  `p7y.env` without the token, so unpack **only the three keys**, never the whole `command`:
+
+  ```sh
+  curl -sf "<url>" | tar -x -C "<project folder>" .p7y/docker/ca.pem .p7y/docker/cert.pem .p7y/docker/key.pem
+  ```
+
+  The project's root folder, absolute, goes inside the quotes (a folder name may have a space); with
+  `--ssl-no-revoke` after `curl` if other calls needed it. Then run `context_commands` in order, with the
+  project's root folder for `<project folder>` (the context is removed, then created from those files), and
+  check with `compose ls` again. A docker context keeps its own copies of the files, so fixing a file alone
+  changes nothing. Never repair or guess at a key. An error 410 (or
+  an empty download): the link has expired or was used; ask for a new one. 409: Docker access is not on.
 - `docker` (the command line; the engine is the sandbox's) and `curl` must be installed on this machine; if one
   is not, say so and stop.
 
@@ -122,7 +150,7 @@ The build runs in the sandbox; it is the same command for an update.
 
 ## 5. Check and hand over
 
-`get_sandbox` again: `apps` lists each app with its `url` and `answers`. A new app shows there a few seconds
+`GET /sandboxes/:name` again: `apps` lists each app with its `url` and `answers`. A new app shows there a few seconds
 after `compose up` (first only in `tcp_urls`): ask every 3 s for up to about 30 s, until it is listed with
 `answers: true`. Rely on `answers`, not on your own `curl` (on Windows the built-in curl fails with
 `CRYPT_E_REVOCATION_OFFLINE` unless given `--ssl-no-revoke`).
@@ -135,8 +163,8 @@ after `compose up` (first only in `tcp_urls`): ask every 3 s for up to about 30 
 
 A page that says the sandbox is waking up is Purgatory's waiting page, not the app: wait and look again.
 
-To change how long it stays awake: `set_sleep_settings` (`idle_timeout`, e.g. `2h`, or `off`), only if the
-user asks.
+To change how long it stays awake: `PATCH /sandboxes/:name` with `{"idle_timeout": "2h"}` (or `"off"`), only
+if the user asks.
 
 ## Publish on the Hub (when the user asks)
 
@@ -151,5 +179,5 @@ app's service, then deploy again:
       p7y.image: "/screenshot.png"   # optional: a path the app itself serves (PNG, JPEG, WebP, GIF; up to 2 MB)
 ```
 
-It appears within about 90 seconds; `get_sandbox` → `hub.published` lists it. Taking it off: remove
+It appears within about 90 seconds; `GET /sandboxes/:name` → `hub.published` lists it. Taking it off: remove
 `p7y.publish` and deploy again.
