@@ -4,6 +4,14 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **Dependencies:** dockerode 5 (without the `uuid` package), TypeScript 7 and vitest 5 for the type check and the tests. js-yaml stays on 4.x: version 5 reads YAML differently (no `<<` merge keys, `yes` is no longer true), which would change how compose files read.
+
+### Fixed
+
+- **The image's license label** (`org.opencontainers.image.licenses`) said Apache-2.0 since the switch to the AGPL-3.0.
+
 ## [0.11.1] - 2026-10-21
 
 Upgrading from 0.11.0: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version).
