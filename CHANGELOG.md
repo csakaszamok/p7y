@@ -4,6 +4,19 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.10.3] - 2026-10-21
+
+Upgrading from 0.10.2: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version).
+
+### Changed
+
+- **The Claude Code tutorial** walks through connecting a project folder to a sandbox with `/p7y:init` step by step, with the approval page, what to do when a code runs out, and moving a folder to another sandbox.
+- **Smaller image:** `better-sqlite3`, unused since the database went, is no longer installed.
+
+### Fixed
+
+- **Dependencies:** js-yaml 4.3.2, @grpc/grpc-js 1.14.6 (GHSA-f596-whhp-79r4), protobufjs 7.6.6 (GHSA-j3f2-48v5-ccww) and source-map-js 1.2.2 (CVE-2026-93749, development only). The GitHub Actions the workflows use are updated, still pinned to commits.
+
 ## [0.10.2] - 2026-10-21
 
 Upgrading from 0.10.1: download the new `docker-compose.yml` (it passes `UI_TITLE`, `UI_LOGO` and `GITHUB_LINK` to Purgatory), then `docker compose pull && docker compose up -d`. Claude Code plugin users: `/plugin marketplace update p7y`, then `/p7y:init` once in each project (Purgatory shows the line under **Let your agent deploy…**); the plugin no longer asks for an address or a token.
