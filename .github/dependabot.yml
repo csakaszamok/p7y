@@ -15,6 +15,9 @@ updates:
       # changes how compose files read. 4.x still gets its fixes
       - dependency-name: js-yaml
         update-types: [version-update:semver-major]
+      # The types follow the Node that CI and the image run (22)
+      - dependency-name: '@types/node'
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     target-branch: release/0.11
