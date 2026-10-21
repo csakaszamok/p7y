@@ -57,4 +57,6 @@ Please do not report vulnerabilities in public issues; see [SECURITY.md](SECURIT
 
 ## License
 
-By contributing you agree that your contribution is licensed under the [Apache-2.0](LICENSE) license.
+Purgatory is licensed under the [AGPL-3.0](LICENSE), with the additional terms in [NOTICE](NOTICE).
+
+By contributing you agree that your contribution is licensed under the AGPL-3.0, and you grant the Purgatory (p7y) authors a perpetual, worldwide, royalty-free right to use, change and release it under other licenses as well (for example a commercial license, or a later license for the whole project). You confirm that you wrote it, or have the right to contribute it on these terms.

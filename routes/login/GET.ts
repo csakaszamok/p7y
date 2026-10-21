@@ -31,6 +31,7 @@ ${faviconTag()}</head>
   </form></details>` : ''}
   ${!oidcEnabled() && !adminEnabled ? '<p class="error">No sign-in method is configured.</p>' : ''}
 </div>
+<p class="about-foot"><a href="/about">About · AGPL-3.0</a></p>
 <script src="/assets/embers.js" defer></script>
 </body></html>`)
 }

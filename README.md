@@ -1,6 +1,6 @@
 # <img src="ui/logo.svg" alt="" width="40" align="top"> Purgatory (p7y)
 
-[![Docs](https://img.shields.io/badge/docs-p7y--dev.github.io%2Fp7y-ea580c)](https://p7y-dev.github.io/p7y/latest/) [![CI](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml/badge.svg)](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-p7y--dev.github.io%2Fp7y-ea580c)](https://p7y-dev.github.io/p7y/latest/) [![CI](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml/badge.svg)](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 
 > [!NOTE]
 > **Early, before 1.0.** It works and is tested (CI on every change, releases with a changelog), but expect rough edges, and breaking changes between minor versions.
@@ -79,6 +79,6 @@ More in [how it compares](https://p7y-dev.github.io/p7y/latest/comparison/).
 
 > **Security:** where [sysbox](https://github.com/nestybox/sysbox) is installed, sandboxes run without a privileged container; without it they fall back to the privileged `dind`, which suits a team that trusts each other, not hostile code. On a shared server install sysbox and set `ALLOWED_RUNTIMES=sysbox` ([details](https://p7y-dev.github.io/p7y/latest/security/)).
 
-[Contributing](CONTRIBUTING.md) · [Security issues](SECURITY.md) · [Apache-2.0](LICENSE)
+[Contributing](CONTRIBUTING.md) · [Security issues](SECURITY.md) · [AGPL-3.0](LICENSE)
 
-Free to use, also commercially. If you ship Purgatory or a product built on it, keep the [NOTICE](NOTICE) with it, so your users see it is based on Purgatory; the names "Purgatory" and "p7y" are not licensed for another product's name.
+Free to use, also commercially, on your own servers or for your customers. Changed it and people use it over the network? Then they get your changed source too, under the same license ([AGPL-3.0](LICENSE)). Every product built on Purgatory says so: *Based on Purgatory (p7y)*, in its About page and its docs, is marked as changed, and does not take the names "Purgatory" or "p7y" ([NOTICE](NOTICE)). Versions up to 0.10.3 were released under Apache-2.0.

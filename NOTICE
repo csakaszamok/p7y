@@ -1,10 +1,20 @@
 Purgatory (p7y)
 Copyright 2026 the Purgatory (p7y) authors
+https://github.com/p7y-dev/p7y
 
-This product is Purgatory (p7y), https://github.com/p7y-dev/p7y,
-licensed under the Apache License, Version 2.0 (see LICENSE).
+Licensed under the GNU Affero General Public License, version 3 only (AGPL-3.0-only): see LICENSE.
+Versions up to and including 0.10.3 were released under the Apache License 2.0 and stay so.
 
-If you redistribute Purgatory, or a product built on it, keep this notice
-(Apache-2.0, section 4) so its users can see that it is based on Purgatory.
-The names "Purgatory" and "p7y" are not licensed for use as the name of
-another product (section 6).
+Additional terms under section 7 of the AGPL-3.0
+------------------------------------------------
+
+(b) Attribution. Every work based on Purgatory, modified or not, keeps this notice in its
+    Appropriate Legal Notices (in Purgatory's web interface: the About page) and in its documentation:
+
+        Based on Purgatory (p7y), https://github.com/p7y-dev/p7y
+
+(c) Origin. A modified version is marked as changed from the original, and is not presented as
+    Purgatory (p7y) itself or as made by its authors.
+
+(e) Names. The names "Purgatory" and "p7y" and the Purgatory logo are not licensed for use as the name
+    or logo of another product, beyond the attribution in (b).

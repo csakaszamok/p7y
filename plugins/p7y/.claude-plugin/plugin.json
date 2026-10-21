@@ -5,6 +5,6 @@
   "author": { "name": "p7y-dev", "url": "https://github.com/p7y-dev" },
   "homepage": "https://p7y-dev.github.io/p7y/latest/claude-plugin/",
   "repository": "https://github.com/p7y-dev/p7y",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0-only",
   "keywords": ["docker", "sandbox", "deploy", "self-hosted"]
 }
