@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- **A sandbox with a non-public app never went to sleep** (since 0.9.0): the app access check sent Purgatory's own Sablier probe to the sign-in page, so the sandbox got no session, its idle countdown never started (*not counting yet*), and the log said *could not open a Sablier session*. The probe's address now passes, unless an app uses it.
+
 ## [0.11.2] - 2026-10-21
 
 Upgrading from 0.11.1: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version).

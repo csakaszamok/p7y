@@ -26,6 +26,11 @@ describe('accessOfHost', () => {
     expect((await accessOfHost('shop-own.example.com', deps({ fresh: async () => map })))!.access).toBe('owner')
     expect((await accessOfHost('shop-own.example.com', deps({ accessMap: () => null, fresh: async () => null })))!.access).toBe('owner')
   })
+  // primeSablierSession's request must pass to Sablier, or a sandbox with a non-public app never gets a session
+  it("p7y's own Sablier probe address: public, unless an app has taken it", async () => {
+    expect((await accessOfHost('shop-p7y-wake.example.com', deps()))!.access).toBe('public')
+    expect((await accessOfHost('shop-p7y-wake.example.com', deps({ accessMap: () => ({ 'shop-p7y-wake': 'owner' }) })))!.access).toBe('owner')
+  })
   it('not a sandbox host: null', async () => {
     expect(await accessOfHost('p7y.example.com', deps())).toBeNull()
   })
