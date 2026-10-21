@@ -17,7 +17,7 @@
     "ws": "^8.22.0"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
+    "@types/bcryptjs": "^3.0.0",
     "@types/dockerode": "^3.3.24",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.0.0",
