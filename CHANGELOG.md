@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-10-21
+
+Upgrading from 0.10.1: download the new `docker-compose.yml` (it passes `UI_TITLE`, `UI_LOGO` and `GITHUB_LINK` to Purgatory), then `docker compose pull && docker compose up -d`. Claude Code plugin users: `/plugin marketplace update p7y`, then `/p7y:init` once in each project (Purgatory shows the line under **Let your agent deploy…**); the plugin no longer asks for an address or a token.
+
 ### Changed
 
 - **The Claude Code plugin keeps no address and no token** any more, and no longer brings the MCP server: each project's `.p7y` folder says which Purgatory and which sandbox it belongs to, and the deploy skill works from `.p7y/p7y.env` with the REST API. **Let your agent deploy…** shows two install lines and the `/p7y:init` line, in place of **Create token** and the long `--config` command. Upgrading: `/plugin marketplace update p7y`, then `/p7y:init` once in each project. The server's own MCP endpoint stays.
