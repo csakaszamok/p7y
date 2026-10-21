@@ -4,6 +4,14 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-10-21
+
+Upgrading from 0.11.0: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version).
+
+### Fixed
+
+- **The install test** looked for the old 404 page's text, so CI failed since the new 404 page (nothing changes for a running server).
+
 ## [0.11.0] - 2026-10-21
 
 Upgrading from 0.10: download the new `docker-compose.yml` (it passes `PUBLIC_URL` to `p7y-init`, for the 404 page's link to Purgatory; without it the page guesses `p7y.<domain>`), then `docker compose pull && docker compose up -d`. A server that follows the 0.10 series (`P7Y_VERSION=0.10`) moves with `P7Y_VERSION=0.11`. **From this version Purgatory is licensed under the AGPL-3.0** (see below); 0.10.3 and earlier stay Apache-2.0.
