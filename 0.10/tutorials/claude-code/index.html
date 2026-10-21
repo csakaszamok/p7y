@@ -761,10 +761,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-deploy" class="md-nav__link">
+  <a href="#3-connect-the-project-and-deploy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Deploy
+        3. Connect the project and deploy
       
     </span>
   </a>
@@ -1690,10 +1690,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-deploy" class="md-nav__link">
+  <a href="#3-connect-the-project-and-deploy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Deploy
+        3. Connect the project and deploy
       
     </span>
   </a>
@@ -1772,35 +1772,43 @@
 <li>
 <p>In Purgatory, click your sandbox, then <strong>Let your agent deploy…</strong>.</p>
 <p><img alt="A sandbox's panel in the Simple view: its apps and Let your agent deploy…" src="../../media/tutorial-panel.png" width="420" /></p>
-<p><img alt="Let your agent deploy: Create token, then the command to copy into a terminal; or the zip for other agents" src="../../media/tutorial-agent.png" width="360" /></p>
+<p><img alt="Let your agent deploy: the install lines and the /p7y:init line to copy; or the zip for other agents" src="../../media/tutorial-agent.png" width="360" /></p>
 </li>
 <li>
-<p>Click <strong>Create token</strong>. It makes a token that works only for this sandbox, and shows it once.</p>
-</li>
-<li>
-<p>Below it appears a command with your address and the new token in it. Click <strong>Copy</strong>, open a terminal (in VS Code: <strong>Terminal → New Terminal</strong>; on Windows also PowerShell, on a Mac the Terminal app), paste it and press Enter:</p>
+<p>In the window's step <strong>1</strong>, click <strong>Copy</strong> next to each of the two lines, open a terminal (in VS Code: <strong>Terminal → New Terminal</strong>; on Windows also PowerShell, on a Mac the Terminal app), paste them one after the other and press Enter after each:</p>
 <div class="highlight"><pre><span></span><code>claude plugin marketplace add p7y-dev/p7y
-claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.com --config p7y_token=p7y_…
+claude plugin install p7y@p7y
 </code></pre></div>
-<p>It installs the plugin for you (<strong>user</strong>: in all your projects) and gives it the address and the token; Claude Code keeps the token in your system's secure storage.</p>
+<p>It installs the plugin for you, in all your projects. It asks for no address and no token.</p>
 </li>
 </ol>
 <div class="admonition note">
 <p class="admonition-title">Good to know</p>
 <ul>
 <li><code>claude</code> not found? Claude Code is not installed for the terminal: see <a href="https://code.claude.com/docs/en/setup">Claude Code's setup</a>. An <em>unknown option</em> means an older Claude Code: run <code>claude update</code>.</li>
-<li>The pasted line can stay in the terminal's history, token included. The token works only for this sandbox, expires in 90 days, and you can revoke it in Purgatory (Advanced → <strong>Access tokens</strong>).</li>
-<li>Rather not paste a token? <strong>Other ways</strong> in the same window: run <code>claude</code> in a terminal, then <code>/plugin marketplace add p7y-dev/p7y</code> and <code>/plugin install p7y@p7y</code> in it, and paste the address and the token when it asks. (The Claude Code panel in VS Code has no <code>/plugin</code>.)</li>
+<li>Already in Claude Code? <strong>In Claude Code instead</strong> in the same window shows the same two lines as <code>/plugin marketplace add p7y-dev/p7y</code> and <code>/plugin install p7y@p7y</code>. (The Claude Code panel in VS Code has no <code>/plugin</code>: use the terminal.)</li>
 </ul>
 </div>
-<p>You do this once. For another sandbox later, see <a href="#more-projects">More projects</a> below.</p>
-<h2 id="3-deploy">3. Deploy<a class="headerlink" href="#3-deploy" title="Permanent link">&para;</a></h2>
-<p>Open your app's folder in Claude Code and say, in your own words:</p>
+<p>You install the plugin once. Each project then gets its sandbox in the next step.</p>
+<h2 id="3-connect-the-project-and-deploy">3. Connect the project and deploy<a class="headerlink" href="#3-connect-the-project-and-deploy" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>Open your app's folder in Claude Code. In Purgatory, in the window's step <strong>2</strong>, click <strong>Copy</strong> and paste the line into Claude Code. It looks like this:</p>
+<div class="highlight"><pre><span></span><code>/p7y:init https://p7y.example.com shop
+</code></pre></div>
+</li>
+<li>
+<p>Claude Code prints a link. Open it in your browser (sign in if it asks). The page shows a code and your sandbox: check that the code is the one Claude Code printed, then click <strong>Approve</strong>. The code works once and expires in 10 minutes.</p>
+<p>Behind the scenes, Claude Code gets a token for this sandbox only, and writes it in a <code>.p7y</code> folder in your project, next to the sandbox's keys. You never see or copy the token. It is a secret, and the folder keeps itself out of git on its own; leave it there. The token expires in 90 days (run <code>/p7y:init</code> again then), and you can revoke it in Purgatory (Advanced → <strong>Access tokens</strong>, named <code>Claude Code init &lt;date&gt;</code>).</p>
+</li>
+<li>
+<p>Now say, in your own words:</p>
 <blockquote>
 <p>Deploy this app.</p>
 </blockquote>
+</li>
+</ol>
 <p>Claude Code wakes the sandbox, builds your app there, starts it and checks that it answers. At the end it gives you a link like <code>https://shop-web.example.com</code> (your sandbox's name first). Open it: that is your app, and it works for anyone you send it to.</p>
-<p>It also creates a <code>.p7y</code> folder in your project: it remembers which sandbox belongs to this project and holds its keys. It is a secret, and it keeps itself out of git on its own; leave it there.</p>
 <h2 id="4-change-and-update">4. Change and update<a class="headerlink" href="#4-change-and-update" title="Permanent link">&para;</a></h2>
 <p>Changed something? Say:</p>
 <blockquote>
@@ -1816,11 +1824,8 @@ claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.
 <li><strong>Docker is needed on your computer</strong> only for its command line: the build runs in the sandbox.</li>
 </ul>
 <h2 id="more-projects">More projects<a class="headerlink" href="#more-projects" title="Permanent link">&para;</a></h2>
-<p>The token you created works for one sandbox. For a second project with its own sandbox:</p>
-<ul>
-<li><strong>Easiest:</strong> in Purgatory, on the other sandbox, <strong>Let your agent deploy…</strong> → <strong>Download</strong>, then in that project say <em>set up the p7y zip from my Downloads in this project and deploy</em>. Claude Code puts it in that project's <code>.p7y</code> folder and uses it from then on.</li>
-<li><strong>Many sandboxes:</strong> give the plugin a token for all your sandboxes instead (switch to <strong>Advanced</strong> → <strong>Access tokens</strong> → <strong>+ New token</strong>, then in Claude Code <code>/plugin</code> → p7y → configure). Then Claude Code picks the sandbox by the project's name, asks when it is not sure, and creates one when there is none.</li>
-</ul>
+<p>Each project is tied to one sandbox by its own <code>.p7y</code> folder. For a second project with its own sandbox (or on another Purgatory), do step 3 there: in Purgatory, on that sandbox, <strong>Let your agent deploy…</strong>, copy the <code>/p7y:init</code> line and paste it into Claude Code in that project. The plugin needs no new setup.</p>
+<p>Used the earlier plugin, which asked for an address and a token? Run <code>/plugin marketplace update p7y</code> once, then <code>/p7y:init</code> in each project.</p>
 <p>More details: <a href="../../claude-plugin/">Claude Code plugin</a>.</p>
 
 

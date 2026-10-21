@@ -118,6 +118,9 @@ Main settings in `.env`:
 | `SANDBOX_DISK`                                                              | `20g`                                          | Disk use above which a sandbox is flagged; a warning only, see [Disk](https://p7y-dev.github.io/p7y/0.10/resources/#disk)                                                                                                                                                                                                                                                                                                                                                                                 |
 | `LOGIN_CAPACITY`                                                            | `on`                                           | The sign-in page shows the sandbox places on the server: taken and free of `SANDBOX_MAX_TOTAL`, with a bar (orange from 90%, red when full). The page is public, so `off` hides it; nothing is shown without a server limit. Counted at most every 30 seconds                                                                                                                                                                                                                                             |
 | `GITHUB_STATS`                                                              | `on`                                           | The topbar links to the GitHub repo and shows Purgatory's version, stars and forks. The server fetches the counts at most once an hour (users' browsers never contact GitHub); `off` never asks GitHub, and the link and the version stay                                                                                                                                                                                                                                                                 |
+| `GITHUB_LINK`                                                               | `on`                                           | `off` takes the GitHub card out of the topbar (and GitHub is never asked for the counts)                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `UI_TITLE`                                                                  | `Purgatory`                                    | The name at the top left, on the sign-in page and in the browser tab titles; `none` shows no name                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `UI_LOGO`                                                                   | Purgatory's logo                               | The logo next to the name and the browser tab icon, on the Hub too: an `https://` address, or an image file in the container (`.svg`, `.png`, `.jpg`, `.webp`, `.gif`, `.ico`), e.g. `/app/data/logo.png` for `./data/logo.png`, served as `/assets/custom-logo`; `none` shows no logo. Its height is fixed, its width follows the image                                                                                                                                                                  |
 | `DEFAULT_TEMPLATE`                                                          | `starter`                                      | Template for new sandboxes when a request names none. An old value such as `dind-standard` makes every create without a template fail with `Unknown template`                                                                                                                                                                                                                                                                                                                                             |
 | `DEEP_SLEEP_CHECK_INTERVAL`                                                 | `1m`                                           | How often Purgatory looks for sandboxes to take into deep sleep                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `HOST_SANDBOXES_DIR`                                                        | auto-detected                                  | Host path of `opt/sandboxes` (every sandbox's compose file mounts from it). Set it only if auto-detection fails; an old `HOST_USERS_DIR` (the former `opt/users`) still works, its sibling `sandboxes` is used                                                                                                                                                                                                                                                                                            |
@@ -161,7 +164,7 @@ With an `https://` `PUBLIC_URL`, Purgatory **refuses to start** while `ADMIN_TOK
 
 Step by step, from nothing to an app with a link you can send to anyone. No server knowledge needed: your coding agent does the technical part.
 
-- **[Put your app online with Claude Code](https://p7y-dev.github.io/p7y/0.10/tutorials/claude-code/index.md)**: install the p7y plugin once, then say *deploy this app* in any project. The easiest way.
+- **[Put your app online with Claude Code](https://p7y-dev.github.io/p7y/0.10/tutorials/claude-code/index.md)**: install the p7y plugin once, approve each project in the browser, then say *deploy this app*. The easiest way.
 - **[Put your app online with any agent](https://p7y-dev.github.io/p7y/0.10/tutorials/other-agents/index.md)**: Codex, Cursor, or Claude Code without the plugin, with a zip from Purgatory.
 - **[Share your app with your team on the Hub](https://p7y-dev.github.io/p7y/0.10/tutorials/hub/index.md)**: list it where colleagues find, open and vote for it.
 
@@ -188,34 +191,39 @@ The switch at the top right changes how much the screen shows. **Simple** is eno
 
 1. In Purgatory, click your sandbox, then **Let your agent deploy…**.
 
-1. Click **Create token**. It makes a token that works only for this sandbox, and shows it once.
-
-1. Below it appears a command with your address and the new token in it. Click **Copy**, open a terminal (in VS Code: **Terminal → New Terminal**; on Windows also PowerShell, on a Mac the Terminal app), paste it and press Enter:
+1. In the window's step **1**, click **Copy** next to each of the two lines, open a terminal (in VS Code: **Terminal → New Terminal**; on Windows also PowerShell, on a Mac the Terminal app), paste them one after the other and press Enter after each:
 
    ```
    claude plugin marketplace add p7y-dev/p7y
-   claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.com --config p7y_token=p7y_…
+   claude plugin install p7y@p7y
    ```
 
-   It installs the plugin for you (**user**: in all your projects) and gives it the address and the token; Claude Code keeps the token in your system's secure storage.
+   It installs the plugin for you, in all your projects. It asks for no address and no token.
 
 Good to know
 
 - `claude` not found? Claude Code is not installed for the terminal: see [Claude Code's setup](https://code.claude.com/docs/en/setup). An *unknown option* means an older Claude Code: run `claude update`.
-- The pasted line can stay in the terminal's history, token included. The token works only for this sandbox, expires in 90 days, and you can revoke it in Purgatory (Advanced → **Access tokens**).
-- Rather not paste a token? **Other ways** in the same window: run `claude` in a terminal, then `/plugin marketplace add p7y-dev/p7y` and `/plugin install p7y@p7y` in it, and paste the address and the token when it asks. (The Claude Code panel in VS Code has no `/plugin`.)
+- Already in Claude Code? **In Claude Code instead** in the same window shows the same two lines as `/plugin marketplace add p7y-dev/p7y` and `/plugin install p7y@p7y`. (The Claude Code panel in VS Code has no `/plugin`: use the terminal.)
 
-You do this once. For another sandbox later, see [More projects](#more-projects) below.
+You install the plugin once. Each project then gets its sandbox in the next step.
 
-## 3. Deploy
+## 3. Connect the project and deploy
 
-Open your app's folder in Claude Code and say, in your own words:
+1. Open your app's folder in Claude Code. In Purgatory, in the window's step **2**, click **Copy** and paste the line into Claude Code. It looks like this:
 
-> Deploy this app.
+   ```
+   /p7y:init https://p7y.example.com shop
+   ```
+
+1. Claude Code prints a link. Open it in your browser (sign in if it asks). The page shows a code and your sandbox: check that the code is the one Claude Code printed, then click **Approve**. The code works once and expires in 10 minutes.
+
+   Behind the scenes, Claude Code gets a token for this sandbox only, and writes it in a `.p7y` folder in your project, next to the sandbox's keys. You never see or copy the token. It is a secret, and the folder keeps itself out of git on its own; leave it there. The token expires in 90 days (run `/p7y:init` again then), and you can revoke it in Purgatory (Advanced → **Access tokens**, named `Claude Code init <date>`).
+
+1. Now say, in your own words:
+
+   > Deploy this app.
 
 Claude Code wakes the sandbox, builds your app there, starts it and checks that it answers. At the end it gives you a link like `https://shop-web.example.com` (your sandbox's name first). Open it: that is your app, and it works for anyone you send it to.
-
-It also creates a `.p7y` folder in your project: it remembers which sandbox belongs to this project and holds its keys. It is a secret, and it keeps itself out of git on its own; leave it there.
 
 ## 4. Change and update
 
@@ -235,10 +243,9 @@ The same link shows the new version a few seconds later.
 
 ## More projects
 
-The token you created works for one sandbox. For a second project with its own sandbox:
+Each project is tied to one sandbox by its own `.p7y` folder. For a second project with its own sandbox (or on another Purgatory), do step 3 there: in Purgatory, on that sandbox, **Let your agent deploy…**, copy the `/p7y:init` line and paste it into Claude Code in that project. The plugin needs no new setup.
 
-- **Easiest:** in Purgatory, on the other sandbox, **Let your agent deploy…** → **Download**, then in that project say *set up the p7y zip from my Downloads in this project and deploy*. Claude Code puts it in that project's `.p7y` folder and uses it from then on.
-- **Many sandboxes:** give the plugin a token for all your sandboxes instead (switch to **Advanced** → **Access tokens** → **+ New token**, then in Claude Code `/plugin` → p7y → configure). Then Claude Code picks the sandbox by the project's name, asks when it is not sure, and creates one when there is none.
+Used the earlier plugin, which asked for an address and a token? Run `/plugin marketplace update p7y` once, then `/p7y:init` in each project.
 
 More details: [Claude Code plugin](https://p7y-dev.github.io/p7y/0.10/claude-plugin/index.md).
 
@@ -327,7 +334,7 @@ Two ways to sign in:
 
 `SESSION_SECRET` signs the session cookie — set it to a long random string; sessions issued under an old value stop working if it changes.
 
-Anyone with an account at the OIDC provider can sign in and create sandboxes, unless `OIDC_ALLOWED_DOMAINS` or `OIDC_ALLOWED_EMAILS` limits it (e.g. to `example.com`): with Google, set one of them, or any Google account gets in. An account not on the list is told so on the sign-in page; one taken off the list is signed out, and its tokens stop working, once Purgatory restarts with the new list. Each user may have `SANDBOX_QUOTA` sandboxes running at once (default 3, `0` = unlimited), guaranteed, and with `SANDBOX_QUOTA_MAX` more while the server has room to spare for the others' guarantees (*Running 4 / 3 · up to 10* beside **New sandbox**); asleep, deep-sleeping and archived ones are not counted, so letting a sandbox sleep frees its place, and the admin is not limited. At the limit a user can neither create a sandbox nor wake one, from sleep or deep sleep: its address shows *Running limit reached*, its address shows *Running limit reached* with the running sandboxes, and **Wake** in the panel lets the owner put one to sleep instead (`POST /sandboxes/:name/start` with `{"sleep": "<name>"}`). Purgatory never puts a sandbox to sleep on its own. Running sandboxes' web addresses do not go through Purgatory: they keep working while it is down; waking needs it, and so do the TLS TCP addresses and Docker access (they go through Purgatory's TCP gateway). `SANDBOX_MAX_TOTAL` (default 200) caps the running sandboxes on the whole server, the admin's included (asleep ones take no place): when it is reached nobody but the admin can create one or wake one (*The server is full*). The sign-in page shows the sandbox places above the sign-in buttons (taken and free; `LOGIN_CAPACITY=off` hides them), and once signed in the top bar does, on every page (e.g. *142 / 200 places*, the free ones on hover; orange from 90%, red when full). The **Overview** page shows the counts as cards: running of how many allowed, asleep, deep sleep and archived; for the admin the sandbox places used against the server limit (the admin's own sandboxes take places too), the host's CPU and memory (used now and reserved by running sandboxes), the disk use and a table per owner.
+Anyone with an account at the OIDC provider can sign in and create sandboxes, unless `OIDC_ALLOWED_DOMAINS` or `OIDC_ALLOWED_EMAILS` limits it (e.g. to `example.com`): with Google, set one of them, or any Google account gets in. An account not on the list is told so on the sign-in page; one taken off the list is signed out, and its tokens stop working, once Purgatory restarts with the new list. Each user may have `SANDBOX_QUOTA` sandboxes running at once (default 3, `0` = unlimited), guaranteed, and with `SANDBOX_QUOTA_MAX` more while the server has room to spare for the others' guarantees (*Running 4 / 3 · up to 10* beside **New sandbox**); asleep, deep-sleeping and archived ones are not counted, so letting a sandbox sleep frees its place, and the admin is not limited. At the limit a user can neither create a sandbox nor wake one, from sleep or deep sleep: its address shows *Running limit reached*, its address shows *Running limit reached* with the running sandboxes, and **Wake** in the panel lets the owner put one to sleep instead (`POST /sandboxes/:name/start` with `{"sleep": "<name>"}`). Purgatory never puts a sandbox to sleep on its own. Running sandboxes' web addresses do not go through Purgatory: they keep working while it is down; waking needs it, and so do the TLS TCP addresses and Docker access (they go through Purgatory's TCP gateway). `SANDBOX_MAX_TOTAL` (default 200) caps the running sandboxes on the whole server, the admin's included (asleep ones take no place): when it is reached nobody but the admin can create one or wake one (*The server is full*). The sign-in page shows the sandbox places above the sign-in buttons (taken and free; `LOGIN_CAPACITY=off` hides them), and once signed in the top bar does, on every page (e.g. *142 / 200 places*, the free ones on hover; orange from 90%, red when full). The **Overview** page shows the counts as cards: running of how many allowed, asleep, deep sleep and archived; for the admin the sandbox places used against the server limit (the admin's own sandboxes take places too), the host's CPU and memory (used now and reserved by running sandboxes), the disk use, a table per owner and a **Users** table. Users lists every account that has signed in since 0.10.2 (by e-mail; `admin` for the local admin): when it was last seen (a page load, at most every 10 minutes), its last sign-in and how many, its sandboxes now and created, and its last API use (its tokens); *no sandbox yet* marks someone who signed in but never created one. Owners of sandboxes from before have no dates. The rows are kept in `data/user-stats.json` until the admin deletes one (**Delete**: only the row; the account and its sandboxes stay). Only the admin sees them (`GET /users`, `DELETE /users/:account`).
 
 From **Access tokens** (`/settings/tokens`), a signed-in user can mint a personal access token (`p7y_…`) for their own agents to use as `Authorization: Bearer p7y_…`; the token acts as that user for the API. The full token is shown once, at creation. Tokens can be set to expire in 30 days, 90 days, or never, and can be revoked at any time.
 
@@ -685,20 +692,20 @@ Give a coding agent (Claude Code, Codex, Cursor…) a personal access token and 
 
 [docs/agent-guide.md](https://p7y-dev.github.io/p7y/0.10/agent-guide/index.md) is written for the agent: every call it needs, tried against a live Purgatory. A token limited to one sandbox keeps the agent away from your other sandboxes; a token for all your sandboxes (Access tokens → + New token) acts as you.
 
-An agent with MCP can also use Purgatory as an MCP server with the same token: see [MCP](https://p7y-dev.github.io/p7y/0.10/mcp/index.md). In Claude Code, the [p7y plugin](https://p7y-dev.github.io/p7y/0.10/claude-plugin/index.md) sets up both in one go: `/plugin marketplace add p7y-dev/p7y`, `/plugin install p7y@p7y`.
+An agent with MCP can also use Purgatory as an MCP server with the same token: see [MCP](https://p7y-dev.github.io/p7y/0.10/mcp/index.md). In Claude Code, the [p7y plugin](https://p7y-dev.github.io/p7y/0.10/claude-plugin/index.md) needs no token typed in: install it once (`/plugin marketplace add p7y-dev/p7y`, `/plugin install p7y@p7y`), then run `/p7y:init <address> <sandbox>` in the project and approve in the browser.
 
 ## Docker, registry, export
 
 A coding agent (Claude Code, Codex…) can work on a sandbox with plain `docker` commands:
 
 - **Docker from outside:** `<raw>-docker.<domain>:443` reaches the sandbox's own Docker daemon. Purgatory does not open that TLS: it only reads the name and passes the connection through, so the Docker command line and the sandbox talk to each other with the sandbox's own certificates (only whoever holds its client key gets in). It does not wake a sleeping sandbox (wake it first: **Wake**, `POST /sandboxes/:name/start`, or the MCP tool `wake_sandbox`); traffic on the connection keeps a running one awake, a connection that is only open (e.g. Docker Desktop keeping a context connected) does not. Sandboxes created before this need new certificates once: **Access → Enable** (restarts the sandbox).
-- **Let your agent deploy…**, on a sandbox's **Apps** tab (and in the Advanced view also at the top of its **Access** tab), is the same window in both views. For the [Claude Code plugin](https://p7y-dev.github.io/p7y/0.10/claude-plugin/index.md): **Create token** makes a token for the sandbox and the command that installs the plugin with it, to paste into a terminal. For other agents: **Download** gives `p7y-<raw>.zip`, with a `.p7y` folder to unpack in the project's root folder (its own `.gitignore` of `*` keeps it out of git; add `.p7y` to `.dockerignore` too, so that a build never copies it into an image), and what to tell the agent (*set up the p7y zip from my Downloads in this project and deploy*). Before a sandbox has Docker access it offers to enable it, or to export without the Docker keys. In the Advanced view the window has **Options**: the token's name and expiry (for the plugin's token and the zip), a zip without the Docker keys, and **Copy as .env**, which puts `p7y.env` (a new token for the sandbox) on the clipboard. When the sandbox's Portainer is public, both also carry `P7Y_PORTAINER_URL` and a Portainer API token (`P7Y_PORTAINER_TOKEN`, sent as `X-API-Key`), made for the export, so the agent never gets the Portainer admin password; making it wakes the sandbox. That token does not expire and revoking the Purgatory token does not revoke it: delete it in the sandbox's Portainer (My account → Access tokens). The `.p7y` folder holds `p7y.env` (with a new token limited to the sandbox, `P7Y_DOCKER_HOST`, `P7Y_REGISTRY`), the Docker client keys and a README with the `docker context create` command for Windows and macOS/Linux. It is a secret; **Rotate Docker keys…** makes the keys of earlier exports useless.
+- **Let your agent deploy…**, on a sandbox's **Apps** tab (and in the Advanced view also at the top of its **Access** tab), is the same window in both views. For the [Claude Code plugin](https://p7y-dev.github.io/p7y/0.10/claude-plugin/index.md): the two lines that install it (once), and the `/p7y:init <address> <sandbox>` line to paste into Claude Code in the project; you approve in the browser, and the project gets its `.p7y` folder with a token for the sandbox. For other agents: **Download** gives `p7y-<raw>.zip`, with a `.p7y` folder to unpack in the project's root folder (its own `.gitignore` of `*` keeps it out of git; add `.p7y` to `.dockerignore` too, so that a build never copies it into an image), and what to tell the agent (*set up the p7y zip from my Downloads in this project and deploy*). Before a sandbox has Docker access it offers to enable it, or to export without the Docker keys. In the Advanced view the window has **Options**: the token's name and expiry (for the zip), a zip without the Docker keys, and **Copy as .env**, which puts `p7y.env` (a new token for the sandbox) on the clipboard. When the sandbox's Portainer is public, both also carry `P7Y_PORTAINER_URL` and a Portainer API token (`P7Y_PORTAINER_TOKEN`, sent as `X-API-Key`), made for the export, so the agent never gets the Portainer admin password; making it wakes the sandbox. That token does not expire and revoking the Purgatory token does not revoke it: delete it in the sandbox's Portainer (My account → Access tokens). The `.p7y` folder holds `p7y.env` (with a new token limited to the sandbox, `P7Y_DOCKER_HOST`, `P7Y_REGISTRY`), the Docker client keys and a README with the `docker context create` command for Windows and macOS/Linux. It is a secret; **Rotate Docker keys…** makes the keys of earlier exports useless.
 - **Registry:** `docker login registry.<domain>` with a Purgatory token as the password (a token limited to a sandbox pushes to `<raw>/…`, a personal one to its owner's sandboxes); the password returned at create still works.
 - **Anonymous pull after a secret scan:** every push is scanned (files such as `.env`, private keys, and well-known key formats, in every layer and in the image config, where Dockerfile `ENV` lines end up). Anonymous pull is decided per repository: one whose versions are all clean — and that has nothing in the registry Purgatory has not scanned — can be pulled by anyone without logging in; one flagged, unscanned or failed version keeps the whole repository private until it is deleted. The registry tells Purgatory about pushes with a secret Purgatory generates (`data/registry-notify.secret`). Garbage collection runs weekly; a push at that very moment may fail and needs a retry. The **Registry** tab shows the images, the scan results (masked) and a Delete button. `REGISTRY_PUBLIC_PULL=false` keeps everything private.
 
 ## An agent inside a sandbox
 
-A coding agent can also run inside one sandbox (say, in a VS Code or code-server container there) and deploy to another: give it that other sandbox's access as usual (the [Claude Code plugin](https://p7y-dev.github.io/p7y/0.10/claude-plugin/index.md) with that sandbox's token, or its zip). It needs two names to reach from inside the sandbox: Purgatory's (`p7y.<domain>`, the API and MCP) and the other sandbox's Docker address (`<sandbox>-docker.<domain>`), plus its apps' addresses if it opens them.
+A coding agent can also run inside one sandbox (say, in a VS Code or code-server container there) and deploy to another: give it that other sandbox's access as usual (the [Claude Code plugin](https://p7y-dev.github.io/p7y/0.10/claude-plugin/index.md) with `/p7y:init` for that sandbox, or its zip). It needs two names to reach from inside the sandbox: Purgatory's (`p7y.<domain>`, the API and MCP) and the other sandbox's Docker address (`<sandbox>-docker.<domain>`), plus its apps' addresses if it opens them.
 
 **With a real domain** (a wildcard DNS record for `*.<domain>`), these names point at the server from inside a sandbox too: nothing to set. The server must reach its own public address from inside, which it usually does ("hairpin NAT"; most clouds and Docker do it).
 
@@ -719,7 +726,7 @@ It has to be an address: `extra_hosts` takes no names, and `host-gateway` inside
 
 The same API is an MCP server at `/mcp` (Streamable HTTP): each endpoint is a tool, such as `list_sandboxes`, `create_sandbox`, `wake_sandbox`, `sleep_sandbox`, `get_sandbox` (with its app links), `set_sleep_settings`, and for the sandbox's files `list_sandbox_files`, `read_sandbox_file`, `write_sandbox_file`, `create_sandbox_folder`, `delete_sandbox_file` and `list_sandbox_volumes` (the apps' volumes, whose paths the other file tools take). A tool call runs the endpoint with the caller's token, so it can do exactly what that token can do on the REST API; a token limited to one sandbox stays limited to it, and is offered only the tools it may call (no `create_sandbox`, no token or SSH key management). Only tokens are accepted (not a browser session).
 
-For Claude Code, the [p7y plugin](https://p7y-dev.github.io/p7y/0.10/claude-plugin/index.md) adds it with a deploy skill (`/plugin marketplace add p7y-dev/p7y`, `/plugin install p7y@p7y`), or by hand:
+For Claude Code, add it by hand (the [p7y plugin](https://p7y-dev.github.io/p7y/0.10/claude-plugin/index.md) is a deploy skill and does not add it):
 
 ```
 claude mcp add --transport http p7y https://p7y.example.com/mcp --header "Authorization: Bearer p7y_…"
@@ -743,54 +750,62 @@ New to this?
 
 [Put your app online with Claude Code](https://p7y-dev.github.io/p7y/0.10/tutorials/claude-code/index.md) walks through it step by step.
 
-The `p7y` plugin connects Claude Code to your Purgatory and teaches it to deploy: you say *put my app online*, it picks or creates a sandbox, wakes it, deploys the project to the sandbox's own Docker, checks that the app answers and gives you its address.
+The `p7y` plugin teaches Claude Code to deploy: you say *put my app online*, it deploys the project to your sandbox's own Docker, checks that the app answers and gives you its address. The plugin itself keeps no address and no token: each project says which Purgatory and which sandbox it belongs to, in its own `.p7y` folder.
 
 ## Install
 
-In Claude Code:
+Once on your computer, from a terminal (a sandbox's **Let your agent deploy…** shows these lines ready to copy). Claude Code in an editor (the VS Code extension) has no `/plugin`, so there this is the way:
+
+```
+claude plugin marketplace add p7y-dev/p7y
+claude plugin install p7y@p7y
+```
+
+Or in Claude Code:
 
 ```
 /plugin marketplace add p7y-dev/p7y
 /plugin install p7y@p7y
 ```
 
-Or from a terminal, without starting Claude (a sandbox's **Let your agent deploy…** gives this, filled in, after **Create token**). Claude Code in an editor (the VS Code extension) has no `/plugin`, so there it is the way:
+Claude Code asks where to install it: **user** (every folder of yours; usually what you want), **project** (this repository, for everyone who uses it, through its `.claude/settings.json`) or **local** (this folder, only you). It asks for nothing else: no address, no token. Updates come with Purgatory's releases (`/plugin marketplace update p7y`).
+
+## Connect a project: `/p7y:init`
+
+In Claude Code, in the project's root folder, run the line that **Let your agent deploy…** shows for the sandbox:
 
 ```
-claude plugin marketplace add p7y-dev/p7y
-claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.com --config p7y_token=p7y_…
+/p7y:init https://p7y.example.com shop
 ```
 
-(that leaves the token in the shell's history).
+Claude Code prints a link. Open it in your browser (sign in first if Purgatory asks). The page shows a code and the sandbox; check that the code is the one Claude Code printed and click **Approve** (or **Deny**). Only the sandbox's owner (or the admin) can approve. The code works once and expires in 10 minutes.
 
-Claude Code asks where to install it: **user** (every folder of yours; usually what you want), **project** (this repository, for everyone who uses it, through its `.claude/settings.json`) or **local** (this folder, only you). Then it asks for two things, which a sandbox's **Let your agent deploy…** shows, ready to copy:
+Then Claude Code unpacks the project's `.p7y` folder straight to disk: a new token for that sandbox only (in `.p7y/p7y.env`, 90 days) and the sandbox's Docker keys. The token never shows on the screen or in the chat. The folder keeps itself out of git, and the token is listed in Purgatory under **Access tokens** as `Claude Code init <date>`, where you can revoke it.
 
-- **Purgatory address**: as in your browser, e.g. `https://p7y.example.com`;
-- **Purgatory access token**: **Create token** there makes one for that sandbox only (it starts with `p7y_` and is shown once). Claude Code keeps it in your system's secure storage, not in a file.
-
-Change them later with `/plugin` → p7y. Updates come with Purgatory's releases (`/plugin marketplace update p7y`).
-
-### Which token
-
-- **For one sandbox** (the default): the safest; the agent can use that sandbox and nothing else, and cannot create sandboxes. For another project with another sandbox, download that sandbox's zip into it (below): the agent uses the `.p7y` folder's own token for it.
-- **For all your sandboxes** (Advanced view → **Access tokens** → **+ New token**): handy with many sandboxes; the agent picks the sandbox by the project's name, asks when it is not clear, and creates one when there is none.
+Run `/p7y:init` again whenever the token has expired or was revoked. A project can be tied to one sandbox at a time; another project in another folder can be tied to another sandbox, or to another Purgatory.
 
 ## The `.p7y` folder
 
-The plugin ties each project to its sandbox with a `.p7y` folder in the project's root folder: the sandbox's name, its Docker keys (and, from an export, a token). The agent writes it the first time it deploys a project, or unpacks it from an export zip. It holds secrets, and it keeps itself out of git: its own `.gitignore` is a single `*`. Add `.p7y` to `.dockerignore` too, so that a build never copies it into an image; the agent does when it writes one.
+The `.p7y` folder in the project's root folder says which Purgatory and which sandbox the project belongs to: `p7y.env` (the address, the sandbox's name and its token) and the sandbox's Docker keys. `/p7y:init` writes it, or you unpack it from an export zip. It holds secrets, and it keeps itself out of git: its own `.gitignore` is a single `*`. Add `.p7y` to `.dockerignore` too, so that a build never copies it into an image; the agent does when it writes one.
 
 ## Use
 
-In your project's folder, ask in your own words, e.g. *deploy this app to my sandbox* or *give me a link to show this to someone*, or run `/p7y:deploy`. You need Docker installed on your machine (the build runs in the sandbox, but the `docker` command line talks to it).
+In your project's folder, ask in your own words, e.g. *deploy this app to my sandbox* or *give me a link to show this to someone*, or run `/p7y:deploy`. You need Docker installed on your machine (the build runs in the sandbox, but the `docker` command line talks to it). In a project without a `.p7y` folder, the agent tells you to run `/p7y:init` first.
 
-The plugin has:
+The plugin has two skills:
 
-- the **p7y MCP server**: your Purgatory's [MCP](https://p7y-dev.github.io/p7y/0.10/mcp/index.md) at `<address>/mcp`, with your token: list, create, wake and put sandboxes to sleep, their apps and files. Its `project_dir_link` gives a single-use link to the project's `.p7y` folder, which the agent unpacks with `curl … | tar -x`: the Docker keys go to the disk and never pass through the model (copied by a model a key gets garbled, and it would end up in the transcript);
-- the **deploy skill** (`/p7y:deploy`): the steps of the [agent guide](https://p7y-dev.github.io/p7y/0.10/agent-guide/index.md) in short, for an agent that may be talking to someone who is not a developer.
+- **`/p7y:init`**: ties the project to a sandbox, as above;
+- **`/p7y:deploy`**: the steps of the [agent guide](https://p7y-dev.github.io/p7y/0.10/agent-guide/index.md) in short, for an agent that may be talking to someone who is not a developer. It works from `.p7y/p7y.env` with the REST API, and gets fresh Docker keys through a single-use link (unpacked to the disk, so a key never passes through the model: copied by a model a key gets garbled, and it would end up in the transcript).
+
+The plugin does not bring the MCP server. Purgatory still has one, for other MCP clients: see [MCP](https://p7y-dev.github.io/p7y/0.10/mcp/index.md).
+
+## Upgrading from the earlier plugin
+
+The earlier plugin asked for an address and a token and kept them for the whole machine. Run `/plugin marketplace update p7y`, then `/p7y:init` once in each project. Those older settings are not used any more.
 
 ## Where it works
 
-The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's **Code** tab; also in Claude Code inside a sandbox, deploying to another one (on a local `lvh.me` stack see [An agent inside a sandbox](https://p7y-dev.github.io/p7y/0.10/agents/#an-agent-inside-a-sandbox)). Claude chat and Cowork can install it too (**Customize → Plugins**, add the marketplace `p7y-dev/p7y`), but there only the skill works: they do not ask for the address and the token, so the MCP server is not connected. Without the plugin, any agent can deploy with an export (**Let your agent deploy…** on a sandbox) or a token: see [Let your agent deploy](https://p7y-dev.github.io/p7y/0.10/agents/index.md).
+The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's **Code** tab; also in Claude Code inside a sandbox, deploying to another one (on a local `lvh.me` stack see [An agent inside a sandbox](https://p7y-dev.github.io/p7y/0.10/agents/#an-agent-inside-a-sandbox)). Claude chat and Cowork can install it too (**Customize → Plugins**, add the marketplace `p7y-dev/p7y`), but they cannot run commands on your computer, so there it does not do much. Without the plugin, any agent can deploy with an export (**Let your agent deploy…** on a sandbox) or a token: see [Let your agent deploy](https://p7y-dev.github.io/p7y/0.10/agents/index.md).
 
 # Purgatory for agents: deploy and update apps in a sandbox
 
@@ -1046,6 +1061,9 @@ The stack Purgatory deployed when it created the sandbox (Portainer + `http-echo
 | `POST`   | `/sandboxes/:name/export`                | A zip for coding agents: a new token for the sandbox, its Docker client keys, a README (owner/admin; not with a token limited to one sandbox); `docker: false` without the keys, `format: "env"` the p7y.env text                                                                                                                                                                                                   |
 | `POST`   | `/sandboxes/:name/project-link`          | A single-use link (5 minutes) to the project's `.p7y` folder with the Docker client keys, checked first; answers `url`, `command` (`curl … \| tar -x`) and `context_commands`, never the keys                                                                                                                                                                                                                       |
 | `GET`    | `/project-dir/:token`                    | The `.p7y` folder as a tar, once (no token: the link is the authorization); `410` when used or expired                                                                                                                                                                                                                                                                                                              |
+| `POST`   | `/device/code`                           | Start a device approval for `/p7y:init` (no token; `sandbox` optional): answers `device_code` (the agent's secret), `user_code`, `verification_uri_complete`, `expires_in` (600) and `interval` (3); both codes live 10 minutes                                                                                                                                                                                     |
+| `POST`   | `/device/poll`                           | Ask whether it was approved (no token; `device_code` in the body): `{"status": "pending"}` or `"denied"`, `410` `"expired"` (also for a used code), or `approved` with the same answer as `project-link`, once                                                                                                                                                                                                      |
+| `GET`    | `/activate`                              | The page where a signed-in owner approves or denies a code (`?code=`); `POST` sends the decision                                                                                                                                                                                                                                                                                                                    |
 | `POST`   | `/sandboxes/:name/docker-keys`           | New Docker access certificates (**Enable** / **Rotate Docker keys…**); restarts the sandbox                                                                                                                                                                                                                                                                                                                         |
 | `GET`    | `/sandboxes/:name/registry`              | The sandbox's images in the registry, with secret-scan results                                                                                                                                                                                                                                                                                                                                                      |
 | `DELETE` | `/sandboxes/:name/registry/:app/:digest` | Delete one version of an image                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -1074,6 +1092,8 @@ The stack Purgatory deployed when it created the sandbox (Portainer + `http-echo
 | `GET`    | `/tokens`                                | List your personal access tokens (`hint`: the token's start and end, e.g. `p7y_aB3x…9fQz`; null for tokens made before hints)                                                                                                                                                                                                                                                                                       |
 | `POST`   | `/tokens`                                | Mint a personal access token (`name`, optional `expires_in` like `30d`/`90d`/`never`)                                                                                                                                                                                                                                                                                                                               |
 | `DELETE` | `/tokens/:id`                            | Revoke a personal access token                                                                                                                                                                                                                                                                                                                                                                                      |
+| `GET`    | `/users`                                 | Accounts (admin): first and last seen, last sign-in, sign-ins, sandboxes now and created, last API use                                                                                                                                                                                                                                                                                                              |
+| `DELETE` | `/users/:account`                        | Forget an account's stats row (admin); the account and its sandboxes stay                                                                                                                                                                                                                                                                                                                                           |
 
 All endpoints require `Authorization: Bearer <ADMIN_TOKEN | personal token>` or a signed-in browser session. Users only see their own sandboxes.
 
@@ -1172,7 +1192,7 @@ Think of it as **a self-hosted Vercel or Railway for the whole team**: you hand 
 - **Its own Docker for everyone.** Every sandbox has its own Docker daemon: what an agent produces (`docker-compose.yml` with app, database, cache) runs as it is, and nobody sees or breaks anyone else's containers.
 - **A URL for every app, automatically.** Whatever a sandbox publishes gets `https://<name>-<app>.<domain>`; databases and SSH get a TLS address on port 443. No DNS, no proxy rules per app.
 - **Idle costs nothing.** A sandbox without traffic falls asleep and wakes on the next request; after a longer sleep its containers are freed. Twenty experiments, three in use: the server carries three.
-- **Made for coding agents.** **Let your agent deploy…** (the Claude Code plugin, or a zip for any agent) gives the agent a token for that one sandbox, Docker access from outside and a registry login; every pushed image is scanned for secrets before anyone can pull it anonymously.
+- **Made for coding agents.** **Let your agent deploy…** (the Claude Code plugin with `/p7y:init`, or a zip for any agent) gives the agent a token for that one sandbox, Docker access from outside and a registry login; every pushed image is scanned for secrets before anyone can pull it anonymously.
 - **Your server, your data, no bill per app.** One `docker compose up` on one Linux host, also inside a company network; no paid edition.
 - **Nothing is lost.** Delete archives the sandbox's configuration and data.
 

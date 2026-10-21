@@ -1858,7 +1858,7 @@
 <li><strong>Its own Docker for everyone.</strong> Every sandbox has its own Docker daemon: what an agent produces (<code>docker-compose.yml</code> with app, database, cache) runs as it is, and nobody sees or breaks anyone else's containers.</li>
 <li><strong>A URL for every app, automatically.</strong> Whatever a sandbox publishes gets <code>https://&lt;name&gt;-&lt;app&gt;.&lt;domain&gt;</code>; databases and SSH get a TLS address on port 443. No DNS, no proxy rules per app.</li>
 <li><strong>Idle costs nothing.</strong> A sandbox without traffic falls asleep and wakes on the next request; after a longer sleep its containers are freed. Twenty experiments, three in use: the server carries three.</li>
-<li><strong>Made for coding agents.</strong> <strong>Let your agent deploy…</strong> (the Claude Code plugin, or a zip for any agent) gives the agent a token for that one sandbox, Docker access from outside and a registry login; every pushed image is scanned for secrets before anyone can pull it anonymously.</li>
+<li><strong>Made for coding agents.</strong> <strong>Let your agent deploy…</strong> (the Claude Code plugin with <code>/p7y:init</code>, or a zip for any agent) gives the agent a token for that one sandbox, Docker access from outside and a registry login; every pushed image is scanned for secrets before anyone can pull it anonymously.</li>
 <li><strong>Your server, your data, no bill per app.</strong> One <code>docker compose up</code> on one Linux host, also inside a company network; no paid edition.</li>
 <li><strong>Nothing is lost.</strong> Delete archives the sandbox's configuration and data.</li>
 </ul>

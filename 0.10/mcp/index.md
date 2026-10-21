@@ -4,7 +4,7 @@
 
 The same API is an MCP server at `/mcp` (Streamable HTTP): each endpoint is a tool, such as `list_sandboxes`, `create_sandbox`, `wake_sandbox`, `sleep_sandbox`, `get_sandbox` (with its app links), `set_sleep_settings`, and for the sandbox's files `list_sandbox_files`, `read_sandbox_file`, `write_sandbox_file`, `create_sandbox_folder`, `delete_sandbox_file` and `list_sandbox_volumes` (the apps' volumes, whose paths the other file tools take). A tool call runs the endpoint with the caller's token, so it can do exactly what that token can do on the REST API; a token limited to one sandbox stays limited to it, and is offered only the tools it may call (no `create_sandbox`, no token or SSH key management). Only tokens are accepted (not a browser session).
 
-For Claude Code, the [p7y plugin](https://p7y-dev.github.io/p7y/0.10/claude-plugin/index.md) adds it with a deploy skill (`/plugin marketplace add p7y-dev/p7y`, `/plugin install p7y@p7y`), or by hand:
+For Claude Code, add it by hand (the [p7y plugin](https://p7y-dev.github.io/p7y/0.10/claude-plugin/index.md) is a deploy skill and does not add it):
 
 ```
 claude mcp add --transport http p7y https://p7y.example.com/mcp --header "Authorization: Bearer p7y_…"

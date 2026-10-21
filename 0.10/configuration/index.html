@@ -1715,6 +1715,21 @@
 <td>The topbar links to the GitHub repo and shows Purgatory's version, stars and forks. The server fetches the counts at most once an hour (users' browsers never contact GitHub); <code>off</code> never asks GitHub, and the link and the version stay</td>
 </tr>
 <tr>
+<td><code>GITHUB_LINK</code></td>
+<td><code>on</code></td>
+<td><code>off</code> takes the GitHub card out of the topbar (and GitHub is never asked for the counts)</td>
+</tr>
+<tr>
+<td><code>UI_TITLE</code></td>
+<td><code>Purgatory</code></td>
+<td>The name at the top left, on the sign-in page and in the browser tab titles; <code>none</code> shows no name</td>
+</tr>
+<tr>
+<td><code>UI_LOGO</code></td>
+<td>Purgatory's logo</td>
+<td>The logo next to the name and the browser tab icon, on the Hub too: an <code>https://</code> address, or an image file in the container (<code>.svg</code>, <code>.png</code>, <code>.jpg</code>, <code>.webp</code>, <code>.gif</code>, <code>.ico</code>), e.g. <code>/app/data/logo.png</code> for <code>./data/logo.png</code>, served as <code>/assets/custom-logo</code>; <code>none</code> shows no logo. Its height is fixed, its width follows the image</td>
+</tr>
+<tr>
 <td><code>DEFAULT_TEMPLATE</code></td>
 <td><code>starter</code></td>
 <td>Template for new sandboxes when a request names none. An old value such as <code>dind-standard</code> makes every create without a template fail with <code>Unknown template</code></td>

@@ -1719,6 +1719,21 @@
 </tr>
 <tr>
 <td><code>POST</code></td>
+<td><code>/device/code</code></td>
+<td>Start a device approval for <code>/p7y:init</code> (no token; <code>sandbox</code> optional): answers <code>device_code</code> (the agent's secret), <code>user_code</code>, <code>verification_uri_complete</code>, <code>expires_in</code> (600) and <code>interval</code> (3); both codes live 10 minutes</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/device/poll</code></td>
+<td>Ask whether it was approved (no token; <code>device_code</code> in the body): <code>{"status": "pending"}</code> or <code>"denied"</code>, <code>410</code> <code>"expired"</code> (also for a used code), or <code>approved</code> with the same answer as <code>project-link</code>, once</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/activate</code></td>
+<td>The page where a signed-in owner approves or denies a code (<code>?code=</code>); <code>POST</code> sends the decision</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
 <td><code>/sandboxes/:name/docker-keys</code></td>
 <td>New Docker access certificates (<strong>Enable</strong> / <strong>Rotate Docker keys…</strong>); restarts the sandbox</td>
 </tr>
@@ -1856,6 +1871,16 @@
 <td><code>DELETE</code></td>
 <td><code>/tokens/:id</code></td>
 <td>Revoke a personal access token</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/users</code></td>
+<td>Accounts (admin): first and last seen, last sign-in, sign-ins, sandboxes now and created, last API use</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/users/:account</code></td>
+<td>Forget an account's stats row (admin); the account and its sandboxes stay</td>
 </tr>
 </tbody>
 </table>

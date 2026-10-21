@@ -1313,22 +1313,16 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Install">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#which-token" class="md-nav__link">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connect-a-project-p7yinit" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Which token
+        Connect a project: /p7y:init
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1348,6 +1342,17 @@
     <span class="md-ellipsis">
       
         Use
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrading-from-the-earlier-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading from the earlier plugin
       
     </span>
   </a>
@@ -1671,22 +1676,16 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Install">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#which-token" class="md-nav__link">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connect-a-project-p7yinit" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Which token
+        Connect a project: /p7y:init
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1706,6 +1705,17 @@
     <span class="md-ellipsis">
       
         Use
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrading-from-the-earlier-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading from the earlier plugin
       
     </span>
   </a>
@@ -1745,39 +1755,38 @@
 <p class="admonition-title">New to this?</p>
 <p><a href="../tutorials/claude-code/">Put your app online with Claude Code</a> walks through it step by step.</p>
 </div>
-<p>The <code>p7y</code> plugin connects Claude Code to your Purgatory and teaches it to deploy: you say <em>put my app online</em>, it picks or creates a sandbox, wakes it, deploys the project to the sandbox's own Docker, checks that the app answers and gives you its address.</p>
+<p>The <code>p7y</code> plugin teaches Claude Code to deploy: you say <em>put my app online</em>, it deploys the project to your sandbox's own Docker, checks that the app answers and gives you its address. The plugin itself keeps no address and no token: each project says which Purgatory and which sandbox it belongs to, in its own <code>.p7y</code> folder.</p>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
-<p>In Claude Code:</p>
+<p>Once on your computer, from a terminal (a sandbox's <strong>Let your agent deploy…</strong> shows these lines ready to copy). Claude Code in an editor (the VS Code extension) has no <code>/plugin</code>, so there this is the way:</p>
+<div class="highlight"><pre><span></span><code>claude plugin marketplace add p7y-dev/p7y
+claude plugin install p7y@p7y
+</code></pre></div>
+<p>Or in Claude Code:</p>
 <div class="highlight"><pre><span></span><code>/plugin marketplace add p7y-dev/p7y
 /plugin install p7y@p7y
 </code></pre></div>
-<p>Or from a terminal, without starting Claude (a sandbox's <strong>Let your agent deploy…</strong> gives this, filled in, after <strong>Create token</strong>). Claude Code in an editor (the VS Code extension) has no <code>/plugin</code>, so there it is the way:</p>
-<div class="highlight"><pre><span></span><code>claude plugin marketplace add p7y-dev/p7y
-claude plugin install p7y@p7y --scope user --config p7y_url=https://p7y.example.com --config p7y_token=p7y_…
+<p>Claude Code asks where to install it: <strong>user</strong> (every folder of yours; usually what you want), <strong>project</strong> (this repository, for everyone who uses it, through its <code>.claude/settings.json</code>) or <strong>local</strong> (this folder, only you). It asks for nothing else: no address, no token. Updates come with Purgatory's releases (<code>/plugin marketplace update p7y</code>).</p>
+<h2 id="connect-a-project-p7yinit">Connect a project: <code>/p7y:init</code><a class="headerlink" href="#connect-a-project-p7yinit" title="Permanent link">&para;</a></h2>
+<p>In Claude Code, in the project's root folder, run the line that <strong>Let your agent deploy…</strong> shows for the sandbox:</p>
+<div class="highlight"><pre><span></span><code>/p7y:init https://p7y.example.com shop
 </code></pre></div>
-<p>(that leaves the token in the shell's history).</p>
-<p>Claude Code asks where to install it: <strong>user</strong> (every folder of yours; usually what you want), <strong>project</strong> (this repository, for everyone who uses it, through its <code>.claude/settings.json</code>) or <strong>local</strong> (this folder, only you). Then it asks for two things, which a sandbox's <strong>Let your agent deploy…</strong> shows, ready to copy:</p>
-<ul>
-<li><strong>Purgatory address</strong>: as in your browser, e.g. <code>https://p7y.example.com</code>;</li>
-<li><strong>Purgatory access token</strong>: <strong>Create token</strong> there makes one for that sandbox only (it starts with <code>p7y_</code> and is shown once). Claude Code keeps it in your system's secure storage, not in a file.</li>
-</ul>
-<p>Change them later with <code>/plugin</code> → p7y. Updates come with Purgatory's releases (<code>/plugin marketplace update p7y</code>).</p>
-<h3 id="which-token">Which token<a class="headerlink" href="#which-token" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>For one sandbox</strong> (the default): the safest; the agent can use that sandbox and nothing else, and cannot create sandboxes. For another project with another sandbox, download that sandbox's zip into it (below): the agent uses the <code>.p7y</code> folder's own token for it.</li>
-<li><strong>For all your sandboxes</strong> (Advanced view → <strong>Access tokens</strong> → <strong>+ New token</strong>): handy with many sandboxes; the agent picks the sandbox by the project's name, asks when it is not clear, and creates one when there is none.</li>
-</ul>
+<p>Claude Code prints a link. Open it in your browser (sign in first if Purgatory asks). The page shows a code and the sandbox; check that the code is the one Claude Code printed and click <strong>Approve</strong> (or <strong>Deny</strong>). Only the sandbox's owner (or the admin) can approve. The code works once and expires in 10 minutes.</p>
+<p>Then Claude Code unpacks the project's <code>.p7y</code> folder straight to disk: a new token for that sandbox only (in <code>.p7y/p7y.env</code>, 90 days) and the sandbox's Docker keys. The token never shows on the screen or in the chat. The folder keeps itself out of git, and the token is listed in Purgatory under <strong>Access tokens</strong> as <code>Claude Code init &lt;date&gt;</code>, where you can revoke it.</p>
+<p>Run <code>/p7y:init</code> again whenever the token has expired or was revoked. A project can be tied to one sandbox at a time; another project in another folder can be tied to another sandbox, or to another Purgatory.</p>
 <h2 id="the-p7y-folder">The <code>.p7y</code> folder<a class="headerlink" href="#the-p7y-folder" title="Permanent link">&para;</a></h2>
-<p>The plugin ties each project to its sandbox with a <code>.p7y</code> folder in the project's root folder: the sandbox's name, its Docker keys (and, from an export, a token). The agent writes it the first time it deploys a project, or unpacks it from an export zip. It holds secrets, and it keeps itself out of git: its own <code>.gitignore</code> is a single <code>*</code>. Add <code>.p7y</code> to <code>.dockerignore</code> too, so that a build never copies it into an image; the agent does when it writes one.</p>
+<p>The <code>.p7y</code> folder in the project's root folder says which Purgatory and which sandbox the project belongs to: <code>p7y.env</code> (the address, the sandbox's name and its token) and the sandbox's Docker keys. <code>/p7y:init</code> writes it, or you unpack it from an export zip. It holds secrets, and it keeps itself out of git: its own <code>.gitignore</code> is a single <code>*</code>. Add <code>.p7y</code> to <code>.dockerignore</code> too, so that a build never copies it into an image; the agent does when it writes one.</p>
 <h2 id="use">Use<a class="headerlink" href="#use" title="Permanent link">&para;</a></h2>
-<p>In your project's folder, ask in your own words, e.g. <em>deploy this app to my sandbox</em> or <em>give me a link to show this to someone</em>, or run <code>/p7y:deploy</code>. You need Docker installed on your machine (the build runs in the sandbox, but the <code>docker</code> command line talks to it).</p>
-<p>The plugin has:</p>
+<p>In your project's folder, ask in your own words, e.g. <em>deploy this app to my sandbox</em> or <em>give me a link to show this to someone</em>, or run <code>/p7y:deploy</code>. You need Docker installed on your machine (the build runs in the sandbox, but the <code>docker</code> command line talks to it). In a project without a <code>.p7y</code> folder, the agent tells you to run <code>/p7y:init</code> first.</p>
+<p>The plugin has two skills:</p>
 <ul>
-<li>the <strong>p7y MCP server</strong>: your Purgatory's <a href="../mcp/">MCP</a> at <code>&lt;address&gt;/mcp</code>, with your token: list, create, wake and put sandboxes to sleep, their apps and files. Its <code>project_dir_link</code> gives a single-use link to the project's <code>.p7y</code> folder, which the agent unpacks with <code>curl … | tar -x</code>: the Docker keys go to the disk and never pass through the model (copied by a model a key gets garbled, and it would end up in the transcript);</li>
-<li>the <strong>deploy skill</strong> (<code>/p7y:deploy</code>): the steps of the <a href="../agent-guide/">agent guide</a> in short, for an agent that may be talking to someone who is not a developer.</li>
+<li><strong><code>/p7y:init</code></strong>: ties the project to a sandbox, as above;</li>
+<li><strong><code>/p7y:deploy</code></strong>: the steps of the <a href="../agent-guide/">agent guide</a> in short, for an agent that may be talking to someone who is not a developer. It works from <code>.p7y/p7y.env</code> with the REST API, and gets fresh Docker keys through a single-use link (unpacked to the disk, so a key never passes through the model: copied by a model a key gets garbled, and it would end up in the transcript).</li>
 </ul>
+<p>The plugin does not bring the MCP server. Purgatory still has one, for other MCP clients: see <a href="../mcp/">MCP</a>.</p>
+<h2 id="upgrading-from-the-earlier-plugin">Upgrading from the earlier plugin<a class="headerlink" href="#upgrading-from-the-earlier-plugin" title="Permanent link">&para;</a></h2>
+<p>The earlier plugin asked for an address and a token and kept them for the whole machine. Run <code>/plugin marketplace update p7y</code>, then <code>/p7y:init</code> once in each project. Those older settings are not used any more.</p>
 <h2 id="where-it-works">Where it works<a class="headerlink" href="#where-it-works" title="Permanent link">&para;</a></h2>
-<p>The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's <strong>Code</strong> tab; also in Claude Code inside a sandbox, deploying to another one (on a local <code>lvh.me</code> stack see <a href="../agents/#an-agent-inside-a-sandbox">An agent inside a sandbox</a>). Claude chat and Cowork can install it too (<strong>Customize → Plugins</strong>, add the marketplace <code>p7y-dev/p7y</code>), but there only the skill works: they do not ask for the address and the token, so the MCP server is not connected. Without the plugin, any agent can deploy with an export (<strong>Let your agent deploy…</strong> on a sandbox) or a token: see <a href="../agents/">Let your agent deploy</a>.</p>
+<p>The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's <strong>Code</strong> tab; also in Claude Code inside a sandbox, deploying to another one (on a local <code>lvh.me</code> stack see <a href="../agents/#an-agent-inside-a-sandbox">An agent inside a sandbox</a>). Claude chat and Cowork can install it too (<strong>Customize → Plugins</strong>, add the marketplace <code>p7y-dev/p7y</code>), but they cannot run commands on your computer, so there it does not do much. Without the plugin, any agent can deploy with an export (<strong>Let your agent deploy…</strong> on a sandbox) or a token: see <a href="../agents/">Let your agent deploy</a>.</p>
 
 
 

@@ -2,7 +2,7 @@
 
 Step by step, from nothing to an app with a link you can send to anyone. No server knowledge needed: your coding agent does the technical part.
 
-- **[Put your app online with Claude Code](https://p7y-dev.github.io/p7y/0.10/tutorials/claude-code/index.md)**: install the p7y plugin once, then say *deploy this app* in any project. The easiest way.
+- **[Put your app online with Claude Code](https://p7y-dev.github.io/p7y/0.10/tutorials/claude-code/index.md)**: install the p7y plugin once, approve each project in the browser, then say *deploy this app*. The easiest way.
 - **[Put your app online with any agent](https://p7y-dev.github.io/p7y/0.10/tutorials/other-agents/index.md)**: Codex, Cursor, or Claude Code without the plugin, with a zip from Purgatory.
 - **[Share your app with your team on the Hub](https://p7y-dev.github.io/p7y/0.10/tutorials/hub/index.md)**: list it where colleagues find, open and vote for it.
 
