@@ -761,10 +761,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-connect-the-project-and-deploy" class="md-nav__link">
+  <a href="#3-connect-your-project-folder-to-the-sandbox-once-per-folder" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Connect the project and deploy
+        3. Connect your project folder to the sandbox (once per folder)
       
     </span>
   </a>
@@ -772,10 +772,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-change-and-update" class="md-nav__link">
+  <a href="#4-deploy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Change and update
+        4. Deploy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-change-and-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Change and update
       
     </span>
   </a>
@@ -1690,10 +1701,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-connect-the-project-and-deploy" class="md-nav__link">
+  <a href="#3-connect-your-project-folder-to-the-sandbox-once-per-folder" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Connect the project and deploy
+        3. Connect your project folder to the sandbox (once per folder)
       
     </span>
   </a>
@@ -1701,10 +1712,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-change-and-update" class="md-nav__link">
+  <a href="#4-deploy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Change and update
+        4. Deploy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-change-and-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Change and update
       
     </span>
   </a>
@@ -1790,26 +1812,51 @@ claude plugin install p7y@p7y
 </ul>
 </div>
 <p>You install the plugin once. Each project then gets its sandbox in the next step.</p>
-<h2 id="3-connect-the-project-and-deploy">3. Connect the project and deploy<a class="headerlink" href="#3-connect-the-project-and-deploy" title="Permanent link">&para;</a></h2>
+<h2 id="3-connect-your-project-folder-to-the-sandbox-once-per-folder">3. Connect your project folder to the sandbox (once per folder)<a class="headerlink" href="#3-connect-your-project-folder-to-the-sandbox-once-per-folder" title="Permanent link">&para;</a></h2>
+<p>Claude Code needs to know which sandbox belongs to which folder. You tell it once per folder; after that it remembers.</p>
 <ol>
+<li>Open your app's folder in Claude Code: start <code>claude</code> in that folder, or open the folder in VS Code or the desktop app.</li>
 <li>
-<p>Open your app's folder in Claude Code. In Purgatory, in the window's step <strong>2</strong>, click <strong>Copy</strong> and paste the line into Claude Code. It looks like this:</p>
+<p>In Purgatory, in the <strong>Let your agent deploy…</strong> window, step <strong>2</strong>, click <strong>Copy</strong>. Paste the line into Claude Code and press Enter. It looks like this, with your Purgatory's address and your sandbox's name:</p>
 <div class="highlight"><pre><span></span><code>/p7y:init https://p7y.example.com shop
 </code></pre></div>
 </li>
 <li>
-<p>Claude Code prints a link. Open it in your browser (sign in if it asks). The page shows a code and your sandbox: check that the code is the one Claude Code printed, then click <strong>Approve</strong>. The code works once and expires in 10 minutes.</p>
-<p>Behind the scenes, Claude Code gets a token for this sandbox only, and writes it in a <code>.p7y</code> folder in your project, next to the sandbox's keys. You never see or copy the token. It is a secret, and the folder keeps itself out of git on its own; leave it there. The token expires in 90 days (run <code>/p7y:init</code> again then), and you can revoke it in Purgatory (Advanced → <strong>Access tokens</strong>, named <code>Claude Code init &lt;date&gt;</code>).</p>
+<p>Claude Code answers with a link and a code, for example:</p>
+<blockquote>
+<p>Open <strong>https://p7y.example.com/activate?code=TGMH-BSGQ</strong> and approve the code <strong>TGMH-BSGQ</strong>.</p>
+</blockquote>
 </li>
 <li>
-<p>Now say, in your own words:</p>
+<p>Open the link in your browser (sign in if Purgatory asks). The page shows the code and the sandbox. Check that the code is the same one Claude Code printed, then click <strong>Approve</strong>.</p>
+<p><img alt="Connect Claude Code: the code, the sandbox, a warning and Approve or Deny" src="../../media/tutorial-approve.png" width="320" /></p>
+</li>
+<li>
+<p>Go back to Claude Code. Within a few seconds it says the folder is connected to the sandbox. That is all.</p>
+</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Approve only your own code</p>
+<p>Approve a code only if you just ran <code>/p7y:init</code> yourself and Claude Code shows that same code. If someone sends you a link like this, do not approve it: whoever started that code would get into your sandbox. Click <strong>Deny</strong> instead.</p>
+</div>
+<p>What happened behind the scenes: Claude Code got a token for this one sandbox and the sandbox's Docker keys, and wrote them into a <code>.p7y</code> folder in your project. You never see or copy them. The folder is secret, and it keeps itself out of git on its own: leave it there. The token works for 90 days (then run <code>/p7y:init</code> again). You can revoke it in Purgatory: Advanced → <strong>Access tokens</strong>, where it is named <code>Claude Code init &lt;date&gt;</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">If something goes wrong</p>
+<ul>
+<li><strong>The code ran out:</strong> it works for 10 minutes and only once. Run the same <code>/p7y:init</code> line again for a new code.</li>
+<li><strong>You clicked Deny by mistake:</strong> run <code>/p7y:init</code> again.</li>
+<li><strong>The button says <em>Enable Docker access and approve</em>:</strong> the sandbox does not let Docker in yet. Click it: the sandbox restarts (about 30 seconds) and Claude Code carries on by itself.</li>
+<li><strong>The folder was connected to another sandbox already:</strong> Claude Code asks before it replaces that connection.</li>
+<li><strong>A wrong sandbox in the list:</strong> if the line names a sandbox that is not yours, the page lets you pick one of your own sandboxes instead.</li>
+</ul>
+</div>
+<h2 id="4-deploy">4. Deploy<a class="headerlink" href="#4-deploy" title="Permanent link">&para;</a></h2>
+<p>In the same folder, say in your own words:</p>
 <blockquote>
 <p>Deploy this app.</p>
 </blockquote>
-</li>
-</ol>
 <p>Claude Code wakes the sandbox, builds your app there, starts it and checks that it answers. At the end it gives you a link like <code>https://shop-web.example.com</code> (your sandbox's name first). Open it: that is your app, and it works for anyone you send it to.</p>
-<h2 id="4-change-and-update">4. Change and update<a class="headerlink" href="#4-change-and-update" title="Permanent link">&para;</a></h2>
+<h2 id="5-change-and-update">5. Change and update<a class="headerlink" href="#5-change-and-update" title="Permanent link">&para;</a></h2>
 <p>Changed something? Say:</p>
 <blockquote>
 <p>Update the app.</p>
@@ -1824,7 +1871,8 @@ claude plugin install p7y@p7y
 <li><strong>Docker is needed on your computer</strong> only for its command line: the build runs in the sandbox.</li>
 </ul>
 <h2 id="more-projects">More projects<a class="headerlink" href="#more-projects" title="Permanent link">&para;</a></h2>
-<p>Each project is tied to one sandbox by its own <code>.p7y</code> folder. For a second project with its own sandbox (or on another Purgatory), do step 3 there: in Purgatory, on that sandbox, <strong>Let your agent deploy…</strong>, copy the <code>/p7y:init</code> line and paste it into Claude Code in that project. The plugin needs no new setup.</p>
+<p>Each folder is tied to one sandbox by its own <code>.p7y</code> folder, so different folders can use different sandboxes, even on different Purgatory servers. For another folder, do step 3 there: in Purgatory, on that folder's sandbox, <strong>Let your agent deploy…</strong>, copy the <code>/p7y:init</code> line and paste it into Claude Code in that folder. The plugin needs no new setup.</p>
+<p>To move a folder to another sandbox, run that sandbox's <code>/p7y:init</code> line in the folder: Claude Code asks, then replaces the connection.</p>
 <p>Used the earlier plugin, which asked for an address and a token? Run <code>/plugin marketplace update p7y</code> once, then <code>/p7y:init</code> in each project.</p>
 <p>More details: <a href="../../claude-plugin/">Claude Code plugin</a>.</p>
 

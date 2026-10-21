@@ -35,25 +35,49 @@ Good to know
 
 You install the plugin once. Each project then gets its sandbox in the next step.
 
-## 3. Connect the project and deploy
+## 3. Connect your project folder to the sandbox (once per folder)
 
-1. Open your app's folder in Claude Code. In Purgatory, in the window's step **2**, click **Copy** and paste the line into Claude Code. It looks like this:
+Claude Code needs to know which sandbox belongs to which folder. You tell it once per folder; after that it remembers.
+
+1. Open your app's folder in Claude Code: start `claude` in that folder, or open the folder in VS Code or the desktop app.
+
+1. In Purgatory, in the **Let your agent deploy…** window, step **2**, click **Copy**. Paste the line into Claude Code and press Enter. It looks like this, with your Purgatory's address and your sandbox's name:
 
    ```
    /p7y:init https://p7y.example.com shop
    ```
 
-1. Claude Code prints a link. Open it in your browser (sign in if it asks). The page shows a code and your sandbox: check that the code is the one Claude Code printed, then click **Approve**. The code works once and expires in 10 minutes.
+1. Claude Code answers with a link and a code, for example:
 
-   Behind the scenes, Claude Code gets a token for this sandbox only, and writes it in a `.p7y` folder in your project, next to the sandbox's keys. You never see or copy the token. It is a secret, and the folder keeps itself out of git on its own; leave it there. The token expires in 90 days (run `/p7y:init` again then), and you can revoke it in Purgatory (Advanced → **Access tokens**, named `Claude Code init <date>`).
+   > Open **https://p7y.example.com/activate?code=TGMH-BSGQ** and approve the code **TGMH-BSGQ**.
 
-1. Now say, in your own words:
+1. Open the link in your browser (sign in if Purgatory asks). The page shows the code and the sandbox. Check that the code is the same one Claude Code printed, then click **Approve**.
 
-   > Deploy this app.
+1. Go back to Claude Code. Within a few seconds it says the folder is connected to the sandbox. That is all.
+
+Approve only your own code
+
+Approve a code only if you just ran `/p7y:init` yourself and Claude Code shows that same code. If someone sends you a link like this, do not approve it: whoever started that code would get into your sandbox. Click **Deny** instead.
+
+What happened behind the scenes: Claude Code got a token for this one sandbox and the sandbox's Docker keys, and wrote them into a `.p7y` folder in your project. You never see or copy them. The folder is secret, and it keeps itself out of git on its own: leave it there. The token works for 90 days (then run `/p7y:init` again). You can revoke it in Purgatory: Advanced → **Access tokens**, where it is named `Claude Code init <date>`.
+
+If something goes wrong
+
+- **The code ran out:** it works for 10 minutes and only once. Run the same `/p7y:init` line again for a new code.
+- **You clicked Deny by mistake:** run `/p7y:init` again.
+- **The button says *Enable Docker access and approve*:** the sandbox does not let Docker in yet. Click it: the sandbox restarts (about 30 seconds) and Claude Code carries on by itself.
+- **The folder was connected to another sandbox already:** Claude Code asks before it replaces that connection.
+- **A wrong sandbox in the list:** if the line names a sandbox that is not yours, the page lets you pick one of your own sandboxes instead.
+
+## 4. Deploy
+
+In the same folder, say in your own words:
+
+> Deploy this app.
 
 Claude Code wakes the sandbox, builds your app there, starts it and checks that it answers. At the end it gives you a link like `https://shop-web.example.com` (your sandbox's name first). Open it: that is your app, and it works for anyone you send it to.
 
-## 4. Change and update
+## 5. Change and update
 
 Changed something? Say:
 
@@ -71,7 +95,9 @@ The same link shows the new version a few seconds later.
 
 ## More projects
 
-Each project is tied to one sandbox by its own `.p7y` folder. For a second project with its own sandbox (or on another Purgatory), do step 3 there: in Purgatory, on that sandbox, **Let your agent deploy…**, copy the `/p7y:init` line and paste it into Claude Code in that project. The plugin needs no new setup.
+Each folder is tied to one sandbox by its own `.p7y` folder, so different folders can use different sandboxes, even on different Purgatory servers. For another folder, do step 3 there: in Purgatory, on that folder's sandbox, **Let your agent deploy…**, copy the `/p7y:init` line and paste it into Claude Code in that folder. The plugin needs no new setup.
+
+To move a folder to another sandbox, run that sandbox's `/p7y:init` line in the folder: Claude Code asks, then replaces the connection.
 
 Used the earlier plugin, which asked for an address and a token? Run `/plugin marketplace update p7y` once, then `/p7y:init` in each project.
 
