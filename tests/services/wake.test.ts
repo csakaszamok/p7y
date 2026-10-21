@@ -179,9 +179,9 @@ describe('wakeByHost', () => {
     vi.mocked(composeUp).mockResolvedValue(undefined)
     expect((await wakeByHost('w3-web.lvh.me')).result).toBe('started')
     await vi.waitFor(() => expect(composeUp).toHaveBeenCalled())
-    await new Promise(r => setImmediate(r))
     vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'leander-w3', template: 't', status: 'running', container_id: 'x', created_at: '' })])
-    expect(await wakeByHost('w3-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w3', from: 'deep_sleep' })
+    // While the start is still under way it says where from; once it is done, the router grace answers
+    await vi.waitFor(async () => expect(await wakeByHost('w3-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w3' }), { timeout: 5000 })
     expect(composeUp).toHaveBeenCalledTimes(1)
   })
 

@@ -20,7 +20,8 @@ vi.mock('dockerode', () => {
     })
   }
   return {
-    default: vi.fn().mockImplementation(() => ({
+    // A function, not an arrow: `new Dockerode()` constructs it. One client, kept for the tests to steer
+    default: vi.fn().mockImplementation(function () { return (globalThis as { __docker?: unknown }).__docker ??= {
       getContainer: vi.fn().mockReturnValue(mockContainer),
       listNetworks: vi.fn(async () => (globalThis as { __networks?: string[] }).__networks!.map(Id => ({ Id }))),
       listContainers: vi.fn().mockResolvedValue([
@@ -32,7 +33,7 @@ vi.mock('dockerode', () => {
           State: 'running'
         }
       ])
-    }))
+    } })
   }
 })
 
@@ -89,7 +90,7 @@ describe('docker service', () => {
   })
 
   it('listManagedContainers tells a sandbox that cannot start from an asleep one', async () => {
-    const d = vi.mocked(Dockerode).mock.results[0].value
+    const d = (globalThis as { __docker?: any }).__docker
     const exited = { Id: 'abc123', Names: ['/leander-user1'], Labels: { 'leander.managed': 'true' }, State: 'exited' }
     const inspect = d.getContainer().inspect
 
