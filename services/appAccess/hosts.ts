@@ -4,6 +4,7 @@ import { rememberedAccess, freshAccess, type AccessMap } from '../appLinks'
 import { getSandboxState } from '../docker'
 import { mostRestrictive, type Access } from './level'
 import { indexed } from './index'
+import { rawNameOf } from '../naming'
 
 export interface HostAccess { sandbox: string; owner: string; access: Access }
 export interface HostDeps {
@@ -74,5 +75,8 @@ async function lookUp(h: string, d: HostDeps): Promise<HostAccess | null> {
   const label = h.split('.')[0]
   let access = d.accessMap(sandbox)?.[label]
   if (access === undefined) access = (await d.fresh(sandbox))?.[label]
+  // p7y's own Sablier session probe (wake.ts primeSablierSession): it must reach Sablier, else a sandbox with a
+  // non-public app never gets a session and never sleeps. Nothing answers there but frps's 404
+  if (access === undefined && label === `${rawNameOf(sandbox) ?? sandbox}-p7y-wake`) access = 'public'
   return { sandbox, owner: d.ownerOf(sandbox), access: access ?? 'owner' }
 }
