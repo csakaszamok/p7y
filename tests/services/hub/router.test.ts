@@ -112,3 +112,13 @@ describe('handleHub: images', () => {
     expect(list.apps[0].image).toBeNull()
   })
 })
+
+describe('handleHub: About', () => {
+  it('serves the license notices without sign-in, and the Hub pages link to them', async () => {
+    const res = await get('/about')
+    expect(res.status).toBe(200)
+    expect(await res.text()).toContain('Based on Purgatory (p7y)')
+    expect(await (await get('/login')).text()).toContain('href="/about"')
+    expect(await (await get('/', as('anna@example.com'))).text()).toContain('href="/about"')
+  })
+})

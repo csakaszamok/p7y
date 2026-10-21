@@ -19,7 +19,7 @@ export function hubPage(opts: { title: string; viewer: HubSession }): string {
 <ul id="apps" class="apps" aria-live="polite"></ul>
 <div id="empty" class="empty" hidden><p>No apps here yet.</p><p>To publish one, add <code>p7y.publish: "true"</code> to its container's labels.
 <a href="https://p7y-dev.github.io/p7y/latest/hub/" target="_blank" rel="noopener">How to publish</a></p></div>
-</main><script src="/assets/hub.js"></script></body></html>`
+</main><footer class="about-foot"><a href="/about">About · AGPL-3.0</a></footer><script src="/assets/hub.js"></script></body></html>`
 }
 
 export function hubLoginPage(opts: { title: string; error: string | null; sso: string | null }): string {
@@ -30,5 +30,5 @@ ${opts.sso ? `<a class="primary wide" href="/auth/oidc">Sign in with ${escapeHtm
 <details${opts.sso ? '' : ' open'}><summary>Administrator</summary>
 <form method="post" action="/login"><label>User <input name="username" autocomplete="username"></label>
 <label>Password <input name="password" type="password" autocomplete="current-password"></label>
-<button class="primary wide">Sign in</button></form></details></main></body></html>`
+<button class="primary wide">Sign in</button></form></details></main><footer class="about-foot"><a href="/about">About · AGPL-3.0</a></footer></body></html>`
 }

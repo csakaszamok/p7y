@@ -80,6 +80,7 @@ ${faviconTag()}
   ${githubLinkEnabled() ? repoBadge(repoInfo()) : ''}
   <span class="mode-switch" role="group" aria-label="View">${modeButton('simple', 'Simple')}${modeButton('advanced', 'Advanced')}</span>
   <form method="post" action="/logout" class="who"><span>${escapeHtml(session.sub)}</span><button class="link">Sign out</button></form>
+  <a class="about-link" href="/about" title="License and source code">About</a>
 </header>
 <main>${body}</main>
 <script src="/assets/panel.js" defer></script>

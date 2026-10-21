@@ -6,7 +6,7 @@ site_url: https://p7y-dev.github.io/p7y/
 repo_url: https://github.com/p7y-dev/p7y
 repo_name: p7y-dev/p7y
 edit_uri: ""
-copyright: Apache-2.0
+copyright: AGPL-3.0 · Based on Purgatory (p7y)
 
 exclude_docs: |
   superpowers/

@@ -4,6 +4,14 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **License: AGPL-3.0** (`AGPL-3.0-only`) from this release, instead of Apache-2.0; versions up to 0.10.3 stay Apache-2.0. Free to use, also commercially; whoever changes Purgatory and lets people use it over the network gives them the changed source too. Additional terms (section 7, in [NOTICE](NOTICE)): a work based on Purgatory says *Based on Purgatory (p7y)* in its About page and docs, is marked as changed, and does not take the names "Purgatory" or "p7y". Contributions: licensed under the AGPL-3.0, with the right for the authors to release them under other licenses too (CONTRIBUTING).
+
+### Added
+
+- **About page** (`/about`, no sign-in; linked from the sign-in page, the top bar and the Hub): the license, the source code of the running version and the attribution, also with an own `UI_TITLE` and `UI_LOGO`.
+
 ### Fixed
 
 - **The 404 page** (any address without a page) was a copied template that loaded its pictures from another site over plain http and sent **Go back home** there. Its own page now: nothing loaded from elsewhere, **Go back**, the site's start page and a link to Purgatory (`PUBLIC_URL`, which the `docker-compose.yml` now passes to `p7y-init`; without it the page guesses `p7y.<domain>`).

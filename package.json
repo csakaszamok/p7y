@@ -2,7 +2,7 @@
   "name": "p7y",
   "version": "0.10.3",
   "private": true,
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0-only",
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -p .",

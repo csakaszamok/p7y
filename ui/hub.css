@@ -51,3 +51,7 @@ main { max-width: 900px; margin: 0 auto; padding: 20px 16px 40px }
 .thumb.ph { color: rgba(255,255,255,.9); font-size: 38px; font-weight: 700 }
 .app .main { flex: 1 1 auto; min-width: 0 }
 @media (max-width: 600px) { .thumb { flex-basis: auto; width: 100%; height: auto; aspect-ratio: 16 / 9 } }
+/* The license notices (AGPL-3.0 5(d)) */
+.about-foot { text-align: center; margin: 24px 0 12px; font-size: 12px }
+.about-foot a { color: #888; text-decoration: none }
+.about-foot a:hover { color: #ddd }
