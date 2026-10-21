@@ -6,6 +6,9 @@ set -eu
 SRC=${ASSETS_SRC:-/app/assets}
 OUT=${ASSETS_OUT:-/out}
 DIRS="sablier-themes error-pages registry"
+# The 404 page links to Purgatory: its address goes in place of {{P7Y_URL}}, only a plain one (nothing for HTML or sed)
+URL=$(printf '%s' "${PUBLIC_URL:-}" | sed 's#/*$##')
+printf '%s' "$URL" | grep -Eq '^https?://[A-Za-z0-9.:-]+$' || URL=""
 
 # Everything there first: a failing run must leave what the services read as it is
 for d in $DIRS; do
@@ -22,7 +25,11 @@ for d in $DIRS; do
   for f in "$SRC/$d"/*; do
     [ -f "$f" ] || continue
     name=${f##*/}
-    cp "$f" "$OUT/$d/.$name.tmp"
+    if [ "$d/$name" = error-pages/404.html ] && [ -n "$URL" ]; then
+      sed "s#{{P7Y_URL}}#$URL#g" "$f" > "$OUT/$d/.$name.tmp"
+    else
+      cp "$f" "$OUT/$d/.$name.tmp"
+    fi
     mv "$OUT/$d/.$name.tmp" "$OUT/$d/$name"
   done
   for f in "$OUT/$d"/* "$OUT/$d"/.[!.]*; do
