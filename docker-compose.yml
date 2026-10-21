@@ -131,6 +131,9 @@ services:
   p7y-init:
     image: ghcr.io/p7y-dev/p7y:${P7Y_VERSION:-0.10.3}
     entrypoint: ["sh", "/app/assets/install-assets.sh"]
+    environment:
+      # The 404 page's link to Purgatory
+      PUBLIC_URL: ${PUBLIC_URL:-http://p7y.${HOST_DOMAIN:-lvh.me}}
     volumes:
       - sablier_themes:/out/sablier-themes
       - error_pages:/out/error-pages

@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- **The 404 page** (any address without a page) was a copied template that loaded its pictures from another site over plain http and sent **Go back home** there. Its own page now: nothing loaded from elsewhere, **Go back**, the site's start page and a link to Purgatory (`PUBLIC_URL`, which the `docker-compose.yml` now passes to `p7y-init`; without it the page guesses `p7y.<domain>`).
+
 ## [0.10.3] - 2026-10-21
 
 Upgrading from 0.10.2: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version).
