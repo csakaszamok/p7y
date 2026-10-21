@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-21
+
+Upgrading from 0.10: download the new `docker-compose.yml` (it passes `PUBLIC_URL` to `p7y-init`, for the 404 page's link to Purgatory; without it the page guesses `p7y.<domain>`), then `docker compose pull && docker compose up -d`. A server that follows the 0.10 series (`P7Y_VERSION=0.10`) moves with `P7Y_VERSION=0.11`. **From this version Purgatory is licensed under the AGPL-3.0** (see below); 0.10.3 and earlier stay Apache-2.0.
+
 ### Changed
 
 - **License: AGPL-3.0** (`AGPL-3.0-only`) from this release, instead of Apache-2.0; versions up to 0.10.3 stay Apache-2.0. Free to use, also commercially; whoever changes Purgatory and lets people use it over the network gives them the changed source too. Additional terms (section 7, in [NOTICE](NOTICE)): a work based on Purgatory says *Based on Purgatory (p7y)* in its About page and docs, is marked as changed, and does not take the names "Purgatory" or "p7y". Contributions: licensed under the AGPL-3.0, with the right for the authors to release them under other licenses too (CONTRIBUTING).
