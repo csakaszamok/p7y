@@ -66,8 +66,8 @@ docker compose up -d --quiet-pull >/dev/null 2>&1 || { docker compose ps -a; doc
 wait_api
 has_portainer && fail "starter has Portainer" || pass "starter from the image (no Portainer)"
 [ -f dynamic/errors.yml ] && pass "dynamic/errors.yml written" || fail "no dynamic/errors.yml"
-for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q 'VIEW IN FULL SCREEN' && break; sleep 2; done
-curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q 'VIEW IN FULL SCREEN' && pass "our 404 page" || fail "404 page"
+for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && break; sleep 2; done
+curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && pass "our 404 page" || fail "404 page"
 docker run --rm --entrypoint ls -v "${COMPOSE_PROJECT_NAME}_sablier_themes:/t" "ghcr.io/p7y-dev/p7y:$TAG" /t | grep -qx p7y.html && pass "Sablier has the p7y theme" || fail "theme"
 
 info "old checkout ($OLD_REF) upgraded with git while it runs"
@@ -90,8 +90,8 @@ printf 'P7Y_VERSION=%s
 ' "$TAG" >> .env   # the new compose file's default would name the new release
 docker compose up -d --remove-orphans --quiet-pull >/dev/null 2>&1 || { docker compose ps -a; docker compose logs p7y-init; fail "up after the pull"; }
 wait_api
-for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q 'VIEW IN FULL SCREEN' && break; sleep 2; done
-curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q 'VIEW IN FULL SCREEN' && pass "after the pull: our 404 page through Traefik" || fail "after the pull: Traefik lost its error pages (dynamic/)"
+for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && break; sleep 2; done
+curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && pass "after the pull: our 404 page through Traefik" || fail "after the pull: Traefik lost its error pages (dynamic/)"
 code=$(curl -s -m 5 -o /dev/null -w '%{http_code}' -H 'Host: p7y.lvh.me' http://localhost/)
 case $code in 200|302) pass "after the pull: the UI through Traefik ($code)";; *) fail "after the pull: the UI through Traefik answers $code";; esac
 # Traefik must read the dynamic/ that is there now: one bound to a directory the pull deleted keeps its last
