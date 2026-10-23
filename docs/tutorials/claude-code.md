@@ -14,7 +14,7 @@ You have an app on your computer (a website, a dashboard, a small tool) and you 
 A sandbox is your own small server: your app runs there, not on your computer.
 
 !!! tip "Simple or Advanced"
-    The switch at the top right changes how much the screen shows. **Simple** is enough for everything here.
+    The switch at the top right changes how much the screen shows. **Simple** is enough for everything here. If you see no switch, you are in Simple: the server lets only the admin switch.
 
     ![The Simple | Advanced switch in the top bar](../media/tutorial-switch.png){ width="420" }
 

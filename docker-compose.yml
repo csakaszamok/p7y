@@ -30,6 +30,8 @@ services:
       GITHUB_STATS: ${GITHUB_STATS:-on}
       # off: no GitHub card in the topbar at all
       GITHUB_LINK: ${GITHUB_LINK:-on}
+      # true: users can switch between the Simple and the Advanced view (otherwise they stay in Simple; the admin always can)
+      USER_VIEW_SWITCH: ${USER_VIEW_SWITCH:-false}
       # The name and logo at the top left, on the sign-in page and in the tab titles: none hides them;
       # the logo can be an https:// address or an image file in the container (e.g. /app/data/logo.png)
       UI_TITLE: ${UI_TITLE:-Purgatory}
