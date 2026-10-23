@@ -2,6 +2,7 @@ import fs from 'fs'
 import { innerDocker } from './innerDocker'
 import { sandboxParent } from './sandboxPaths'
 import { rememberLastSeen, lastSeen } from './lastSeen'
+import { subdomainOf } from './subdomain'
 
 export interface InnerContainer {
   Names: string[]
@@ -16,7 +17,7 @@ const dash = (s: string) => s.toLowerCase().replace(/\//g, '-').replace(/_/g, '-
 
 /** The HTTP name frpc gives a published port (foxglove frpc.tmpl), without the domain. */
 export function frpcName(instance: string, labels: Record<string, string>, containerName: string, hostPort: number): string {
-  const subdomain = labels['frpc.subdomain']
+  const subdomain = subdomainOf(labels)
   if (subdomain) return `${instance}-${subdomain}`
   const stack = (labels['com.docker.compose.project'] ?? '').toLowerCase().replace(/_/g, '-')
   const container = dash(containerName.replace(/^\//, ''))
@@ -27,7 +28,7 @@ export const ALL_INTERFACES = new Set(['', '0.0.0.0', '::'])
 
 /**
  * The -tcp names of the TCP ports published on all interfaces (127.0.0.1-published ports stay private).
- * A frpc.subdomain container has one HTTP name for all its ports; when it publishes several, each
+ * A p7y.subdomain (or frpc.subdomain) container has one HTTP name for all its ports; when it publishes several, each
  * gets `-port<N>` too, so a name never lands on another port than the one it says.
  */
 export function tcpPortsOf(instance: string, containers: InnerContainer[], domain: string): TcpPort[] {
@@ -37,7 +38,7 @@ export function tcpPortsOf(instance: string, containers: InnerContainer[], domai
     const published = ct.Ports.filter(p => p.Type === 'tcp' && p.PublicPort && ALL_INTERFACES.has(p.IP ?? ''))
     const ports = [...new Set(published.map(p => p.PublicPort!))].sort((a, b) => a - b)
     const user = ct.Labels['p7y.connect.user']
-    const subdomain = ct.Labels['frpc.subdomain']
+    const subdomain = subdomainOf(ct.Labels)
     for (const port of ports) {
       const base = subdomain && ports.length > 1
         ? `${instance}-${subdomain}-port${port}`

@@ -38,6 +38,13 @@ describe('hubAppsOf', () => {
     const { apps } = hubAppsOf('shop', [c('ui', { 'p7y.publish': 'true', 'frpc.subdomain': 'board' }, [web(9001), web(3000)])], 'example.com', 'http')
     expect(apps[0]).toMatchObject({ id: 'shop-board.example.com', url: 'http://shop-board.example.com', title: 'ui', description: '' })
   })
+  it('uses p7y.subdomain, which wins over frpc.subdomain', () => {
+    const { apps } = hubAppsOf('shop', [
+      c('ui', { 'p7y.publish': 'true', 'p7y.subdomain': 'board' }, [web(3000)]),
+      c('api', { 'p7y.publish': 'true', 'frpc.subdomain': 'old', 'p7y.subdomain': 'api' }, [web(3001)]),
+    ], 'example.com', 'https')
+    expect(apps.map(a => a.id)).toEqual(['shop-board.example.com', 'shop-api.example.com'])
+  })
   it('cuts long titles and descriptions', () => {
     const { apps } = hubAppsOf('shop', [c('web', { 'p7y.publish': 'true', 'p7y.title': 't'.repeat(100), 'p7y.description': 'd'.repeat(400) }, [web(80)])], 'example.com', 'https')
     expect(apps[0].title).toHaveLength(80)
@@ -58,6 +65,9 @@ describe('hubAppsOf: only addresses under the domain', () => {
     ], 'example.com', 'https')
     expect(r.apps.map(a => a.url)).toEqual(['https://shop-board.example.com'])
     expect(r.unlinked).toEqual(['web'])
+    const p = hubAppsOf('shop', [c('web', { 'p7y.publish': 'true', 'p7y.subdomain': 'x@evil.com/' }, [web(80)])], 'example.com', 'https')
+    expect(p.apps).toEqual([])
+    expect(p.unlinked).toEqual(['web'])
   })
 })
 

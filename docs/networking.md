@@ -11,6 +11,27 @@ The Purgatory API itself requires authentication (see [Web UI and sign-in](web-u
 
 Who may open an app's **web address** can be limited per app with `p7y.access` ([App access](app-access.md)); that applies to HTTP through Purgatory only, not to the TCP addresses below, nor to the direct `traefik-net` path from other sandboxes.
 
+## App web addresses
+Each TCP port an inner container publishes on all interfaces gets a web address, `<sandbox>-<project>-<container>-port<host port>.<domain>` (`shop-inner-web-port8080.<domain>`). A label on the container gives it a short one instead:
+
+| Label | What it does |
+|---|---|
+| `p7y.subdomain: web` | The app's address becomes `<sandbox>-web.<domain>`. `frpc.subdomain`, its older name, still works; if both are set, `p7y.subdomain` wins. Needs the sandbox's foxglove image 0.8.0 or newer (an older one reads only `frpc.subdomain`). `shell` gets no TCP address: that name is the sandbox's own SSH ([Shell and logs](shell-and-logs.md)). |
+| `p7y.access` | Who may open the address ([App access](app-access.md)). |
+| `p7y.connect.user` | The login the **Connect…** recipes use (below). |
+| `p7y.publish`, `p7y.title`, `p7y.description`, `p7y.image` | Lists the app on the [Hub](hub.md). |
+
+```yaml
+services:
+  web:
+    build: .
+    ports: ["8080:8080"]
+    labels:
+      p7y.subdomain: web
+```
+
+A container with `p7y.subdomain` that publishes several ports has one web address for all of them; each port's TCP address (below) gets `-port<N>` too.
+
 ## TLS TCP addresses
 A port an inner container publishes on all interfaces (`"5432:5432"`) also gets a TCP address, its HTTP name plus `-tcp`, on port 443, TLS only: `shop-inner-db-port5432-tcp.<domain>:443`. Ports published on `127.0.0.1` stay private: no TCP address and no link.
 

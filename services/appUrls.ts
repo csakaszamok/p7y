@@ -1,6 +1,7 @@
 import fs from 'fs'
 import yaml from 'js-yaml'
 import { rawNameOf } from './naming'
+import { subdomainOf } from './subdomain'
 
 export interface AppHostContext {
   /** The sandbox's raw name (INSTANCE_NAME inside the sandbox). */
@@ -17,14 +18,6 @@ interface Service {
 }
 
 const dash = (s: string) => s.toLowerCase().replace(/[/_]/g, '-')
-
-function label(labels: Service['labels'], key: string): string | undefined {
-  if (Array.isArray(labels)) {
-    const entry = labels.find(l => typeof l === 'string' && l.startsWith(`${key}=`))
-    return entry?.slice(key.length + 1)
-  }
-  return labels?.[key]
-}
 
 const ALL_INTERFACES = new Set(['', '0.0.0.0', '::'])
 
@@ -55,7 +48,7 @@ function hostPort(entry: unknown): number | null {
 /**
  * The app hosts frpc will register for an inner compose file. Mirrors the
  * foxglove image's docker-gen template (/etc/frpc/frpc.tmpl): one HTTP proxy
- * per TCP port published on all interfaces, `<instance>-<frpc.subdomain>` when that label is set,
+ * per TCP port published on all interfaces, `<instance>-<subdomain>` when `p7y.subdomain` (or the older `frpc.subdomain`) is set,
  * else `<instance>-<project>-<container>-port<hostPort>`.
  */
 export function appEntriesFromCompose(text: string, ctx: AppHostContext): Array<{ host: string; service: string }> {
@@ -70,7 +63,7 @@ export function appEntriesFromCompose(text: string, ctx: AppHostContext): Array<
   for (const [service, def] of Object.entries(services)) {
     if (!def) continue
     const container = dash(def.container_name ?? `${ctx.project}-${service}-1`)
-    const subdomain = label(def.labels, 'frpc.subdomain')
+    const subdomain = subdomainOf(def.labels)
     for (const port of (def.ports ?? []).map(hostPort)) {
       if (port === null) continue
       const host = subdomain
