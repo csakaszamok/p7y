@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **Users stay in the Simple view** unless `USER_VIEW_SWITCH=true`: without it the top bar has no **Simple | Advanced** switch for them, and `PUT /me/view` answers 403. A view a user chose before is kept, and comes back when the switch is turned on. The admin can always switch. `GET /me` says whether the account may switch, as `view_switch`.
+
 ## [0.11.3] - 2026-10-21
 
 Upgrading from 0.11.2: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version).

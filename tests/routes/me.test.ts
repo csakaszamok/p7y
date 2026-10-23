@@ -49,6 +49,7 @@ describe('the Simple / Advanced view', () => {
   it('GET /me says which view the caller has; PUT /me/view changes it, and only to simple or advanced', async () => {
     const fs = await import('node:fs'); const os = await import('node:os'); const path = await import('node:path')
     vi.stubEnv('USER_PREFS_FILE', path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'prefs-')), 'p.json'))
+    vi.stubEnv('USER_VIEW_SWITCH', 'true')
     expect((await (await me(req('p7y_u'))).json()).view).toBe('simple')
     expect((await (await me(req('admin-secret'))).json()).view).toBe('advanced')
     const { default: put } = await import('../../routes/me/view/PUT')
@@ -56,6 +57,28 @@ describe('the Simple / Advanced view', () => {
     expect((await set('advanced')).status).toBe(200)
     expect((await (await me(req('p7y_u'))).json()).view).toBe('advanced')
     expect((await set('expert')).status).toBe(400)
+  })
+  it('without USER_VIEW_SWITCH=true a user stays in Simple and cannot switch (403); the admin can', async () => {
+    const fs = await import('node:fs'); const os = await import('node:os'); const path = await import('node:path')
+    vi.stubEnv('USER_PREFS_FILE', path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'prefs-')), 'p.json'))
+    const { default: put } = await import('../../routes/me/view/PUT')
+    const set = (t: string, view: unknown) => put(new Request('http://localhost/me/view', { method: 'PUT', headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ view }) }))
+    try {
+      vi.stubEnv('USER_VIEW_SWITCH', 'true')
+      expect((await set('p7y_u', 'advanced')).status).toBe(200)
+      expect(await (await me(req('p7y_u'))).json()).toMatchObject({ view: 'advanced', view_switch: true })
+      vi.stubEnv('USER_VIEW_SWITCH', '')
+      // The saved choice is kept, not used
+      expect(await (await me(req('p7y_u'))).json()).toMatchObject({ view: 'simple', view_switch: false })
+      const refused = await set('p7y_u', 'advanced')
+      expect(refused.status).toBe(403)
+      expect((await refused.json()).error).toMatch(/USER_VIEW_SWITCH/)
+      expect(await (await me(req('admin-secret'))).json()).toMatchObject({ view: 'advanced', view_switch: true })
+      expect((await set('admin-secret', 'simple')).status).toBe(200)
+      expect((await (await me(req('admin-secret'))).json()).view).toBe('simple')
+      vi.stubEnv('USER_VIEW_SWITCH', 'TRUE')
+      expect((await (await me(req('p7y_u'))).json()).view).toBe('advanced')
+    } finally { vi.stubEnv('USER_VIEW_SWITCH', '') }
   })
 })
 

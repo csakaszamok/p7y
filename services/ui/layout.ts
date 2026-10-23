@@ -2,7 +2,7 @@ import { readSession, getCookie, SESSION_COOKIE, type Session } from '../session
 import { subAllowed } from '../allowlist'
 import { sandboxPrefix } from '../naming'
 import { repoInfo, type RepoInfo } from '../repoInfo'
-import { viewOf } from '../userPrefs'
+import { viewOf, canSwitchView } from '../userPrefs'
 import { recordSeen } from '../userStats'
 import { brandTitle, faviconTag, githubLinkEnabled, logoImg, titleSuffix } from './brand'
 
@@ -78,7 +78,7 @@ ${faviconTag()}
   </nav>
   <span class="places" data-places hidden></span>
   ${githubLinkEnabled() ? repoBadge(repoInfo()) : ''}
-  <span class="mode-switch" role="group" aria-label="View">${modeButton('simple', 'Simple')}${modeButton('advanced', 'Advanced')}</span>
+  ${canSwitchView(session.role) ? `<span class="mode-switch" role="group" aria-label="View">${modeButton('simple', 'Simple')}${modeButton('advanced', 'Advanced')}</span>` : ''}
   <form method="post" action="/logout" class="who"><span>${escapeHtml(session.sub)}</span><button class="link">Sign out</button></form>
   <a class="about-link" href="/about" title="License and source code">About</a>
 </header>

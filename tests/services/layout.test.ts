@@ -21,13 +21,23 @@ describe('renderPage: Simple / Advanced', () => {
     expect(page(admin)).toContain('data-mode="advanced"')
   })
   it('follows the choice saved for the account', () => {
+    vi.stubEnv('USER_VIEW_SWITCH', 'true')
     setView('leander', 'advanced')
     expect(page(user)).toContain('data-mode="advanced"')
   })
   it('has the switch in the topbar, the current one pressed', () => {
+    vi.stubEnv('USER_VIEW_SWITCH', 'true')
     const html = page(user)
     expect(html).toMatch(/<button[^>]*data-mode-set="simple"[^>]*aria-pressed="true"/)
     expect(html).toMatch(/<button[^>]*data-mode-set="advanced"[^>]*aria-pressed="false"/)
+  })
+  it('without USER_VIEW_SWITCH=true: a user is in Simple with no switch, whatever they chose; the admin keeps it', () => {
+    setView('leander', 'advanced')
+    const html = page(user)
+    expect(html).toContain('data-mode="simple"')
+    expect(html).not.toContain('data-mode-set')
+    expect(html).not.toContain('class="mode-switch"')
+    expect(page(admin)).toMatch(/<button[^>]*data-mode-set="advanced"[^>]*aria-pressed="true"/)
   })
   it('marks what Simple hides: Overview, Access tokens and SSH keys in the nav', () => {
     const html = page(user)
