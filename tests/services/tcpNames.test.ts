@@ -8,6 +8,10 @@ describe('frpcName (same rules as foxglove frpc.tmpl)', () => {
   it('uses the frpc.subdomain label when set', () => {
     expect(frpcName('shop', { 'frpc.subdomain': 'db' }, 'pg', 5432)).toBe('shop-db')
   })
+  it('uses the p7y.subdomain label, which wins over frpc.subdomain', () => {
+    expect(frpcName('shop', { 'p7y.subdomain': 'db' }, 'pg', 5432)).toBe('shop-db')
+    expect(frpcName('shop', { 'frpc.subdomain': 'old', 'p7y.subdomain': 'db' }, 'pg', 5432)).toBe('shop-db')
+  })
   it('uses stack and container name for compose containers', () => {
     expect(frpcName('shop', { 'com.docker.compose.project': 'My_App' }, 'My_App-db_1', 5432)).toBe('shop-my-app-my-app-db-1-port5432')
   })
@@ -46,6 +50,13 @@ describe('tcpPortsOf', () => {
   it("never gives an inner container the sandbox's own SSH name (<sandbox>-shell-tcp)", () => {
     const shell = c('shell', { 'frpc.subdomain': 'shell' }, [{ IP: '0.0.0.0', PrivatePort: 22, PublicPort: 2200, Type: 'tcp' }])
     expect(tcpPortsOf('sb', [shell], 'lvh.me')).toEqual([])
+    const p7y = c('shell', { 'p7y.subdomain': 'shell' }, [{ IP: '0.0.0.0', PrivatePort: 22, PublicPort: 2200, Type: 'tcp' }])
+    expect(tcpPortsOf('sb', [p7y], 'lvh.me')).toEqual([])
+    // the label in effect counts: p7y.subdomain wins, so a frpc.subdomain: shell under it is not reserved
+    const both = c('ssh', { 'frpc.subdomain': 'shell', 'p7y.subdomain': 'ssh' }, [{ IP: '0.0.0.0', PrivatePort: 22, PublicPort: 2200, Type: 'tcp' }])
+    expect(tcpPortsOf('sb', [both], 'lvh.me')).toEqual([{ host: 'sb-ssh-tcp.lvh.me', port: 2200, privatePort: 22 }])
+    const reserved = c('ssh', { 'frpc.subdomain': 'ssh', 'p7y.subdomain': 'shell' }, [{ IP: '0.0.0.0', PrivatePort: 22, PublicPort: 2200, Type: 'tcp' }])
+    expect(tcpPortsOf('sb', [reserved], 'lvh.me')).toEqual([])
   })
 
   it('lists only TCP ports published on all interfaces, once each, with the -tcp name', () => {
@@ -53,6 +64,14 @@ describe('tcpPortsOf', () => {
       { host: 'shop-inner-db-port5432-tcp.lvh.me', port: 5432, privatePort: 5432 },
       { host: 'shop-any-port7000-tcp.lvh.me', port: 7000, privatePort: 7000 },
     ])
+  })
+
+  it('gives each port of a p7y.subdomain container with several ports its own name', () => {
+    const web = c('web', { 'frpc.subdomain': 'old', 'p7y.subdomain': 'shop' }, [
+      { IP: '0.0.0.0', PrivatePort: 80, PublicPort: 80, Type: 'tcp' },
+      { IP: '0.0.0.0', PrivatePort: 443, PublicPort: 443, Type: 'tcp' },
+    ])
+    expect(tcpPortsOf('sb', [web], 'lvh.me').map(p => p.host)).toEqual(['sb-shop-port80-tcp.lvh.me', 'sb-shop-port443-tcp.lvh.me'])
   })
 
   it("gives the container's own port (what the service is) and the p7y.connect.user label", () => {

@@ -9,7 +9,7 @@ const ctx = { instance: 'shop', project: 'inner', domain: 'lvh.me' }
 const hosts = (services: Record<string, unknown>, c = ctx) => appHostsFromCompose(yaml.dump({ services }), c)
 
 // The rules mirror the foxglove image's docker-gen template (/etc/frpc/frpc.tmpl):
-// one HTTP proxy per published TCP port, named after frpc.subdomain when set.
+// one HTTP proxy per published TCP port, named after p7y.subdomain (or the older frpc.subdomain) when set.
 describe('appHostsFromCompose', () => {
   it('matches what frps reports for the starter stack', () => {
     expect(hosts({
@@ -45,6 +45,14 @@ describe('appHostsFromCompose', () => {
 
   it('lists a subdomain once however many ports it publishes; accepts list-form labels', () => {
     expect(hosts({ app: { ports: ['80:80', '443:443'], labels: ['frpc.subdomain=app'] } })).toEqual(['shop-app.lvh.me'])
+    expect(hosts({ app: { ports: ['80:80', '443:443'], labels: ['p7y.subdomain=app'] } })).toEqual(['shop-app.lvh.me'])
+  })
+
+  it('names the proxy after p7y.subdomain, which wins over the older frpc.subdomain', () => {
+    expect(hosts({ app: { ports: ['80:80'], labels: { 'p7y.subdomain': 'app' } } })).toEqual(['shop-app.lvh.me'])
+    expect(hosts({ app: { ports: ['80:80'], labels: { 'frpc.subdomain': 'old', 'p7y.subdomain': 'app' } } })).toEqual(['shop-app.lvh.me'])
+    expect(hosts({ app: { ports: ['80:80'], labels: ['frpc.subdomain=old', 'p7y.subdomain=app'] } })).toEqual(['shop-app.lvh.me'])
+    expect(hosts({ app: { ports: ['127.0.0.1:80:80'], labels: { 'p7y.subdomain': 'app' } } })).toEqual([])
   })
 
   it('returns nothing for an unreadable file', () => {
@@ -72,6 +80,16 @@ describe('appHostsOffline', () => {
   it('falls back to the name without leander- and the project "inner"', () => {
     const dir = setup({ 'inner/docker-compose.yml': inner })
     expect(appHostsOffline('leander-shop', dir, 'lvh.me', () => undefined)).toEqual(['shop-inner-http-echo-port5678.lvh.me'])
+  })
+
+  it('names an app after p7y.subdomain (or the older frpc.subdomain) while the sandbox is not running', () => {
+    const text = yaml.dump({ services: {
+      web: { ports: ['8080:8080'], labels: { 'p7y.subdomain': 'web' } },
+      both: { ports: ['8081:8081'], labels: { 'frpc.subdomain': 'old', 'p7y.subdomain': 'new' } },
+      legacy: { ports: ['8082:8082'], labels: ['frpc.subdomain=legacy'] },
+    } })
+    const dir = setup({ 'inner/docker-compose.yml': text, 'instance-name': 'shop\n' })
+    expect(appHostsOffline('leander-shop', dir, 'lvh.me', () => undefined)).toEqual(['shop-web.lvh.me', 'shop-new.lvh.me', 'shop-legacy.lvh.me'])
   })
 
   it('returns nothing without an inner compose file', () => {

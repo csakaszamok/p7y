@@ -14,7 +14,7 @@ services:
       - "9000:9000"
     restart: unless-stopped
     labels:
-      frpc.subdomain: portainer
+      p7y.subdomain: portainer
 
   http-echo:
     image: hashicorp/http-echo:latest

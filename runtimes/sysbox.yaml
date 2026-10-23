@@ -15,7 +15,7 @@ daemon_json:
 docker_compose:
   services:
     sandbox:
-      image: ghcr.io/p7y-dev/foxglove:0.7.0-sysbox
+      image: ghcr.io/p7y-dev/foxglove:0.8.0-sysbox
       container_name: ${name}
       runtime: sysbox-runc
       environment:
