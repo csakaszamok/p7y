@@ -31,6 +31,9 @@
 | `POST` | `/sandboxes/:name/files/mkdir` | Create a folder (`{"path": "/srv/data"}`) |
 | `DELETE` | `/sandboxes/:name/files` | Delete a file or a folder (`path`), not the four folders themselves (nor a volume's folder) |
 | `GET` | `/sandboxes/:name/volumes` | The volumes of the apps in the sandbox's own Docker: `name`, `path` (for the routes above), `project`, `containers` that use it |
+| `GET` | `/sandboxes/:name/mounts` | The host folders mounted into the sandbox: `mounts` (`host`, `target`, `readonly`), `enabled` (`HOST_MOUNT_ROOTS` is set); the admin also gets `roots`. Owner, admin, and a token limited to the sandbox. See [Host folders](web-ui.md#host-folders) |
+| `POST` | `/sandboxes/:name/mounts` | Mount a host folder (admin only, `HOST_MOUNT_ROOTS` set, else 403 / 409): `{"host": "/srv/shared/team", "target": "/mnt/team", "readonly": true}`, `target` defaulting to `/mnt/<last part of host>`. The sandbox container is recreated (a running one restarts). 400 for a path outside the roots or a target that is not allowed; 409 with Docker's words when Docker refuses it (e.g. the host folder does not exist), nothing changed |
+| `DELETE` | `/sandboxes/:name/mounts?target=/mnt/team` | Unmount it (admin only; also with `HOST_MOUNT_ROOTS` unset); the sandbox container is recreated |
 | `DELETE` | `/sandboxes/:name` | Archive the sandbox, then remove it (**Archive…** in the UI; see [Delete = archive](archive.md)) |
 | `GET` | `/runtimes` | List the runtimes new sandboxes may use (`name`, `description`, `default`; only those in `ALLOWED_RUNTIMES` when it is set) |
 | `GET` | `/templates` | List the templates (`name`, `description`, `default`) |

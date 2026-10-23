@@ -14,9 +14,12 @@ export function mountedUsersDir(text: string, name: string): string | null {
   return m ? m[1] : null
 }
 
-/** The compose file with every `<from>/<name>/` bind source moved to `<to>/<name>/`. */
+// The admin's host mounts (services/hostMounts.ts): a long-syntax `source:` and the p7y.mounts label, never moved
+const HOST_MOUNT_LINE = /^\s*(?:-\s+)?(?:source|["']?p7y\.mounts["']?):/
+
+/** The compose file with every `<from>/<name>/` bind source moved to `<to>/<name>/` (the host mounts left as they are). */
 export function withUsersDir(text: string, name: string, from: string, to: string): string {
-  return text.split(`${from}/${name}/`).join(`${to}/${name}/`)
+  return text.split('\n').map(line => HOST_MOUNT_LINE.test(line) ? line : line.split(`${from}/${name}/`).join(`${to}/${name}/`)).join('\n')
 }
 
 /**

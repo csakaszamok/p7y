@@ -220,6 +220,25 @@
     ]) + (s.disk?.over ? '<p class="warn">⚠ Over its disk limit: clean up unused images and volumes in the sandbox (<code>docker system prune</code>). Nothing is stopped.</p>' : '')
   }
 
+  /**
+   * Host folders mounted into the sandbox (HOST_MOUNT_ROOTS): the admin adds and removes them (s.host_mount_roots
+   * set: the feature is on), the owner sees them, read-only, when there are any.
+   */
+  function mountsSection(s, ctx) {
+    const mounts = s.mounts || [], roots = s.host_mount_roots || []
+    const editor = ctx.isAdmin && roots.length > 0
+    if (!mounts.length && !editor) return ''
+    const rows = mounts.map(m => `<tr><td><code>${esc(m.host)}</code></td><td><code>${esc(m.target)}</code></td><td>${m.readonly ? 'read-only' : 'read-write'}</td>${ctx.isAdmin ? `<td><button class="link danger-link" data-mount-remove="${esc(m.target)}">Remove</button></td>` : ''}</tr>`)
+    const list = mounts.length ? table(ctx.isAdmin ? ['Host folder', 'In the sandbox', '', ''] : ['Host folder', 'In the sandbox', ''], rows) : '<p class="muted">None yet.</p>'
+    const form = editor ? `<form class="mount-form" data-mount-form>
+        <input name="host" placeholder="${esc(roots[0])}/…" aria-label="Host folder" required>
+        <input name="target" placeholder="/mnt/&lt;folder name&gt;" aria-label="Path in the sandbox">
+        <label><input type="checkbox" name="readonly"> read-only</label>
+        <button>Mount…</button></form>
+      <p class="muted">Under ${roots.map(r => `<code>${esc(r)}</code>`).join(', ')}. Whoever owns the sandbox gets the folder (as root). Adding or removing one restarts the sandbox.</p>` : ''
+    return `<div class="mounts"><h3>Host folders</h3>${list}${form}</div>`
+  }
+
   // Measured from outside every 15 minutes while running (once after it stops): a warning, never a stop
   function diskRow(d) {
     const now = d.used === null ? '<span class="muted">not measured yet</span>'
@@ -347,7 +366,7 @@
     const body = {
       apps: appsTab(s, ctx),
       access: accessTab(s, ctx),
-      resources: `<div data-resources>${resourcesTable(s)}</div><div class="actions"><button data-act="resources">Change limits…</button></div>`,
+      resources: `<div data-resources>${resourcesTable(s)}</div><div class="actions"><button data-act="resources">Change limits…</button></div>${mountsSection(s, ctx)}`,
       registry: '<div data-registry><p class="muted">Loading…</p></div>',
       files: s.status === 'running' ? '<div data-files><p class="muted">Loading…</p></div>'
         : `<p class="muted">The sandbox is ${esc(statusLabel(s.status))}: wake it to see its files.</p><div class="actions"><button data-act="start">Wake</button></div>`,
@@ -477,7 +496,7 @@
     return `/p7y:init ${u} ${sandboxShort}`
   }
 
-  const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, mountsSection, registryTable, renderPanel }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

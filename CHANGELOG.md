@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **Host folders in a sandbox:** the admin can mount host folders into an existing sandbox (**Resources** tab → **Host folders**, or `GET`/`POST`/`DELETE /sandboxes/:name/mounts`, over MCP `list_sandbox_mounts`, `add_sandbox_mount`, `remove_sandbox_mount`), read-write or read-only, at `/mnt/<name>` or a path of their choice; the apps in the sandbox's own Docker can bind them too. Only folders at or under the new `HOST_MOUNT_ROOTS` (a comma list, e.g. `/srv/shared`; empty: off). A host folder that does not exist is refused by Docker, not created empty. Adding or removing one recreates the sandbox container (a running one restarts). The owner sees the list, read-only. **A mount gives the sandbox's owner that host folder as root:** mount only what they may see, read-only what they need not change.
+
 ## [0.11.3] - 2026-10-21
 
 Upgrading from 0.11.2: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version).

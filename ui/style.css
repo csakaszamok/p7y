@@ -52,6 +52,9 @@ body:not([data-mode="simple"]) .simple-only { display: none !important }
 .files-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px }
 .files-tools form { display: flex; gap: 4px }
 .files-tools input[name=folder] { width: 110px }
+.mounts { margin-top: 16px }
+.mount-form { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px }
+.mount-form input[name=host], .mount-form input[name=target] { flex: 1 1 160px; min-width: 0 }
 .button-like { padding: 4px 10px; border-radius: 6px; background: #ea580c; color: #fff; cursor: pointer }
 .files-name { overflow-wrap: anywhere }
 .files-note { font-size: 12px; margin-top: 8px }

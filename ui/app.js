@@ -287,6 +287,35 @@ async function makeFolder(form) {
   catch (e) { filesStatus(e.message, true) }
 }
 
+// ---------- host folders (admin): mounting one or taking it away recreates the sandbox container ----------
+async function changeMount(form, target) {
+  const name = selected
+  if (!name) return
+  const s = sandboxes.find(x => x.name === name)
+  const restart = s?.status === 'running' ? 'The sandbox restarts (its apps are unreachable for a few seconds).'
+    : s?.status === 'deep_sleep' ? 'It applies when the sandbox wakes.' : 'The sandbox stays asleep.'
+  const field = n => form.querySelector(`[name=${n}]`)
+  const body = form ? { host: field('host').value.trim(), ...(field('target').value.trim() ? { target: field('target').value.trim() } : {}), readonly: field('readonly').checked } : null
+  const q = form ? `Mount ${body.host} into ${shortName(name)}${body.readonly ? ' read-only' : ''}? Its owner gets that host folder as root. ${restart}`
+    : `Unmount ${target} from ${shortName(name)}? ${restart}`
+  if (!await confirmDialog(q, form ? 'Mount' : 'Unmount')) return
+  const section = $('[data-panel] .mounts')
+  const controls = section ? [...section.querySelectorAll('button, input')] : []
+  for (const el of controls) el.disabled = true
+  $('[data-act-error]').hidden = true
+  try {
+    const url = `/sandboxes/${encodeURIComponent(name)}/mounts`
+    if (form) await api(url, { method: 'POST', body: JSON.stringify(body) })
+    else await api(`${url}?target=${encodeURIComponent(target)}`, { method: 'DELETE' })
+    renderedJSON = null
+    if (selected === name) await showPanel(name)
+  } catch (e) {
+    // The form keeps what was typed, to correct it (Docker's own words for a host folder it cannot mount)
+    for (const el of controls) el.disabled = false
+    const err = $('[data-act-error]'); if (err && selected === name) { err.textContent = e.message; err.hidden = false }
+  }
+}
+
 // ---------- export for coding agents ----------
 // A new token for the sandbox as p7y.env text, to the clipboard (or shown to copy by hand without one)
 async function copyEnv(name, b = $('[data-panel] [data-act="copy-env"]'), opts = {}) {
@@ -829,6 +858,7 @@ function initSandboxes() {
     if (b.dataset.filesPath) return void loadFiles(selected, b.dataset.filesPath)
     if ('filesVolumes' in b.dataset) return void loadFiles(selected, 'volumes')
     if (b.dataset.filesDelete) return void deleteFile(b.dataset.filesDelete)
+    if (b.dataset.mountRemove) return void changeMount(null, b.dataset.mountRemove)
     if (b.dataset.show !== undefined) {
       const s = b.parentElement.querySelector('[data-secret]'); s.hidden = !s.hidden; b.textContent = s.hidden ? 'show' : 'hide'
       const mask = b.parentElement.querySelector('[data-secret-mask]'); if (mask) mask.hidden = !s.hidden
@@ -838,6 +868,13 @@ function initSandboxes() {
   })
   // The Files tab: a new folder, files picked or dropped
   $('[data-panel]').addEventListener('submit', e => { if (e.target.matches('[data-files-mkdir]')) { e.preventDefault(); void makeFolder(e.target) } })
+  // Resources: a host folder to mount; the target's placeholder shows the default (/mnt/<last part of the host path>)
+  $('[data-panel]').addEventListener('submit', e => { if (e.target.matches('[data-mount-form]')) { e.preventDefault(); void changeMount(e.target) } })
+  $('[data-panel]').addEventListener('input', e => {
+    if (!e.target.matches('[data-mount-form] [name=host]')) return
+    const last = e.target.value.trim().replace(/\/+$/, '').split('/').pop()
+    e.target.form.querySelector('[name=target]').placeholder = `/mnt/${last || '<folder name>'}`
+  })
   $('[data-panel]').addEventListener('change', e => { if (e.target.matches('[data-files-input]')) { void uploadFiles(e.target.files); e.target.value = '' } })
   $('[data-panel]').addEventListener('dragover', e => { const z = e.target.closest('[data-files]'); if (z && e.dataTransfer?.types.includes('Files')) { e.preventDefault(); z.classList.add('drop') } })
   $('[data-panel]').addEventListener('dragleave', e => { const z = e.target.closest('[data-files]'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('drop') })

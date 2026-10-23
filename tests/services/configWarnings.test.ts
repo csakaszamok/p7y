@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { insecureConfigWarnings, insecureConfigErrors } from '../../services/configWarnings'
+import { insecureConfigWarnings, insecureConfigErrors, hostMountWarnings } from '../../services/configWarnings'
 
 describe('insecureConfigWarnings', () => {
   it('warns when ADMIN_TOKEN is the default "abc123"', () => {
@@ -49,6 +49,18 @@ describe('insecureConfigErrors', () => {
   it('never blocks a plain-http (local) start', () => {
     expect(insecureConfigErrors({ PUBLIC_URL: 'http://p7y.lvh.me', ADMIN_TOKEN: 'abc123' })).toEqual([])
     expect(insecureConfigErrors({ ADMIN_TOKEN: 'abc123' })).toEqual([])
+  })
+})
+
+describe('hostMountWarnings', () => {
+  it('nothing while HOST_MOUNT_ROOTS is unset or holds only fine directories', () => {
+    expect(hostMountWarnings({})).toEqual([])
+    expect(hostMountWarnings({ HOST_MOUNT_ROOTS: '/srv/shared,/data/projects' })).toEqual([])
+  })
+  it('names the entries left out, and a root of / (the whole host)', () => {
+    const w = hostMountWarnings({ HOST_MOUNT_ROOTS: 'srv/shared,/a/../b,/' })
+    expect(w.some(l => l.includes('srv/shared') && l.includes('/a/../b'))).toBe(true)
+    expect(w.some(l => l.includes('whole host'))).toBe(true)
   })
 })
 
