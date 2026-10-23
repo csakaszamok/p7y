@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **Host folders in a sandbox:** the admin can mount host folders into an existing sandbox (**Resources** tab → **Host folders**, or `GET`/`POST`/`DELETE /sandboxes/:name/mounts`, over MCP `list_sandbox_mounts`, `add_sandbox_mount`, `remove_sandbox_mount`), read-write or read-only, at `/mnt/<name>` or a path of their choice; the apps in the sandbox's own Docker can bind them too. Only folders at or under the new `HOST_MOUNT_ROOTS` (a comma list, e.g. `/srv/shared`; empty: off). A host folder that does not exist is refused by Docker, not created empty. Adding or removing one recreates the sandbox container (a running one restarts). The owner sees the list, read-only. **A mount gives the sandbox's owner that host folder as root:** mount only what they may see, read-only what they need not change.
+
 ### Changed
 
 - **Users stay in the Simple view** unless `USER_VIEW_SWITCH=true`: without it the top bar has no **Simple | Advanced** switch for them, and `PUT /me/view` answers 403. A view a user chose before is kept, and comes back when the switch is turned on. The admin can always switch. `GET /me` says whether the account may switch, as `view_switch`.

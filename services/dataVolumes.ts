@@ -13,7 +13,14 @@ import { entriesIn } from './sandboxPaths'
 export const DATA_PATHS = ['/opt', '/root', '/home', '/srv']
 const volumeOf = (p: string) => `sandbox_${p.slice(1)}`
 
-type Doc = { services?: Record<string, { volumes?: string[] } | undefined>; volumes?: Record<string, unknown> }
+type Doc = { services?: Record<string, { volumes?: unknown[] } | undefined>; volumes?: Record<string, unknown> }
+
+/** Where a compose volume entry mounts: `source:target[:mode]`, or the long syntax's target (a host mount). */
+export function volumeTarget(v: unknown): string | undefined {
+  if (typeof v === 'string') return v.split(':')[1]
+  const t = (v as { target?: unknown } | null)?.target
+  return typeof t === 'string' ? t : undefined
+}
 
 /** The compose file with the data volumes mounted on the sandbox and declared, or null if it needs no change. */
 export function withDataVolumes(text: string): string | null {
@@ -22,7 +29,7 @@ export function withDataVolumes(text: string): string | null {
   const sb = doc?.services?.sandbox
   if (!sb) return null
   const mounts = sb.volumes ?? []
-  const missing = DATA_PATHS.filter(p => !mounts.some(m => String(m).split(':')[1] === p))
+  const missing = DATA_PATHS.filter(p => !mounts.some(m => volumeTarget(m) === p))
   if (!missing.length) return null
   sb.volumes = [...mounts, ...missing.map(p => `${volumeOf(p)}:${p}`)]
   doc!.volumes = { ...(doc!.volumes ?? {}) }

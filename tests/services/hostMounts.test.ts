@@ -1,0 +1,186 @@
+import { describe, it, expect, vi } from 'vitest'
+import fs from 'fs'
+import os from 'os'
+import path from 'path'
+import yaml from 'js-yaml'
+import {
+  MOUNTS_LABEL, SYSTEM_DIRS, hostMountRoots, parseHostMountRoots, cleanPath, underRoot, ownTargets,
+  validateMount, readMounts, withMounts, mountsOf, setMounts, type HostMount,
+} from '../../services/hostMounts'
+import { withDataVolumes } from '../../services/dataVolumes'
+import { withUsersDir, mountedUsersDir } from '../../services/pathMigration'
+
+// The sandbox's compose file as created from runtimes/dind.yaml (its mounts are what the targets must keep clear of)
+const RUNTIME = yaml.load(fs.readFileSync(path.join(__dirname, '..', '..', 'runtimes', 'dind.yaml'), 'utf8')) as { docker_compose: unknown }
+const HOST = '/data/p7y/opt/sandboxes/admin'
+const compose = () => yaml.dump(RUNTIME.docker_compose, { lineWidth: -1 }).split('${sandbox_dir}').join(`${HOST}/p7y-shop`).split('${name}').join('p7y-shop')
+const ctx = (existing: HostMount[] = [], text = compose()) => ({ roots: ['/srv/shared', '/data/projects'], existing, own: ownTargets(text) })
+
+describe('HOST_MOUNT_ROOTS', () => {
+  it('a comma-separated list of absolute directories, normalized; unset or empty: none (the feature is off)', () => {
+    expect(hostMountRoots({})).toEqual([])
+    expect(hostMountRoots({ HOST_MOUNT_ROOTS: ' ' })).toEqual([])
+    expect(hostMountRoots({ HOST_MOUNT_ROOTS: '/srv/shared/, /data//projects ,' })).toEqual(['/srv/shared', '/data/projects'])
+  })
+  it('relative ones and ones with .. are left out (and reported)', () => {
+    expect(parseHostMountRoots('srv/x,/a/../b,/ok')).toEqual({ roots: ['/ok'], invalid: ['srv/x', '/a/../b'] })
+  })
+})
+
+describe('cleanPath / underRoot', () => {
+  it('absolute, normalized, no trailing slash; relative, .., $ (compose variables) and control characters refused', () => {
+    expect(cleanPath('/srv/shared/')).toBe('/srv/shared')
+    expect(cleanPath('/srv//shared/./x')).toBe('/srv/shared/x')
+    expect(cleanPath('/')).toBe('/')
+    for (const bad of ['srv/shared', '', '/srv/../etc', '/srv/shared/..', '/srv/$HOME', '/srv/a\nb', 'C:\\x', 42, null]) expect(cleanPath(bad), String(bad)).toBeNull()
+  })
+  it('at or under a root, never a sibling that only starts with the same letters', () => {
+    expect(underRoot('/srv/shared', ['/srv/shared'])).toBe(true)
+    expect(underRoot('/srv/shared/team/a', ['/srv/shared'])).toBe(true)
+    expect(underRoot('/srv/shared2', ['/srv/shared'])).toBe(false)
+    expect(underRoot('/srv', ['/srv/shared'])).toBe(false)
+    expect(underRoot('/anything', ['/'])).toBe(true)
+    expect(underRoot('/srv/shared', [])).toBe(false)
+  })
+})
+
+describe('ownTargets', () => {
+  it("the sandbox container's own mount points, from its compose file (not its host mounts)", () => {
+    const own = ownTargets(compose())
+    for (const t of ['/var/lib/docker', '/opt', '/root', '/home', '/srv', '/certs', '/inner', '/etc/docker/daemon.json']) expect(own).toContain(t)
+    const mounted = withMounts(compose(), [{ host: '/srv/shared', target: '/mnt/shared', readonly: false }])
+    expect(ownTargets(mounted)).not.toContain('/mnt/shared')
+  })
+})
+
+describe('validateMount', () => {
+  it('a host path under a root; the target defaults to /mnt/<last part of the host path>, read-write', () => {
+    expect(validateMount({ host: '/srv/shared/team/' }, ctx())).toEqual({ host: '/srv/shared/team', target: '/mnt/team', readonly: false })
+    expect(validateMount({ host: '/data/projects', target: '/work/p/', readonly: true }, ctx())).toEqual({ host: '/data/projects', target: '/work/p', readonly: true })
+  })
+  it('refuses a host path outside the roots, relative, or with ..', () => {
+    expect(validateMount({ host: '/srv/shared2' }, ctx())).toMatch(/HOST_MOUNT_ROOTS/)
+    expect(validateMount({ host: '/etc' }, ctx())).toMatch(/HOST_MOUNT_ROOTS/)
+    expect(validateMount({ host: 'srv/shared' }, ctx())).toMatch(/absolute/)
+    expect(validateMount({ host: '/srv/shared/../../etc' }, ctx())).toMatch(/absolute/)
+    expect(validateMount({}, ctx())).toMatch(/host/)
+    expect(validateMount('x', ctx())).toMatch(/JSON object/)
+  })
+  it('refuses a target that is relative, /, has .., or is taken', () => {
+    expect(validateMount({ host: '/srv/shared', target: 'mnt/x' }, ctx())).toMatch(/absolute/)
+    expect(validateMount({ host: '/srv/shared', target: '/' }, ctx())).toMatch(/not \//)
+    expect(validateMount({ host: '/srv/shared', target: '/mnt/../x' }, ctx())).toMatch(/absolute/)
+    const existing = [{ host: '/data/projects', target: '/mnt/shared', readonly: false }]
+    expect(validateMount({ host: '/srv/shared' }, ctx(existing))).toMatch(/already/)
+  })
+  it("refuses a target on, above or under the sandbox's own mounts (from its compose file)", () => {
+    for (const t of ['/var/lib/docker', '/var/lib', '/var', '/var/lib/docker/volumes/x', '/opt', '/opt/data', '/root/x', '/home', '/srv/x', '/inner', '/certs/a']) {
+      expect(validateMount({ host: '/srv/shared', target: t }, ctx()), t).toMatch(/own mount/)
+    }
+  })
+  it('refuses a target in a system directory', () => {
+    for (const d of ['/proc', '/sys', '/dev', '/etc', '/usr', '/bin', '/sbin', '/lib', '/run', '/boot']) expect(SYSTEM_DIRS).toContain(d)
+    for (const t of ['/proc', '/etc/x', '/usr/local/share', '/dev/shm', '/run/docker']) {
+      expect(validateMount({ host: '/srv/shared', target: t }, ctx()), t).toMatch(/system/)
+    }
+    // A sibling that only starts with the same letters is fine
+    expect(validateMount({ host: '/srv/shared', target: '/etcetera' }, ctx())).toMatchObject({ target: '/etcetera' })
+  })
+  it('the host path / has no default target; readonly must be a boolean', () => {
+    const all = { ...ctx(), roots: ['/'] }
+    expect(validateMount({ host: '/' }, all)).toMatch(/target/)
+    expect(validateMount({ host: '/srv/shared', readonly: 'yes' }, ctx())).toMatch(/readonly/)
+  })
+})
+
+describe('withMounts / readMounts', () => {
+  const m1 = { host: '/srv/shared', target: '/mnt/shared', readonly: true }
+  const m2 = { host: '/data/projects/a', target: '/work/a', readonly: false }
+  type Svc = { volumes: unknown[]; labels: Record<string, string> }
+  const sandbox = (text: string) => (yaml.load(text) as { services: { sandbox: Svc } }).services.sandbox
+
+  it('bind mounts on the sandbox (long syntax, a missing host folder is an error, not an empty new one) and the p7y.mounts label', () => {
+    const text = withMounts(compose(), [m1, m2])
+    const sb = sandbox(text)
+    expect(sb.volumes).toContainEqual({ type: 'bind', source: '/srv/shared', target: '/mnt/shared', read_only: true, bind: { create_host_path: false } })
+    expect(sb.volumes).toContainEqual({ type: 'bind', source: '/data/projects/a', target: '/work/a', read_only: false, bind: { create_host_path: false } })
+    expect(JSON.parse(sb.labels[MOUNTS_LABEL])).toEqual([m1, m2])
+    expect(readMounts(text)).toEqual([m1, m2])
+    // Everything else stays: its own mounts and labels
+    expect(sb.volumes).toContain('docker_data:/var/lib/docker')
+    expect(sb.labels['p7y.name']).toBe('p7y-shop')
+  })
+  it('replaces the earlier ones; none left: no label, no binds', () => {
+    const one = withMounts(withMounts(compose(), [m1, m2]), [m2])
+    expect(readMounts(one)).toEqual([m2])
+    expect(sandbox(one).volumes.filter(v => typeof v === 'object')).toHaveLength(1)
+    const none = withMounts(one, [])
+    expect(readMounts(none)).toEqual([])
+    expect(sandbox(none).labels[MOUNTS_LABEL]).toBeUndefined()
+    expect(sandbox(none).volumes).toEqual(sandbox(compose()).volumes)
+  })
+  it('a file without the label, or not readable: no mounts', () => {
+    expect(readMounts(compose())).toEqual([])
+    expect(readMounts(': not yaml [')).toEqual([])
+    expect(() => withMounts(yaml.dump({ services: { other: {} } }), [m1])).toThrow(/no sandbox service/)
+  })
+
+  it('kept by the data-volume migration and the host-path migrations', () => {
+    // An old file without the data volumes, with mounts
+    const old = withMounts(compose().replace(/\n\s+- sandbox_(opt|root|home|srv):\/\w+/g, ''), [m1])
+    const migrated = withDataVolumes(old)!
+    expect(migrated).not.toBeNull()
+    expect(readMounts(migrated)).toEqual([m1])
+    expect(sandbox(migrated).volumes).toContainEqual(expect.objectContaining({ source: '/srv/shared', target: '/mnt/shared' }))
+    expect(withDataVolumes(migrated)).toBeNull()
+
+    // A host mount that happens to sit in the sandbox's old directory is not moved with it
+    const inDir = { host: `${HOST}/p7y-shop/shared`, target: '/mnt/x', readonly: false }
+    const text = withMounts(compose(), [inDir])
+    expect(mountedUsersDir(text, 'p7y-shop')).toBe(HOST)
+    const moved = withUsersDir(text, 'p7y-shop', HOST, '/new/sandboxes/admin')
+    expect(readMounts(moved)).toEqual([inDir])
+    expect(sandbox(moved).volumes).toContainEqual(expect.objectContaining({ source: inDir.host }))
+    expect(sandbox(moved).volumes).toContain('/new/sandboxes/admin/p7y-shop/certs:/certs')
+  })
+})
+
+describe('setMounts', () => {
+  const file = () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-mounts-'))
+    fs.writeFileSync(`${dir}/docker-compose.yml`, compose())
+    return `${dir}/docker-compose.yml`
+  }
+  const m1 = { host: '/srv/shared', target: '/mnt/shared', readonly: false }
+
+  it('writes the compose file and recreates the sandbox container: started if it was running, else left stopped', async () => {
+    for (const [status, start] of [['running', true], ['exited', false], ['created', false]] as const) {
+      const f = file()
+      const recreate = vi.fn(async () => {})
+      expect(await setMounts('p7y-shop', status, [m1], { composePath: () => f, recreate })).toEqual([m1])
+      expect(recreate).toHaveBeenCalledWith(f, start)
+      expect(mountsOf('p7y-shop', f)).toEqual([m1])
+    }
+  })
+  it('deep sleep: only the file (it applies when the sandbox wakes)', async () => {
+    const f = file()
+    const recreate = vi.fn(async () => {})
+    await setMounts('p7y-shop', 'deep_sleep', [m1], { composePath: () => f, recreate })
+    expect(recreate).not.toHaveBeenCalled()
+    expect(mountsOf('p7y-shop', f)).toEqual([m1])
+  })
+  it("Docker refuses (e.g. the host folder does not exist): the file as it was, the container brought back, Docker's words in the error", async () => {
+    const f = file()
+    const before = fs.readFileSync(f, 'utf8')
+    const recreate = vi.fn()
+      .mockRejectedValueOnce(Object.assign(new Error('Command failed: docker compose up'), { stderr: 'Error response from daemon: invalid mount config for type "bind": bind source path does not exist: /srv/shared\n' }))
+      .mockResolvedValueOnce(undefined)
+    await expect(setMounts('p7y-shop', 'running', [m1], { composePath: () => f, recreate })).rejects.toThrow(/bind source path does not exist: \/srv\/shared/)
+    expect(fs.readFileSync(f, 'utf8')).toBe(before)
+    expect(recreate).toHaveBeenCalledTimes(2)
+    expect(recreate).toHaveBeenLastCalledWith(f, true)
+  })
+  it('mountsOf: none for a sandbox without a readable compose file', () => {
+    expect(mountsOf('p7y-none', '/nonexistent/docker-compose.yml')).toEqual([])
+  })
+})

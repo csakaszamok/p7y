@@ -676,3 +676,47 @@ describe('usersTable (Overview, admin)', () => {
     expect(P.usersTable([], now)).toBe('')
   })
 })
+
+describe('mountsSection (Resources tab): host folders mounted into the sandbox', () => {
+  const m = { host: '/srv/shared/<team>', target: '/mnt/team', readonly: true }
+  const user = { ...ctx, isAdmin: false, me: 'alice@example.com' }
+  it('the admin, HOST_MOUNT_ROOTS set: the list with a remove button each, and the add form', () => {
+    const html = P.mountsSection({ ...running, mounts: [m], host_mount_roots: ['/srv/shared'] }, ctx)
+    expect(html).toContain('/srv/shared/&lt;team&gt;')
+    expect(html).not.toContain('<team>')
+    expect(html).toContain('/mnt/team')
+    expect(html).toContain('read-only')
+    expect(html).toMatch(/<button[^>]*data-mount-remove="\/mnt\/team"/)
+    expect(html).toContain('data-mount-form')
+    expect(html).toMatch(/<input[^>]*name="host"/)
+    expect(html).toMatch(/<input[^>]*name="target"[^>]*placeholder="\/mnt\//)
+    expect(html).toMatch(/<input type="checkbox" name="readonly"/)
+    expect(html).toContain('/srv/shared')
+    // In the Resources tab
+    expect(panelOf(P.renderPanel({ ...running, mounts: [m], host_mount_roots: ['/srv/shared'] }, { ...ctx, tab: 'resources' }), 'resources')).toContain('data-mount-form')
+  })
+  it('the admin, the feature off: no form; mounts already there can still be removed', () => {
+    expect(P.mountsSection({ ...running, mounts: [], host_mount_roots: [] }, ctx)).toBe('')
+    const html = P.mountsSection({ ...running, mounts: [m], host_mount_roots: [] }, ctx)
+    expect(html).toContain('data-mount-remove')
+    expect(html).not.toContain('data-mount-form')
+  })
+  it('the owner: the list, read-only, only when there is one', () => {
+    const html = P.mountsSection({ ...running, owner: 'alice@example.com', mounts: [m] }, user)
+    expect(html).toContain('/mnt/team')
+    expect(html).not.toContain('data-mount-remove')
+    expect(html).not.toContain('data-mount-form')
+    expect(P.mountsSection({ ...running, owner: 'alice@example.com', mounts: [] }, user)).toBe('')
+    expect(P.mountsSection({ ...running, owner: 'alice@example.com' }, user)).toBe('')
+  })
+  it('Simple (no Resources tab): the list, read-only, on the Details tab', () => {
+    const s = { ...running, owner: 'alice@example.com', mounts: [m], host_mount_roots: ['/srv/shared'] }
+    for (const c of [{ ...user, simple: true }, { ...ctx, simple: true }]) {
+      const html = panelOf(P.renderPanel(s, { ...c, tab: 'settings' }), 'settings')
+      expect(html).toContain('/mnt/team')
+      expect(html).not.toContain('data-mount-remove')
+      expect(html).not.toContain('data-mount-form')
+    }
+    expect(panelOf(P.renderPanel(s, { ...user, tab: 'settings' }), 'settings')).not.toContain('/mnt/team')
+  })
+})

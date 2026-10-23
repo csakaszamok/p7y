@@ -5,7 +5,7 @@ import { internalOnly, INTERNAL_PORT } from "./services/appAccess/internal";
 import { startSessionWatch } from "./services/sessionWatch";
 import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
 import { openSignInWarning } from "./services/allowlist";
-import { insecureConfigWarnings, insecureConfigErrors } from "./services/configWarnings";
+import { insecureConfigWarnings, insecureConfigErrors, hostMountWarnings } from "./services/configWarnings";
 import { syncTlsConfig } from "./services/tlsConfig";
 import { migrateRouters } from "./services/routerMigration";
 import { migrateFrpsApiAuth } from "./services/frpsApi";
@@ -347,7 +347,7 @@ migrateSandboxDirs()
   // Then sandboxes created before CPU/memory limits: give them the default
   .then(() => migrateResourceLimits())
   .catch(err => console.error("[resources] migration failed:", err));
-for (const warning of insecureConfigWarnings(process.env)) console.warn(warning);
+for (const warning of [...insecureConfigWarnings(process.env), ...hostMountWarnings(process.env)]) console.warn(warning);
 
 
 // --- Dynamic route resolution ---

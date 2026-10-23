@@ -27,7 +27,8 @@ describe('the API routes as MCP tools', () => {
   it('a token for one sandbox sees only the tools it may call; a token for all of them sees every tool', () => {
     const scoped = namesFor({ sub: 'u@x', role: 'user', via: 'token', sandbox: 'p7y-shop' })
     for (const n of ['wake_sandbox', 'sleep_sandbox', 'restart_sandbox', 'get_sandbox', 'list_sandboxes', 'set_sleep_settings', 'who_am_i']) expect(scoped).toContain(n)
-    for (const n of ['create_sandbox', 'archive_sandbox', 'create_token', 'list_tokens', 'add_ssh_key', 'sandbox_summary']) expect(scoped).not.toContain(n)
+    for (const n of ['create_sandbox', 'archive_sandbox', 'create_token', 'list_tokens', 'add_ssh_key', 'sandbox_summary', 'add_sandbox_mount', 'remove_sandbox_mount']) expect(scoped).not.toContain(n)
+    expect(scoped).toContain('list_sandbox_mounts')
     expect(namesFor({ sub: 'u@x', role: 'user', via: 'token' })).toHaveLength(tools().length)
   })
 

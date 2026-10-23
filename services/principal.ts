@@ -40,6 +40,8 @@ const SCOPED_ALLOWED: Array<[string, RegExp]> = [
   ['POST', /^\/sandboxes\/[^/]+\/files\/mkdir$/],
   ['PUT', /^\/sandboxes\/[^/]+\/files\/content$/],
   ['GET', /^\/sandboxes\/[^/]+\/volumes$/],
+  // The host folders mounted into it (only the admin changes them)
+  ['GET', /^\/sandboxes\/[^/]+\/mounts$/],
 ]
 
 // The router prefers a static directory under routes/sandboxes/ over [name], so such a

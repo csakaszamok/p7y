@@ -1,3 +1,5 @@
+import { parseHostMountRoots } from './hostMounts'
+
 /**
  * Local-dev defaults that must not survive into a publicly reachable
  * deployment. The dev stack (docker-compose.yml) and the e2e scripts rely on
@@ -15,6 +17,15 @@ export function insecureConfigWarnings(env: NodeJS.ProcessEnv = process.env): st
   if (env.ADMIN_PASSWORD === 'change-me') {
     warnings.push('WARNING: ADMIN_PASSWORD is set to the default "change-me". Set a strong ADMIN_PASSWORD before exposing Purgatory publicly.')
   }
+  return warnings
+}
+
+/** HOST_MOUNT_ROOTS entries that are ignored, and a root of / (any host folder could be mounted). */
+export function hostMountWarnings(env: NodeJS.ProcessEnv = process.env): string[] {
+  const { roots, invalid } = parseHostMountRoots(env.HOST_MOUNT_ROOTS)
+  const warnings: string[] = []
+  if (invalid.length) warnings.push(`WARNING: HOST_MOUNT_ROOTS: ignored (not absolute, or with ..): ${invalid.join(', ')}`)
+  if (roots.includes('/')) warnings.push('WARNING: HOST_MOUNT_ROOTS includes /: the admin can mount any folder of the whole host into a sandbox.')
   return warnings
 }
 
