@@ -1690,7 +1690,7 @@
 <div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>-o<span class="w"> </span><span class="nv">ProxyCommand</span><span class="o">=</span><span class="s2">"openssl s_client -quiet -connect %h:443 -servername %h"</span><span class="w"> </span>root@&lt;name&gt;-shell-tcp.&lt;domain&gt;
 </code></pre></div>
 <p>Each new sandbox also has a key of its own: <strong>Download key</strong> in its panel (API <code>GET /sandboxes/:name/ssh-key</code>; <code>POST</code> makes one for an SSH sandbox that has none yet), so nobody has to make or upload a key first. The <strong>Connect…</strong> recipe then reads <code>ssh -i ~/Downloads/&lt;name&gt;.key …</code>.</p>
-<p>The name <code>shell</code> is reserved: an inner service with <code>frpc.subdomain: shell</code> gets no TCP address. Sandboxes created before have no SSH.</p>
+<p>The name <code>shell</code> is reserved: an inner service with <code>p7y.subdomain: shell</code> (or the older <code>frpc.subdomain: shell</code>) gets no TCP address. Sandboxes created before have no SSH.</p>
 <h2 id="terminal-in-the-browser">Terminal in the browser<a class="headerlink" href="#terminal-in-the-browser" title="Permanent link">&para;</a></h2>
 <p><strong>Terminal</strong> in a sandbox's panel opens a root shell in the sandbox in a new tab: nothing to install, no key. It wakes the sandbox if it is asleep, and keeps it awake while the tab is open. Inside, <code>docker</code> talks to the sandbox's own Docker. Only the sandbox's owner (and the admin) can open it, from the Purgatory pages themselves (signed in; not with a token); at most 5 at once per user.</p>
 <h2 id="app-logs">App logs<a class="headerlink" href="#app-logs" title="Permanent link">&para;</a></h2>

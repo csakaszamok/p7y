@@ -2041,7 +2041,7 @@
 <span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"8080:8080"</span><span class="p p-Indicator">]</span>
 <span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unless-stopped</span>
 <span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">frpc.subdomain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">shop</span>
+<span class="w">      </span><span class="nt">p7y.subdomain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">shop</span>
 </code></pre></div>
 <ul>
 <li><strong>Publish ports on all interfaces</strong> (<code>8080:8080</code>): that is what gives the app its public address. A port published on <code>127.0.0.1</code> stays private to the sandbox: no address at all. The app itself must listen on <code>0.0.0.0</code> inside its container (not <code>127.0.0.1</code>), or its address answers with an error; <code>GET /sandboxes/:name</code> → <code>apps[].answers</code> says whether it answers. An app labelled <code>p7y.access: domain</code> or <code>owner</code> (<a href="../app-access/">App access</a>) answers your own <code>curl</code> with a redirect to Purgatory's sign-in: check <code>apps[].answers</code> instead. Set the label the user asks for (<em>only for me</em> → <code>owner</code>, <em>for my colleagues</em> → <code>domain</code>) before the first deploy.</li>
@@ -2051,7 +2051,7 @@
 <h3 id="the-apps-public-address">The app's public address<a class="headerlink" href="#the-apps-public-address" title="Permanent link">&para;</a></h3>
 <p>Every published TCP port gets an HTTP address. With the sandbox <code>p7y-shop</code> on <code>example.com</code>:</p>
 <ul>
-<li>with a <code>frpc.subdomain: shop</code> label: <code>https://shop-shop.example.com</code>, that is <code>&lt;sandbox&gt;-&lt;subdomain&gt;.&lt;domain&gt;</code>;</li>
+<li>with a <code>p7y.subdomain: shop</code> label: <code>https://shop-shop.example.com</code>, that is <code>&lt;sandbox&gt;-&lt;subdomain&gt;.&lt;domain&gt;</code> (<code>frpc.subdomain</code>, the label's older name, still works; <code>p7y.subdomain</code> wins if both are set);</li>
 <li>without the label: <code>https://shop-&lt;project&gt;-&lt;container&gt;-port&lt;host port&gt;.example.com</code>. The container name is <code>&lt;project&gt;-&lt;service&gt;-1</code> unless <code>container_name</code> is set.</li>
 </ul>
 <p>The app is reachable a few seconds after the container starts. <code>GET /sandboxes/p7y-shop</code> lists the addresses in <code>tunnel_urls</code>.</p>
@@ -2106,7 +2106,7 @@ docker<span class="w"> </span>--context<span class="w"> </span>p7y-shop<span cla
 
 <span class="err">{</span>
 <span class="err">  "name": "shop",</span>
-<span class="err">  "stackFileContent": "services:\n  web:\n    image: registry.example.com/shop:1.4.2\n    ports: [\"8080:8080\"]\n    labels:\n      frpc.subdomain: shop\n",</span>
+<span class="err">  "stackFileContent": "services:\n  web:\n    image: registry.example.com/shop:1.4.2\n    ports: [\"8080:8080\"]\n    labels:\n      p7y.subdomain: shop\n",</span>
 <span class="err">  "env": [{"name": "LOG_LEVEL", "value": "info"}]</span>
 <span class="err">}</span>
 </code></pre></div>

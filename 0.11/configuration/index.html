@@ -1705,6 +1705,11 @@
 <td>Disk use above which a sandbox is flagged; a warning only, see <a href="../resources/#disk">Disk</a></td>
 </tr>
 <tr>
+<td><code>HOST_MOUNT_ROOTS</code></td>
+<td>(empty: off)</td>
+<td>Host folders the admin may mount into a sandbox, as a comma list of absolute paths (e.g. <code>/srv/shared,/data/projects</code>): a mount's host path must be one of them or under one (<code>/srv/shared2</code> is not under <code>/srv/shared</code>). Entries that are not absolute or have <code>..</code> are ignored, with a warning at startup; <code>/</code> (the whole host) is allowed, with a warning. <strong>A mount gives whoever owns the sandbox that host folder, as root</strong> (read-only if mounted so), and to every app in it. Empty: nobody can add a mount; ones already there stay until the admin removes them. See <a href="../web-ui/#host-folders">Host folders</a></td>
+</tr>
+<tr>
 <td><code>LOGIN_CAPACITY</code></td>
 <td><code>on</code></td>
 <td>The sign-in page shows the sandbox places on the server: taken and free of <code>SANDBOX_MAX_TOTAL</code>, with a bar (orange from 90%, red when full). The page is public, so <code>off</code> hides it; nothing is shown without a server limit. Counted at most every 30 seconds</td>
@@ -1713,6 +1718,11 @@
 <td><code>GITHUB_STATS</code></td>
 <td><code>on</code></td>
 <td>The topbar links to the GitHub repo and shows Purgatory's version, stars and forks. The server fetches the counts at most once an hour (users' browsers never contact GitHub); <code>off</code> never asks GitHub, and the link and the version stay</td>
+</tr>
+<tr>
+<td><code>USER_VIEW_SWITCH</code></td>
+<td><code>false</code></td>
+<td><code>true</code> gives users the <strong>Simple | Advanced</strong> switch in the top bar (see <a href="../web-ui/#simple-and-advanced">Simple and Advanced</a>). Otherwise users always see Simple, and <code>PUT /me/view</code> answers 403 to them; a view they chose before is kept for when it is turned on. The admin can always switch</td>
 </tr>
 <tr>
 <td><code>GITHUB_LINK</code></td>

@@ -1788,6 +1788,21 @@
 <td>The volumes of the apps in the sandbox's own Docker: <code>name</code>, <code>path</code> (for the routes above), <code>project</code>, <code>containers</code> that use it</td>
 </tr>
 <tr>
+<td><code>GET</code></td>
+<td><code>/sandboxes/:name/mounts</code></td>
+<td>The host folders mounted into the sandbox: <code>mounts</code> (<code>host</code>, <code>target</code>, <code>readonly</code>), <code>enabled</code> (<code>HOST_MOUNT_ROOTS</code> is set); the admin also gets <code>roots</code>. Owner, admin, and a token limited to the sandbox. See <a href="../web-ui/#host-folders">Host folders</a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/sandboxes/:name/mounts</code></td>
+<td>Mount a host folder (admin only, <code>HOST_MOUNT_ROOTS</code> set, else 403 / 409): <code>{"host": "/srv/shared/team", "target": "/mnt/team", "readonly": true}</code>, <code>target</code> defaulting to <code>/mnt/&lt;last part of host&gt;</code>. The sandbox container is recreated (a running one restarts). 400 for a path outside the roots or a target that is not allowed; 409 with Docker's words when Docker refuses it (e.g. the host folder does not exist), nothing changed</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/sandboxes/:name/mounts?target=/mnt/team</code></td>
+<td>Unmount it (admin only; also with <code>HOST_MOUNT_ROOTS</code> unset); the sandbox container is recreated</td>
+</tr>
+<tr>
 <td><code>DELETE</code></td>
 <td><code>/sandboxes/:name</code></td>
 <td>Archive the sandbox, then remove it (<strong>Archive…</strong> in the UI; see <a href="../archive/">Delete = archive</a>)</td>
@@ -1855,7 +1870,7 @@
 <tr>
 <td><code>PUT</code></td>
 <td><code>/me/view</code></td>
-<td>The web UI's view for this account: <code>{"view": "simple"}</code> or <code>"advanced"</code> (<code>GET /me</code> returns it as <code>view</code>)</td>
+<td>The web UI's view for this account: <code>{"view": "simple"}</code> or <code>"advanced"</code> (<code>GET /me</code> returns it as <code>view</code>, and whether the account may switch as <code>view_switch</code>); a user gets 403 unless <code>USER_VIEW_SWITCH=true</code></td>
 </tr>
 <tr>
 <td><code>GET</code></td>

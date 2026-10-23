@@ -89,7 +89,7 @@ services:
     ports: ["8080:8080"]
     restart: unless-stopped
     labels:
-      frpc.subdomain: shop
+      p7y.subdomain: shop
 ```
 
 - **Publish ports on all interfaces** (`8080:8080`): that is what gives the app its public address. A port published on `127.0.0.1` stays private to the sandbox: no address at all. The app itself must listen on `0.0.0.0` inside its container (not `127.0.0.1`), or its address answers with an error; `GET /sandboxes/:name` → `apps[].answers` says whether it answers. An app labelled `p7y.access: domain` or `owner` ([App access](https://p7y-dev.github.io/p7y/0.11/app-access/index.md)) answers your own `curl` with a redirect to Purgatory's sign-in: check `apps[].answers` instead. Set the label the user asks for (*only for me* → `owner`, *for my colleagues* → `domain`) before the first deploy.
@@ -100,7 +100,7 @@ services:
 
 Every published TCP port gets an HTTP address. With the sandbox `p7y-shop` on `example.com`:
 
-- with a `frpc.subdomain: shop` label: `https://shop-shop.example.com`, that is `<sandbox>-<subdomain>.<domain>`;
+- with a `p7y.subdomain: shop` label: `https://shop-shop.example.com`, that is `<sandbox>-<subdomain>.<domain>` (`frpc.subdomain`, the label's older name, still works; `p7y.subdomain` wins if both are set);
 - without the label: `https://shop-<project>-<container>-port<host port>.example.com`. The container name is `<project>-<service>-1` unless `container_name` is set.
 
 The app is reachable a few seconds after the container starts. `GET /sandboxes/p7y-shop` lists the addresses in `tunnel_urls`.
@@ -179,7 +179,7 @@ Content-Type: application/json
 
 {
   "name": "shop",
-  "stackFileContent": "services:\n  web:\n    image: registry.example.com/shop:1.4.2\n    ports: [\"8080:8080\"]\n    labels:\n      frpc.subdomain: shop\n",
+  "stackFileContent": "services:\n  web:\n    image: registry.example.com/shop:1.4.2\n    ports: [\"8080:8080\"]\n    labels:\n      p7y.subdomain: shop\n",
   "env": [{"name": "LOG_LEVEL", "value": "info"}]
 }
 ```

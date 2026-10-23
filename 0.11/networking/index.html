@@ -1061,6 +1061,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#app-web-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        App web addresses
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tls-tcp-addresses" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1635,6 +1646,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#app-web-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        App web addresses
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tls-tcp-addresses" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1672,6 +1694,42 @@
 </ul>
 <p>The Purgatory API itself requires authentication (see <a href="../web-ui/">Web UI and sign-in</a>). Two endpoints of each sandbox are not published on the host but are reachable from other sandboxes over <code>traefik-net</code>: its Docker API (protected by per-sandbox TLS client certs) and its frps API (<code>:7500</code>, which lists the sandbox's proxies; it has a per-sandbox password, kept in the sandbox's <code>frps.toml</code>, so a neighbour gets 401). Closing published ports to neighbours is on the <a href="../roadmap/">roadmap</a>.</p>
 <p>Who may open an app's <strong>web address</strong> can be limited per app with <code>p7y.access</code> (<a href="../app-access/">App access</a>); that applies to HTTP through Purgatory only, not to the TCP addresses below, nor to the direct <code>traefik-net</code> path from other sandboxes.</p>
+<h2 id="app-web-addresses">App web addresses<a class="headerlink" href="#app-web-addresses" title="Permanent link">&para;</a></h2>
+<p>Each TCP port an inner container publishes on all interfaces gets a web address, <code>&lt;sandbox&gt;-&lt;project&gt;-&lt;container&gt;-port&lt;host port&gt;.&lt;domain&gt;</code> (<code>shop-inner-web-port8080.&lt;domain&gt;</code>). A label on the container gives it a short one instead:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>p7y.subdomain: web</code></td>
+<td>The app's address becomes <code>&lt;sandbox&gt;-web.&lt;domain&gt;</code>. <code>frpc.subdomain</code>, its older name, still works; if both are set, <code>p7y.subdomain</code> wins. Needs the sandbox's foxglove image 0.8.0 or newer (an older one reads only <code>frpc.subdomain</code>): a sandbox keeps the image it was created with, so in sandboxes created before p7y 0.11.4 use <code>frpc.subdomain</code>. <code>shell</code> gets no TCP address: that name is the sandbox's own SSH (<a href="../shell-and-logs/">Shell and logs</a>).</td>
+</tr>
+<tr>
+<td><code>p7y.access</code></td>
+<td>Who may open the address (<a href="../app-access/">App access</a>).</td>
+</tr>
+<tr>
+<td><code>p7y.connect.user</code></td>
+<td>The login the <strong>Connect…</strong> recipes use (below).</td>
+</tr>
+<tr>
+<td><code>p7y.publish</code>, <code>p7y.title</code>, <code>p7y.description</code>, <code>p7y.image</code></td>
+<td>Lists the app on the <a href="../hub/">Hub</a>.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">web</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">build</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"8080:8080"</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">p7y.subdomain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+</code></pre></div>
+<p>A container with <code>p7y.subdomain</code> that publishes several ports has one web address for all of them; each port's TCP address (below) gets <code>-port&lt;N&gt;</code> too.</p>
 <h2 id="tls-tcp-addresses">TLS TCP addresses<a class="headerlink" href="#tls-tcp-addresses" title="Permanent link">&para;</a></h2>
 <p>A port an inner container publishes on all interfaces (<code>"5432:5432"</code>) also gets a TCP address, its HTTP name plus <code>-tcp</code>, on port 443, TLS only: <code>shop-inner-db-port5432-tcp.&lt;domain&gt;:443</code>. Ports published on <code>127.0.0.1</code> stay private: no TCP address and no link.</p>
 <ul>

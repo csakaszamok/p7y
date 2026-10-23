@@ -1589,6 +1589,7 @@
 <li><strong><code>sysbox</code> is not a VM:</strong> its sandboxes run unprivileged, in their own user namespace, but share the host's kernel, so a kernel exploit would still reach the host.</li>
 <li>There is no network policy between a sandbox and the internet, and no hard disk quota per sandbox: only a warning above its disk limit (see <a href="../resources/#disk">Disk</a>); CPU and memory limits exist (see <a href="../resources/#cpu-and-memory">CPU and memory</a>).</li>
 <li>The Purgatory container mounts the host's Docker socket, so whoever controls Purgatory controls the host.</li>
+<li>A <a href="../web-ui/#host-folders">host folder</a> the admin mounts into a sandbox (<code>HOST_MOUNT_ROOTS</code>) is the sandbox owner's, as root, and every app's and agent's in it: read-only only limits writing. Keep the roots narrow.</li>
 </ul>
 <p>For untrusted code (public sign-up, code from strangers), use sysbox or a microVM-based sandbox instead; a Kata Containers runtime (a VM per sandbox) is on the <a href="../roadmap/">roadmap</a>.</p>
 <p>Found a vulnerability? See <a href="https://github.com/p7y-dev/p7y/blob/main/SECURITY.md">SECURITY.md</a>.</p>

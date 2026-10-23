@@ -10,7 +10,7 @@ ssh -o ProxyCommand="openssl s_client -quiet -connect %h:443 -servername %h" roo
 
 Each new sandbox also has a key of its own: **Download key** in its panel (API `GET /sandboxes/:name/ssh-key`; `POST` makes one for an SSH sandbox that has none yet), so nobody has to make or upload a key first. The **Connect…** recipe then reads `ssh -i ~/Downloads/<name>.key …`.
 
-The name `shell` is reserved: an inner service with `frpc.subdomain: shell` gets no TCP address. Sandboxes created before have no SSH.
+The name `shell` is reserved: an inner service with `p7y.subdomain: shell` (or the older `frpc.subdomain: shell`) gets no TCP address. Sandboxes created before have no SSH.
 
 ## Terminal in the browser
 

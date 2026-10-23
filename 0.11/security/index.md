@@ -17,6 +17,7 @@ What it does not do:
 - **`sysbox` is not a VM:** its sandboxes run unprivileged, in their own user namespace, but share the host's kernel, so a kernel exploit would still reach the host.
 - There is no network policy between a sandbox and the internet, and no hard disk quota per sandbox: only a warning above its disk limit (see [Disk](https://p7y-dev.github.io/p7y/0.11/resources/#disk)); CPU and memory limits exist (see [CPU and memory](https://p7y-dev.github.io/p7y/0.11/resources/#cpu-and-memory)).
 - The Purgatory container mounts the host's Docker socket, so whoever controls Purgatory controls the host.
+- A [host folder](https://p7y-dev.github.io/p7y/0.11/web-ui/#host-folders) the admin mounts into a sandbox (`HOST_MOUNT_ROOTS`) is the sandbox owner's, as root, and every app's and agent's in it: read-only only limits writing. Keep the roots narrow.
 
 For untrusted code (public sign-up, code from strangers), use sysbox or a microVM-based sandbox instead; a Kata Containers runtime (a VM per sandbox) is on the [roadmap](https://p7y-dev.github.io/p7y/0.11/roadmap/index.md).
 

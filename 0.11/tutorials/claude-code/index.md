@@ -13,7 +13,7 @@ A sandbox is your own small server: your app runs there, not on your computer.
 
 Simple or Advanced
 
-The switch at the top right changes how much the screen shows. **Simple** is enough for everything here.
+The switch at the top right changes how much the screen shows. **Simple** is enough for everything here. If you see no switch, you are in Simple: the server lets only the admin switch.
 
 ## 2. Install the p7y plugin in Claude Code (once)
 
