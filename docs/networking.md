@@ -16,7 +16,7 @@ Each TCP port an inner container publishes on all interfaces gets a web address,
 
 | Label | What it does |
 |---|---|
-| `p7y.subdomain: web` | The app's address becomes `<sandbox>-web.<domain>`. `frpc.subdomain`, its older name, still works; if both are set, `p7y.subdomain` wins. Needs the sandbox's foxglove image 0.8.0 or newer (an older one reads only `frpc.subdomain`). `shell` gets no TCP address: that name is the sandbox's own SSH ([Shell and logs](shell-and-logs.md)). |
+| `p7y.subdomain: web` | The app's address becomes `<sandbox>-web.<domain>`. `frpc.subdomain`, its older name, still works; if both are set, `p7y.subdomain` wins. Needs the sandbox's foxglove image 0.8.0 or newer (an older one reads only `frpc.subdomain`): a sandbox keeps the image it was created with, so in sandboxes created before p7y 0.11.4 use `frpc.subdomain`. `shell` gets no TCP address: that name is the sandbox's own SSH ([Shell and logs](shell-and-logs.md)). |
 | `p7y.access` | Who may open the address ([App access](app-access.md)). |
 | `p7y.connect.user` | The login the **Connect…** recipes use (below). |
 | `p7y.publish`, `p7y.title`, `p7y.description`, `p7y.image` | Lists the app on the [Hub](hub.md). |
