@@ -1,5 +1,6 @@
 import { sandboxService } from './sandbox'
 import type { Principal } from './principal'
+import type { SandboxMeta } from './docker'
 
 export function canAccess(p: Principal, owner: string, name?: string): boolean {
   // A token limited to one sandbox sees nothing else, whoever owns it
@@ -14,9 +15,9 @@ export async function getOwnedSandbox(p: Principal, name: string) {
   return sandbox
 }
 
-/** States and owners only (no app links): for counting. */
-export async function visibleSandboxStates(p: Principal) {
-  return (await sandboxService.listSandboxStates()).filter(s => canAccess(p, s.owner, s.name))
+/** States and owners only (no app links): for counting. `all`: a listing the caller already has. */
+export async function visibleSandboxStates(p: Principal, all?: SandboxMeta[]) {
+  return (all ?? await sandboxService.listSandboxStates()).filter(s => canAccess(p, s.owner, s.name))
 }
 
 /** With app links: only the caller's sandboxes are asked for theirs. */
