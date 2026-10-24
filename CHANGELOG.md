@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.11.12] - 2026-10-24
+
+Upgrading from 0.11.11: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version).
+
 ### Changed
 
 - **Lists ask Docker less:** a sandbox's container is inspected again only when its status changed since the last list (started, stopped, or a minute older), an asleep one's start error only when its state changed, and each compose file is parsed once per change instead of four times per row on every poll.
