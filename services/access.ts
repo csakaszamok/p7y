@@ -19,7 +19,7 @@ export async function visibleSandboxStates(p: Principal) {
   return (await sandboxService.listSandboxStates()).filter(s => canAccess(p, s.owner, s.name))
 }
 
+/** With app links: only the caller's sandboxes are asked for theirs. */
 export async function visibleSandboxes(p: Principal) {
-  const all = await sandboxService.listSandboxes()
-  return all.filter(s => canAccess(p, s.owner, s.name))
+  return sandboxService.listSandboxes(s => canAccess(p, s.owner, s.name))
 }

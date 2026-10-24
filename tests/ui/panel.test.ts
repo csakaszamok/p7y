@@ -83,6 +83,18 @@ describe('renderPanel', () => {
     expect(panelOf(P.renderPanel(none, ctx), 'apps')).toContain('No apps yet — publish a port on all interfaces (e.g. 8080:8080) to get a link.')
   })
 
+  // A busy server: the sandbox did not answer, so the apps are the ones it had last time, and the user is told
+  it('Apps: a warning over the apps it had last time when the sandbox did not answer just now', () => {
+    const apps = panelOf(P.renderPanel({ ...running, apps_stale: true }, ctx), 'apps')
+    expect(apps).toContain('⚠ Could not see its apps just now (the server is busy): these are the apps it had last time.')
+    expect(apps).toContain('shop-inner-web-port8080.lvh.me')
+    const none = { ...running, apps_stale: true, tunnel_urls: [], apps: [], tcp_addresses: [] }
+    const empty = panelOf(P.renderPanel(none, ctx), 'apps')
+    expect(empty).toContain('⚠ Could not see its apps just now (the server is busy).')
+    expect(empty).not.toContain('No apps yet')
+    expect(panelOf(P.renderPanel(running, ctx), 'apps')).not.toContain('Could not see its apps')
+  })
+
   it('Access: SSH, Portainer with a hidden password, token for the owner only', () => {
     const access = panelOf(P.renderPanel(running, ctx), 'access')
     expect(access).toContain('shop-shell-tcp.lvh.me:443')

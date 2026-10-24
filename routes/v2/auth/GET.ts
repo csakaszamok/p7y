@@ -44,7 +44,7 @@ export default async (req: Request): Promise<Response> => {
     if (!found) return unauthorized()
     who = found
   }
-  const sandboxes = who.kind === 'owner' ? await sandboxService.listSandboxes() : []
+  const sandboxes = who.kind === 'owner' ? await sandboxService.listSandboxStates() : []
   const publicPull = (process.env.REGISTRY_PUBLIC_PULL ?? 'true') !== 'false'
   // Anonymous pull per repo: every version scanned and clean, and nothing in the registry p7y has not scanned
   const repos = [...new Set(scope.split(' ').filter(s => s.startsWith('repository:')).map(s => s.split(':')[1]))]

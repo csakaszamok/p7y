@@ -11,7 +11,8 @@ const sandboxes = [
 
 vi.mock('../../../services/sandbox', () => ({
   sandboxService: {
-    listSandboxes: vi.fn(async () => sandboxes),
+    // As the service: only the sandboxes `only` lets through
+    listSandboxes: vi.fn(async (only: (s: typeof sandboxes[number]) => boolean = () => true) => sandboxes.filter(only)),
     getSandbox: vi.fn(async (name: string) => {
       const s = sandboxes.find(x => x.name === name)
       if (!s) throw new Error(`Sandbox not found: ${name}`)

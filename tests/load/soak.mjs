@@ -82,7 +82,8 @@ async function create(u, k) {
     const sb = { name, full: (await r.json()).name, url: `https://${name}-web.${DOMAIN}/`, user: u, ready: false }
     u.sandboxes.push(sb)
     for (let i = 0; i < 90 && !stopping; i++) {
-      const s = await (await u.api(`/sandboxes/${sb.full}`)).json().catch(() => ({}))
+      // A slow answer is not a failed create: ask again
+      const s = await u.api(`/sandboxes/${sb.full}`).then(r => r.json()).catch(() => ({}))
       if (s.status === 'running' && s.apps?.length && s.apps.every(a => a.answers)) { sb.ready = true; break }
       await sleep(2000)
     }
@@ -106,8 +107,11 @@ async function hit(sb, step = 'app request') {
 
 async function sleepAndWake(sb) {
   try {
-    const stop = await sb.user.api(`/sandboxes/${sb.full}/stop`, { method: 'POST' })
+    // Stopping waits for the containers: give it as long as a person would
+    const t0 = performance.now()
+    const stop = await sb.user.api(`/sandboxes/${sb.full}/stop`, { method: 'POST' }, 120_000)
     if (stop.status >= 300) return failed('put to sleep', `status ${stop.status}`)
+    record('put to sleep', performance.now() - t0)
     const t = performance.now()
     for (let i = 0; i < 90; i++) {
       const r = await get(sb.url).catch(() => null)

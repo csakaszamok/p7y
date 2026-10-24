@@ -51,7 +51,14 @@ async function refreshAccess(): Promise<void> {
 let timer: NodeJS.Timeout | null = null
 export function startAccessRefresher(): void {
   if (timer) return
-  void refreshAccess().catch(err => console.error('[access]', err))
-  timer = setInterval(() => { void refreshAccess().catch(err => console.error('[access]', err)) }, 10_000)
+  // One round at a time: on a busy server a round can take longer than 10 s, and rounds piling up make it busier
+  let busy = false
+  const round = () => {
+    if (busy) return
+    busy = true
+    refreshAccess().catch(err => console.error('[access]', err)).finally(() => { busy = false })
+  }
+  round()
+  timer = setInterval(round, 10_000)
   timer.unref()
 }

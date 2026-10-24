@@ -28,7 +28,7 @@ interface Deps {
 }
 
 const defaultDeps: Deps = {
-  list: async () => { const { sandboxService } = await import('./sandbox'); return sandboxService.listSandboxes() },
+  list: async () => { const { sandboxService } = await import('./sandbox'); return sandboxService.listSandboxStates() },
   archived: () => archivedOwners(),
   quota: () => quotaLimit(),
   running: () => runningLimit(),

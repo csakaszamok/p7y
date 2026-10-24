@@ -10,6 +10,7 @@ import { insecureConfigWarnings, insecureConfigErrors, hostMountWarnings } from 
 import { syncTlsConfig } from "./services/tlsConfig";
 import { migrateRouters } from "./services/routerMigration";
 import { migrateFrpsApiAuth } from "./services/frpsApi";
+import { migrateSocatCheck } from "./services/socatHealthcheck";
 import { migrateDataVolumes } from "./services/dataVolumes";
 import { migrateHostPaths } from "./services/pathMigration";
 import { migrateSandboxDirs, migrateArchives } from "./services/sandboxDirMigration";
@@ -323,7 +324,7 @@ startDeepSleepScheduler();
 startAccessRefresher();
 // A running sandbox without a Sablier session (started outside p7y) would never sleep: open its session
 startSessionWatch();
-startUsageSampler();
+startUsageSampler(10_000);
 startDiskSampler();
 // The topbar's GitHub star and fork counts: fetched now, so the first page has them
 repoInfo();
@@ -353,6 +354,9 @@ migrateSandboxDirs()
   // Then sandboxes whose frps API has no password: frps.toml and socat's health check get one
   .then(() => migrateFrpsApiAuth())
   .catch(err => console.error("[frps] migration failed:", err))
+  // Then sandboxes whose socat checks its tunnel every 2 s: every 10 s
+  .then(() => migrateSocatCheck())
+  .catch(err => console.error("[socat] migration failed:", err))
   // Then sandboxes from before the data volumes: /opt, /root, /home, /srv copied into volumes
   .then(() => migrateDataVolumes())
   .catch(err => console.error("[data-volumes] migration failed:", err))

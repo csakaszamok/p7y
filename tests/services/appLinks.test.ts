@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import fs from 'fs'
-import { publicAppNames, appLinks, forgetAppLinks, rememberedApps } from '../../services/appLinks'
+import { publicAppNames, appLinks, appLinksForView, forgetAppLinks, rememberedApps } from '../../services/appLinks'
 import { forgetSandboxDir } from '../../services/sandboxPaths'
 import type { InnerContainer } from '../../services/tcpNames'
 
@@ -94,6 +94,47 @@ describe('appLinks', () => {
     expect(d.containers).toHaveBeenCalledTimes(1)
     d.tick(1_500); await appLinks('p7y-shop', d)
     expect(d.containers).toHaveBeenCalledTimes(2)
+  })
+
+  // Every user's list and the access refresher ask at once: one read, not one each
+  it('asks once for callers that ask while a read is under way', async () => {
+    const d = deps([ct('web', [['0.0.0.0', 8080]])])
+    const all = await Promise.all([appLinks('p7y-shop', d), appLinks('p7y-shop', d), appLinks('p7y-shop', d)])
+    expect(d.containers).toHaveBeenCalledTimes(1)
+    expect(all[1]).toEqual(all[0])
+  })
+
+  it('after no answer, asks again only after 2 s (each wait takes seconds)', async () => {
+    const d = deps(new Error('timeout'))
+    await appLinks('p7y-shop', d); d.tick(1_500); await appLinks('p7y-shop', d)
+    expect(d.containers).toHaveBeenCalledTimes(1)
+    d.tick(1_000); await appLinks('p7y-shop', d)
+    expect(d.containers).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('appLinksForView', () => {
+  beforeEach(() => forgetAppLinks())
+  const before = [{ url: 'shop-inner-web-port8080.lvh.me', port: 8080, service: 'web', access: 'public' as const }]
+  const d = (containers: InnerContainer[] | Error, domains: string[] | Error = ['shop-inner-web-port8080.lvh.me']) => ({
+    domains: async () => { if (domains instanceof Error) throw domains; return domains },
+    containers: async () => { if (containers instanceof Error) throw containers; return containers },
+    instance: () => 'shop', now: () => 0, remember: vi.fn(), rememberAccess: vi.fn(), recall: () => before,
+  })
+
+  it('what the sandbox answers, not stale', async () => {
+    expect(await appLinksForView('p7y-shop', d([ct('web', [['0.0.0.0', 8080]])]))).toEqual({ links: [{ ...before[0], project: 'inner' }], stale: false })
+  })
+
+  it('a sandbox whose inner Docker or frps does not answer (a busy server): the apps it last had, stale', async () => {
+    expect(await appLinksForView('p7y-shop', d(new Error('timeout')))).toEqual({ links: before, stale: true })
+    forgetAppLinks()
+    expect(await appLinksForView('p7y-shop', d([ct('web', [['0.0.0.0', 8080]])], new Error('frps of p7y-shop does not answer')))).toEqual({ links: before, stale: true })
+  })
+
+  // Just woken: frps answers, with no proxy yet. That is the truth, not a failure
+  it('frps with no proxies yet is not stale', async () => {
+    expect(await appLinksForView('p7y-shop', d([ct('web', [['0.0.0.0', 8080]])], []))).toEqual({ links: [], stale: false })
   })
 })
 

@@ -12,7 +12,7 @@ export const openapi = {
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],
   responses: {
-    200: { description: 'Array of sandbox records' },
+    200: { description: 'Array of sandbox records; apps_stale: true on a running one that did not answer just now (a busy server): its tunnel_urls are the ones it last had' },
     401: { description: 'Unauthorized' }
   }
 }

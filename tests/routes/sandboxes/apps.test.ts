@@ -22,7 +22,7 @@ vi.mock('../../../services/resourceSettings', () => ({ limitsOf: vi.fn(() => nul
 vi.mock('../../../services/usageSampler', () => ({ usageOf: vi.fn(() => null) }))
 vi.mock('../../../services/diskUsage', () => ({ diskOf: vi.fn(() => null) }))
 vi.mock('../../../services/appLinks', () => ({
-  appLinks: vi.fn(async () => [{ url: 'up-inner-web-port8080.lvh.me', port: 8080, service: 'web' }]),
+  appLinksForView: vi.fn(async () => ({ links: [{ url: 'up-inner-web-port8080.lvh.me', port: 8080, service: 'web' }], stale: false })),
   // What it had when it last ran: its p7y.access
   rememberedApps: vi.fn((n: string) => n === 'p7y-down' ? [{ url: 'down-inner-web-port8080.lvh.me', port: 8080, service: 'web', project: 'inner', access: 'owner' }] : null),
 }))
