@@ -5,6 +5,7 @@ import { parseMemory } from './resources'
 import { writeFileAtomic } from './atomicWrite'
 import { composePathOf } from './sleepSettings'
 import { measureBinds } from './dataVolumes'
+import { parseComposeText } from './composeCache'
 
 /**
  * Disk use per sandbox, against a limit that only warns: everything a sandbox keeps (inner images, containers,
@@ -54,7 +55,7 @@ type Doc = { services?: Record<string, { labels?: Record<string, string> | strin
 /** The sandbox's own disk limit (a label the admin set), else SANDBOX_DISK. */
 export function diskLimitOf(name: string, composePath = composePathOf(name)): number {
   try {
-    const labels = (yaml.load(fs.readFileSync(composePath, 'utf8')) as Doc | null)?.services?.sandbox?.labels
+    const labels = (parseComposeText(fs.readFileSync(composePath, 'utf8')) as Doc | null)?.services?.sandbox?.labels
     const v = labels && !Array.isArray(labels) ? parseMemory(String(labels[LABEL] ?? '')) : null
     if (v !== null) return v
   } catch { /* no compose file: the default */ }

@@ -43,6 +43,7 @@ import {
   resolveHostUsersDir,
   resolveHostSandboxesDir,
   _resetHostUsersDirCache,
+  listedSandboxState,
   listManagedContainers,
   getSandboxState,
 } from '../../services/docker'
@@ -106,16 +107,81 @@ describe('docker service', () => {
 
   it('listManagedContainers tells a sandbox that cannot start from an asleep one', async () => {
     const d = (globalThis as { __docker?: any }).__docker
-    const exited = { Id: 'abc123', Names: ['/leander-user1'], Labels: { 'leander.managed': 'true' }, State: 'exited' }
+    const exited = { Id: 'abc123', Names: ['/leander-user1'], Labels: { 'leander.managed': 'true' }, State: 'exited', Status: 'Exited (128) 2 seconds ago' }
     const inspect = d.getContainer().inspect
 
     d.listContainers.mockResolvedValueOnce([exited]).mockResolvedValueOnce([exited])
     inspect.mockResolvedValueOnce({ State: { Status: 'exited', Error: 'error mounting "daemon.json": not a directory' } })
     expect((await listManagedContainers())[0].start_error).toBe('error mounting "daemon.json": not a directory')
 
-    d.listContainers.mockResolvedValueOnce([exited]).mockResolvedValueOnce([exited])
+    // Started again and stopped: a new status text, asked again
+    const again = { ...exited, Status: 'Exited (0) 1 second ago' }
+    d.listContainers.mockResolvedValueOnce([again]).mockResolvedValueOnce([again])
     inspect.mockResolvedValueOnce({ State: { Status: 'exited', Error: '' } })
     expect((await listManagedContainers())[0].start_error).toBeUndefined()
+  })
+
+  it('listedSandboxState inspects a listed container again only when its status text changed', async () => {
+    const d = (globalThis as { __docker?: any }).__docker
+    const inspect = d.getContainer().inspect
+    const up = { Id: 'run1', Names: ['/p7y-listed'], Labels: { 'p7y.managed': 'true' }, State: 'running', Status: 'Up 5 minutes' }
+    const list = (c: object) => d.listContainers.mockResolvedValueOnce([c]).mockResolvedValueOnce([])
+
+    list(up)
+    await listManagedContainers()
+    inspect.mockClear()
+    expect((await listedSandboxState('p7y-listed'))?.status).toBe('running')
+    expect((await listedSandboxState('p7y-listed'))?.status).toBe('running')
+    expect(inspect).toHaveBeenCalledTimes(1)
+
+    // Stopped since: listed with a new status text, so inspected again
+    list({ ...up, State: 'exited', Status: 'Exited (0) 1 second ago' })
+    await listManagedContainers() // asks its start error (the list's own inspect)
+    inspect.mockClear()
+    inspect.mockResolvedValueOnce({ State: { Status: 'exited', FinishedAt: '2026-10-24T12:00:00Z' }, Config: { Labels: {} } })
+    expect((await listedSandboxState('p7y-listed'))?.status).toBe('exited')
+    expect(inspect).toHaveBeenCalledTimes(1)
+  })
+
+  it('listedSandboxState does not ask Docker for a sandbox a list just made did not show (deep sleep)', async () => {
+    const d = (globalThis as { __docker?: any }).__docker
+    const inspect = d.getContainer().inspect
+    d.listContainers.mockResolvedValueOnce([]).mockResolvedValueOnce([])
+    await listManagedContainers()
+    inspect.mockClear()
+    expect(await listedSandboxState('p7y-deep')).toBeNull()
+    expect(inspect).not.toHaveBeenCalled()
+  })
+
+  it('listedSandboxState asks Docker each time when no list was made just now', async () => {
+    const d = (globalThis as { __docker?: any }).__docker
+    const inspect = d.getContainer().inspect
+    const up = { Id: 'run2', Names: ['/p7y-old'], Labels: { 'p7y.managed': 'true' }, State: 'running', Status: 'Up 2 hours' }
+    d.listContainers.mockResolvedValueOnce([up]).mockResolvedValueOnce([])
+    await listManagedContainers()
+    inspect.mockClear()
+    const later = Date.now() + 6000
+    const now = vi.spyOn(Date, 'now').mockReturnValue(later)
+    try {
+      await listedSandboxState('p7y-old')
+      await listedSandboxState('p7y-old')
+      expect(inspect).toHaveBeenCalledTimes(2)
+    } finally { now.mockRestore() }
+  })
+
+  it('listManagedContainers does not ask an asleep sandbox again while its status is the same', async () => {
+    const d = (globalThis as { __docker?: any }).__docker
+    const exited = { Id: 'def456', Names: ['/p7y-asleep'], Labels: { 'p7y.managed': 'true' }, State: 'exited', Status: 'Exited (0) 5 minutes ago' }
+    const inspect = d.getContainer().inspect
+    inspect.mockClear()
+
+    d.listContainers.mockResolvedValueOnce([exited]).mockResolvedValueOnce([exited])
+    inspect.mockResolvedValueOnce({ State: { Status: 'exited', Error: 'no such network' } })
+    expect((await listManagedContainers())[0].start_error).toBe('no such network')
+
+    d.listContainers.mockResolvedValueOnce([exited]).mockResolvedValueOnce([exited])
+    expect((await listManagedContainers())[0].start_error).toBe('no such network')
+    expect(inspect).toHaveBeenCalledTimes(1)
   })
 
 })

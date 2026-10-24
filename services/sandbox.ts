@@ -24,6 +24,7 @@ import { listManagedContainers, resolveHostSandboxesDir, type SandboxMeta } from
 import { sandboxDir, legacyUsersDir, listSandboxDirs, newSandboxDir, archiveRoot, ownerDirName, ownerOfCompose, sandboxesDir, forgetSandboxDir, sandboxesMounted, SANDBOX_NAME } from './sandboxPaths'
 import { composeUp, composeStop, composeStart, composeDown, composeUpInner, composeConfigCheck } from './compose'
 import { concurrency } from './concurrency'
+import { parseComposeText } from './composeCache'
 import { hashPassword } from './registryAuth'
 import { listProjectVolumes, exportVolume, removeVolume, stopProjectContainers, removeProjectContainers } from './project'
 
@@ -126,7 +127,7 @@ function deepSleepMeta(name: string): SandboxMeta | null {
   if (!fs.existsSync(composePath)) return null
   let labels: Record<string, string> = {}
   try {
-    const compose = yaml.load(fs.readFileSync(composePath, 'utf8')) as { services?: { sandbox?: { labels?: Record<string, string> } } } | null
+    const compose = parseComposeText(fs.readFileSync(composePath, 'utf8')) as { services?: { sandbox?: { labels?: Record<string, string> } } } | null
     labels = compose?.services?.sandbox?.labels ?? {}
   } catch { /* unreadable compose: report without template info */ }
   return { name, template: readLabel(labels, 'template') ?? '', runtime: readLabel(labels, 'runtime') ?? '', compose: readLabel(labels, 'compose') === 'edited' ? 'edited' : 'template', ssh: readLabel(labels, 'ssh') === 'true', owner: readLabel(labels, 'owner') ?? 'admin', status: 'deep_sleep', container_id: '', created_at: readLabel(labels, 'created_at') ?? '' }
