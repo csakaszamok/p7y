@@ -12,10 +12,10 @@
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://p7y.{domain}/mcp",
+      "url": "https://{purgatory_host}/mcp",
       "variables": {
-        "domain": {
-          "description": "The HOST_DOMAIN of your Purgatory server (its UI is at p7y.<domain>), e.g. example.com",
+        "purgatory_host": {
+          "description": "Your Purgatory server's address, where its UI is (PUBLIC_URL without https://), e.g. p7y.example.com",
           "isRequired": true
         }
       },
