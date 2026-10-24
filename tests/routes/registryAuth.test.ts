@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 vi.stubEnv('ADMIN_TOKEN', 'admin-secret')
 vi.mock('../../services/tokens', () => ({ resolveToken: vi.fn((t: string) => t === 'p7y_scoped' ? { owner: 'alice', sandbox: 'p7y-shop' } : t === 'p7y_alice' ? { owner: 'alice', sandbox: null } : null) }))
 vi.mock('../../services/registryScans', () => ({ publicPullAllowed: vi.fn(async (r: string) => r !== 'shop/unscanned') }))
-vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxes: vi.fn(async () => [{ name: 'p7y-shop', owner: 'alice' }]) } }))
+vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxStates: vi.fn(async () => [{ name: 'p7y-shop', owner: 'alice' }]) } }))
 vi.mock('../../services/registryAuth', async orig => ({ ...(await orig<object>()), verifyPassword: vi.fn(async (pw: string) => pw === 'regpw') }))
 vi.mock('../../services/registryPasswords', () => ({ registryHashOf: vi.fn((user: string) => (user === 'shop' ? 'salt:hash' : null)) }))
 const { default: get } = await import('../../routes/v2/auth/GET')

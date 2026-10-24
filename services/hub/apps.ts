@@ -40,7 +40,7 @@ export function hubAppsOf(instance: string, containers: InnerContainer[], domain
     const ports = [...new Set(ct.Ports.filter(p => p.Type === 'tcp' && p.PublicPort && ALL_INTERFACES.has(p.IP ?? '')).map(p => p.PublicPort!))].sort((a, b) => a - b)
     if (!ports.length) { unlinked.push(service); continue }
     const name = frpcName(instance, ct.Labels, ct.Names[0] ?? '', ports[0]).toLowerCase()
-    // One DNS label under the domain, nothing else: a label like frpc.subdomain "x@evil.com/" must not steer Open
+    // One DNS label under the domain, nothing else: a label like p7y.subdomain "x@evil.com/" must not steer Open
     if (!DNS_LABEL.test(name)) { unlinked.push(service); continue }
     const id = `${name}.${domain}`
     if (seen.has(id)) continue

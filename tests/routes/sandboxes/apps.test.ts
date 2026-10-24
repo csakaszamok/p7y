@@ -22,7 +22,7 @@ vi.mock('../../../services/resourceSettings', () => ({ limitsOf: vi.fn(() => nul
 vi.mock('../../../services/usageSampler', () => ({ usageOf: vi.fn(() => null) }))
 vi.mock('../../../services/diskUsage', () => ({ diskOf: vi.fn(() => null) }))
 vi.mock('../../../services/appLinks', () => ({
-  appLinks: vi.fn(async () => [{ url: 'up-inner-web-port8080.lvh.me', port: 8080, service: 'web' }]),
+  appLinksForView: vi.fn(async () => ({ links: [{ url: 'up-inner-web-port8080.lvh.me', port: 8080, service: 'web' }], stale: false })),
   // What it had when it last ran: its p7y.access
   rememberedApps: vi.fn((n: string) => n === 'p7y-down' ? [{ url: 'down-inner-web-port8080.lvh.me', port: 8080, service: 'web', project: 'inner', access: 'owner' }] : null),
 }))
@@ -40,6 +40,10 @@ vi.mock('../../../services/hub/list', () => ({
 }))
 vi.mock('../../../services/lastRunning', () => ({
   lastRunningOf: vi.fn(async (_n: string, status: string) => status === 'running' ? { at: null, estimated: false } : { at: '2026-09-01T08:00:00.000Z', estimated: true }),
+}))
+vi.mock('../../../services/hostMounts', () => ({
+  mountsOf: vi.fn((n: string) => n === 'p7y-up' ? [{ host: '/srv/shared', target: '/mnt/shared', readonly: true }] : []),
+  hostMountRoots: vi.fn(() => ['/srv/shared']),
 }))
 const { appStatuses } = await import('../../../services/appProbe')
 const { default: get } = await import('../../../routes/sandboxes/[name]/GET')
@@ -94,6 +98,15 @@ describe('GET /sandboxes/:name last running', () => {
     expect(plain.docker_access).toBeDefined()
     const keys = await (await get(new Request('http://localhost/sandboxes/p7y-up?include_keys=true', { headers: { Authorization: 'Bearer admin-secret' } }))).json()
     expect(keys).toMatchObject({ ca_cert: 'CA PEM', client_cert: 'CERT PEM', client_key: 'KEY PEM' })
+  })
+})
+
+describe('GET /sandboxes/:name mounts', () => {
+  it('the host folders mounted into it; the admin also gets the roots that may be mounted', async () => {
+    const up = await (await get(req('p7y-up'))).json()
+    expect(up.mounts).toEqual([{ host: '/srv/shared', target: '/mnt/shared', readonly: true }])
+    expect(up.host_mount_roots).toEqual(['/srv/shared'])
+    expect((await (await get(req('p7y-down'))).json()).mounts).toEqual([])
   })
 })
 

@@ -4,6 +4,43 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.11.6] - 2026-10-24
+
+Upgrading from 0.11.5: download the new `docker-compose.yml` (it sets Purgatory's DNS timeout), then `docker compose pull && docker compose up -d`.
+
+### Fixed
+
+- **Purgatory slowed down for everyone with many sandboxes** (a list took seconds while the server was idle): a name that does not resolve (a sandbox's frps, which Purgatory never reaches, or a sandbox just removed) waited 5 s for the host's resolver and held up Purgatory's other lookups meanwhile. Purgatory no longer asks for frps by name, gives up on a name after 1 s (`dns_opt` in `docker-compose.yml`) and resolves on 16 threads instead of 4.
+- **A sandbox sysbox would not start again** ("already pre-registered" with sysbox-fs, after a failed start) could not be woken; its containers are now recreated, its data stays.
+- **Deleting many sandboxes at once** made everything else wait while their volumes were archived: at most 4 are archived at a time, the others wait their turn.
+
+## [0.11.5] - 2026-10-24
+
+Upgrading from 0.11.4: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d --remove-orphans` (the `error-pages` container is gone; its volume can go too: `docker volume rm <project>_error_pages`). When Purgatory starts, every sandbox's socat is recreated once (see Changed): a running sandbox's web addresses are gone for a second or two.
+
+### Changed
+
+- **Purgatory serves the 404 page itself**, on its internal port, instead of a separate nginx container (`error-pages`): one container and one volume fewer. The page is the same and still links to `PUBLIC_URL`. While Purgatory is down or restarting (a few seconds on an upgrade), a sandbox app's 404 reaches the browser as an empty 500, since Traefik cannot fetch the page; addresses without a sandbox already needed Purgatory.
+- **Faster with many sandboxes** (a load test of 20 users with 3 sandboxes each: the list took 8–15 s, the Docker daemon was at 4 cores):
+  - A user's sandbox list asks only their own running sandboxes for their apps, not every one on the server; callers asking for the same sandbox at once share one answer; the Overview, disk sampling and registry sign-in no longer ask for apps at all.
+  - socat checks a running sandbox's tunnel every 10 s instead of every 2 s (each check is a `docker exec`); while it starts, still every 0.5 s, so a wake is as fast. A broken tunnel takes its router away within 2 minutes, as before. Existing sandboxes get this when Purgatory starts: socat is recreated, so a running sandbox's web addresses are gone for a second or two. On Docker Engine below 25 (no `start_interval`) the check stays at every 2 s.
+  - CPU and memory are sampled every 10 s instead of every 5 s.
+- **A sandbox that does not answer in time** (a busy server) shows the apps it had last time, with ⚠ *Could not see its apps just now* on the Apps tab and in the list, instead of no apps. The API says so with `apps_stale: true`.
+
+## [0.11.4] - 2026-10-23
+
+Upgrading from 0.11.3: download the new `docker-compose.yml` (it passes `USER_VIEW_SWITCH` and `HOST_MOUNT_ROOTS` to Purgatory), then `docker compose pull && docker compose up -d`. **Users lose the Simple | Advanced switch and stay in Simple** unless you set `USER_VIEW_SWITCH=true` (see Changed). New sandboxes run foxglove 0.8.0; existing ones keep their image, so in them use `frpc.subdomain` rather than `p7y.subdomain`.
+
+### Added
+
+- **Host folders in a sandbox:** the admin can mount host folders into an existing sandbox (**Resources** tab → **Host folders**, or `GET`/`POST`/`DELETE /sandboxes/:name/mounts`, over MCP `list_sandbox_mounts`, `add_sandbox_mount`, `remove_sandbox_mount`), read-write or read-only, at `/mnt/<name>` or a path of their choice; the apps in the sandbox's own Docker can bind them too. Only folders at or under the new `HOST_MOUNT_ROOTS` (a comma list, e.g. `/srv/shared`; empty: off). A host folder that does not exist is refused by Docker, not created empty. Adding or removing one recreates the sandbox container (a running one restarts). The owner sees the list, read-only. **A mount gives the sandbox's owner that host folder as root:** mount only what they may see, read-only what they need not change.
+
+- **`p7y.subdomain` label:** the preferred name for `frpc.subdomain`, which gives an app in a sandbox the short address `<sandbox>-<subdomain>.<domain>` ([Isolation and TCP addresses](docs/networking.md#app-web-addresses)). `frpc.subdomain` keeps working; if a container has both, `p7y.subdomain` wins. The built-in templates and the docs use the new name. The sandbox's foxglove image must be 0.8.0 or newer for frpc to read `p7y.subdomain`: with an older image the app keeps its long address. A sandbox keeps the image it was created with, so only new sandboxes get 0.8.0; in older ones use `frpc.subdomain`.
+
+### Changed
+
+- **Users stay in the Simple view** unless `USER_VIEW_SWITCH=true`: without it the top bar has no **Simple | Advanced** switch for them, and `PUT /me/view` answers 403. A view a user chose before is kept, and comes back when the switch is turned on. The admin can always switch. `GET /me` says whether the account may switch, as `view_switch`.
+
 ## [0.11.3] - 2026-10-21
 
 Upgrading from 0.11.2: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version).

@@ -31,6 +31,9 @@
 | `POST` | `/sandboxes/:name/files/mkdir` | Create a folder (`{"path": "/srv/data"}`) |
 | `DELETE` | `/sandboxes/:name/files` | Delete a file or a folder (`path`), not the four folders themselves (nor a volume's folder) |
 | `GET` | `/sandboxes/:name/volumes` | The volumes of the apps in the sandbox's own Docker: `name`, `path` (for the routes above), `project`, `containers` that use it |
+| `GET` | `/sandboxes/:name/mounts` | The host folders mounted into the sandbox: `mounts` (`host`, `target`, `readonly`), `enabled` (`HOST_MOUNT_ROOTS` is set); the admin also gets `roots`. Owner, admin, and a token limited to the sandbox. See [Host folders](web-ui.md#host-folders) |
+| `POST` | `/sandboxes/:name/mounts` | Mount a host folder (admin only, `HOST_MOUNT_ROOTS` set, else 403 / 409): `{"host": "/srv/shared/team", "target": "/mnt/team", "readonly": true}`, `target` defaulting to `/mnt/<last part of host>`. The sandbox container is recreated (a running one restarts). 400 for a path outside the roots or a target that is not allowed; 409 with Docker's words when Docker refuses it (e.g. the host folder does not exist), nothing changed |
+| `DELETE` | `/sandboxes/:name/mounts?target=/mnt/team` | Unmount it (admin only; also with `HOST_MOUNT_ROOTS` unset); the sandbox container is recreated |
 | `DELETE` | `/sandboxes/:name` | Archive the sandbox, then remove it (**Archive…** in the UI; see [Delete = archive](archive.md)) |
 | `GET` | `/runtimes` | List the runtimes new sandboxes may use (`name`, `description`, `default`; only those in `ALLOWED_RUNTIMES` when it is set) |
 | `GET` | `/templates` | List the templates (`name`, `description`, `default`) |
@@ -44,7 +47,7 @@
 | `DELETE` | `/ssh-keys/:id` | Delete one of your keys (it stops working at once) |
 | `GET` | `/templates/:name` | A template's `compose.yaml` as written (`compose`), to show or edit before a create |
 | `GET` | `/me` | Who you are signed in as, Purgatory's own address (`url`), your running sandboxes and limit, and `server_places`: the sandbox places on the server, `used` and `limit` (`null` without a server limit) |
-| `PUT` | `/me/view` | The web UI's view for this account: `{"view": "simple"}` or `"advanced"` (`GET /me` returns it as `view`) |
+| `PUT` | `/me/view` | The web UI's view for this account: `{"view": "simple"}` or `"advanced"` (`GET /me` returns it as `view`, and whether the account may switch as `view_switch`); a user gets 403 unless `USER_VIEW_SWITCH=true` |
 | `GET` | `/tokens` | List your personal access tokens (`hint`: the token's start and end, e.g. `p7y_aB3x…9fQz`; null for tokens made before hints) |
 | `POST` | `/tokens` | Mint a personal access token (`name`, optional `expires_in` like `30d`/`90d`/`never`) |
 | `DELETE` | `/tokens/:id` | Revoke a personal access token |

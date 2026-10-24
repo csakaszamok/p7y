@@ -139,13 +139,16 @@
   }
 
   const AGENT_BUTTON = '<div class="actions agent-actions"><button class="primary" data-act="export">Let your agent deploy…</button></div>'
+  const STALE_APPS = 'Could not see its apps just now (the server is busy)'
 
   function appsTab(s, ctx) {
     const extras = s.extras || {}
     const rows = appRows(s)
     // Let your agent deploy: here in both views, for the owner (the new token is theirs)
     const agent = (s.owner || 'admin') === ctx.me ? AGENT_BUTTON : ''
-    if (!rows.length) return '<p class="muted">No apps yet — publish a port on all interfaces (e.g. 8080:8080) to get a link.</p>' + agent
+    // Running, but the sandbox did not answer just now (a busy server): the apps it last had
+    const stale = s.apps_stale ? `<p class="not-answering">⚠ ${STALE_APPS}${rows.length ? ': these are the apps it had last time.' : '.'}</p>` : ''
+    if (!rows.length) return (stale || '<p class="muted">No apps yet — publish a port on all interfaces (e.g. 8080:8080) to get a link.</p>') + agent
     const mark = a => a === true ? ' <span class="ok" title="answering">✓</span><span class="sr-only">answering</span>'
       : a === false ? ' <span class="warn" title="not answering">⚠</span><span class="sr-only">not answering</span>' : ''
     const hub = s.hub || { published: [], unlinked: [] }
@@ -165,7 +168,7 @@
       : down.length === 1 ? `<p class="not-answering">⚠ ${esc(down[0])} is not answering — does it listen on 0.0.0.0 (not 127.0.0.1) inside its container?</p>`
       : `<p class="not-answering">⚠ ${down.map(esc).join(', ')} are not answering — do they listen on 0.0.0.0 (not 127.0.0.1) inside their containers?</p>`
     const asleep = s.status !== 'running' && rows.some(r => r.url) ? '<p class="muted">opening one wakes the sandbox</p>' : ''
-    return table(ctx.simple ? ['App', 'Web'] : ['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep + agent
+    return stale + table(ctx.simple ? ['App', 'Web'] : ['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep + agent
   }
 
   function accessTab(s, ctx) {
@@ -220,6 +223,25 @@
     ]) + (s.disk?.over ? '<p class="warn">⚠ Over its disk limit: clean up unused images and volumes in the sandbox (<code>docker system prune</code>). Nothing is stopped.</p>' : '')
   }
 
+  /**
+   * Host folders mounted into the sandbox (HOST_MOUNT_ROOTS): the admin adds and removes them (s.host_mount_roots
+   * set: the feature is on), the owner sees them, read-only, when there are any.
+   */
+  function mountsSection(s, ctx) {
+    const mounts = s.mounts || [], roots = s.host_mount_roots || []
+    const editor = ctx.isAdmin && roots.length > 0
+    if (!mounts.length && !editor) return ''
+    const rows = mounts.map(m => `<tr><td><code>${esc(m.host)}</code></td><td><code>${esc(m.target)}</code></td><td>${m.readonly ? 'read-only' : 'read-write'}</td>${ctx.isAdmin ? `<td><button class="link danger-link" data-mount-remove="${esc(m.target)}">Remove</button></td>` : ''}</tr>`)
+    const list = mounts.length ? table(ctx.isAdmin ? ['Host folder', 'In the sandbox', '', ''] : ['Host folder', 'In the sandbox', ''], rows) : '<p class="muted">None yet.</p>'
+    const form = editor ? `<form class="mount-form" data-mount-form>
+        <input name="host" placeholder="${esc(roots[0])}/…" aria-label="Host folder" required>
+        <input name="target" placeholder="/mnt/&lt;folder name&gt;" aria-label="Path in the sandbox">
+        <label><input type="checkbox" name="readonly"> read-only</label>
+        <button>Mount…</button></form>
+      <p class="muted">Under ${roots.map(r => `<code>${esc(r)}</code>`).join(', ')}. Whoever owns the sandbox gets the folder (as root). Adding or removing one restarts the sandbox.</p>` : ''
+    return `<div class="mounts"><h3>Host folders</h3>${list}${form}</div>`
+  }
+
   // Measured from outside every 15 minutes while running (once after it stops): a warning, never a stop
   function diskRow(d) {
     const now = d.used === null ? '<span class="muted">not measured yet</span>'
@@ -256,7 +278,10 @@
         ? [kv('Deep sleep', `in ${countdown(s.deep_sleep_at, ctx.now)}`)] : []),
       kv('Sleep', sleep),
       ...(ctx.simple ? [] : [kv('Compose', '<button class="link" data-act="compose">Starter stack…</button>')]),
-    ]) + warnings(s) + `<div class="danger-zone"><h3>Danger zone</h3><div class="actions">${s.status !== 'deep_sleep' ? '<button data-act="deep-sleep">Deep sleep now</button>' : ''}<button class="danger" data-act="delete">Archive…</button></div></div>`
+    ]) + warnings(s)
+      // Simple has no Resources tab: the host folders shown here, read-only
+      + (ctx.simple ? mountsSection(s, { ...ctx, isAdmin: false }) : '')
+      + `<div class="danger-zone"><h3>Danger zone</h3><div class="actions">${s.status !== 'deep_sleep' ? '<button data-act="deep-sleep">Deep sleep now</button>' : ''}<button class="danger" data-act="delete">Archive…</button></div></div>`
   }
 
   /** The Registry tab: the sandbox's images, their scan results, and whether they can be pulled without a login. */
@@ -347,7 +372,7 @@
     const body = {
       apps: appsTab(s, ctx),
       access: accessTab(s, ctx),
-      resources: `<div data-resources>${resourcesTable(s)}</div><div class="actions"><button data-act="resources">Change limits…</button></div>`,
+      resources: `<div data-resources>${resourcesTable(s)}</div><div class="actions"><button data-act="resources">Change limits…</button></div>${mountsSection(s, ctx)}`,
       registry: '<div data-registry><p class="muted">Loading…</p></div>',
       files: s.status === 'running' ? '<div data-files><p class="muted">Loading…</p></div>'
         : `<p class="muted">The sandbox is ${esc(statusLabel(s.status))}: wake it to see its files.</p><div class="actions"><button data-act="start">Wake</button></div>`,
@@ -477,7 +502,7 @@
     return `/p7y:init ${u} ${sandboxShort}`
   }
 
-  const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, registryTable, renderPanel }
+  const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, mountsSection, registryTable, renderPanel, STALE_APPS }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

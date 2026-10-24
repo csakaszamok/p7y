@@ -131,12 +131,24 @@ export interface SandboxState {
   createdAt?: string
 }
 
+// The host's network IDs, shared for 2 s: a list of many sandboxes asks for each one's state at once
+let networks: { at: number; ids: Promise<Set<string>> } | null = null
+function networkIds(fresh = false): Promise<Set<string>> {
+  if (!fresh && networks && Date.now() - networks.at < 2000) return networks.ids
+  const ids = docker.listNetworks().then(list => new Set(list.map(n => n.Id)))
+  ids.catch(() => { networks = null })
+  networks = { at: Date.now(), ids }
+  return ids
+}
+
 /** Current container state of a sandbox, or null if its container does not exist. */
 export async function getSandboxState(name: string): Promise<SandboxState | null> {
   try {
     const info = await docker.getContainer(name).inspect()
     const attached = Object.values(info.NetworkSettings?.Networks ?? {}).map(n => n.NetworkID).filter(Boolean)
-    const existing = attached.length ? new Set((await docker.listNetworks()).map(n => n.Id)) : new Set<string>()
+    let existing = attached.length ? await networkIds() : new Set<string>()
+    // Not in the shared list: maybe created since; only a fresh list may say it is gone (that takes the sandbox down)
+    if (attached.some(id => !existing.has(id))) existing = await networkIds(true)
     return {
       name,
       status: info.State.Status,

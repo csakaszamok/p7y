@@ -19,7 +19,7 @@ web() { curl -sk -b "$JAR" -c "$JAR" "$@"; }
 cleanup() { api -X DELETE "$P7Y_API/sandboxes/p7y-$NAME" >/dev/null 2>&1 || true; rm -f "$JAR"; }
 trap cleanup EXIT
 
-svc() { printf '  %s:\n    image: traefik/whoami:latest\n    ports: ["%s:80"]\n    labels:\n      frpc.subdomain: %s\n      p7y.access: %s\n    restart: unless-stopped\n' "$1" "$2" "$1" "$3"; }
+svc() { printf '  %s:\n    image: traefik/whoami:latest\n    ports: ["%s:80"]\n    labels:\n      p7y.subdomain: %s\n      p7y.access: %s\n    restart: unless-stopped\n' "$1" "$2" "$1" "$3"; }
 compose="services:
 $(svc pub 8081 public)
 $(svc dom 8082 domain)

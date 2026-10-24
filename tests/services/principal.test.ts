@@ -187,6 +187,7 @@ describe('scoped-token allowlist against the real routes', () => {
       'sandboxes/[name]/files/text/GET.ts',
       'sandboxes/[name]/keep-awake/POST.ts',
       'sandboxes/[name]/logs/stream/GET.ts',
+      'sandboxes/[name]/mounts/GET.ts',
       'sandboxes/[name]/project-link/POST.ts',
       'sandboxes/[name]/registry/GET.ts',
       'sandboxes/[name]/registry/[app]/[digest]/DELETE.ts',

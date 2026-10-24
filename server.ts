@@ -2,13 +2,15 @@ import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { startDeepSleepScheduler } from "./services/deepSleep";
 import { startAccessRefresher } from "./services/appAccess/traefik";
 import { internalOnly, INTERNAL_PORT } from "./services/appAccess/internal";
+import { errorPage, ERROR_PAGE_PATH } from "./services/errorPage";
 import { startSessionWatch } from "./services/sessionWatch";
 import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
 import { openSignInWarning } from "./services/allowlist";
-import { insecureConfigWarnings, insecureConfigErrors } from "./services/configWarnings";
+import { insecureConfigWarnings, insecureConfigErrors, hostMountWarnings } from "./services/configWarnings";
 import { syncTlsConfig } from "./services/tlsConfig";
 import { migrateRouters } from "./services/routerMigration";
 import { migrateFrpsApiAuth } from "./services/frpsApi";
+import { migrateSocatCheck } from "./services/socatHealthcheck";
 import { migrateDataVolumes } from "./services/dataVolumes";
 import { migrateHostPaths } from "./services/pathMigration";
 import { migrateSandboxDirs, migrateArchives } from "./services/sandboxDirMigration";
@@ -214,6 +216,17 @@ async function handle(req: IncomingMessage, res: ServerResponse, internal: boole
 
   if (path.includes("..")) { res.writeHead(400).end("Bad Request"); return; }
 
+  // Traefik's error-page middleware, for any host (a sandbox app's too): it keeps the original 404 status
+  if (path === ERROR_PAGE_PATH) {
+    try {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(await errorPage());
+    } catch (err) {
+      console.error("[error-page]", err);
+      if (!res.headersSent) res.writeHead(500).end("Internal Server Error");
+    }
+    return;
+  }
+
   // The Hub host: only the Hub's own routes; Purgatory's API, /mcp and /swagger never answer here
   if (isHubHost(req.headers.host)) {
     try {
@@ -311,7 +324,7 @@ startDeepSleepScheduler();
 startAccessRefresher();
 // A running sandbox without a Sablier session (started outside p7y) would never sleep: open its session
 startSessionWatch();
-startUsageSampler();
+startUsageSampler(10_000);
 startDiskSampler();
 // The topbar's GitHub star and fork counts: fetched now, so the first page has them
 repoInfo();
@@ -341,13 +354,16 @@ migrateSandboxDirs()
   // Then sandboxes whose frps API has no password: frps.toml and socat's health check get one
   .then(() => migrateFrpsApiAuth())
   .catch(err => console.error("[frps] migration failed:", err))
+  // Then sandboxes whose socat checks its tunnel every 2 s: every 10 s
+  .then(() => migrateSocatCheck())
+  .catch(err => console.error("[socat] migration failed:", err))
   // Then sandboxes from before the data volumes: /opt, /root, /home, /srv copied into volumes
   .then(() => migrateDataVolumes())
   .catch(err => console.error("[data-volumes] migration failed:", err))
   // Then sandboxes created before CPU/memory limits: give them the default
   .then(() => migrateResourceLimits())
   .catch(err => console.error("[resources] migration failed:", err));
-for (const warning of insecureConfigWarnings(process.env)) console.warn(warning);
+for (const warning of [...insecureConfigWarnings(process.env), ...hostMountWarnings(process.env)]) console.warn(warning);
 
 
 // --- Dynamic route resolution ---

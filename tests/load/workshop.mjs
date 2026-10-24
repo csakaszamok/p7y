@@ -55,12 +55,12 @@ async function user(i) {
   web:
     image: traefik/whoami:latest
     ports: ["8080:80"]
-    labels: { frpc.subdomain: web }
+    labels: { p7y.subdomain: web }
     restart: unless-stopped
   own:
     image: traefik/whoami:latest
     ports: ["8081:80"]
-    labels: { frpc.subdomain: own, p7y.access: owner }
+    labels: { p7y.subdomain: own, p7y.access: owner }
     restart: unless-stopped
 `
     const created = await time('create sandbox', () => api('/sandboxes', { method: 'POST', body: JSON.stringify({ name, template: 'empty', compose, idle_timeout: '2h' }) }))

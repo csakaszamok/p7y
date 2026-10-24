@@ -125,7 +125,7 @@ describe('tcp-demo', () => {
     expect(services.redis.ports).toEqual(['6379:6379'])
     expect(services.ssh.ports).toEqual(['2222:2222'])
     expect(services.pgweb.ports).toEqual(['8081:8081'])
-    expect(Object.fromEntries(Object.entries(services).map(([k, s]) => [k, s.labels?.['frpc.subdomain']])))
+    expect(Object.fromEntries(Object.entries(services).map(([k, s]) => [k, s.labels?.['p7y.subdomain']])))
       .toEqual({ db: 'db', redis: 'redis', ssh: 'ssh', pgweb: 'pgweb' })
   })
 

@@ -13,7 +13,7 @@ import { loadTemplate } from './templateLoader'
 import { loadRuntime } from './runtimeLoader'
 import { appEntriesOffline, appHostsFromCompose } from './appUrls'
 import { waitForTunnels } from './tunnelWait'
-import { appLinks, frpsDomains, rememberedApps } from './appLinks'
+import { appLinks, appLinksForView, frpsDomains, rememberedApps } from './appLinks'
 import { primeSablierSession, markWoken, markCreating, creatingDone } from './wake'
 import { writeAuthorizedKeys, createGeneratedKey } from './sandboxSsh'
 import { sshKeysOf } from './sshKeys'
@@ -23,6 +23,7 @@ import { sessionDurationOf, cappedSleepDefault } from './sleepSettings'
 import { listManagedContainers, resolveHostSandboxesDir, type SandboxMeta } from './docker'
 import { sandboxDir, legacyUsersDir, listSandboxDirs, newSandboxDir, archiveRoot, ownerDirName, ownerOfCompose, sandboxesDir, forgetSandboxDir, sandboxesMounted, SANDBOX_NAME } from './sandboxPaths'
 import { composeUp, composeStop, composeStart, composeDown, composeUpInner, composeConfigCheck } from './compose'
+import { concurrency } from './concurrency'
 import { hashPassword } from './registryAuth'
 import { listProjectVolumes, exportVolume, removeVolume, stopProjectContainers, removeProjectContainers } from './project'
 
@@ -43,6 +44,8 @@ export interface SandboxInfo extends SandboxMeta {
   /** host → compose service, for a sandbox that is not running (not sent by the API) */
   app_services?: Record<string, string>
   tunnel_urls: string[]
+  /** Running, but frps or its inner Docker did not answer just now: tunnel_urls are the ones it last answered with */
+  apps_stale?: true
   extras: Record<string, string>
 }
 
@@ -352,17 +355,19 @@ export const sandboxService = {
     }
   },
 
-  async listSandboxes(): Promise<Array<SandboxMeta & { tunnel_urls: string[] }>> {
+  /** The sandboxes `only` lets through (all without it), each with its app links: the running ones are asked, so
+   * filter here, not afterwards (a user's list asks their own sandboxes, not every one on the server). */
+  async listSandboxes(only: (meta: SandboxMeta) => boolean = () => true): Promise<Array<SandboxMeta & { tunnel_urls: string[]; apps_stale?: true }>> {
     const live = await listManagedContainers()
     const running = await Promise.all(
-      live.map(async meta => ({
-        ...meta,
-        tunnel_urls: !fs.existsSync(`${dirOf(meta.name)}/frps.toml`) ? []
-          : meta.status === 'running' ? (await appLinks(meta.name)).map(l => l.url)
-          : offlineApps(meta).map(e => e.host)
-      }))
+      live.filter(only).map(async meta => {
+        if (!fs.existsSync(`${dirOf(meta.name)}/frps.toml`)) return { ...meta, tunnel_urls: [] }
+        if (meta.status !== 'running') return { ...meta, tunnel_urls: offlineApps(meta).map(e => e.host) }
+        const { links, stale } = await appLinksForView(meta.name)
+        return { ...meta, tunnel_urls: links.map(l => l.url), ...(stale ? { apps_stale: true as const } : {}) }
+      })
     )
-    return [...running, ...deepSleepingSandboxes(live).map(meta => ({ ...meta, tunnel_urls: fs.existsSync(`${dirOf(meta.name)}/frps.toml`) ? offlineApps(meta).map(e => e.host) : [] }))]
+    return [...running, ...deepSleepingSandboxes(live).filter(only).map(meta => ({ ...meta, tunnel_urls: fs.existsSync(`${dirOf(meta.name)}/frps.toml`) ? offlineApps(meta).map(e => e.host) : [] }))]
   },
 
   /** Every sandbox with its state and owner, without asking the running ones for their apps (as listSandboxes does):
@@ -379,13 +384,14 @@ export const sandboxService = {
     const certs = readClientCerts(name)
     const hasFrps = fs.existsSync(`${dirOf(name)}/frps.toml`)
     const offline = hasFrps && meta.status !== 'running' ? offlineApps(meta) : []
+    const view = hasFrps && meta.status === 'running' ? await appLinksForView(name) : null
     const tunnel_urls = !hasFrps ? []
-      : meta.status === 'running' ? (await appLinks(name)).map(l => l.url)
+      : view ? view.links.map(l => l.url)
       : offline.map(e => e.host)
     const extras = fs.existsSync(`${dirOf(name)}/extras.json`)
       ? JSON.parse(fs.readFileSync(`${dirOf(name)}/extras.json`, 'utf8')) as Record<string, string>
       : {}
-    return { ...meta, ...certs, tunnel_urls, extras, ...(offline.length ? { app_services: Object.fromEntries(offline.map(e => [e.host, e.service])) } : {}) }
+    return { ...meta, ...certs, tunnel_urls, ...(view?.stale ? { apps_stale: true as const } : {}), extras, ...(offline.length ? { app_services: Object.fromEntries(offline.map(e => [e.host, e.service])) } : {}) }
   },
 
   async refreshStatus(name: string): Promise<SandboxInfo> {
@@ -447,42 +453,50 @@ export const sandboxService = {
    * older versions) are handled too. Returns the archive dir.
    */
   async archiveSandbox(name: string): Promise<string> {
-    if (!SANDBOX_NAME.test(name)) throw new Error(`Invalid sandbox name: ${name}`)
-    const dir = dirOf(name)
-    if (!fs.existsSync(dir)) throw new Error(`Sandbox not found: ${name}`)
-    const composePath = `${dir}/docker-compose.yml`
-    const hasCompose = fs.existsSync(composePath)
-    // In deep sleep there are no containers to read labels from: the compose file has the same ones
-    const meta = (await listManagedContainers()).find(c => c.name === name) ?? deepSleepMeta(name)
-
-    await stopProjectContainers(name)
-
-    const archivedAt = new Date()
-    let owner = meta?.owner
-    if (!owner) { try { owner = ownerOfCompose(fs.readFileSync(composePath, 'utf8')) } catch { owner = 'admin' } }
-    const dest = `${archiveRoot(owner)}/${name}-${archivedAt.toISOString().replace(/[:.]/g, '-')}`
-    const volumes = await listProjectVolumes(name)
-    fs.mkdirSync(`${dest}/volumes`, { recursive: true })
-    for (const volume of volumes) await exportVolume(volume, `${dest}/volumes/${volume}.tar.gz`)
-    fs.cpSync(dir, `${dest}/config`, { recursive: true })
-    fs.writeFileSync(`${dest}/manifest.json`, JSON.stringify({
-      name,
-      owner,
-      template: meta?.template ?? null,
-      runtime: meta?.runtime || null,
-      created_at: meta?.created_at ?? null,
-      archived_at: archivedAt.toISOString(),
-      volumes
-    }, null, 2))
-
-    // Archive is complete — only now remove the live sandbox.
-    if (hasCompose) await composeDown(composePath)
-    await removeProjectContainers(name)
-    for (const volume of volumes) await removeVolume(volume)
-    fs.rmSync(dir, { recursive: true, force: true })
-    forgetSandboxDir(name)
-    removeEmptyOwnerDir(dir)
-    removeDynamicConfig(name)
-    return dest
+    return archiving(() => archive(name))
   }
+}
+
+// Archiving copies every volume through Purgatory: many at once (a class deleting its sandboxes) kept everything else
+// waiting. At most 4 at a time; the others wait their turn
+const archiving = concurrency(4)
+
+async function archive(name: string): Promise<string> {
+  if (!SANDBOX_NAME.test(name)) throw new Error(`Invalid sandbox name: ${name}`)
+  const dir = dirOf(name)
+  if (!fs.existsSync(dir)) throw new Error(`Sandbox not found: ${name}`)
+  const composePath = `${dir}/docker-compose.yml`
+  const hasCompose = fs.existsSync(composePath)
+  // In deep sleep there are no containers to read labels from: the compose file has the same ones
+  const meta = (await listManagedContainers()).find(c => c.name === name) ?? deepSleepMeta(name)
+
+  await stopProjectContainers(name)
+
+  const archivedAt = new Date()
+  let owner = meta?.owner
+  if (!owner) { try { owner = ownerOfCompose(fs.readFileSync(composePath, 'utf8')) } catch { owner = 'admin' } }
+  const dest = `${archiveRoot(owner)}/${name}-${archivedAt.toISOString().replace(/[:.]/g, '-')}`
+  const volumes = await listProjectVolumes(name)
+  fs.mkdirSync(`${dest}/volumes`, { recursive: true })
+  for (const volume of volumes) await exportVolume(volume, `${dest}/volumes/${volume}.tar.gz`)
+  fs.cpSync(dir, `${dest}/config`, { recursive: true })
+  fs.writeFileSync(`${dest}/manifest.json`, JSON.stringify({
+    name,
+    owner,
+    template: meta?.template ?? null,
+    runtime: meta?.runtime || null,
+    created_at: meta?.created_at ?? null,
+    archived_at: archivedAt.toISOString(),
+    volumes
+  }, null, 2))
+
+  // Archive is complete — only now remove the live sandbox.
+  if (hasCompose) await composeDown(composePath)
+  await removeProjectContainers(name)
+  for (const volume of volumes) await removeVolume(volume)
+  fs.rmSync(dir, { recursive: true, force: true })
+  forgetSandboxDir(name)
+  removeEmptyOwnerDir(dir)
+  removeDynamicConfig(name)
+  return dest
 }

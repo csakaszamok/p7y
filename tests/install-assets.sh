@@ -11,17 +11,16 @@ fail() { echo -e "${RED}FAIL${RESET}: $*"; exit 1; }
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 src=$tmp/src out=$tmp/out
 mkdir -p "$src"
-cp -R sablier-themes error-pages registry traefik "$src/"
+cp -R sablier-themes registry traefik "$src/"
 mkdir -p "$out/sablier-themes" "$out/dynamic"
 echo old > "$out/sablier-themes/removed-theme.html"
 echo keep > "$out/dynamic/tls.yml"
 echo keep > "$out/dynamic/sandbox-p7y-a.yml"
 
-ASSETS_SRC=$src ASSETS_OUT=$out PUBLIC_URL= sh scripts/install-assets.sh >/dev/null || fail "exit code $?"
+ASSETS_SRC=$src ASSETS_OUT=$out sh scripts/install-assets.sh >/dev/null || fail "exit code $?"
 
 [ -f "$out/sablier-themes/p7y.html" ] && pass "themes copied" || fail "themes not copied"
 [ ! -e "$out/sablier-themes/removed-theme.html" ] && pass "a theme no longer released is gone" || fail "old theme lingers"
-cmp -s error-pages/404.html "$out/error-pages/404.html" && pass "error pages copied" || fail "error pages"
 cmp -s registry/config.yml "$out/registry/config.yml" && pass "registry config copied" || fail "registry config"
 cmp -s traefik/errors.yml "$out/dynamic/errors.yml" && pass "dynamic/errors.yml written" || fail "errors.yml"
 [ "$(cat "$out/dynamic/tls.yml")" = keep ] && [ "$(cat "$out/dynamic/sandbox-p7y-a.yml")" = keep ] && pass "rest of dynamic/ untouched" || fail "dynamic/ touched"
@@ -31,19 +30,10 @@ rm "$src/registry/config.yml"
 if ASSETS_SRC=$src ASSETS_OUT=$out sh scripts/install-assets.sh >/dev/null 2>&1; then fail "a missing asset must fail"; else pass "a missing asset fails"; fi
 
 # A failing run (a release without one of its files) leaves what is there as it is: nothing emptied half way
-fresh=$tmp/fresh; mkdir -p "$fresh"; cp -R sablier-themes error-pages registry traefik "$fresh/"
+fresh=$tmp/fresh; mkdir -p "$fresh"; cp -R sablier-themes registry traefik "$fresh/"
 ASSETS_SRC=$fresh ASSETS_OUT=$out sh scripts/install-assets.sh >/dev/null
 rm "$fresh/registry/config.yml"
 ASSETS_SRC=$fresh ASSETS_OUT=$out sh scripts/install-assets.sh >/dev/null 2>&1 || true
-[ -f "$out/sablier-themes/p7y.html" ] && [ -f "$out/error-pages/404.html" ] && [ -f "$out/registry/config.yml" ] \
+[ -f "$out/sablier-themes/p7y.html" ] && [ -f "$out/registry/config.yml" ] \
   && pass "a failing run leaves every volume as it was" || fail "a failing run emptied something: $(ls "$out"/*)"
-
-# The 404 page gets Purgatory's address; anything but a plain address is left out (the page then guesses)
-ASSETS_SRC=$fresh ASSETS_OUT=$out PUBLIC_URL=https://p7y.example.com/ sh scripts/install-assets.sh >/dev/null 2>&1 || true
-cp -R error-pages "$fresh/"; cp registry/config.yml "$fresh/registry/"
-ASSETS_SRC=$fresh ASSETS_OUT=$out PUBLIC_URL=https://p7y.example.com/ sh scripts/install-assets.sh >/dev/null
-grep -q 'href="https://p7y.example.com" id="portal"' "$out/error-pages/404.html" && ! grep -q '{{P7Y_URL}}' "$out/error-pages/404.html"   && pass "404 page links to PUBLIC_URL" || fail "404 page: $(grep -o 'href="[^"]*" id="portal"' "$out/error-pages/404.html")"
-ASSETS_SRC=$fresh ASSETS_OUT=$out PUBLIC_URL='https://x.example.com/"><script>' sh scripts/install-assets.sh >/dev/null
-grep -q 'href="{{P7Y_URL}}" id="portal"' "$out/error-pages/404.html" && pass "an odd PUBLIC_URL is not written into the page" || fail "odd PUBLIC_URL written"
-! grep -q 'salehriaz\|http://[a-z]' error-pages/404.html && pass "404 page loads nothing from elsewhere" || fail "404 page has an outside address"
 
