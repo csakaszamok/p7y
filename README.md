@@ -18,6 +18,10 @@ Think of it as a self-hosted Vercel for the apps your team and its agents spin u
 - **Sleeps when idle, wakes on the next request**; a delete archives, nothing is lost
 - **Made for agents:** tokens limited to one sandbox, an [agent guide](docs/agent-guide.md), an MCP server and a [Claude Code plugin](https://p7y-dev.github.io/p7y/latest/claude-plugin/) (`/plugin marketplace add p7y-dev/p7y`, then `/p7y:init` connects each project: Purgatory shows the line under *Let your agent deploy…*)
 
+### Hide the complexity. Keep it simple. Focus on what matters.
+
+Purgatory abstracts away infrastructure complexity and operational overhead, providing an intuitive user experience that lets users focus on their work and business goals rather than managing the underlying technology.
+
 **[Why Purgatory, and how it compares](https://p7y-dev.github.io/p7y/latest/comparison/)** with a laptop, a cloud PaaS, a shared Docker host, Coolify and a VM for everyone · **[How it works](https://p7y-dev.github.io/p7y/latest/architecture.html)**: the components (Docker-in-Docker, frp, Traefik, Sablier), a sandbox's lifecycle and the path of a request
 
 ### The same from a script or an agent
