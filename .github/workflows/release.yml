@@ -14,6 +14,8 @@ env:
 jobs:
   image:
     runs-on: ubuntu-latest
+    outputs:
+      is_latest: ${{ steps.latest.outputs.is_latest }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -93,3 +95,26 @@ jobs:
           for f in check-host.sh docker-compose.yml setup.sh env.example; do
             echo "$assets" | grep -qx "$f" || { echo "missing release asset: $f"; exit 1; }
           done
+
+  # The newest version on the MCP Registry, as io.github.p7y-dev/p7y: GitHub's OIDC token proves the repository is
+  # p7y-dev's, so no one signs in. Only for the highest version (an older series' fix does not go back in time).
+  mcp-registry:
+    needs: image
+    if: needs.image.outputs.is_latest == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PUBLISHER_VERSION: v1.8.1
+      PUBLISHER_SHA256: a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: mcp-publisher
+        run: |
+          curl -fsSL -o mcp-publisher.tar.gz "https://github.com/modelcontextprotocol/registry/releases/download/$PUBLISHER_VERSION/mcp-publisher_linux_amd64.tar.gz"
+          echo "$PUBLISHER_SHA256  mcp-publisher.tar.gz" | sha256sum -c -
+          tar -xzf mcp-publisher.tar.gz mcp-publisher
+      - run: bash scripts/check-release-version.sh "${{ github.ref_name }}"
+      - run: ./mcp-publisher login github-oidc
+      - run: ./mcp-publisher publish

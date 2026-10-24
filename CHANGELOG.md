@@ -4,6 +4,20 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.11.9] - 2026-10-24
+
+Upgrading from 0.11.8: download the new `docker-compose.yml` (the registry cache is `registry:3.1.2`), then `docker compose pull && docker compose up -d`. The cache keeps what it has.
+
+### Added
+
+- **`REGISTRY_CACHE_TTL`:** how long the sandboxes' Docker Hub cache keeps an image (default `168h`, as before; `0` = for ever). The time counts from the image's first download, and pulling it again does not extend it: an image cached 6½ days before a workshop was downloaded again during it. See [Configuration](docs/configuration.md).
+
+### Changed
+
+- **The registry cache runs `registry:3.1.2`** instead of `registry:2.8.3` (only 3 lets the cache time be set). It serves what 2.8.3 cached. What was cached before keeps its old expiry (7 days from its download), unless `REGISTRY_CACHE_TTL=0`: then nothing expires, that included.
+- **The load test** (`tests/load/soak.sh`) says where the images came from: before the run, whether the test app's image is in the registry cache; after it, how much the cache downloaded from Docker Hub and which images the server pulled itself. A second run should download nothing.
+- **Releases publish the newest version to the MCP Registry** themselves (GitHub's OIDC token, no one signs in).
+
 ## [0.11.8] - 2026-10-24
 
 Upgrading from 0.11.7: `docker compose pull && docker compose up -d` (the `docker-compose.yml` changes only in the image version).
