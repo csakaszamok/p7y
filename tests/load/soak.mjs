@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Soak test: USERS people at once, each with SANDBOXES sandboxes, for MINUTES minutes. Every sandbox runs a small
 // public app that gets RATE requests a second the whole time; every user polls their sandbox list like the UI does;
-// every SLEEP_EVERY minutes each sandbox is put to sleep and woken by a request. Prints a line a minute (and the
+// every SLEEP_EVERY minutes each sandbox is put to sleep and woken by a request; the admin's pages (all sandboxes, the
+// Overview, a sandbox opened) are timed every 10 s. Prints a line a minute (and the
 // host's load and memory when run on the server itself), then how long each step took and whether it held.
 //
 // Needs the server's SESSION_SECRET to sign the users' sessions (as tests/load/workshop.mjs): run it on the server,
@@ -38,8 +39,8 @@ const RUN = crypto.randomBytes(2).toString('hex')
 const TIMEOUT = 15_000
 
 // A session as Purgatory signs it (services/session.ts): base64url(JSON) "." HMAC-SHA256 in base64url
-const session = sub => {
-  const data = Buffer.from(JSON.stringify({ sub, role: 'user', exp: Math.floor(Date.now() / 1000) + 3600 + MINUTES * 60 })).toString('base64url')
+const session = (sub, role = 'user') => {
+  const data = Buffer.from(JSON.stringify({ sub, role, exp: Math.floor(Date.now() / 1000) + 3600 + MINUTES * 60 })).toString('base64url')
   return `${data}.${crypto.createHmac('sha256', SECRET).update(data).digest('base64url')}`
 }
 
@@ -148,6 +149,32 @@ async function poll(u, until) {
   }
 }
 
+// The admin's pages meanwhile, every 10 s, as the UI asks for them: is Purgatory still usable for the one watching it?
+const ADMIN_STEPS = [
+  ['admin: All sandboxes list', () => '/sandboxes'],
+  ['admin: Overview (summary)', () => '/sandboxes/summary'],
+  ['admin: Overview (users)', () => '/users'],
+  ['admin: top bar (/me)', () => '/me'],
+  ['admin: a sandbox opened', sb => `/sandboxes/${sb.full}`],
+]
+async function adminPoll(sandboxes, until) {
+  const cookie = `p7y_session=${session('admin', 'admin')}`
+  let k = 0
+  while (!stopping && Date.now() < until) {
+    const sb = sandboxes[k++ % sandboxes.length]
+    for (const [step, path] of ADMIN_STEPS) {
+      const t = performance.now()
+      try {
+        const r = await get(`${P7Y_URL}${path(sb)}`, { headers: { cookie } })
+        await r.arrayBuffer()
+        if (r.status !== 200) failed(step, `status ${r.status}`)
+        else record(step, performance.now() - t)
+      } catch (err) { failed(step, why(err)) }
+    }
+    await sleep(10_000)
+  }
+}
+
 // The host's load and memory when run on the server (Linux /proc), else nothing
 function host() {
   try {
@@ -183,7 +210,7 @@ const ticker = setInterval(() => {
   console.log(`${min} min  ${String(minute.ok).padStart(6)} ok  ${String(minute.failed).padStart(4)} failed  p95 ${s ? s.p95.toFixed(0) : '–'} ms${host()}`)
   minute.ok = 0; minute.failed = 0; minute.ms = []
 }, 60_000)
-if (ready.length) await Promise.all([...ready.map(sb => traffic(sb, until)), ...users.map(u => poll(u, until))])
+if (ready.length) await Promise.all([...ready.map(sb => traffic(sb, until)), ...users.map(u => poll(u, until)), adminPoll(ready, until)])
 clearInterval(ticker)
 
 if (!KEEP) {
