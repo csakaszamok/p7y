@@ -4,6 +4,12 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+Upgrading from 0.11.9: download the new `docker-compose.yml` (its cache default is 30 days), then `docker compose up -d`. A `REGISTRY_CACHE_TTL` in `.env` still wins.
+
+### Changed
+
+- **The registry cache keeps an image for 30 days** by default instead of 7 (`REGISTRY_CACHE_TTL=720h`). The time only frees disk: a cached layer never changes, and a tag is checked with Docker Hub on every pull anyway, so after 7 days the same images were just downloaded again, every week. Where disk is short, set it lower (`168h` = 7 days, as before).
+
 ## [0.11.9] - 2026-10-24
 
 Upgrading from 0.11.8: download the new `docker-compose.yml` (the registry cache is `registry:3.1.2`), then `docker compose pull && docker compose up -d`. The cache keeps what it has.
