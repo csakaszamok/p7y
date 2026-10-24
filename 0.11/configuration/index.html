@@ -1769,6 +1769,11 @@
 <td><code>true</code></td>
 <td>Images whose versions all passed the secret scan can be pulled without a login; <code>false</code>: tokens only</td>
 </tr>
+<tr>
+<td><code>REGISTRY_CACHE_TTL</code></td>
+<td><code>168h</code> (7 days)</td>
+<td>How long the sandboxes' Docker Hub cache (<code>registry-cache</code>) keeps an image, counted from its <strong>first</strong> download: pulling it again does not extend it, so an image cached 6½ days before a workshop is downloaded again during it. In hours (<code>720h</code> = 30 days); <code>0</code> keeps everything for ever (the cache only grows: watch the disk). Not in hours (e.g. <code>7d</code>): the cache does not start, and the sandboxes pull from Docker Hub directly</td>
+</tr>
 </tbody>
 </table>
 
