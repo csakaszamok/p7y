@@ -23,6 +23,7 @@ import { sessionDurationOf, cappedSleepDefault } from './sleepSettings'
 import { listManagedContainers, resolveHostSandboxesDir, type SandboxMeta } from './docker'
 import { sandboxDir, legacyUsersDir, listSandboxDirs, newSandboxDir, archiveRoot, ownerDirName, ownerOfCompose, sandboxesDir, forgetSandboxDir, sandboxesMounted, SANDBOX_NAME } from './sandboxPaths'
 import { composeUp, composeStop, composeStart, composeDown, composeUpInner, composeConfigCheck } from './compose'
+import { concurrency } from './concurrency'
 import { hashPassword } from './registryAuth'
 import { listProjectVolumes, exportVolume, removeVolume, stopProjectContainers, removeProjectContainers } from './project'
 
@@ -452,42 +453,50 @@ export const sandboxService = {
    * older versions) are handled too. Returns the archive dir.
    */
   async archiveSandbox(name: string): Promise<string> {
-    if (!SANDBOX_NAME.test(name)) throw new Error(`Invalid sandbox name: ${name}`)
-    const dir = dirOf(name)
-    if (!fs.existsSync(dir)) throw new Error(`Sandbox not found: ${name}`)
-    const composePath = `${dir}/docker-compose.yml`
-    const hasCompose = fs.existsSync(composePath)
-    // In deep sleep there are no containers to read labels from: the compose file has the same ones
-    const meta = (await listManagedContainers()).find(c => c.name === name) ?? deepSleepMeta(name)
-
-    await stopProjectContainers(name)
-
-    const archivedAt = new Date()
-    let owner = meta?.owner
-    if (!owner) { try { owner = ownerOfCompose(fs.readFileSync(composePath, 'utf8')) } catch { owner = 'admin' } }
-    const dest = `${archiveRoot(owner)}/${name}-${archivedAt.toISOString().replace(/[:.]/g, '-')}`
-    const volumes = await listProjectVolumes(name)
-    fs.mkdirSync(`${dest}/volumes`, { recursive: true })
-    for (const volume of volumes) await exportVolume(volume, `${dest}/volumes/${volume}.tar.gz`)
-    fs.cpSync(dir, `${dest}/config`, { recursive: true })
-    fs.writeFileSync(`${dest}/manifest.json`, JSON.stringify({
-      name,
-      owner,
-      template: meta?.template ?? null,
-      runtime: meta?.runtime || null,
-      created_at: meta?.created_at ?? null,
-      archived_at: archivedAt.toISOString(),
-      volumes
-    }, null, 2))
-
-    // Archive is complete — only now remove the live sandbox.
-    if (hasCompose) await composeDown(composePath)
-    await removeProjectContainers(name)
-    for (const volume of volumes) await removeVolume(volume)
-    fs.rmSync(dir, { recursive: true, force: true })
-    forgetSandboxDir(name)
-    removeEmptyOwnerDir(dir)
-    removeDynamicConfig(name)
-    return dest
+    return archiving(() => archive(name))
   }
+}
+
+// Archiving copies every volume through Purgatory: many at once (a class deleting its sandboxes) kept everything else
+// waiting. At most 4 at a time; the others wait their turn
+const archiving = concurrency(4)
+
+async function archive(name: string): Promise<string> {
+  if (!SANDBOX_NAME.test(name)) throw new Error(`Invalid sandbox name: ${name}`)
+  const dir = dirOf(name)
+  if (!fs.existsSync(dir)) throw new Error(`Sandbox not found: ${name}`)
+  const composePath = `${dir}/docker-compose.yml`
+  const hasCompose = fs.existsSync(composePath)
+  // In deep sleep there are no containers to read labels from: the compose file has the same ones
+  const meta = (await listManagedContainers()).find(c => c.name === name) ?? deepSleepMeta(name)
+
+  await stopProjectContainers(name)
+
+  const archivedAt = new Date()
+  let owner = meta?.owner
+  if (!owner) { try { owner = ownerOfCompose(fs.readFileSync(composePath, 'utf8')) } catch { owner = 'admin' } }
+  const dest = `${archiveRoot(owner)}/${name}-${archivedAt.toISOString().replace(/[:.]/g, '-')}`
+  const volumes = await listProjectVolumes(name)
+  fs.mkdirSync(`${dest}/volumes`, { recursive: true })
+  for (const volume of volumes) await exportVolume(volume, `${dest}/volumes/${volume}.tar.gz`)
+  fs.cpSync(dir, `${dest}/config`, { recursive: true })
+  fs.writeFileSync(`${dest}/manifest.json`, JSON.stringify({
+    name,
+    owner,
+    template: meta?.template ?? null,
+    runtime: meta?.runtime || null,
+    created_at: meta?.created_at ?? null,
+    archived_at: archivedAt.toISOString(),
+    volumes
+  }, null, 2))
+
+  // Archive is complete — only now remove the live sandbox.
+  if (hasCompose) await composeDown(composePath)
+  await removeProjectContainers(name)
+  for (const volume of volumes) await removeVolume(volume)
+  fs.rmSync(dir, { recursive: true, force: true })
+  forgetSandboxDir(name)
+  removeEmptyOwnerDir(dir)
+  removeDynamicConfig(name)
+  return dest
 }

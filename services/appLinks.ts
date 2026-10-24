@@ -47,21 +47,18 @@ export async function frpsDomains(name: string): Promise<string[]> {
   return askFrps(name).catch(() => [])
 }
 
-/** As frpsDomains, but throws when neither socat nor frps answers (within 3 s each). */
+/** As frpsDomains, but throws when socat (which passes the API on from frps) does not answer within 3 s. */
 async function askFrps(name: string): Promise<string[]> {
   // Its API has a password (a sandbox from before 0.6 may have none until Purgatory restarts)
   let auth: string | null = null
   try { auth = frpsApiAuth(fs.readFileSync(`${dirOf(name)}/frps.toml`, 'utf8')) } catch { /* no frps.toml: ask without */ }
   const headers: Record<string, string> = auth ? { authorization: `Basic ${Buffer.from(auth).toString('base64')}` } : {}
-  for (const host of [`${name}-socat`, `${name}-frps`]) {
-    try {
-      const res = await fetch(`http://${host}:7500/api/proxy/http`, { headers, signal: AbortSignal.timeout(3000) })
-      if (!res.ok) continue
-      const data = await res.json() as { proxies?: Array<{ conf?: { customDomains?: string[] } }> }
-      return (data.proxies ?? []).flatMap(p => p.conf?.customDomains ?? [])
-    } catch { /* try next */ }
-  }
-  throw new Error(`frps of ${name} does not answer`)
+  // Only socat: frps is on the sandbox's own network, not Purgatory's, so its name never resolves (and a name that
+  // does not resolve costs seconds, holding up every other lookup meanwhile)
+  const res = await fetch(`http://${name}-socat:7500/api/proxy/http`, { headers, signal: AbortSignal.timeout(3000) })
+  if (!res.ok) throw new Error(`frps of ${name} answered ${res.status}`)
+  const data = await res.json() as { proxies?: Array<{ conf?: { customDomains?: string[] } }> }
+  return (data.proxies ?? []).flatMap(p => p.conf?.customDomains ?? [])
 }
 
 const dirOf = (name: string) => `${sandboxParent(name)}/${name}`
