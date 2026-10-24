@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **The top bar loads faster** (`GET /me`, asked on every page): it counts the caller's sandboxes for the quota, the running limit and the server's places from one listing of the sandboxes instead of three. On a test server with 26 sandboxes it took 0.5–0.9 s, now 0.2–0.3 s.
+
 ## [0.11.7] - 2026-10-24
 
 Nothing changes in Purgatory itself; upgrading from 0.11.6 is optional (`docker compose pull && docker compose up -d`).

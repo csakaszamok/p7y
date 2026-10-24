@@ -6,6 +6,7 @@ vi.mock('../../services/tokens', () => ({ resolveToken: vi.fn((t: string) => (t 
 let limit: number | null = null
 vi.mock('../../services/quota', () => ({ quotaStatus: vi.fn(async () => ({ quota: null, sandbox_count: 0 })), serverLimit: () => limit, serverUsed: async () => 5, runningStatus: async (p: { role: string }) => ({ max_running: p.role === 'admin' ? null : 1, running: 1 }) }))
 vi.mock('../../services/docker', () => ({ hostResources: vi.fn(async () => ({ cpus: 20, memory: 32 * G })) }))
+vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxStates: vi.fn(async () => []) } }))
 const { default: me } = await import('../../routes/me/GET')
 const req = (t: string) => new Request('http://localhost/me', { headers: { Authorization: `Bearer ${t}` } })
 
