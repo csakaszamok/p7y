@@ -8,7 +8,7 @@ import { sshKeyCount, hasGeneratedKey } from '../../../services/sandboxSsh'
 import { limitsOf } from '../../../services/resourceSettings'
 import { usageOf } from '../../../services/usageSampler'
 import { diskOf } from '../../../services/diskUsage'
-import { appLinks, rememberedApps } from '../../../services/appLinks'
+import { appLinksForView, rememberedApps } from '../../../services/appLinks'
 import { appStatuses } from '../../../services/appProbe'
 import { dockerAccessInfo } from '../../../services/dockerAccess'
 import { rememberedHub, refreshHub } from '../../../services/hub/list'
@@ -23,7 +23,7 @@ export const openapi = {
   security: [{ bearerAuth: [] }],
   parameters: [{ name: 'include_keys', in: 'query', required: false, description: "true: also the Docker client certificates and private key (ca_cert, client_cert, client_key). Leave it out for an agent: the Claude Code plugin's setup_project_dir writes them to disk without them passing through the model", schema: { type: 'boolean' } }],
   responses: {
-    200: { description: 'Sandbox record (the Docker client keys only with include_keys=true); apps: each link with answers true/false (null when not running) and access (p7y.access: public, domain or owner; access_invalid when its label is not one); mounts: the host folders mounted into it (the admin also gets host_mount_roots)' },
+    200: { description: 'Sandbox record (the Docker client keys only with include_keys=true); apps: each link with answers true/false (null when not running) and access (p7y.access: public, domain or owner; access_invalid when its label is not one); apps_stale: true when the sandbox runs but did not answer just now (a busy server), and apps are the ones it last had; mounts: the host folders mounted into it (the admin also gets host_mount_roots)' },
     401: { description: 'Unauthorized' },
     404: { description: 'Sandbox not found' }
   }
@@ -40,8 +40,9 @@ export default async (req: Request): Promise<Response> => {
     const withKeys = new URL(req.url).searchParams.get('include_keys') === 'true'
     const { app_services, ca_cert, client_cert, client_key, ...info } = sandbox as typeof sandbox & { ca_cert?: string; client_cert?: string; client_key?: string }
     if (withKeys) Object.assign(info, { ca_cert, client_cert, client_key })
+    // apps_stale (from getSandbox): frps or its inner Docker did not answer just now, these are the apps it last had
     const apps = sandbox.status === 'running'
-      ? await appStatuses(name, await appLinks(name))
+      ? await appStatuses(name, (await appLinksForView(name)).links)
       : withRememberedAccess(name, sandbox.tunnel_urls.map(url => ({ url, port: null, service: app_services?.[url] ?? null, answers: null })))
     // Asleep: the ports it had when it last ran (a connection wakes it)
     const tcp = sandbox.status === 'running' ? await publicTcpPorts(name).catch(() => []) : rememberedTcpPorts(name) ?? []

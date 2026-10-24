@@ -3,16 +3,16 @@ import { withoutStartInterval, createStartIntervalCheck } from '../../services/h
 
 const compose = {
   services: {
-    socat: { image: 'socat', healthcheck: { test: ['CMD', 'true'], interval: '2s', start_period: '60s', start_interval: '500ms' } },
+    socat: { image: 'socat', healthcheck: { test: ['CMD', 'true'], interval: '10s', retries: 12, start_period: '60s', start_interval: '500ms' } },
     frps: { image: 'frps' },
   },
 }
 
 describe('healthcheck start_interval (Docker Engine 25+)', () => {
   // Below 25 docker compose refuses the field, and the sandbox would not be created at all
-  it('can be taken out of a compose file, nothing else changes', () => {
+  it('can be taken out of a compose file: the check then runs every 2 s throughout (a wake is not slower), nothing else changes', () => {
     const out = withoutStartInterval(compose) as typeof compose
-    expect(out.services.socat.healthcheck).toEqual({ test: ['CMD', 'true'], interval: '2s', start_period: '60s' })
+    expect(out.services.socat.healthcheck).toEqual({ test: ['CMD', 'true'], interval: '2s', retries: 60, start_period: '60s' })
     expect(out.services.frps).toEqual({ image: 'frps' })
     expect(compose.services.socat.healthcheck.start_interval).toBe('500ms') // the runtime's own object is left alone
   })

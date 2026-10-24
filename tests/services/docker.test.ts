@@ -52,11 +52,26 @@ import Dockerode from 'dockerode'
 (globalThis as { __networks?: string[] }).__networks = ['net-a', 'net-b']
 
 describe('getSandboxState', () => {
-  it('flags a container attached to a network that no longer exists', async () => {
-    (globalThis as { __networks?: string[] }).__networks = ['net-a', 'net-b']
-    expect((await getSandboxState('leander-user1'))?.staleNetwork).toBe(false);
-    (globalThis as { __networks?: string[] }).__networks = ['net-a', 'net-c']
-    expect((await getSandboxState('leander-user1'))?.staleNetwork).toBe(true)
+  // The network list is shared for 2 s (a list asks for many sandboxes' states at once)
+  it('flags a container attached to a network that no longer exists, once the shared list is 2 s old', async () => {
+    const net = globalThis as { __networks?: string[] }
+    net.__networks = ['net-a', 'net-b']
+    expect((await getSandboxState('leander-user1'))?.staleNetwork).toBe(false)
+    net.__networks = ['net-a', 'net-c']
+    const now = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 2_500)
+    try { expect((await getSandboxState('leander-user1'))?.staleNetwork).toBe(true) } finally { now.mockRestore() }
+  })
+
+  // Stale takes the sandbox down (deep sleep): a network missing from the shared list is looked up afresh first
+  it('does not call a network created since the shared list stale', async () => {
+    const net = globalThis as { __networks?: string[] }
+    net.__networks = ['net-a']
+    const now = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 10_000)
+    try {
+      expect((await getSandboxState('leander-user1'))?.staleNetwork).toBe(true)
+      net.__networks = ['net-a', 'net-b']
+      expect((await getSandboxState('leander-user1'))?.staleNetwork).toBe(false)
+    } finally { now.mockRestore() }
   })
 
   it('takes deep_sleep_after from the compose file, falling back to the container label', async () => {

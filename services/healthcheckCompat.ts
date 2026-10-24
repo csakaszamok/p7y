@@ -3,12 +3,17 @@ import { engineApiVersion } from './docker'
 /**
  * A healthcheck's start_interval (checks more often while a container starts) needs Docker Engine 25 (API 1.44):
  * below that docker compose refuses the file. The runtimes use it so a new sandbox's router shows up sooner;
- * on an older engine it is taken out, and the sandbox starts as before.
+ * on an older engine it is taken out, and the check runs every 2 s throughout, as it did before: else a wake would
+ * wait for the next check, up to `interval`.
  */
 export function withoutStartInterval(compose: Record<string, unknown>): Record<string, unknown> {
   const copy = structuredClone(compose) as { services?: Record<string, { healthcheck?: Record<string, unknown> } | undefined> }
   for (const service of Object.values(copy.services ?? {})) {
-    if (service?.healthcheck) delete service.healthcheck.start_interval
+    const check = service?.healthcheck
+    if (!check || check.start_interval === undefined) continue
+    delete check.start_interval
+    check.interval = '2s'
+    check.retries = 60
   }
   return copy as Record<string, unknown>
 }

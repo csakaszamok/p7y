@@ -79,9 +79,11 @@ docker_compose:
       # so Sablier does not redirect the user before the tunnel works.
       healthcheck:
         test: ["CMD-SHELL", "wget -qO- http://$$FRPS_API_AUTH@127.0.0.1:7500/api/proxy/http | grep -q online"]
-        interval: 2s
+        # Every 10 s once up (each check is a `docker exec`: with many sandboxes, every 2 s kept dockerd busy);
+        # a broken tunnel still takes its router away within 2 minutes
+        interval: 10s
         timeout: 2s
-        retries: 60
+        retries: 12
         # Every 0.5 s while it starts, so its router (and its app address) shows up as soon as the tunnel does;
         # needs Docker Engine 25, below which Purgatory leaves start_interval out
         start_period: 60s

@@ -157,7 +157,7 @@ export function startDiskSampler(): void {
     if (busy) return
     busy = true
     import('./sandbox')
-      .then(({ sandboxService }) => measureOnce({ list: () => sandboxService.listSandboxes(), measure: measureVolume }))
+      .then(({ sandboxService }) => measureOnce({ list: () => sandboxService.listSandboxStates(), measure: measureVolume }))
       .catch(err => console.error('[disk]', err instanceof Error ? err.message : err))
       .finally(() => { busy = false })
   }

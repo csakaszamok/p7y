@@ -139,13 +139,16 @@
   }
 
   const AGENT_BUTTON = '<div class="actions agent-actions"><button class="primary" data-act="export">Let your agent deploy…</button></div>'
+  const STALE_APPS = 'Could not see its apps just now (the server is busy)'
 
   function appsTab(s, ctx) {
     const extras = s.extras || {}
     const rows = appRows(s)
     // Let your agent deploy: here in both views, for the owner (the new token is theirs)
     const agent = (s.owner || 'admin') === ctx.me ? AGENT_BUTTON : ''
-    if (!rows.length) return '<p class="muted">No apps yet — publish a port on all interfaces (e.g. 8080:8080) to get a link.</p>' + agent
+    // Running, but the sandbox did not answer just now (a busy server): the apps it last had
+    const stale = s.apps_stale ? `<p class="not-answering">⚠ ${STALE_APPS}${rows.length ? ': these are the apps it had last time.' : '.'}</p>` : ''
+    if (!rows.length) return (stale || '<p class="muted">No apps yet — publish a port on all interfaces (e.g. 8080:8080) to get a link.</p>') + agent
     const mark = a => a === true ? ' <span class="ok" title="answering">✓</span><span class="sr-only">answering</span>'
       : a === false ? ' <span class="warn" title="not answering">⚠</span><span class="sr-only">not answering</span>' : ''
     const hub = s.hub || { published: [], unlinked: [] }
@@ -165,7 +168,7 @@
       : down.length === 1 ? `<p class="not-answering">⚠ ${esc(down[0])} is not answering — does it listen on 0.0.0.0 (not 127.0.0.1) inside its container?</p>`
       : `<p class="not-answering">⚠ ${down.map(esc).join(', ')} are not answering — do they listen on 0.0.0.0 (not 127.0.0.1) inside their containers?</p>`
     const asleep = s.status !== 'running' && rows.some(r => r.url) ? '<p class="muted">opening one wakes the sandbox</p>' : ''
-    return table(ctx.simple ? ['App', 'Web'] : ['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep + agent
+    return stale + table(ctx.simple ? ['App', 'Web'] : ['App', 'Web', 'TCP', ''], body, 'apps-table') + tip + asleep + agent
   }
 
   function accessTab(s, ctx) {
@@ -499,7 +502,7 @@
     return `/p7y:init ${u} ${sandboxShort}`
   }
 
-  const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, mountsSection, registryTable, renderPanel }
+  const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, mountsSection, registryTable, renderPanel, STALE_APPS }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P7yPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)
