@@ -130,17 +130,13 @@ services:
       retries: 30
       start_period: 5s
 
-  # One-shot, on every up: copies this release's Sablier themes, error pages, registry config and
+  # One-shot, on every up: copies this release's Sablier themes, registry config and
   # dynamic/errors.yml from the image, so they always match it (no files from a checkout).
   p7y-init:
     image: ghcr.io/p7y-dev/p7y:${P7Y_VERSION:-0.11.4}
     entrypoint: ["sh", "/app/assets/install-assets.sh"]
-    environment:
-      # The 404 page's link to Purgatory
-      PUBLIC_URL: ${PUBLIC_URL:-http://p7y.${HOST_DOMAIN:-lvh.me}}
     volumes:
       - sablier_themes:/out/sablier-themes
-      - error_pages:/out/error-pages
       - registry_conf:/out/registry
       - ./dynamic:/out/dynamic
     network_mode: none
@@ -259,24 +255,11 @@ services:
     networks:
       - traefik-net
 
-  error-pages:
-    image: nginx:1.31.6-alpine
-    volumes:
-      - error_pages:/usr/share/nginx/html:ro
-    depends_on:
-      p7y-init:
-        condition: service_completed_successfully
-        restart: true
-    networks:
-      - traefik-net
-    restart: unless-stopped
-
 volumes:
   registry_data:
   sablier_data:
   registry_cache_data:
   sablier_themes:
-  error_pages:
   registry_conf:
 
 networks:

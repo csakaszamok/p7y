@@ -9,9 +9,10 @@ COPY routes ./routes
 COPY services ./services
 COPY templates ./templates
 COPY runtimes ./runtimes
+# The 404 page Traefik's error-page middleware asks Purgatory for
+COPY error-pages ./error-pages
 # Files other services read: p7y-init (assets/install-assets.sh) copies them into their volumes on every up
 COPY sablier-themes ./assets/sablier-themes
-COPY error-pages ./assets/error-pages
 COPY registry ./assets/registry
 COPY traefik ./assets/traefik
 COPY scripts/install-assets.sh ./assets/install-assets.sh

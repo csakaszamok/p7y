@@ -4,6 +4,12 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+Upgrading: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d --remove-orphans` (the `error-pages` container is gone; its volume can go too: `docker volume rm <project>_error_pages`).
+
+### Changed
+
+- **Purgatory serves the 404 page itself**, on its internal port, instead of a separate nginx container (`error-pages`): one container and one volume fewer. The page is the same and still links to `PUBLIC_URL`. While Purgatory is down or restarting (a few seconds on an upgrade), a sandbox app's 404 reaches the browser as an empty 500, since Traefik cannot fetch the page; addresses without a sandbox already needed Purgatory.
+
 ## [0.11.4] - 2026-10-23
 
 Upgrading from 0.11.3: download the new `docker-compose.yml` (it passes `USER_VIEW_SWITCH` and `HOST_MOUNT_ROOTS` to Purgatory), then `docker compose pull && docker compose up -d`. **Users lose the Simple | Advanced switch and stay in Simple** unless you set `USER_VIEW_SWITCH=true` (see Changed). New sandboxes run foxglove 0.8.0; existing ones keep their image, so in them use `frpc.subdomain` rather than `p7y.subdomain`.

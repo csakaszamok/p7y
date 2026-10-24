@@ -2,6 +2,7 @@ import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { startDeepSleepScheduler } from "./services/deepSleep";
 import { startAccessRefresher } from "./services/appAccess/traefik";
 import { internalOnly, INTERNAL_PORT } from "./services/appAccess/internal";
+import { errorPage, ERROR_PAGE_PATH } from "./services/errorPage";
 import { startSessionWatch } from "./services/sessionWatch";
 import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
 import { openSignInWarning } from "./services/allowlist";
@@ -213,6 +214,17 @@ async function handle(req: IncomingMessage, res: ServerResponse, internal: boole
   const method = req.method ?? "GET";
 
   if (path.includes("..")) { res.writeHead(400).end("Bad Request"); return; }
+
+  // Traefik's error-page middleware, for any host (a sandbox app's too): it keeps the original 404 status
+  if (path === ERROR_PAGE_PATH) {
+    try {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(await errorPage());
+    } catch (err) {
+      console.error("[error-page]", err);
+      if (!res.headersSent) res.writeHead(500).end("Internal Server Error");
+    }
+    return;
+  }
 
   // The Hub host: only the Hub's own routes; Purgatory's API, /mcp and /swagger never answer here
   if (isHubHost(req.headers.host)) {
