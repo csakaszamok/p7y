@@ -4,7 +4,9 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
-Upgrading: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d --remove-orphans` (the `error-pages` container is gone; its volume can go too: `docker volume rm <project>_error_pages`).
+## [0.11.5] - 2026-10-24
+
+Upgrading from 0.11.4: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d --remove-orphans` (the `error-pages` container is gone; its volume can go too: `docker volume rm <project>_error_pages`). When Purgatory starts, every sandbox's socat is recreated once (see Changed): a running sandbox's web addresses are gone for a second or two.
 
 ### Changed
 
