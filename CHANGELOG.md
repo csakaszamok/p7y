@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.11.6] - 2026-10-24
+
+Upgrading from 0.11.5: download the new `docker-compose.yml` (it sets Purgatory's DNS timeout), then `docker compose pull && docker compose up -d`.
+
 ### Fixed
 
 - **Purgatory slowed down for everyone with many sandboxes** (a list took seconds while the server was idle): a name that does not resolve (a sandbox's frps, which Purgatory never reaches, or a sandbox just removed) waited 5 s for the host's resolver and held up Purgatory's other lookups meanwhile. Purgatory no longer asks for frps by name, gives up on a name after 1 s (`dns_opt` in `docker-compose.yml`) and resolves on 16 threads instead of 4.
