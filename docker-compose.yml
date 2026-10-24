@@ -251,10 +251,12 @@ services:
     restart: unless-stopped
 
   registry-cache:
-    image: registry:2.8.3
+    image: registry:3.1.2
     restart: unless-stopped
     environment:
       REGISTRY_PROXY_REMOTEURL: https://registry-1.docker.io
+      # How long a downloaded image stays, counted from its first download (using it does not extend it); 0 = for ever
+      REGISTRY_PROXY_TTL: ${REGISTRY_CACHE_TTL:-168h}
     volumes:
       - registry_cache_data:/var/lib/registry
     networks:
