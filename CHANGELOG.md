@@ -4,6 +4,12 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- **Purgatory slowed down for everyone with many sandboxes** (a list took seconds while the server was idle): a name that does not resolve (a sandbox's frps, which Purgatory never reaches, or a sandbox just removed) waited 5 s for the host's resolver and held up Purgatory's other lookups meanwhile. Purgatory no longer asks for frps by name, gives up on a name after 1 s (`dns_opt` in `docker-compose.yml`) and resolves on 16 threads instead of 4.
+- **A sandbox sysbox would not start again** ("already pre-registered" with sysbox-fs, after a failed start) could not be woken; its containers are now recreated, its data stays.
+- **Deleting many sandboxes at once** made everything else wait while their volumes were archived: at most 4 are archived at a time, the others wait their turn.
+
 ## [0.11.5] - 2026-10-24
 
 Upgrading from 0.11.4: download the new `docker-compose.yml`, then `docker compose pull && docker compose up -d --remove-orphans` (the `error-pages` container is gone; its volume can go too: `docker volume rm <project>_error_pages`). When Purgatory starts, every sandbox's socat is recreated once (see Changed): a running sandbox's web addresses are gone for a second or two.

@@ -64,8 +64,19 @@ export function composeStop(composePath: string): Promise<void> {
   return run(`docker compose -f "${composePath}" stop`)
 }
 
-export function composeStart(composePath: string): Promise<void> {
-  return run(`docker compose -f "${composePath}" start`)
+/**
+ * Starts a stopped sandbox. sysbox can refuse to start a container again after a failed start ("already
+ * pre-registered" with sysbox-fs) however often it is asked: then its containers are created anew, which sysbox
+ * takes. Its data is in volumes and stays.
+ */
+export async function composeStart(composePath: string, exec: (cmd: string) => Promise<void> = run): Promise<void> {
+  try {
+    await exec(`docker compose -f "${composePath}" start`)
+  } catch (err) {
+    if (!/already pre-registered/.test(err instanceof Error ? err.message : String(err))) throw err
+    console.warn(`[compose] ${composePath}: sysbox refused to start it again, recreating its containers`)
+    await exec(`docker compose -f "${composePath}" up -d --force-recreate --pull never`)
+  }
 }
 
 export function composeDown(composePath: string): Promise<void> {

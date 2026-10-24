@@ -88,6 +88,11 @@ services:
       - default
       - traefik-net
       - sablier-net   # read Sablier's /metrics (session expiry per sandbox)
+    # A name that does not resolve (a sandbox just removed or asleep) waits for the host's resolver: 5 s by default,
+    # holding up Purgatory's other lookups meanwhile. Give up after 1 s, once more
+    dns_opt:
+      - timeout:1
+      - attempts:2
     labels:
       traefik.enable: "true"
       traefik.http.routers.p7y.rule: "Host(`p7y.${HOST_DOMAIN:-lvh.me}`)"

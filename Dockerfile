@@ -2,6 +2,8 @@
 FROM ghcr.io/p7y-dev/rododentron:0.3.1
 RUN apk add --no-cache python3 make g++ docker-cli docker-cli-compose
 WORKDIR /app
+# Node resolves names (and reads files) on this many threads, 4 by default: a few slow lookups held up the rest
+ENV UV_THREADPOOL_SIZE=16
 RUN npm install --no-save dockerode@^5.0.1 node-forge@^1.3.1 js-yaml@^4.3.2 bcryptjs@^3.0.3 openid-client@^6 ws@^8
 COPY ecosystem.config.cjs ./
 COPY server.ts ./
