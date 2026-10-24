@@ -256,7 +256,7 @@ services:
     environment:
       REGISTRY_PROXY_REMOTEURL: https://registry-1.docker.io
       # How long a downloaded image stays, counted from its first download (using it does not extend it); 0 = for ever
-      REGISTRY_PROXY_TTL: ${REGISTRY_CACHE_TTL:-168h}
+      REGISTRY_PROXY_TTL: ${REGISTRY_CACHE_TTL:-720h}
     volumes:
       - registry_cache_data:/var/lib/registry
     networks:
