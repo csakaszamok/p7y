@@ -31,9 +31,53 @@ if [ ! -f "$script" ]; then
   curl -fsSL "https://raw.githubusercontent.com/p7y-dev/p7y/${SOAK_REF:-release/0.11}/tests/load/soak.mjs" -o "$script"
 fi
 
+# Where the images came from: the sandboxes pull Docker Hub images through Purgatory's registry-cache, so a second
+# run should download nothing. Its size before and after, and the server's own images (foxglove, frps, socat: these
+# the server pulls itself, once). Only where docker is at hand (the server); otherwise reported as unknown.
+APP_IMAGE=traefik/whoami # the app soak.mjs deploys
+project=$(docker ps --filter label=com.docker.compose.service=p7y --format '{{.Label "com.docker.compose.project"}}' 2>/dev/null | head -1 || true)
+cache=""
+[ -n "$project" ] && cache=$(docker ps -q --filter "label=com.docker.compose.project=$project" --filter label=com.docker.compose.service=registry-cache 2>/dev/null | head -1 || true)
+cache_kb() { docker exec "$cache" du -sk /var/lib/registry 2>/dev/null | cut -f1; }
+host_images() { docker images -q --no-trunc 2>/dev/null | sort -u || true; }
+if [ -n "$cache" ]; then
+  cache_before=$(cache_kb)
+  if docker exec "$cache" test -d "/var/lib/registry/docker/registry/v2/repositories/$APP_IMAGE"; then
+    echo "images: $APP_IMAGE is in Purgatory's registry cache already: the sandboxes take it from there, not from the internet"
+  else
+    echo "images: $APP_IMAGE is not in Purgatory's registry cache yet: this run downloads it from Docker Hub once"
+  fi
+fi
+# The test's own Node image first, so it is not counted as one the server pulled for Purgatory
+docker image inspect node:22.23.4-alpine >/dev/null 2>&1 || docker pull -q node:22.23.4-alpine >/dev/null
+images_before=$(host_images)
+
 # -t only with a terminal (Ctrl+C reaches the test, which then archives its sandboxes); not from cron or a pipe
 tty=""; [ -t 0 ] && tty="-t"
+trap ':' INT # Ctrl+C is the test's: this script still reports the images after it
+status=0
 docker run --rm -i $tty --network host --init -v "$(cd "$(dirname "$script")" && pwd)/$(basename "$script"):/soak.mjs:ro" \
   -e SESSION_SECRET -e P7Y_URL -e USERS -e SANDBOXES -e MINUTES \
   -e RATE -e SLEEP_EVERY -e CPUS -e MEMORY -e USER_DOMAIN -e MAX_ERRORS -e KEEP -e INSECURE \
-  node:22.23.4-alpine node /soak.mjs
+  node:22.23.4-alpine node /soak.mjs || status=$?
+
+echo
+if [ -n "$cache" ]; then
+  grown=$(( $(cache_kb) - cache_before ))
+  if [ "$grown" -le 0 ]; then
+    echo "registry cache: nothing downloaded from Docker Hub, every image came from the cache"
+  else
+    echo "registry cache: $((grown / 1024)) MB downloaded from Docker Hub (cached now: the next run takes it from there)"
+  fi
+else
+  echo "registry cache: not found (run this on the server, as a user who may use docker): the images' source is unknown"
+fi
+new=$(host_images | grep -vxF "$images_before" || true)
+if [ -z "$images_before" ]; then
+  echo "server images: unknown (docker is not at hand here)"
+elif [ -z "$new" ]; then
+  echo "server images: none pulled (foxglove, frps, socat were here already)"
+else
+  echo "server images: pulled from the internet: $(for id in $new; do docker image inspect -f '{{join .RepoTags ","}}' "$id"; done | tr '\n' ' ')"
+fi
+exit $status
