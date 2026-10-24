@@ -5,10 +5,8 @@
 // host's load and memory when run on the server itself), then how long each step took and whether it held.
 //
 // Needs the server's SESSION_SECRET to sign the users' sessions (as tests/load/workshop.mjs): run it on the server,
-// never put the secret in a file in the repository. Node 18+, no packages; on a server without Node:
-//
-//   docker run --rm -it --network host -v "$PWD/tests/load:/load:ro" -e P7Y_URL -e SESSION_SECRET \
-//     -e USERS -e SANDBOXES -e MINUTES node:22-alpine node /load/soak.mjs
+// never put the secret in a file in the repository. Node 18+, no packages; on a server without Node, soak.sh runs it
+// in a container (sh soak.sh USERS SANDBOXES MINUTES, next to Purgatory's .env).
 //
 //   P7Y_URL=https://p7y.demo.example.com SESSION_SECRET=… USERS=10 SANDBOXES=3 MINUTES=30 node tests/load/soak.mjs
 //
