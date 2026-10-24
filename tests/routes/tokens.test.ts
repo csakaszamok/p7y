@@ -14,7 +14,8 @@ vi.mock('../../services/sandbox', () => ({
       const owners: Record<string, string> = { 'p7y-shop': 'alice@example.com', 'p7y-bobs': 'bob@example.com', 'p7y-admins': 'admin' }
       if (!owners[name]) throw new Error(`Sandbox not found: ${name}`)
       return { name, owner: owners[name] }
-    })
+    }),
+    listSandboxStates: vi.fn(async () => [])
   }
 }))
 

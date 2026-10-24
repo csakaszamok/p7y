@@ -1,6 +1,7 @@
 import { visibleSandboxStates } from './access'
 import { sandboxService } from './sandbox'
 import type { Principal } from './principal'
+import type { SandboxMeta } from './docker'
 import { rawNameOf } from './naming'
 
 const DEFAULT_QUOTA = 3
@@ -38,8 +39,8 @@ export function serverLimit(env: NodeJS.ProcessEnv = process.env): number | null
 const isRunning = (s: { status: string }) => s.status === 'running'
 
 /** The places taken on the server (SANDBOX_MAX_TOTAL): every running sandbox, the admin's too. */
-export async function serverUsed(): Promise<number> {
-  return (await sandboxService.listSandboxStates()).filter(isRunning).length
+export async function serverUsed(all?: SandboxMeta[]): Promise<number> {
+  return (all ?? await sandboxService.listSandboxStates()).filter(isRunning).length
 }
 
 /**
@@ -148,14 +149,14 @@ export async function reserveWake(owner: string, name: string, from: string, fre
 }
 
 /** The caller's running sandboxes and their running limit (none for the admin). */
-export async function runningStatus(p: Principal): Promise<{ max_running: number | null; running: number }> {
-  const running = (await visibleSandboxStates(p)).filter(s => s.owner === p.sub && s.status === 'running').length
+export async function runningStatus(p: Principal, all?: SandboxMeta[]): Promise<{ max_running: number | null; running: number }> {
+  const running = (await visibleSandboxStates(p, all)).filter(s => s.owner === p.sub && s.status === 'running').length
   return { max_running: p.role === 'admin' ? null : runningLimit(), running }
 }
 
-export async function quotaStatus(p: Principal): Promise<{ quota: number | null; sandbox_count: number }> {
+export async function quotaStatus(p: Principal, all?: SandboxMeta[]): Promise<{ quota: number | null; sandbox_count: number }> {
   // Only running sandboxes count against the quota
-  const count = (await visibleSandboxStates(p)).filter(s => s.status === 'running').length
+  const count = (await visibleSandboxStates(p, all)).filter(s => s.status === 'running').length
   return { quota: p.role === 'admin' ? null : quotaLimit(), sandbox_count: count }
 }
 
