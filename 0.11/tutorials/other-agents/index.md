@@ -2,7 +2,7 @@
 
 For Codex, Cursor, Claude Code without the plugin, or any agent that can run commands on your computer. You download a small zip from Purgatory; the agent uses it to build and run your app in your sandbox, and gives you its link.
 
-**What you need:** the agent, [Docker](https://docs.docker.com/get-docker/) installed on your computer, and a Purgatory account with a sandbox (**+ New sandbox** in Purgatory; see [step 1 of the Claude Code tutorial](https://p7y-dev.github.io/p7y/0.11/tutorials/claude-code/#1-make-a-sandbox)).
+**What you need:** the agent, [Docker](https://docs.docker.com/get-docker/) installed on your computer, and a Purgatory account with a sandbox (**+ New sandbox** in Purgatory; see [step 1 of the Claude Code tutorial](https://csakaszamok.github.io/p7y/0.11/tutorials/claude-code/#1-make-a-sandbox)).
 
 ## 1. Download the zip
 
@@ -28,6 +28,6 @@ Changed something? *Update the app in my sandbox.* The same link shows the new v
 
 - The zip's token expires in 90 days (in the Advanced view you can choose 30 days or never). Download a new zip then.
 - Lost the zip, or someone else got it? In Purgatory (Advanced view): the sandbox → **Access** → **Rotate Docker keys…** makes the old keys useless, and **Access tokens** lets you revoke its token.
-- Sleep and wake work the same as with Claude Code: see [Good to know](https://p7y-dev.github.io/p7y/0.11/tutorials/claude-code/#good-to-know) there.
+- Sleep and wake work the same as with Claude Code: see [Good to know](https://csakaszamok.github.io/p7y/0.11/tutorials/claude-code/#good-to-know) there.
 
-For agent builders: everything the agent does is in the [agent guide](https://p7y-dev.github.io/p7y/0.11/agent-guide/index.md).
+For agent builders: everything the agent does is in the [agent guide](https://csakaszamok.github.io/p7y/0.11/agent-guide/index.md).

@@ -2,7 +2,7 @@
 
 The Hub is your team's showcase: a page at `https://hub.<your Purgatory domain>` where colleagues find the apps you published, open them with one click, and vote for the ones they like. Colleagues who only use apps can sign in to the Hub alone.
 
-**What you need:** an app already online in your sandbox (see [Put your app online with Claude Code](https://p7y-dev.github.io/p7y/0.11/tutorials/claude-code/index.md)), and the Hub turned on in your Purgatory (ask whoever runs it; it is `HUB_ENABLED=true`).
+**What you need:** an app already online in your sandbox (see [Put your app online with Claude Code](https://csakaszamok.github.io/p7y/0.11/tutorials/claude-code/index.md)), and the Hub turned on in your Purgatory (ask whoever runs it; it is `HUB_ENABLED=true`).
 
 ## 1. Publish
 
@@ -35,4 +35,4 @@ Send colleagues the Hub's address. They see whether your app is running or aslee
 
 To take it off the Hub: *remove the app from the Hub* (the agent removes `p7y.publish`), or archive the sandbox.
 
-All labels and settings: [Hub](https://p7y-dev.github.io/p7y/0.11/hub/index.md).
+All labels and settings: [Hub](https://csakaszamok.github.io/p7y/0.11/hub/index.md).

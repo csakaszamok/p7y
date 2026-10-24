@@ -2,7 +2,7 @@
 
 New to this?
 
-[Put your app online with Claude Code](https://p7y-dev.github.io/p7y/0.11/tutorials/claude-code/index.md) walks through it step by step.
+[Put your app online with Claude Code](https://csakaszamok.github.io/p7y/0.11/tutorials/claude-code/index.md) walks through it step by step.
 
 The `p7y` plugin teaches Claude Code to deploy: you say *put my app online*, it deploys the project to your sandbox's own Docker, checks that the app answers and gives you its address. The plugin itself keeps no address and no token: each project says which Purgatory and which sandbox it belongs to, in its own `.p7y` folder.
 
@@ -11,14 +11,14 @@ The `p7y` plugin teaches Claude Code to deploy: you say *put my app online*, it 
 Once on your computer, from a terminal (a sandbox's **Let your agent deploy…** shows these lines ready to copy). Claude Code in an editor (the VS Code extension) has no `/plugin`, so there this is the way:
 
 ```
-claude plugin marketplace add p7y-dev/p7y
+claude plugin marketplace add csakaszamok/p7y
 claude plugin install p7y@p7y
 ```
 
 Or in Claude Code:
 
 ```
-/plugin marketplace add p7y-dev/p7y
+/plugin marketplace add csakaszamok/p7y
 /plugin install p7y@p7y
 ```
 
@@ -49,9 +49,9 @@ In your project's folder, ask in your own words, e.g. *deploy this app to my san
 The plugin has two skills:
 
 - **`/p7y:init`**: ties the project to a sandbox, as above;
-- **`/p7y:deploy`**: the steps of the [agent guide](https://p7y-dev.github.io/p7y/0.11/agent-guide/index.md) in short, for an agent that may be talking to someone who is not a developer. It works from `.p7y/p7y.env` with the REST API, and gets fresh Docker keys through a single-use link (unpacked to the disk, so a key never passes through the model: copied by a model a key gets garbled, and it would end up in the transcript).
+- **`/p7y:deploy`**: the steps of the [agent guide](https://csakaszamok.github.io/p7y/0.11/agent-guide/index.md) in short, for an agent that may be talking to someone who is not a developer. It works from `.p7y/p7y.env` with the REST API, and gets fresh Docker keys through a single-use link (unpacked to the disk, so a key never passes through the model: copied by a model a key gets garbled, and it would end up in the transcript).
 
-The plugin does not bring the MCP server. Purgatory still has one, for other MCP clients: see [MCP](https://p7y-dev.github.io/p7y/0.11/mcp/index.md).
+The plugin does not bring the MCP server. Purgatory still has one, for other MCP clients: see [MCP](https://csakaszamok.github.io/p7y/0.11/mcp/index.md).
 
 ## Upgrading from the earlier plugin
 
@@ -59,4 +59,4 @@ The earlier plugin asked for an address and a token and kept them for the whole 
 
 ## Where it works
 
-The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's **Code** tab; also in Claude Code inside a sandbox, deploying to another one (on a local `lvh.me` stack see [An agent inside a sandbox](https://p7y-dev.github.io/p7y/0.11/agents/#an-agent-inside-a-sandbox)). Claude chat and Cowork can install it too (**Customize → Plugins**, add the marketplace `p7y-dev/p7y`), but they cannot run commands on your computer, so there it does not do much. Without the plugin, any agent can deploy with an export (**Let your agent deploy…** on a sandbox) or a token: see [Let your agent deploy](https://p7y-dev.github.io/p7y/0.11/agents/index.md).
+The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's **Code** tab; also in Claude Code inside a sandbox, deploying to another one (on a local `lvh.me` stack see [An agent inside a sandbox](https://csakaszamok.github.io/p7y/0.11/agents/#an-agent-inside-a-sandbox)). Claude chat and Cowork can install it too (**Customize → Plugins**, add the marketplace `csakaszamok/p7y`), but they cannot run commands on your computer, so there it does not do much. Without the plugin, any agent can deploy with an export (**Let your agent deploy…** on a sandbox) or a token: see [Let your agent deploy](https://csakaszamok.github.io/p7y/0.11/agents/index.md).

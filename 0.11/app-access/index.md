@@ -34,8 +34,8 @@ Behind `domain` and `owner`, every request to the app carries `X-P7y-User: <thei
 
 ## Not covered
 
-- **The TCP addresses** (databases, SSH, Docker) are not HTTP: this does not apply to them. They are protected by their own TLS certificates and passwords, as before; see [Isolation and TCP addresses](https://p7y-dev.github.io/p7y/0.11/networking/index.md).
-- **Other sandboxes on the internal network.** A port published on all interfaces is also reachable from other sandboxes directly on the internal `traefik-net` address ([Isolation and TCP addresses](https://p7y-dev.github.io/p7y/0.11/networking/index.md)), without going through Purgatory's check. App access protects the web address, not that path: for an app no other sandbox must reach, publish its port on `127.0.0.1` and nothing else (it then has no web address either).
+- **The TCP addresses** (databases, SSH, Docker) are not HTTP: this does not apply to them. They are protected by their own TLS certificates and passwords, as before; see [Isolation and TCP addresses](https://csakaszamok.github.io/p7y/0.11/networking/index.md).
+- **Other sandboxes on the internal network.** A port published on all interfaces is also reachable from other sandboxes directly on the internal `traefik-net` address ([Isolation and TCP addresses](https://csakaszamok.github.io/p7y/0.11/networking/index.md)), without going through Purgatory's check. App access protects the web address, not that path: for an app no other sandbox must reach, publish its port on `127.0.0.1` and nothing else (it then has no web address either).
 - **Webhooks and API clients without a browser** cannot make the sign-in hop. Keep an app that receives webhooks, or that a script or a mobile app calls, `public` for now.
 - **A coding agent's own `curl`** to an app that is not public gets the sign-in redirect. The agent checks whether an app answers from inside (`GET /sandboxes/:name` → `apps[].answers`), which is not affected.
 
@@ -48,7 +48,7 @@ Behind `domain` and `owner`, every request to the app carries `X-P7y-User: <thei
 
 ## On the Hub
 
-An owner-only app is not published on the [Hub](https://p7y-dev.github.io/p7y/0.11/hub/index.md), even with `p7y.publish` (the **Details** tab says so: set `p7y.access: domain`). A `domain` app shows to Hub viewers who can sign in to Purgatory itself; viewers who can sign in only to the Hub (`HUB_ALLOWED_*`) see the public apps.
+An owner-only app is not published on the [Hub](https://csakaszamok.github.io/p7y/0.11/hub/index.md), even with `p7y.publish` (the **Details** tab says so: set `p7y.access: domain`). A `domain` app shows to Hub viewers who can sign in to Purgatory itself; viewers who can sign in only to the Hub (`HUB_ALLOWED_*`) see the public apps.
 
 ## Settings
 

@@ -22,7 +22,7 @@ The switch at the top right changes how much the screen shows. **Simple** is eno
 1. In the window's step **1**, click **Copy** next to each of the two lines, open a terminal (in VS Code: **Terminal → New Terminal**; on Windows also PowerShell, on a Mac the Terminal app), paste them one after the other and press Enter after each:
 
    ```
-   claude plugin marketplace add p7y-dev/p7y
+   claude plugin marketplace add csakaszamok/p7y
    claude plugin install p7y@p7y
    ```
 
@@ -31,7 +31,7 @@ The switch at the top right changes how much the screen shows. **Simple** is eno
 Good to know
 
 - `claude` not found? Claude Code is not installed for the terminal: see [Claude Code's setup](https://code.claude.com/docs/en/setup). An *unknown option* means an older Claude Code: run `claude update`.
-- Already in Claude Code? **In Claude Code instead** in the same window shows the same two lines as `/plugin marketplace add p7y-dev/p7y` and `/plugin install p7y@p7y`. (The Claude Code panel in VS Code has no `/plugin`: use the terminal.)
+- Already in Claude Code? **In Claude Code instead** in the same window shows the same two lines as `/plugin marketplace add csakaszamok/p7y` and `/plugin install p7y@p7y`. (The Claude Code panel in VS Code has no `/plugin`: use the terminal.)
 
 You install the plugin once. Each project then gets its sandbox in the next step.
 
@@ -90,7 +90,7 @@ The same link shows the new version a few seconds later.
 - **Sleep:** when nobody uses the app for a while (30 minutes by default), the sandbox sleeps to free the server. The next visit wakes it in a few seconds: the visitor sees *waking up* and then your app. Nothing is lost.
 - **Sleep later:** *let it sleep only after 2 hours without visitors* works too, or set it in Purgatory: the sandbox → **Details** → **Sleep** → **Change…** (*never* is there as well).
 - **It does not answer?** Ask Claude Code *why does my app not answer?*: it reads the app's logs in the sandbox. The usual cause is an app that listens only on `localhost`; Claude Code fixes that.
-- **Only for you or your colleagues?** Say *make it visible only to me* (or *only to my colleagues*): Claude Code sets `p7y.access` ([App access](https://p7y-dev.github.io/p7y/0.11/app-access/index.md)), and opening the link then asks the visitor to sign in to Purgatory.
+- **Only for you or your colleagues?** Say *make it visible only to me* (or *only to my colleagues*): Claude Code sets `p7y.access` ([App access](https://csakaszamok.github.io/p7y/0.11/app-access/index.md)), and opening the link then asks the visitor to sign in to Purgatory.
 - **Docker is needed on your computer** only for its command line: the build runs in the sandbox.
 
 ## More projects
@@ -101,4 +101,4 @@ To move a folder to another sandbox, run that sandbox's `/p7y:init` line in the 
 
 Used the earlier plugin, which asked for an address and a token? Run `/plugin marketplace update p7y` once, then `/p7y:init` in each project.
 
-More details: [Claude Code plugin](https://p7y-dev.github.io/p7y/0.11/claude-plugin/index.md).
+More details: [Claude Code plugin](https://csakaszamok.github.io/p7y/0.11/claude-plugin/index.md).

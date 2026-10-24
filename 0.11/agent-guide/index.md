@@ -7,7 +7,7 @@ Every sandbox has its own Docker daemon. The agent works with:
 - the **Purgatory API**, with the user's personal access token, to find the sandbox, wake it and get its Docker client certificates;
 - the sandbox's **Docker daemon**, with the plain `docker` command line, to deploy, build and update.
 
-An agent with MCP can make the Purgatory API calls as tools instead: see [MCP](https://p7y-dev.github.io/p7y/0.11/mcp/index.md). A sandbox made from the `portainer` template also has a Portainer API: see [With Portainer](#with-portainer) at the end.
+An agent with MCP can make the Purgatory API calls as tools instead: see [MCP](https://csakaszamok.github.io/p7y/0.11/mcp/index.md). A sandbox made from the `portainer` template also has a Portainer API: see [With Portainer](#with-portainer) at the end.
 
 ## What the user gives the agent
 
@@ -92,7 +92,7 @@ services:
       p7y.subdomain: shop
 ```
 
-- **Publish ports on all interfaces** (`8080:8080`): that is what gives the app its public address. A port published on `127.0.0.1` stays private to the sandbox: no address at all. The app itself must listen on `0.0.0.0` inside its container (not `127.0.0.1`), or its address answers with an error; `GET /sandboxes/:name` → `apps[].answers` says whether it answers. An app labelled `p7y.access: domain` or `owner` ([App access](https://p7y-dev.github.io/p7y/0.11/app-access/index.md)) answers your own `curl` with a redirect to Purgatory's sign-in: check `apps[].answers` instead. Set the label the user asks for (*only for me* → `owner`, *for my colleagues* → `domain`) before the first deploy.
+- **Publish ports on all interfaces** (`8080:8080`): that is what gives the app its public address. A port published on `127.0.0.1` stays private to the sandbox: no address at all. The app itself must listen on `0.0.0.0` inside its container (not `127.0.0.1`), or its address answers with an error; `GET /sandboxes/:name` → `apps[].answers` says whether it answers. An app labelled `p7y.access: domain` or `owner` ([App access](https://csakaszamok.github.io/p7y/0.11/app-access/index.md)) answers your own `curl` with a redirect to Purgatory's sign-in: check `apps[].answers` instead. Set the label the user asks for (*only for me* → `owner`, *for my colleagues* → `domain`) before the first deploy.
 - **Set a restart policy** (`restart: unless-stopped`): when the sandbox wakes from sleep, only containers with one start again.
 - Pass secrets when the container runs (`environment:`, `env_file:` read on your machine by `docker compose`), **never in the image**.
 
@@ -105,7 +105,7 @@ Every published TCP port gets an HTTP address. With the sandbox `p7y-shop` on `e
 
 The app is reachable a few seconds after the container starts. `GET /sandboxes/p7y-shop` lists the addresses in `tunnel_urls`.
 
-A database or other TCP service published the same way also gets a TLS address on port 443: see [Isolation and TCP addresses](https://p7y-dev.github.io/p7y/0.11/networking/#tls-tcp-addresses).
+A database or other TCP service published the same way also gets a TLS address on port 443: see [Isolation and TCP addresses](https://csakaszamok.github.io/p7y/0.11/networking/#tls-tcp-addresses).
 
 ## 4. Update the app
 
@@ -126,7 +126,7 @@ docker --context p7y-shop push registry.example.com/shop/web:3
 
 ## 5. Other ways in
 
-- **SSH:** `ssh root@<sandbox>-shell-tcp.<domain>` through port 443 ([SSH, terminal and logs](https://p7y-dev.github.io/p7y/0.11/shell-and-logs/index.md)); inside, `docker` talks to the sandbox's Docker.
+- **SSH:** `ssh root@<sandbox>-shell-tcp.<domain>` through port 443 ([SSH, terminal and logs](https://csakaszamok.github.io/p7y/0.11/shell-and-logs/index.md)); inside, `docker` talks to the sandbox's Docker.
 - **Logs** of every app in the sandbox: `GET /sandboxes/<name>/logs/stream` (Server-Sent Events).
 
 ## With Portainer
