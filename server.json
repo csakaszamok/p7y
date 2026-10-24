@@ -3,7 +3,7 @@
   "name": "io.github.csakaszamok/p7y",
   "title": "Purgatory (p7y)",
   "description": "Self-hosted Docker sandboxes for agents: create one, deploy a compose stack, read its files and URLs",
-  "version": "0.11.10",
+  "version": "0.11.11",
   "repository": {
     "url": "https://github.com/csakaszamok/p7y",
     "source": "github"
