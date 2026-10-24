@@ -119,10 +119,10 @@ const EXPORT_DIALOG = `
       <h3>Claude Code <small class="muted">recommended</small></h3>
       <ol>
         <li>Once on this computer, in a terminal (in VS Code: Terminal → New Terminal):
-          <div class="copy-line"><code>claude plugin marketplace add p7y-dev/p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+          <div class="copy-line"><code>claude plugin marketplace add csakaszamok/p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
           <div class="copy-line"><code>claude plugin install p7y@p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
           <details class="plugin-other"><summary>In Claude Code instead:</summary>
-            <div class="copy-line"><code>/plugin marketplace add p7y-dev/p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+            <div class="copy-line"><code>/plugin marketplace add csakaszamok/p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
             <div class="copy-line"><code>/plugin install p7y@p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
           </details></li>
         <li>In Claude Code, in your project's folder, paste this, then approve in the browser page it opens:

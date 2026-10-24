@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 v=${1#v}
-n=$(grep -cF "ghcr.io/p7y-dev/p7y:\${P7Y_VERSION:-$v}" docker-compose.yml || true)
+n=$(grep -cF "ghcr.io/csakaszamok/p7y:\${P7Y_VERSION:-$v}" docker-compose.yml || true)
 [ "$n" = 2 ] || { echo "docker-compose.yml: $n of its 2 image defaults name $v" >&2; exit 1; }
 grep -q "^  \"version\": \"$v\"," package.json || { echo "package.json is not version $v" >&2; exit 1; }
 grep -q "^  \"version\": \"$v\"," server.json || { echo "server.json (MCP Registry) is not version $v" >&2; exit 1; }

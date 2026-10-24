@@ -24,6 +24,6 @@ COPY package.json ./p7y/package.json
 # The licence and the notice travel with the image (AGPL-3.0, sections 4 and 5)
 COPY LICENSE NOTICE ./p7y/
 
-LABEL org.opencontainers.image.source="https://github.com/p7y-dev/p7y" \
+LABEL org.opencontainers.image.source="https://github.com/csakaszamok/p7y" \
       org.opencontainers.image.description="Purgatory: self-hosted sandboxes, each with its own Docker daemon" \
       org.opencontainers.image.licenses="AGPL-3.0-only"

@@ -10,14 +10,14 @@ The `p7y` plugin teaches Claude Code to deploy: you say *put my app online*, it 
 Once on your computer, from a terminal (a sandbox's **Let your agent deploy…** shows these lines ready to copy). Claude Code in an editor (the VS Code extension) has no `/plugin`, so there this is the way:
 
 ```
-claude plugin marketplace add p7y-dev/p7y
+claude plugin marketplace add csakaszamok/p7y
 claude plugin install p7y@p7y
 ```
 
 Or in Claude Code:
 
 ```
-/plugin marketplace add p7y-dev/p7y
+/plugin marketplace add csakaszamok/p7y
 /plugin install p7y@p7y
 ```
 
@@ -58,4 +58,4 @@ The earlier plugin asked for an address and a token and kept them for the whole 
 
 ## Where it works
 
-The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's **Code** tab; also in Claude Code inside a sandbox, deploying to another one (on a local `lvh.me` stack see [An agent inside a sandbox](agents.md#an-agent-inside-a-sandbox)). Claude chat and Cowork can install it too (**Customize → Plugins**, add the marketplace `p7y-dev/p7y`), but they cannot run commands on your computer, so there it does not do much. Without the plugin, any agent can deploy with an export (**Let your agent deploy…** on a sandbox) or a token: see [Let your agent deploy](agents.md).
+The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's **Code** tab; also in Claude Code inside a sandbox, deploying to another one (on a local `lvh.me` stack see [An agent inside a sandbox](agents.md#an-agent-inside-a-sandbox)). Claude chat and Cowork can install it too (**Customize → Plugins**, add the marketplace `csakaszamok/p7y`), but they cannot run commands on your computer, so there it does not do much. Without the plugin, any agent can deploy with an export (**Let your agent deploy…** on a sandbox) or a token: see [Let your agent deploy](agents.md).

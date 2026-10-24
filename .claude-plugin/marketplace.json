@@ -1,7 +1,7 @@
 {
   "name": "p7y",
   "description": "Purgatory (p7y): self-hosted Docker sandboxes for teams and their AI agents",
-  "owner": { "name": "p7y-dev", "url": "https://github.com/p7y-dev" },
+  "owner": { "name": "csakaszamok", "url": "https://github.com/csakaszamok" },
   "plugins": [
     {
       "name": "p7y",

@@ -29,7 +29,7 @@ A sandbox is your own small server: your app runs there, not on your computer.
 2. In the window's step **1**, click **Copy** next to each of the two lines, open a terminal (in VS Code: **Terminal → New Terminal**; on Windows also PowerShell, on a Mac the Terminal app), paste them one after the other and press Enter after each:
 
     ```
-    claude plugin marketplace add p7y-dev/p7y
+    claude plugin marketplace add csakaszamok/p7y
     claude plugin install p7y@p7y
     ```
 
@@ -37,7 +37,7 @@ A sandbox is your own small server: your app runs there, not on your computer.
 
 !!! note "Good to know"
     - `claude` not found? Claude Code is not installed for the terminal: see [Claude Code's setup](https://code.claude.com/docs/en/setup). An *unknown option* means an older Claude Code: run `claude update`.
-    - Already in Claude Code? **In Claude Code instead** in the same window shows the same two lines as `/plugin marketplace add p7y-dev/p7y` and `/plugin install p7y@p7y`. (The Claude Code panel in VS Code has no `/plugin`: use the terminal.)
+    - Already in Claude Code? **In Claude Code instead** in the same window shows the same two lines as `/plugin marketplace add csakaszamok/p7y` and `/plugin install p7y@p7y`. (The Claude Code panel in VS Code has no `/plugin`: use the terminal.)
 
 You install the plugin once. Each project then gets its sandbox in the next step.
 

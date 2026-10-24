@@ -2,7 +2,7 @@
 # Checks whether this machine is ready for Purgatory, before the first `docker compose up`.
 # Changes nothing on the host; the sysbox check runs one `docker run --rm alpine` (pulls alpine).
 #
-#   curl -fsSL https://github.com/p7y-dev/p7y/releases/latest/download/check-host.sh | bash -s -- [domain]
+#   curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/check-host.sh | bash -s -- [domain]
 #   ./check-host.sh [domain]     # domain: the HOST_DOMAIN you plan to use, e.g. dev.example.com (UI: p7y.dev.example.com)
 #
 # Exit code 1 if any check failed (✘), 0 otherwise (warnings ⚠ allowed).
@@ -85,7 +85,7 @@ if $docker_ok; then
   pools=$(docker info 2>/dev/null | awk '/Default Address Pools:/ {on=1; next} on && /Base:/ {print $2, $4; next} on {exit}' | tr -d ',')
   if [ -z "$pools" ]; then
     warn "Docker's default address pools: about 30 networks, so about 30 sandboxes" \
-         'set "default-address-pools": [{"base": "10.10.0.0/16", "size": 28}] in /etc/docker/daemon.json and restart Docker (see https://p7y-dev.github.io/p7y/latest/install/)'
+         'set "default-address-pools": [{"base": "10.10.0.0/16", "size": 28}] in /etc/docker/daemon.json and restart Docker (see https://csakaszamok.github.io/p7y/latest/install/)'
   else
     total=0
     while read -r base size; do
@@ -94,7 +94,7 @@ if $docker_ok; then
     done <<< "$pools"
     used=$(docker network ls -q | wc -l)
     if [ "$total" -lt 200 ]; then
-      warn "address pools allow $total networks ($used in use)" "SANDBOX_MAX_TOTAL defaults to 200 sandboxes: use smaller subnets (e.g. size 28, see https://p7y-dev.github.io/p7y/latest/install/)"
+      warn "address pools allow $total networks ($used in use)" "SANDBOX_MAX_TOTAL defaults to 200 sandboxes: use smaller subnets (e.g. size 28, see https://csakaszamok.github.io/p7y/latest/install/)"
     else
       ok "address pools allow $total networks ($used in use)"
     fi

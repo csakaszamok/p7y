@@ -1004,7 +1004,7 @@ function agentEnv({ url, token, sandbox }) {
     `P7Y_URL=${url}`,
     `P7Y_TOKEN=${token}`,
     ...(sandbox ? [`P7Y_SANDBOX=${sandbox}`] : []),
-    'P7Y_AGENT_GUIDE=https://p7y-dev.github.io/p7y/latest/agent-guide/index.md',
+    'P7Y_AGENT_GUIDE=https://csakaszamok.github.io/p7y/latest/agent-guide/index.md',
     '',
   ].join('\n')
 }

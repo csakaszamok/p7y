@@ -24,7 +24,7 @@ describe('/about (AGPL-3.0 sections 5(d) and 13)', () => {
     const html = await res.text()
     expect(html).toContain('Based on Purgatory (p7y)')
     expect(html).toContain('GNU Affero General Public License')
-    expect(html).toContain('href="https://github.com/p7y-dev/p7y/tree/v0.11.0"')
+    expect(html).toContain('href="https://github.com/csakaszamok/p7y/tree/v0.11.0"')
     expect(html).toMatch(/without any warranty/i)
   })
   it('stays Purgatory with an own name and logo: the attribution is not white-labelled', async () => {
@@ -33,12 +33,12 @@ describe('/about (AGPL-3.0 sections 5(d) and 13)', () => {
     vi.stubEnv('GITHUB_LINK', 'off')
     const html = await page()
     expect(html).toContain('Based on Purgatory (p7y)')
-    expect(html).toContain('https://github.com/p7y-dev/p7y')
+    expect(html).toContain('https://github.com/csakaszamok/p7y')
   })
   it('an unknown version links to the repository', async () => {
     vi.stubEnv('P7Y_PACKAGE_JSON', path.join(os.tmpdir(), 'no-such-package.json'))
     _resetRepoInfo()
-    expect(await page()).toContain('href="https://github.com/p7y-dev/p7y"')
+    expect(await page()).toContain('href="https://github.com/csakaszamok/p7y"')
   })
   it('the sign-in page and every signed-in page link to it, also with GITHUB_LINK=off and UI_TITLE=none', async () => {
     vi.stubEnv('GITHUB_LINK', 'off')
