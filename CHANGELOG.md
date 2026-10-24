@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.11.11] - 2026-10-24
+
+Upgrading from 0.11.10: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml` (it pulls the image from `ghcr.io/csakaszamok/p7y`), then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.11.10.
+
 ### Changed
 
 - **The project moved to `github.com/csakaszamok/p7y`**, and with it its image: `ghcr.io/csakaszamok/p7y` (until 0.11.10 `ghcr.io/p7y-dev/p7y`, where those versions stay), the documentation (`csakaszamok.github.io/p7y`; the old address does not redirect), the Claude Code plugin's marketplace (`/plugin marketplace add csakaszamok/p7y`; one added as `p7y-dev/p7y` keeps working through GitHub's redirect) and the MCP Registry name (`io.github.csakaszamok/p7y`). The new `docker-compose.yml` pulls from the new place; one downloaded before keeps pulling the old versions from the old place.
