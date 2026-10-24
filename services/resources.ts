@@ -1,4 +1,5 @@
 import yaml from 'js-yaml'
+import { parseComposeText } from './composeCache'
 
 /** A sandbox's CPU (cores) and memory (bytes) limit. */
 export interface Limits { cpus: number; memory: number }
@@ -83,7 +84,7 @@ type Services = Record<string, Record<string, unknown>>
 /** The limits in a sandbox's compose file; null for one created before limits (or unreadable). */
 export function readLimits(composeText: string): Limits | null {
   try {
-    const sb = ((yaml.load(composeText) as { services?: Services } | null)?.services ?? {}).sandbox
+    const sb = ((parseComposeText(composeText) as { services?: Services } | null)?.services ?? {}).sandbox
     if (!sb || sb.cpus === undefined || sb.mem_limit === undefined) return null
     const cpus = parseCpus(sb.cpus)
     const memory = parseMemory(String(sb.mem_limit))

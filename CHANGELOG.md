@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **Lists ask Docker less:** a sandbox's container is inspected again only when its status changed since the last list (started, stopped, or a minute older), an asleep one's start error only when its state changed, and each compose file is parsed once per change instead of four times per row on every poll.
+
 ## [0.11.11] - 2026-10-24
 
 Upgrading from 0.11.10: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml` (it pulls the image from `ghcr.io/csakaszamok/p7y`), then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.11.10.

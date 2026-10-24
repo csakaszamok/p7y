@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { SandboxState } from '../../services/docker'
 
-vi.mock('../../services/docker', () => ({ getSandboxState: vi.fn() }))
+vi.mock('../../services/docker', () => {
+  const getSandboxState = vi.fn()
+  // A list's rows: the same state, read through the list's cache
+  return { getSandboxState, listedSandboxState: (name: string) => getSandboxState(name) }
+})
 
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)

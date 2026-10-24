@@ -91,11 +91,33 @@ async function startError(containerId: string): Promise<string | undefined> {
   }
 }
 
+// A stopped container's start error, by its id and Docker's status text: every list asked each asleep sandbox
+// again, though nothing changes while it sleeps. A new start (failed or not) changes the status text, so it is asked
+// then; the text also changes with its age ("… 3 minutes ago"), so it is asked again at most about once a minute.
+const startErrors = new Map<string, { status: string; error: Promise<string | undefined> }>()
+
+function cachedStartError(c: { Id: string; Status: string }): Promise<string | undefined> {
+  const hit = startErrors.get(c.Id)
+  if (hit?.status === c.Status) return hit.error
+  const error = startError(c.Id)
+  startErrors.set(c.Id, { status: c.Status, error })
+  return error
+}
+
 export async function listManagedContainers(): Promise<SandboxMeta[]> {
   // One query per label namespace (p7y.* and legacy leander.*): Docker ANDs label filters.
   const lists = await Promise.all(managedLabelFilters().map(label => docker.listContainers({ all: true, filters: { label: [label] } })))
   const seen = new Set<string>()
-  return Promise.all(lists.flat().filter(c => !seen.has(c.Id) && seen.add(c.Id)).map(async c => {
+  const containers = lists.flat().filter(c => !seen.has(c.Id) && seen.add(c.Id))
+  const now = Date.now()
+  listedStatus.clear()
+  listedAt = now
+  for (const c of containers) listedStatus.set(readLabel(c.Labels, 'name') ?? c.Names[0].replace(/^\//, ''), c.Status)
+  for (const name of inspected.keys()) if (!listedStatus.has(name)) inspected.delete(name)
+  // Containers gone (deep sleep, archived) or running again are not kept
+  const stopped = new Set(containers.filter(c => c.State !== 'running').map(c => c.Id))
+  for (const id of startErrors.keys()) if (!stopped.has(id)) startErrors.delete(id)
+  return Promise.all(containers.map(async c => {
     const meta: SandboxMeta = {
       name: readLabel(c.Labels, 'name') ?? c.Names[0].replace(/^\//, ''),
       template: readLabel(c.Labels, 'template') ?? '',
@@ -109,7 +131,7 @@ export async function listManagedContainers(): Promise<SandboxMeta[]> {
     }
     // An asleep sandbox and one that cannot start look the same in the list: tell them apart
     if (c.State !== 'running') {
-      const error = await startError(c.Id)
+      const error = await cachedStartError(c)
       if (error) meta.start_error = error
     }
     return meta
@@ -144,24 +166,57 @@ function networkIds(fresh = false): Promise<Set<string>> {
 /** Current container state of a sandbox, or null if its container does not exist. */
 export async function getSandboxState(name: string): Promise<SandboxState | null> {
   try {
-    const info = await docker.getContainer(name).inspect()
-    const attached = Object.values(info.NetworkSettings?.Networks ?? {}).map(n => n.NetworkID).filter(Boolean)
-    let existing = attached.length ? await networkIds() : new Set<string>()
-    // Not in the shared list: maybe created since; only a fresh list may say it is gone (that takes the sandbox down)
-    if (attached.some(id => !existing.has(id))) existing = await networkIds(true)
-    return {
-      name,
-      status: info.State.Status,
-      finishedAt: info.State.FinishedAt,
-      // The compose file is the source of truth (PATCH changes it without recreating the container)
-      deepSleepAfter: composeDeepSleepAfter(name) ?? readLabel(info.Config.Labels, 'deep_sleep_after'),
-      staleNetwork: attached.some(id => !existing.has(id)),
-      error: info.State.Error ?? '',
-      startedAt: info.State.StartedAt,
-      createdAt: info.Created
-    }
+    return await stateOf(name, await docker.getContainer(name).inspect())
   } catch {
     return null
+  }
+}
+
+// Each container's status text as the last list showed it, and when: a list's rows read their state from it
+const listedStatus = new Map<string, string>()
+let listedAt = 0
+const inspected = new Map<string, { status: string; info: Promise<Dockerode.ContainerInspectInfo> }>()
+const LISTED_FRESH_MS = 5000
+
+/**
+ * As getSandboxState, for a list's rows: the container is inspected again only when its status text changed since
+ * (started, stopped, or older by a minute: "Up 5 minutes"), not on every poll of every user. The compose file's
+ * settings are read afresh. No list just now: asked as getSandboxState does.
+ */
+export async function listedSandboxState(name: string): Promise<SandboxState | null> {
+  const listed = listedStatus.get(name)
+  const fresh = Date.now() - listedAt <= LISTED_FRESH_MS
+  // Not in a list just made: no container (deep sleep), nothing to ask Docker
+  if (fresh && !listed) return null
+  if (!listed || !fresh) return getSandboxState(name)
+  let hit = inspected.get(name)
+  if (hit?.status !== listed) {
+    hit = { status: listed, info: docker.getContainer(name).inspect() }
+    inspected.set(name, hit)
+    hit.info.catch(() => inspected.delete(name))
+  }
+  try {
+    return await stateOf(name, await hit.info)
+  } catch {
+    return null
+  }
+}
+
+async function stateOf(name: string, info: Dockerode.ContainerInspectInfo): Promise<SandboxState> {
+  const attached = Object.values(info.NetworkSettings?.Networks ?? {}).map(n => n.NetworkID).filter(Boolean)
+  let existing = attached.length ? await networkIds() : new Set<string>()
+  // Not in the shared list: maybe created since; only a fresh list may say it is gone (that takes the sandbox down)
+  if (attached.some(id => !existing.has(id))) existing = await networkIds(true)
+  return {
+    name,
+    status: info.State.Status,
+    finishedAt: info.State.FinishedAt,
+    // The compose file is the source of truth (PATCH changes it without recreating the container)
+    deepSleepAfter: composeDeepSleepAfter(name) ?? readLabel(info.Config.Labels, 'deep_sleep_after'),
+    staleNetwork: attached.some(id => !existing.has(id)),
+    error: info.State.Error ?? '',
+    startedAt: info.State.StartedAt,
+    createdAt: info.Created
   }
 }
 

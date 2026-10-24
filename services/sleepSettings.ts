@@ -4,6 +4,7 @@ import { composeUpService } from './compose'
 import { nudgeTraefik } from './project'
 import { parseDuration } from './duration'
 import { sandboxParent } from './sandboxPaths'
+import { parseComposeText } from './composeCache'
 
 export interface SleepSettings {
   idle_timeout: string
@@ -82,7 +83,7 @@ export function composePathOf(name: string): string {
 }
 
 function services(text: string): Services {
-  const doc = yaml.load(text) as { services?: Services } | null
+  const doc = parseComposeText(text) as { services?: Services } | null
   return doc?.services ?? {}
 }
 
