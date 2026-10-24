@@ -4,6 +4,8 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.11.10] - 2026-10-24
+
 Upgrading from 0.11.9: download the new `docker-compose.yml` (its cache default is 30 days), then `docker compose up -d`. A `REGISTRY_CACHE_TTL` in `.env` still wins.
 
 ### Changed
