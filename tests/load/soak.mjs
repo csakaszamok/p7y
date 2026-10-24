@@ -1,0 +1,203 @@
+#!/usr/bin/env node
+// Soak test: USERS people at once, each with SANDBOXES sandboxes, for MINUTES minutes. Every sandbox runs a small
+// public app that gets RATE requests a second the whole time; every user polls their sandbox list like the UI does;
+// every SLEEP_EVERY minutes each sandbox is put to sleep and woken by a request. Prints a line a minute (and the
+// host's load and memory when run on the server itself), then how long each step took and whether it held.
+//
+// Needs the server's SESSION_SECRET to sign the users' sessions (as tests/load/workshop.mjs): run it on the server,
+// never put the secret in a file in the repository. Node 18+, no packages; on a server without Node:
+//
+//   docker run --rm -it --network host -v "$PWD/tests/load:/load:ro" -e P7Y_URL -e SESSION_SECRET \
+//     -e USERS -e SANDBOXES -e MINUTES node:22-alpine node /load/soak.mjs
+//
+//   P7Y_URL=https://p7y.demo.example.com SESSION_SECRET=… USERS=10 SANDBOXES=3 MINUTES=30 node tests/load/soak.mjs
+//
+// USERS (10), SANDBOXES per user (2), MINUTES (15), RATE requests a second per sandbox (1), SLEEP_EVERY minutes
+// (5; 0 = never), CPUS (0.5) and MEMORY (512m) per sandbox, USER_DOMAIN for the users' e-mails (example.com: must
+// pass OIDC_ALLOWED_DOMAINS / _EMAILS if set), MAX_ERRORS share of failed requests still counted as stable (0.001),
+// KEEP=1 keeps the sandboxes, INSECURE=1 accepts a self-signed certificate (a local lvh.me stack).
+// The server's limits apply: SANDBOXES above SANDBOX_QUOTA (running at once per user) and USERS × SANDBOXES above
+// SANDBOX_MAX_TOTAL are refused, and CPUS / MEMORY must fit SANDBOX_MAX_CPUS / SANDBOX_MAX_MEMORY.
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+
+const P7Y_URL = (process.env.P7Y_URL ?? '').replace(/\/$/, '')
+const SECRET = process.env.SESSION_SECRET
+const USERS = Number(process.env.USERS ?? 10)
+const SANDBOXES = Number(process.env.SANDBOXES ?? 2)
+const MINUTES = Number(process.env.MINUTES ?? 15)
+const RATE = Number(process.env.RATE ?? 1)
+const SLEEP_EVERY = Number(process.env.SLEEP_EVERY ?? 5)
+const CPUS = Number(process.env.CPUS ?? 0.5)
+const MEMORY = process.env.MEMORY ?? '512m'
+const USER_DOMAIN = process.env.USER_DOMAIN ?? 'example.com'
+const MAX_ERRORS = Number(process.env.MAX_ERRORS ?? 0.001)
+const KEEP = process.env.KEEP === '1'
+if (!P7Y_URL || !SECRET) { console.error('set P7Y_URL and SESSION_SECRET'); process.exit(2) }
+if (process.env.INSECURE === '1') process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+const DOMAIN = new URL(P7Y_URL).host.replace(/^p7y\./, '')
+const RUN = crypto.randomBytes(2).toString('hex')
+const TIMEOUT = 15_000
+
+// A session as Purgatory signs it (services/session.ts): base64url(JSON) "." HMAC-SHA256 in base64url
+const session = sub => {
+  const data = Buffer.from(JSON.stringify({ sub, role: 'user', exp: Math.floor(Date.now() / 1000) + 3600 + MINUTES * 60 })).toString('base64url')
+  return `${data}.${crypto.createHmac('sha256', SECRET).update(data).digest('base64url')}`
+}
+
+const times = new Map()
+const failures = new Map() // "step: why" → count, so a long run does not print the same failure a thousand times
+const minute = { ok: 0, failed: 0, ms: [] }
+const record = (step, ms) => (times.get(step) ?? times.set(step, []).get(step)).push(ms)
+const failed = (step, why) => { const k = `${step}: ${why}`; failures.set(k, (failures.get(k) ?? 0) + 1); minute.failed++ }
+const sleep = ms => new Promise(r => setTimeout(r, ms))
+const get = (url, init = {}, timeout = TIMEOUT) => fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(timeout), ...init })
+let stopping = false
+process.on('SIGINT', () => { if (stopping) process.exit(130); stopping = true; console.log('\nstopping early (Ctrl+C again to quit without archiving)') })
+
+function userOf(i) {
+  const n = String(i + 1).padStart(2, '0')
+  const sub = `soak${n}@${USER_DOMAIN}`
+  const cookie = `p7y_session=${session(sub)}`
+  // Creating and archiving take minutes under load: those get a longer timeout
+  const api = (path, init = {}, timeout) => get(`${P7Y_URL}${path}`, { ...init, headers: { cookie, origin: P7Y_URL, 'content-type': 'application/json', ...(init.headers ?? {}) } }, timeout)
+  return { sub, n, api, sandboxes: [] }
+}
+
+const compose = `services:
+  web:
+    image: traefik/whoami:latest
+    ports: ["8080:80"]
+    labels: { p7y.subdomain: web }
+    restart: unless-stopped
+`
+
+async function create(u, k) {
+  const name = `sk${RUN}u${u.n}s${k + 1}`
+  const t = performance.now()
+  try {
+    const body = JSON.stringify({ name, template: 'empty', compose, cpus: CPUS, memory: MEMORY, idle_timeout: '2h' })
+    const r = await u.api('/sandboxes', { method: 'POST', body }, 300_000)
+    if (r.status >= 300) { failed('create', `${r.status} ${(await r.text()).slice(0, 160)}`); return }
+    const sb = { name, full: (await r.json()).name, url: `https://${name}-web.${DOMAIN}/`, user: u, ready: false }
+    u.sandboxes.push(sb)
+    for (let i = 0; i < 90 && !stopping; i++) {
+      const s = await (await u.api(`/sandboxes/${sb.full}`)).json().catch(() => ({}))
+      if (s.status === 'running' && s.apps?.length && s.apps.every(a => a.answers)) { sb.ready = true; break }
+      await sleep(2000)
+    }
+    if (sb.ready) record('create, until the app answers', performance.now() - t)
+    else failed('create', 'the app did not answer within 3 minutes')
+  } catch (err) { failed('create', err.message) }
+}
+
+// One request to the sandbox's app; the waiting page means the sandbox fell asleep on its own
+async function hit(sb, step = 'app request') {
+  const t = performance.now()
+  try {
+    const r = await get(sb.url)
+    const body = await r.text()
+    if (r.status !== 200) return failed(step, `status ${r.status}`)
+    if (body.includes('data-p7y-waiting')) return failed(step, 'asleep (the waiting page)')
+    const ms = performance.now() - t
+    record(step, ms); minute.ok++; minute.ms.push(ms)
+  } catch (err) { failed(step, err.name === 'TimeoutError' ? `no answer within ${TIMEOUT / 1000} s` : err.message) }
+}
+
+async function sleepAndWake(sb) {
+  try {
+    const stop = await sb.user.api(`/sandboxes/${sb.full}/stop`, { method: 'POST' })
+    if (stop.status >= 300) return failed('put to sleep', `status ${stop.status}`)
+    const t = performance.now()
+    for (let i = 0; i < 90; i++) {
+      const r = await get(sb.url).catch(() => null)
+      const body = r ? await r.text() : ''
+      if (r?.status === 200 && !body.includes('data-p7y-waiting')) return record('wake by a request (until the app answers)', performance.now() - t)
+      await sleep(1000)
+    }
+    failed('wake', 'not awake within 90 s')
+  } catch (err) { failed('sleep and wake', err.message) }
+}
+
+async function traffic(sb, until) {
+  // Each sandbox sleeps at its own moment, not all at once
+  let nextSleep = SLEEP_EVERY > 0 ? Date.now() + Math.random() * SLEEP_EVERY * 60_000 : Infinity
+  while (!stopping && Date.now() < until) {
+    if (Date.now() >= nextSleep) { await sleepAndWake(sb); nextSleep = Date.now() + SLEEP_EVERY * 60_000; continue }
+    const t = Date.now()
+    await hit(sb)
+    await sleep(Math.max(0, 1000 / RATE - (Date.now() - t)))
+  }
+}
+
+// The UI asks for the list every few seconds while it is open
+async function poll(u, until) {
+  while (!stopping && Date.now() < until) {
+    const t = performance.now()
+    try {
+      const r = await u.api('/sandboxes')
+      await r.arrayBuffer()
+      if (r.status !== 200) failed('sandbox list (UI poll)', `status ${r.status}`)
+      else record('sandbox list (UI poll)', performance.now() - t)
+    } catch (err) { failed('sandbox list (UI poll)', err.message) }
+    await sleep(5000)
+  }
+}
+
+// The host's load and memory when run on the server (Linux /proc), else nothing
+function host() {
+  try {
+    const load = fs.readFileSync('/proc/loadavg', 'utf8').split(' ')[0]
+    const mem = Object.fromEntries(fs.readFileSync('/proc/meminfo', 'utf8').split('\n').map(l => l.split(/:\s+/)).map(([k, v]) => [k, parseInt(v)]))
+    return `  load ${load}, memory ${((mem.MemTotal - mem.MemAvailable) / 1048576).toFixed(1)}/${(mem.MemTotal / 1048576).toFixed(1)} GiB`
+  } catch { return '' }
+}
+
+const stat = xs => {
+  const s = [...xs].sort((a, b) => a - b), q = p => s[Math.min(s.length - 1, Math.floor(p * s.length))]
+  return { n: s.length, p50: q(0.5), p95: q(0.95), max: s[s.length - 1] }
+}
+
+console.log(`${USERS} users × ${SANDBOXES} sandboxes for ${MINUTES} min against ${P7Y_URL} (sandboxes sk${RUN}…), ${RATE} req/s each, sleep every ${SLEEP_EVERY || '–'} min${host()}`)
+const users = Array.from({ length: USERS }, (_, i) => userOf(i))
+for (const u of users) {
+  const me = await u.api('/me').catch(() => null)
+  if (me?.status !== 200) { console.error(`sign in as ${u.sub}: ${me?.status ?? 'no answer'} (is SESSION_SECRET right, ${USER_DOMAIN} allowed to sign in?)`); process.exit(2) }
+}
+
+// Users at once, each user's sandboxes one after another (as people click)
+const t0 = performance.now()
+await Promise.all(users.map(async u => { for (let k = 0; k < SANDBOXES && !stopping; k++) await create(u, k) }))
+const ready = users.flatMap(u => u.sandboxes.filter(s => s.ready))
+console.log(`${ready.length}/${USERS * SANDBOXES} sandboxes ready in ${((performance.now() - t0) / 1000).toFixed(0)} s${host()}`)
+
+const start = Date.now(), until = start + MINUTES * 60_000
+const ticker = setInterval(() => {
+  const s = minute.ms.length ? stat(minute.ms) : null
+  const min = ((Date.now() - start) / 60_000).toFixed(0).padStart(3)
+  console.log(`${min} min  ${String(minute.ok).padStart(6)} ok  ${String(minute.failed).padStart(4)} failed  p95 ${s ? s.p95.toFixed(0) : '–'} ms${host()}`)
+  minute.ok = 0; minute.failed = 0; minute.ms = []
+}, 60_000)
+if (ready.length) await Promise.all([...ready.map(sb => traffic(sb, until)), ...users.map(u => poll(u, until))])
+clearInterval(ticker)
+
+if (!KEEP) {
+  console.log('archiving the sandboxes…')
+  await Promise.all(users.flatMap(u => u.sandboxes.map(sb =>
+    u.api(`/sandboxes/${sb.full}`, { method: 'DELETE' }, 600_000).catch(() => {}))))
+}
+
+console.log(`\n${'step'.padEnd(46)}${'n'.padStart(8)}${'p50'.padStart(9)}${'p95'.padStart(9)}${'max'.padStart(9)}  (ms)`)
+for (const [step, xs] of times) {
+  const s = stat(xs)
+  console.log(`${step.padEnd(46)}${String(s.n).padStart(8)}${s.p50.toFixed(0).padStart(9)}${s.p95.toFixed(0).padStart(9)}${s.max.toFixed(0).padStart(9)}`)
+}
+const requests = (times.get('app request') ?? []).length
+const requestErrors = [...failures].filter(([k]) => k.startsWith('app request')).reduce((a, [, n]) => a + n, 0)
+const otherErrors = [...failures].filter(([k]) => !k.startsWith('app request')).reduce((a, [, n]) => a + n, 0)
+const share = requests + requestErrors ? requestErrors / (requests + requestErrors) : 1
+const stable = ready.length === USERS * SANDBOXES && share <= MAX_ERRORS && otherErrors === 0
+console.log(`\n${ready.length}/${USERS * SANDBOXES} sandboxes ran, ${requestErrors} of ${requests + requestErrors} app requests failed (${(share * 100).toFixed(2)} %), ${otherErrors} other failure(s)`)
+for (const [k, n] of failures) console.log(`  ✘ ${k}${n > 1 ? ` (×${n})` : ''}`)
+console.log(stable ? '\nSTABLE' : '\nNOT STABLE')
+process.exit(stable ? 0 : 1)
