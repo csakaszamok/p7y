@@ -49,6 +49,8 @@ const minute = { ok: 0, failed: 0, ms: [] }
 const record = (step, ms) => (times.get(step) ?? times.set(step, []).get(step)).push(ms)
 const failed = (step, why) => { const k = `${step}: ${why}`; failures.set(k, (failures.get(k) ?? 0) + 1); minute.failed++ }
 const sleep = ms => new Promise(r => setTimeout(r, ms))
+// fetch says only "fetch failed": the reason (a certificate, DNS, a refused connection) is in its cause
+const why = err => err.name === 'TimeoutError' ? `no answer within ${TIMEOUT / 1000} s` : [err.message, err.cause?.code ?? err.cause?.message].filter(Boolean).join(': ')
 const get = (url, init = {}, timeout = TIMEOUT) => fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(timeout), ...init })
 let stopping = false
 process.on('SIGINT', () => { if (stopping) process.exit(130); stopping = true; console.log('\nstopping early (Ctrl+C again to quit without archiving)') })
@@ -86,7 +88,7 @@ async function create(u, k) {
     }
     if (sb.ready) record('create, until the app answers', performance.now() - t)
     else failed('create', 'the app did not answer within 3 minutes')
-  } catch (err) { failed('create', err.message) }
+  } catch (err) { failed('create', why(err)) }
 }
 
 // One request to the sandbox's app; the waiting page means the sandbox fell asleep on its own
@@ -99,7 +101,7 @@ async function hit(sb, step = 'app request') {
     if (body.includes('data-p7y-waiting')) return failed(step, 'asleep (the waiting page)')
     const ms = performance.now() - t
     record(step, ms); minute.ok++; minute.ms.push(ms)
-  } catch (err) { failed(step, err.name === 'TimeoutError' ? `no answer within ${TIMEOUT / 1000} s` : err.message) }
+  } catch (err) { failed(step, why(err)) }
 }
 
 async function sleepAndWake(sb) {
@@ -114,7 +116,7 @@ async function sleepAndWake(sb) {
       await sleep(1000)
     }
     failed('wake', 'not awake within 90 s')
-  } catch (err) { failed('sleep and wake', err.message) }
+  } catch (err) { failed('sleep and wake', why(err)) }
 }
 
 async function traffic(sb, until) {
@@ -137,7 +139,7 @@ async function poll(u, until) {
       await r.arrayBuffer()
       if (r.status !== 200) failed('sandbox list (UI poll)', `status ${r.status}`)
       else record('sandbox list (UI poll)', performance.now() - t)
-    } catch (err) { failed('sandbox list (UI poll)', err.message) }
+    } catch (err) { failed('sandbox list (UI poll)', why(err)) }
     await sleep(5000)
   }
 }
@@ -159,8 +161,9 @@ const stat = xs => {
 console.log(`${USERS} users × ${SANDBOXES} sandboxes for ${MINUTES} min against ${P7Y_URL} (sandboxes sk${RUN}…), ${RATE} req/s each, sleep every ${SLEEP_EVERY || '–'} min${host()}`)
 const users = Array.from({ length: USERS }, (_, i) => userOf(i))
 for (const u of users) {
-  const me = await u.api('/me').catch(() => null)
-  if (me?.status !== 200) { console.error(`sign in as ${u.sub}: ${me?.status ?? 'no answer'} (is SESSION_SECRET right, ${USER_DOMAIN} allowed to sign in?)`); process.exit(2) }
+  const me = await u.api('/me').catch(err => err)
+  if (me instanceof Error) { console.error(`cannot reach ${P7Y_URL}: ${why(me)}${/CERT|SIGNATURE|ISSUER/.test(why(me)) ? ' (a certificate this container does not trust: INSECURE=1)' : ''}`); process.exit(2) }
+  if (me.status !== 200) { console.error(`sign in as ${u.sub}: ${me.status} (is SESSION_SECRET right, ${USER_DOMAIN} allowed to sign in?)`); process.exit(2) }
 }
 
 // Users at once, each user's sandboxes one after another (as people click)
