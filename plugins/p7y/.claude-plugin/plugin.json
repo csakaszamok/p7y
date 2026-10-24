@@ -1,6 +1,6 @@
 {
   "name": "p7y",
-  "version": "0.11.11",
+  "version": "0.11.12",
   "description": "Deploy your app to a Purgatory sandbox: /p7y:init ties a project to its sandbox, then deploy",
   "author": { "name": "csakaszamok", "url": "https://github.com/csakaszamok" },
   "homepage": "https://csakaszamok.github.io/p7y/latest/claude-plugin/",
