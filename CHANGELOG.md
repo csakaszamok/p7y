@@ -4,6 +4,15 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.11.7] - 2026-10-24
+
+Nothing changes in Purgatory itself; upgrading from 0.11.6 is optional (`docker compose pull && docker compose up -d`).
+
+### Changed
+
+- **The load test** (`tests/load/soak.sh`) also times the admin's pages: the list of all sandboxes, the Overview and one sandbox's page, next to the users' own lists.
+- **The README** states the key idea: hide the complexity, keep it simple, focus on what matters.
+
 ## [0.11.6] - 2026-10-24
 
 Upgrading from 0.11.5: download the new `docker-compose.yml` (it sets Purgatory's DNS timeout), then `docker compose pull && docker compose up -d`.
