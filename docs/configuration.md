@@ -41,3 +41,4 @@ Main settings in `.env`:
 | `P7Y_API_BIND` | `0.0.0.0` | Interface of the direct API port `8081`; `127.0.0.1` for a public deployment |
 | `P7Y_VERSION` | the release the `docker-compose.yml` came from | The image version to run. Pin it only to stay on a version: an upgrade with a new `docker-compose.yml` then needs it changed too |
 | `REGISTRY_PUBLIC_PULL` | `true` | Images whose versions all passed the secret scan can be pulled without a login; `false`: tokens only |
+| `REGISTRY_CACHE_TTL` | `168h` (7 days) | How long the sandboxes' Docker Hub cache (`registry-cache`) keeps an image, counted from its **first** download: pulling it again does not extend it, so an image cached 6½ days before a workshop is downloaded again during it. In hours (`720h` = 30 days); `0` keeps everything for ever (the cache only grows: watch the disk). Not in hours (e.g. `7d`): the cache does not start, and the sandboxes pull from Docker Hub directly |
