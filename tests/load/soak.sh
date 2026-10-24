@@ -1,6 +1,7 @@
 #!/bin/sh
 # Runs the soak test (soak.mjs) in a throwaway Node container, so the server needs only Docker. Run it in the
-# directory with Purgatory's .env: SESSION_SECRET comes from there, P7Y_URL from its PUBLIC_URL.
+# directory with Purgatory's .env: SESSION_SECRET comes from there, P7Y_URL from its PUBLIC_URL, USER_DOMAIN
+# from its OIDC_ALLOWED_DOMAINS. A certificate from an internal CA needs INSECURE=1 (the container does not trust it).
 #
 #   sh soak.sh [USERS] [SANDBOXES] [MINUTES]        e.g. sh soak.sh 10 3 30
 #
@@ -19,6 +20,9 @@ P7Y_URL=${P7Y_URL:-$(env_value PUBLIC_URL)}
 [ -n "$SESSION_SECRET" ] || { echo "no SESSION_SECRET: run it next to Purgatory's .env, or set it" >&2; exit 2; }
 [ -n "$P7Y_URL" ] || { echo "no PUBLIC_URL in .env: set P7Y_URL=https://p7y.<domain>" >&2; exit 2; }
 export SESSION_SECRET P7Y_URL
+# The test users' e-mails must pass OIDC_ALLOWED_DOMAINS: its first domain, unless USER_DOMAIN is set
+USER_DOMAIN=${USER_DOMAIN:-$(env_value OIDC_ALLOWED_DOMAINS | cut -d, -f1 | tr -d ' ')}
+[ -n "$USER_DOMAIN" ] && export USER_DOMAIN || unset USER_DOMAIN
 
 script=$(dirname "$0")/soak.mjs
 if [ ! -f "$script" ]; then
