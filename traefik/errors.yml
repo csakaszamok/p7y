@@ -5,10 +5,10 @@ http:
         status:
           - "404"
         service: error-pages
-        query: "/404.html"
+        query: "/errors/404"
 
   services:
     error-pages:
       loadBalancer:
         servers:
-          - url: "http://error-pages:80"
+          - url: "http://p7y:3001"
