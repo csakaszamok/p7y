@@ -8,6 +8,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 - **Lists ask Docker less:** a sandbox's container is inspected again only when its status changed since the last list (started, stopped, or a minute older), an asleep one's start error only when its state changed, and each compose file is parsed once per change instead of four times per row on every poll.
 
+### Fixed
+
+- **The MCP Registry entry under the new name** (`io.github.csakaszamok/p7y`) could not be published: the registry takes one server per remote address, and `https://p7y.{domain}/mcp` is the old `io.github.p7y-dev/p7y`'s, which stays at 0.11.10. The address is now `https://{purgatory_host}/mcp`, `purgatory_host` being Purgatory's own (its `PUBLIC_URL`), which also fits a server not at `p7y.<domain>`.
+
 ## [0.11.11] - 2026-10-24
 
 Upgrading from 0.11.10: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml` (it pulls the image from `ghcr.io/csakaszamok/p7y`), then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.11.10.
