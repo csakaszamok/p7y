@@ -18,7 +18,7 @@ export function hubPage(opts: { title: string; viewer: HubSession }): string {
 <div class="seg" id="filter"><button data-v="all" class="on">All</button><button data-v="running">Running</button><button data-v="asleep">Asleep</button></div></div>
 <ul id="apps" class="apps" aria-live="polite"></ul>
 <div id="empty" class="empty" hidden><p>No apps here yet.</p><p>To publish one, add <code>p7y.publish: "true"</code> to its container's labels.
-<a href="https://p7y-dev.github.io/p7y/latest/hub/" target="_blank" rel="noopener">How to publish</a></p></div>
+<a href="https://csakaszamok.github.io/p7y/latest/hub/" target="_blank" rel="noopener">How to publish</a></p></div>
 </main><footer class="about-foot"><a href="/about">About · AGPL-3.0</a></footer><script src="/assets/hub.js"></script></body></html>`
 }
 

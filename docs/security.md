@@ -21,4 +21,4 @@ What it does not do:
 
 For untrusted code (public sign-up, code from strangers), use sysbox or a microVM-based sandbox instead; a Kata Containers runtime (a VM per sandbox) is on the [roadmap](roadmap.md).
 
-Found a vulnerability? See [SECURITY.md](https://github.com/p7y-dev/p7y/blob/main/SECURITY.md).
+Found a vulnerability? See [SECURITY.md](https://github.com/csakaszamok/p7y/blob/main/SECURITY.md).

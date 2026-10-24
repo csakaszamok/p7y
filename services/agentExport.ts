@@ -32,7 +32,7 @@ export function prepareExport(
     ...(withDocker ? [`P7Y_DOCKER_HOST=tcp://${docker}:443`] : []),
     `P7Y_REGISTRY=${registry}`,
     ...(pt ? [`P7Y_PORTAINER_URL=${pt.url}`, `P7Y_PORTAINER_TOKEN=${pt.token}`] : portainer && 'skipped' in portainer ? [`# Portainer: not included (${portainer.skipped})`] : []),
-    'P7Y_AGENT_GUIDE=https://p7y-dev.github.io/p7y/latest/agent-guide/index.md',
+    'P7Y_AGENT_GUIDE=https://csakaszamok.github.io/p7y/latest/agent-guide/index.md',
     '',
   ].join('\n')
   const dockerSection = withDocker ? `## Docker in the sandbox

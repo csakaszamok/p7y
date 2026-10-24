@@ -1,14 +1,14 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.p7y-dev/p7y",
+  "name": "io.github.csakaszamok/p7y",
   "title": "Purgatory (p7y)",
   "description": "Self-hosted Docker sandboxes for agents: create one, deploy a compose stack, read its files and URLs",
   "version": "0.11.10",
   "repository": {
-    "url": "https://github.com/p7y-dev/p7y",
+    "url": "https://github.com/csakaszamok/p7y",
     "source": "github"
   },
-  "websiteUrl": "https://p7y-dev.github.io/p7y/latest/mcp/",
+  "websiteUrl": "https://csakaszamok.github.io/p7y/latest/mcp/",
   "remotes": [
     {
       "type": "streamable-http",

@@ -1,13 +1,13 @@
 # <img src="ui/logo.svg" alt="" width="40" align="top"> Purgatory (p7y)
 
-[![Docs](https://img.shields.io/badge/docs-p7y--dev.github.io%2Fp7y-ea580c)](https://p7y-dev.github.io/p7y/latest/) [![CI](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml/badge.svg)](https://github.com/p7y-dev/p7y/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-p7y--dev.github.io%2Fp7y-ea580c)](https://csakaszamok.github.io/p7y/latest/) [![CI](https://github.com/csakaszamok/p7y/actions/workflows/ci.yml/badge.svg)](https://github.com/csakaszamok/p7y/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 
 > [!NOTE]
 > **Early, before 1.0.** It works and is tested (CI on every change, releases with a changelog), but expect rough edges, and breaking changes between minor versions.
 
 **Self-hosted sandboxes for your team and their AI agents: everyone gets their own Docker, every app gets a URL, idle sandboxes sleep.**
 
-Think of it as a self-hosted Vercel for the apps your team and its agents spin up. Today you deploy with `docker compose`; [git-based builds](https://p7y-dev.github.io/p7y/latest/roadmap/) are on the roadmap.
+Think of it as a self-hosted Vercel for the apps your team and its agents spin up. Today you deploy with `docker compose`; [git-based builds](https://csakaszamok.github.io/p7y/latest/roadmap/) are on the roadmap.
 
 **About 10 seconds** from *New sandbox* to your own Docker and a public URL for your app; a sleeping sandbox is back in under 10. (Measured with the images already pulled: the first sandbox on a new server also downloads them.)
 
@@ -16,13 +16,13 @@ Think of it as a self-hosted Vercel for the apps your team and its agents spin u
 - **Its own Docker daemon** for every sandbox (with a Portainer UI if you want one)
 - **A public URL for every app**, and TLS addresses for Postgres, Redis and SSH
 - **Sleeps when idle, wakes on the next request**; a delete archives, nothing is lost
-- **Made for agents:** tokens limited to one sandbox, an [agent guide](docs/agent-guide.md), an MCP server and a [Claude Code plugin](https://p7y-dev.github.io/p7y/latest/claude-plugin/) (`/plugin marketplace add p7y-dev/p7y`, then `/p7y:init` connects each project: Purgatory shows the line under *Let your agent deploy…*)
+- **Made for agents:** tokens limited to one sandbox, an [agent guide](docs/agent-guide.md), an MCP server and a [Claude Code plugin](https://csakaszamok.github.io/p7y/latest/claude-plugin/) (`/plugin marketplace add csakaszamok/p7y`, then `/p7y:init` connects each project: Purgatory shows the line under *Let your agent deploy…*)
 
 ### Hide the complexity. Keep it simple. Focus on what matters.
 
 Purgatory abstracts away infrastructure complexity and operational overhead, providing an intuitive user experience that lets users focus on their work and business goals rather than managing the underlying technology.
 
-**[Why Purgatory, and how it compares](https://p7y-dev.github.io/p7y/latest/comparison/)** with a laptop, a cloud PaaS, a shared Docker host, Coolify and a VM for everyone · **[How it works](https://p7y-dev.github.io/p7y/latest/architecture.html)**: the components (Docker-in-Docker, frp, Traefik, Sablier), a sandbox's lifecycle and the path of a request
+**[Why Purgatory, and how it compares](https://csakaszamok.github.io/p7y/latest/comparison/)** with a laptop, a cloud PaaS, a shared Docker host, Coolify and a VM for everyone · **[How it works](https://csakaszamok.github.io/p7y/latest/architecture.html)**: the components (Docker-in-Docker, frp, Traefik, Sablier), a sandbox's lifecycle and the path of a request
 
 ### The same from a script or an agent
 
@@ -34,7 +34,7 @@ All real runs, in real time; press one to watch it.
 <td width="33%"><a href="docs/media/mcp-rpc.gif"><img src="docs/media/mcp-rpc-thumb.webp" alt="The MCP server called with curl: tools/list, then create_sandbox, in real time" width="100%"></a></td>
 </tr></table>
 
-With curl through the [API](https://p7y-dev.github.io/p7y/latest/api/), by an agent over the [MCP server](https://p7y-dev.github.io/p7y/latest/mcp/), and the MCP server by hand (JSON-RPC over HTTP, so even curl can call its tools).
+With curl through the [API](https://csakaszamok.github.io/p7y/latest/api/), by an agent over the [MCP server](https://csakaszamok.github.io/p7y/latest/mcp/), and the MCP server by hand (JSON-RPC over HTTP, so even curl can call its tools).
 
 ## Try it on your laptop
 
@@ -42,8 +42,8 @@ With Docker Desktop, or Docker Engine and the compose plugin on Linux, and ports
 
 ```bash
 mkdir p7y && cd p7y
-curl -fsSLO https://github.com/p7y-dev/p7y/releases/latest/download/docker-compose.yml
-curl -fsSL https://github.com/p7y-dev/p7y/releases/latest/download/setup.sh | bash   # prints the admin password
+curl -fsSLO https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml
+curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash   # prints the admin password
 docker compose up -d
 ```
 
@@ -55,12 +55,12 @@ To remove it: delete the sandboxes in the UI first (each is a compose project of
 
 ## Install
 
-On a Linux host with Docker Engine and the compose plugin, no clone needed ([check the host first](https://p7y-dev.github.io/p7y/latest/install/)):
+On a Linux host with Docker Engine and the compose plugin, no clone needed ([check the host first](https://csakaszamok.github.io/p7y/latest/install/)):
 
 ```bash
 mkdir p7y && cd p7y
-curl -fsSLO https://github.com/p7y-dev/p7y/releases/latest/download/docker-compose.yml
-curl -fsSL https://github.com/p7y-dev/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com   # .env with your domain and random secrets
+curl -fsSLO https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml
+curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com   # .env with your domain and random secrets
 docker compose up -d
 ```
 
@@ -75,13 +75,13 @@ Purgatory is for a team's apps and agents' deployments that should be up at a UR
 - **Writing code in a cloud IDE** → [Coder](https://coder.com) or GitHub Codespaces
 - **An agent running short scripts from an SDK** → E2B or [Daytona](https://daytona.io)
 
-More in [how it compares](https://p7y-dev.github.io/p7y/latest/comparison/).
+More in [how it compares](https://csakaszamok.github.io/p7y/latest/comparison/).
 
 ## Documentation
 
-**[p7y-dev.github.io/p7y](https://p7y-dev.github.io/p7y/latest/)**: [tutorials](https://p7y-dev.github.io/p7y/latest/tutorials/), [install](https://p7y-dev.github.io/p7y/latest/install/), [configuration](https://p7y-dev.github.io/p7y/latest/configuration/), [let your agent deploy](https://p7y-dev.github.io/p7y/latest/agents/), [MCP](https://p7y-dev.github.io/p7y/latest/mcp/), [API](https://p7y-dev.github.io/p7y/latest/api/), and [`llms-full.txt`](https://p7y-dev.github.io/p7y/latest/llms-full.txt) for agents.
+**[csakaszamok.github.io/p7y](https://csakaszamok.github.io/p7y/latest/)**: [tutorials](https://csakaszamok.github.io/p7y/latest/tutorials/), [install](https://csakaszamok.github.io/p7y/latest/install/), [configuration](https://csakaszamok.github.io/p7y/latest/configuration/), [let your agent deploy](https://csakaszamok.github.io/p7y/latest/agents/), [MCP](https://csakaszamok.github.io/p7y/latest/mcp/), [API](https://csakaszamok.github.io/p7y/latest/api/), and [`llms-full.txt`](https://csakaszamok.github.io/p7y/latest/llms-full.txt) for agents.
 
-> **Security:** where [sysbox](https://github.com/nestybox/sysbox) is installed, sandboxes run without a privileged container; without it they fall back to the privileged `dind`, which suits a team that trusts each other, not hostile code. On a shared server install sysbox and set `ALLOWED_RUNTIMES=sysbox` ([details](https://p7y-dev.github.io/p7y/latest/security/)).
+> **Security:** where [sysbox](https://github.com/nestybox/sysbox) is installed, sandboxes run without a privileged container; without it they fall back to the privileged `dind`, which suits a team that trusts each other, not hostile code. On a shared server install sysbox and set `ALLOWED_RUNTIMES=sysbox` ([details](https://csakaszamok.github.io/p7y/latest/security/)).
 
 [Contributing](CONTRIBUTING.md) · [Security issues](SECURITY.md) · [AGPL-3.0](LICENSE)
 
