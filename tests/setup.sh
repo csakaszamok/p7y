@@ -53,6 +53,16 @@ grep -qx 'PUBLIC_URL=https://purgatorium.example.org' .env && grep -qx 'HOST_DOM
 mkdir "$tmp/h" && cd "$tmp/h" && bash "$repo/setup.sh" >/dev/null && echo 'UI_HOST=console.dev.example.com' >> .env
 bash "$repo/setup.sh" dev.example.com >/dev/null
 grep -qx 'PUBLIC_URL=http://console.dev.example.com' .env && pass "UI_HOST: PUBLIC_URL from it" || fail "PUBLIC_URL: $(grep PUBLIC_URL .env)"
+# SANDBOX_MAX_TOTAL: the example's 200 becomes the suggestion for the host; one of your own stays
+mkdir "$tmp/i" && cd "$tmp/i"
+P9M_HOST_CPUS=8 P9M_HOST_MEMORY_MB=32768 P9M_HOST_DISK_GB=1000 bash "$repo/setup.sh" >/dev/null
+grep -qx 'SANDBOX_MAX_TOTAL=8' .env && pass "8 CPUs, 32 GB: SANDBOX_MAX_TOTAL=8" || fail "$(grep SANDBOX_MAX_TOTAL .env)"
+sed -i 's|^SANDBOX_MAX_TOTAL=.*|SANDBOX_MAX_TOTAL=50|' .env
+P9M_HOST_CPUS=8 P9M_HOST_MEMORY_MB=32768 P9M_HOST_DISK_GB=1000 bash "$repo/setup.sh" >/dev/null
+grep -qx 'SANDBOX_MAX_TOTAL=50' .env && pass "a SANDBOX_MAX_TOTAL of your own is kept" || fail "$(grep SANDBOX_MAX_TOTAL .env)"
+mkdir "$tmp/j" && cd "$tmp/j"
+P9M_HOST_CPUS=8 P9M_HOST_MEMORY_MB=32768 P9M_HOST_DISK_GB=100 bash "$repo/setup.sh" >/dev/null
+grep -qx 'SANDBOX_MAX_TOTAL=5' .env && pass "100 GB of disk: 5 at 20 GB" || fail "$(grep SANDBOX_MAX_TOTAL .env)"
 # Without a domain on a fresh directory: it says lvh.me only works on this machine
 mkdir "$tmp/f" && cd "$tmp/f"
 out=$(bash "$repo/setup.sh")

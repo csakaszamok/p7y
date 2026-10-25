@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **A suggested `SANDBOX_MAX_TOTAL` for the host:** twice as many sandboxes as can all use their full CPU and memory limits at once, at most as many as the disk holds at `SANDBOX_DISK` each. `setup.sh` puts it into a new `.env` instead of 200 (a number of your own stays), `check-host.sh` prints it and warns when `.env` has one well above it, and the admin's Overview shows it under Host resources. See [Configuration](docs/configuration.md).
+
 ## [0.12.5] - 2026-10-25
 
 Upgrading from 0.12.4: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml` (it passes the new `OIDC_ADMIN_EMAILS` and `UI_HOST` to Purgatorium), then `docker compose pull && docker compose up -d`. Without either set, nothing changes. A `docker-compose.yml` you keep from before stays on 0.12.4.
