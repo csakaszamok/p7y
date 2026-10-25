@@ -9,7 +9,7 @@ vi.mock('../../services/access', () => ({ visibleSandboxStates: vi.fn(async (p: 
 
 const { quotaMax, reservedFor, reserveSandboxSlot, wakeRefusal, runningLimit } = await import('../../services/quota')
 const user = (sub: string) => ({ sub, role: 'user' as const, via: 'session' as const })
-const make = (owner: string, status: string, n: number) => Array.from({ length: n }, (_, i) => ({ name: `p7y-${owner[0]}${status[0]}${i}`, owner, status }))
+const make = (owner: string, status: string, n: number) => Array.from({ length: n }, (_, i) => ({ name: `p9m-${owner[0]}${status[0]}${i}`, owner, status }))
 const create = async (sub: string) => { const r = await reserveSandboxSlot(user(sub)); if (r.ok) r.release(); return r }
 
 beforeEach(() => {

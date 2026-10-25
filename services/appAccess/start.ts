@@ -7,10 +7,10 @@ import { issueTicket, signNext, readNext } from './sign'
 import { LANDING } from './decide'
 
 /**
- * /auth/app/start, on Purgatory's own host (its session cookie is here): sign the visitor in, then hand the app's
- * host a one-time ticket, or say that this app is not open to them. Only for addresses of this Purgatory's sandbox apps.
+ * /auth/app/start, on Purgatorium's own host (its session cookie is here): sign the visitor in, then hand the app's
+ * host a one-time ticket, or say that this app is not open to them. Only for addresses of this Purgatorium's sandbox apps.
  */
-export const NEXT_COOKIE = 'p7y_next'
+export const NEXT_COOKIE = 'p9m_next'
 const START = '/auth/app/start?'
 export interface StartDeps { session: (req: Request) => Viewer | null; access: (host: string) => Promise<HostAccess | null>; env: NodeJS.ProcessEnv }
 const defaults: StartDeps = { session: req => pageSession(req), access: h => accessOfHost(h), env: process.env }
@@ -37,10 +37,10 @@ export async function startResponse(req: Request, deps: Partial<StartDeps> = {})
     return new Response(null, { status: 303, headers: { location: '/login', 'set-cookie': cookieHeader(NEXT_COOKIE, signNext(back), 600), 'cache-control': 'no-store' } })
   }
   if (!mayOpen(a.access, viewer, a.owner, d.env)) {
-    const who = a.access === 'owner' ? 'only to its owner' : 'only to people who can sign in to this Purgatory'
+    const who = a.access === 'owner' ? 'only to its owner' : 'only to people who can sign in to this Purgatorium'
     return page(403, 'Not open to you', `<p>This app is open ${who}. You are signed in as <b>${esc(viewer.sub)}</b>.</p><form method="post" action="/logout"><button class="link">Sign out</button> to use another account.</form>`)
   }
-  // Over Purgatory's own scheme, never the one in rd (http would show the ticket on the way); the host without a port,
+  // Over Purgatorium's own scheme, never the one in rd (http would show the ticket on the way); the host without a port,
   // as /auth/app reads it
   const scheme = publicUrl().startsWith('https://') ? 'https:' : target.protocol
   const landing = new URL(`${scheme}//${target.hostname}${LANDING}`)
@@ -49,7 +49,7 @@ export async function startResponse(req: Request, deps: Partial<StartDeps> = {})
   return new Response(null, { status: 302, headers: { location: landing.toString(), 'cache-control': 'no-store' } })
 }
 
-// The /p7y:init approval page sends the visitor through sign-in too
+// The /p9m:init approval page sends the visitor through sign-in too
 const ACTIVATE = '/activate?'
 
 /** Where to go after signing in: only back to /auth/app/start or /activate, from the signed cookie they set, nowhere else. */

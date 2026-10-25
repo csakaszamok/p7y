@@ -38,7 +38,7 @@ data/hub-images/
 data/user-prefs.json
 data/user-stats.json
 dynamic/tls.yml
-# written by p7y-init from the image
+# written by p9m-init from the image
 dynamic/errors.yml
 .vscode/
 

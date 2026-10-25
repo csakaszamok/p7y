@@ -16,7 +16,7 @@ import { getSandboxState } from '../../services/docker'
 import { sandboxHasSsh } from '../../services/sandboxSsh'
 import { sandboxService } from '../../services/sandbox'
 
-const running = { name: 'p7y-shop', status: 'running', finishedAt: '', deepSleepAfter: '7d', staleNetwork: false, error: '' }
+const running = { name: 'p9m-shop', status: 'running', finishedAt: '', deepSleepAfter: '7d', staleNetwork: false, error: '' }
 async function listener(): Promise<{ port: number; close: () => void }> {
   const s = net.createServer(sock => sock.end()); await new Promise<void>(r => s.listen(0, '127.0.0.1', r))
   return { port: (s.address() as net.AddressInfo).port, close: () => s.close() }
@@ -26,7 +26,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   _resetTcpRoutes()
   vi.stubEnv('HOST_DOMAIN', 'lvh.me')
-  vi.mocked(findSandboxDirByHost).mockImplementation(h => (h.startsWith('shop-') ? 'p7y-shop' : null))
+  vi.mocked(findSandboxDirByHost).mockImplementation(h => (h.startsWith('shop-') ? 'p9m-shop' : null))
 })
 
 describe('resolveTcpHost', () => {
@@ -83,7 +83,7 @@ describe('resolveTcpHost', () => {
       return [{ host: 'shop-inner-db-port5432-tcp.lvh.me', port: l.port, privatePort: l.port }]
     })
     const target = await resolveTcpHost('shop-inner-db-port5432-tcp.lvh.me', { host: '127.0.0.1', retryMs: 50 })
-    expect(sandboxService.startSandbox).toHaveBeenCalledWith('p7y-shop')
+    expect(sandboxService.startSandbox).toHaveBeenCalledWith('p9m-shop')
     expect(target?.port).toBe(l!.port)
     l!.close()
   })
@@ -157,7 +157,7 @@ describe('resolveTcpHost under load and while waking', () => {
 describe('resolveDockerHost', () => {
   it('sends <raw>-docker to the sandbox dockerd, only when its certificate is ready', async () => {
     const l = await listener()
-    vi.mocked(getSandboxState).mockResolvedValue({ name: 'p7y-shop', status: 'running' } as never)
+    vi.mocked(getSandboxState).mockResolvedValue({ name: 'p9m-shop', status: 'running' } as never)
     expect(await resolveDockerHost('shop-docker.lvh.me', { host: '127.0.0.1', port: l.port, deadlineMs: 2000 })).toEqual({ host: '127.0.0.1', port: l.port })
     vi.mocked(dockerAccessState).mockReturnValueOnce('needs-certs')
     expect(await resolveDockerHost('shop-docker.lvh.me', { host: '127.0.0.1', port: l.port, deadlineMs: 2000 })).toBeNull()
@@ -173,7 +173,7 @@ describe('resolveDockerHost', () => {
   it('does not wake a sleeping sandbox', async () => {
     vi.mocked(wakeInProgress).mockReturnValue(false) // an earlier test leaves it true
     vi.mocked(sandboxService.startSandbox).mockClear()
-    vi.mocked(getSandboxState).mockResolvedValue({ name: 'p7y-shop', status: 'exited' } as never)
+    vi.mocked(getSandboxState).mockResolvedValue({ name: 'p9m-shop', status: 'exited' } as never)
     const t0 = Date.now()
     expect(await resolveDockerHost('shop-docker.lvh.me', { deadlineMs: 5000 })).toBeNull()
     expect(Date.now() - t0).toBeLessThan(1000)
@@ -182,7 +182,7 @@ describe('resolveDockerHost', () => {
   it('waits for a wake already under way (Wake in the UI, an app opened)', async () => {
     const l = await listener()
     vi.mocked(wakeInProgress).mockReturnValue(true)
-    vi.mocked(getSandboxState).mockResolvedValue({ name: 'p7y-shop', status: 'exited' } as never)
+    vi.mocked(getSandboxState).mockResolvedValue({ name: 'p9m-shop', status: 'exited' } as never)
     expect(await resolveDockerHost('shop-docker.lvh.me', { host: '127.0.0.1', port: l.port, deadlineMs: 2000 })).toEqual({ host: '127.0.0.1', port: l.port })
     vi.mocked(wakeInProgress).mockReturnValue(false)
     l.close()

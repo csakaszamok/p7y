@@ -5,7 +5,7 @@ import { sandboxParent } from './sandboxPaths'
 
 /**
  * When a sandbox last ran: asleep, when its container stopped (Docker's FinishedAt); in deep sleep its containers
- * are gone, so Purgatory remembers that time in last-running.json just before taking it down. A sandbox put into
+ * are gone, so Purgatorium remembers that time in last-running.json just before taking it down. A sandbox put into
  * deep sleep before that was remembered gets an estimate: when it last showed its apps (apps.json, tcp.json,
  * hub.json are written while it runs).
  */

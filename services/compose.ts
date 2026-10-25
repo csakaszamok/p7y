@@ -35,7 +35,7 @@ export function composeConfigCheck(text: string, opts: { cwd: string; timeoutMs?
 
 /**
  * The environment for a compose CLI run on a sandbox's stack. Compose fills every ${VAR} it is not
- * given from its own environment, so a compose text written by a user must not see Purgatory's
+ * given from its own environment, so a compose text written by a user must not see Purgatorium's
  * settings (ADMIN_TOKEN, SESSION_SECRET…): only what the CLI itself needs, plus `extra`.
  */
 export function innerCliEnv(base: NodeJS.ProcessEnv, extra: Record<string, string> = {}): Record<string, string> {

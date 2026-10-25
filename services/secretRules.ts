@@ -7,7 +7,7 @@ const NAME_RULES: Array<[string, RegExp]> = [
   // .pem / .key: only a private key is a secret (the content rule finds it); CA bundles are in many base images
   ['key-store', /\.(p12|pfx)$/],
   ['ssh-key', /(^|\/)id_(rsa|ed25519|ecdsa|dsa)(?!\.pub$)[^/]*$/],
-  ['credentials-file', /(^|\/)(credentials\.json|\.git-credentials|p7y\.env)$/],
+  ['credentials-file', /(^|\/)(credentials\.json|\.git-credentials|p9m\.env)$/],
   ['docker-config', /(^|\/)\.docker\/config\.json$/],
 ]
 
@@ -21,7 +21,7 @@ const CONTENT_RULES: Array<[string, RegExp]> = [
   ['slack-token', /\bxox[bpas]-[A-Za-z0-9-]{10,}/],
   ['stripe-live-key', /\bsk_live_[A-Za-z0-9]{20,}/],
   ['google-api-key', /\bAIza[0-9A-Za-z_-]{35}/],
-  ['p7y-token', /\bp7y_[A-Za-z0-9_-]{20,}/],
+  ['p9m-token', /\bp9m_[A-Za-z0-9_-]{20,}/],
 ]
 
 /** First 4 and last 3 characters: enough to recognise the key, not enough to use it. */

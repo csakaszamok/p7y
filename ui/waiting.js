@@ -4,11 +4,11 @@
 // (the app answers, or an error page), reload to show it. Without JavaScript the
 // page's <noscript> meta refresh does the same, more plainly.
 ;(() => {
-  const root = document.querySelector('[data-p7y-waiting]')
+  const root = document.querySelector('[data-p9m-waiting]')
   if (!root) return
   const every = Math.max(1, Number(root.getAttribute('data-refresh')) || 3) * 1000
   const coal = document.querySelector('[data-coal]')
-  // Purgatory's /wake/ready: the sandbox's router comes up with its first tunnel, but the app asked for may not
+  // Purgatorium's /wake/ready: the sandbox's router comes up with its first tunnel, but the app asked for may not
   // answer yet (frps shows 404 meanwhile), so this is asked before opening it; for at most 5 minutes
   const readyUrl = root.getAttribute('data-ready')
   const until = Date.now() + 5 * 60 * 1000
@@ -22,7 +22,7 @@
       if (el) el.innerHTML = `<span class="dot starting"></span>starting ${String(r.service || 'the app').replace(/[&<>"']/g, '')}…`
       return true
     } catch {
-      return false // Purgatory not reachable: open it as it is
+      return false // Purgatorium not reachable: open it as it is
     }
   }
 
@@ -36,7 +36,7 @@
       const res = await fetch(location.href, { cache: 'no-store', credentials: 'same-origin' })
       const text = await res.text()
       const doc = new DOMParser().parseFromString(text, 'text/html')
-      const next = doc.querySelector('[data-p7y-waiting]')
+      const next = doc.querySelector('[data-p9m-waiting]')
       // The app answers: everything is ready. Let the ember become a flame for a moment, then open it
       if (!next) {
         if (await appStarting()) return void setTimeout(poll, every)

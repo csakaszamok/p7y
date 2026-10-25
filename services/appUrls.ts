@@ -48,7 +48,7 @@ function hostPort(entry: unknown): number | null {
 /**
  * The app hosts frpc will register for an inner compose file. Mirrors the
  * foxglove image's docker-gen template (/etc/frpc/frpc.tmpl): one HTTP proxy
- * per TCP port published on all interfaces, `<instance>-<subdomain>` when `p7y.subdomain` (or the older `frpc.subdomain`) is set,
+ * per TCP port published on all interfaces, `<instance>-<subdomain>` when `p9m.subdomain` is set,
  * else `<instance>-<project>-<container>-port<hostPort>`.
  */
 export function appEntriesFromCompose(text: string, ctx: AppHostContext): Array<{ host: string; service: string }> {
@@ -82,7 +82,7 @@ export function appHostsFromCompose(text: string, ctx: AppHostContext): string[]
 
 /**
  * App hosts of a sandbox that is not running (no frps to ask), from the inner
- * compose file Purgatory deployed. Apps started by other means are not listed.
+ * compose file Purgatorium deployed. Apps started by other means are not listed.
  */
 export function appEntriesOffline(name: string, dir: string, domain: string, innerProject: () => string | undefined): Array<{ host: string; service: string }> {
   let text: string

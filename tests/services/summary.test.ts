@@ -5,11 +5,11 @@ import path from 'path'
 import { summaryFor, archivedOwners } from '../../services/summary'
 
 const live = [
-  { name: 'p7y-a', owner: 'alice@x', status: 'running' },
-  { name: 'p7y-b', owner: 'alice@x', status: 'exited' },
-  { name: 'p7y-c', owner: 'alice@x', status: 'deep_sleep' },
-  { name: 'p7y-d', owner: 'bob@x', status: 'exited' },
-  { name: 'p7y-e', owner: 'admin', status: 'running' },
+  { name: 'p9m-a', owner: 'alice@x', status: 'running' },
+  { name: 'p9m-b', owner: 'alice@x', status: 'exited' },
+  { name: 'p9m-c', owner: 'alice@x', status: 'deep_sleep' },
+  { name: 'p9m-d', owner: 'bob@x', status: 'exited' },
+  { name: 'p9m-e', owner: 'admin', status: 'running' },
 ]
 const resources = { cpu: { used: 0.5, reserved: 4, host: 20 }, memory: { used: 2e9, reserved: 8e9, host: 16e9 }, disk: { used: 30e9, over: 1 } }
 const deps = { list: async () => live, archived: async () => ['alice@x', 'alice@x', 'carol@x'], quota: () => 3 as number | null, server: () => null as number | null, running: () => 1 as number | null, resources: async () => resources }
@@ -38,11 +38,11 @@ describe('summaryFor', () => {
 describe('summaryFor, server places', () => {
   it("the running sandboxes count, the admin's too; asleep and deep-sleeping ones do not", async () => {
     const d = { ...deps, server: () => 2, list: async () => [
-      { name: 'p7y-x', owner: 'admin', status: 'running' }, { name: 'p7y-y', owner: 'admin', status: 'exited' }, { name: 'p7y-z', owner: 'alice@x', status: 'deep_sleep' },
+      { name: 'p9m-x', owner: 'admin', status: 'running' }, { name: 'p9m-y', owner: 'admin', status: 'exited' }, { name: 'p9m-z', owner: 'alice@x', status: 'deep_sleep' },
     ] }
     expect(await summaryFor(admin, d)).toMatchObject({ server_limit: 2, server_used: 1 })
     expect((await summaryFor(alice, d)).server_full).toBe(false)
-    const full = { ...d, list: async () => [...await d.list(), { name: 'p7y-w', owner: 'bob@x', status: 'running' }] }
+    const full = { ...d, list: async () => [...await d.list(), { name: 'p9m-w', owner: 'bob@x', status: 'running' }] }
     expect((await summaryFor(alice, full)).server_full).toBe(true)
   })
 })
@@ -59,16 +59,16 @@ describe('summaryFor, server limit', () => {
 })
 
 describe('archivedOwners', () => {
-  it("reads each archive's owner from its compose file; legacy labels too, admin without one; skips non-archives", async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-arch-'))
+  it("reads each archive's owner from its compose file; bare labels too, admin without one; skips non-archives", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-arch-'))
     const arch = (n: string, compose: string | null) => {
       fs.mkdirSync(`${dir}/${n}/config`, { recursive: true })
       fs.writeFileSync(`${dir}/${n}/manifest.json`, JSON.stringify({ name: n }))
       if (compose !== null) fs.writeFileSync(`${dir}/${n}/config/docker-compose.yml`, compose)
     }
-    arch('p7y-a-2026', 'services:\n  sandbox:\n    labels:\n      p7y.owner: "alice@x"\n')
-    arch('leander-b-2026', 'services:\n  sandbox:\n    labels:\n      leander.owner: bob@x\n')
-    arch('p7y-c-2026', null)
+    arch('p9m-a-2026', 'services:\n  sandbox:\n    labels:\n      p9m.owner: "alice@x"\n')
+    arch('p9m-b-2026', 'services:\n  sandbox:\n    labels:\n      p9m.owner: bob@x\n')
+    arch('p9m-c-2026', null)
     // A bulk save of orphan volumes: a manifest, but no sandbox config
     fs.mkdirSync(`${dir}/_orphan-volumes-2026`)
     fs.writeFileSync(`${dir}/_orphan-volumes-2026/manifest.json`, '{}')
@@ -79,14 +79,14 @@ describe('archivedOwners', () => {
 
 describe('archivedOwners in the per-owner layout', () => {
   it('reads archives under owner directories (manifest owner first), and flat ones not moved yet', async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-arch2-'))
-    fs.mkdirSync(`${dir}/carol@x/p7y-a-2026/config`, { recursive: true })
-    fs.writeFileSync(`${dir}/carol@x/p7y-a-2026/manifest.json`, JSON.stringify({ name: 'p7y-a', owner: 'Carol@x' }))
-    fs.mkdirSync(`${dir}/admin/p7y-b-2026/config`, { recursive: true })
-    fs.writeFileSync(`${dir}/admin/p7y-b-2026/manifest.json`, JSON.stringify({ name: 'p7y-b' }))
-    fs.mkdirSync(`${dir}/p7y-c-2026/config`, { recursive: true })
-    fs.writeFileSync(`${dir}/p7y-c-2026/manifest.json`, JSON.stringify({ name: 'p7y-c' }))
-    fs.writeFileSync(`${dir}/p7y-c-2026/config/docker-compose.yml`, '      p7y.owner: dave@x\n')
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-arch2-'))
+    fs.mkdirSync(`${dir}/carol@x/p9m-a-2026/config`, { recursive: true })
+    fs.writeFileSync(`${dir}/carol@x/p9m-a-2026/manifest.json`, JSON.stringify({ name: 'p9m-a', owner: 'Carol@x' }))
+    fs.mkdirSync(`${dir}/admin/p9m-b-2026/config`, { recursive: true })
+    fs.writeFileSync(`${dir}/admin/p9m-b-2026/manifest.json`, JSON.stringify({ name: 'p9m-b' }))
+    fs.mkdirSync(`${dir}/p9m-c-2026/config`, { recursive: true })
+    fs.writeFileSync(`${dir}/p9m-c-2026/manifest.json`, JSON.stringify({ name: 'p9m-c' }))
+    fs.writeFileSync(`${dir}/p9m-c-2026/config/docker-compose.yml`, '      p9m.owner: dave@x\n')
     expect((await archivedOwners(dir)).sort()).toEqual(['Carol@x', 'admin', 'dave@x'])
   })
 })

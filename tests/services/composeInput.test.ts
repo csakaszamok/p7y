@@ -22,9 +22,9 @@ describe('checkCompose', () => {
   })
 })
 
-// The compose CLI runs inside the Purgatory container: these keys would make it read Purgatory's
+// The compose CLI runs inside the Purgatorium container: these keys would make it read Purgatorium's
 // own files (other sandboxes' TLS keys, the token store) or environment (ADMIN_TOKEN) for the user
-describe('checkCompose: nothing that makes the compose CLI read files or settings of the Purgatory server', () => {
+describe('checkCompose: nothing that makes the compose CLI read files or settings of the Purgatorium server', () => {
   const svc = (extra: string) => 'services:\n  web:\n    image: nginx\n' + extra
   const cases: Array<[string, string]> = [
     [svc('    build: /opt/users\n'), 'services.web.build'],
@@ -38,7 +38,7 @@ describe('checkCompose: nothing that makes the compose CLI read files or setting
   ]
   for (const [text, key] of cases) {
     it(`refuses ${key}`, () => {
-      expect(checkCompose(text)).toBe(`compose may not use ${key}: it would read files or settings of the Purgatory server (build images and the like through DOCKER_HOST or Portainer)`)
+      expect(checkCompose(text)).toBe(`compose may not use ${key}: it would read files or settings of the Purgatorium server (build images and the like through DOCKER_HOST or Portainer)`)
     })
   }
 

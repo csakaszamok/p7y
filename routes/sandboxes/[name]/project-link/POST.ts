@@ -5,8 +5,8 @@ import { checkDockerKeys, issueProjectLink, projectLinkAnswer, readDockerKeys } 
 
 export const openapi = {
   mcp: { name: 'project_dir_link' },
-  summary: "A single-use link to the project's .p7y folder, with the sandbox's Docker keys",
-  description: "Answers a link that works once, for 5 minutes, and the command that unpacks it into the project (`curl -sf \"<url>\" | tar -x -C \"<project folder>\"`): the .p7y folder with .gitignore, p7y.env and docker/{ca,cert,key}.pem, the keys checked first. Run the command yourself; never copy a key. Then the docker context commands (a context keeps its own copies of the files: remove it and create it again after new keys or any TLS error, with a new link). An expired or used link answers 410: ask for a new one.",
+  summary: "A single-use link to the project's .p9m folder, with the sandbox's Docker keys",
+  description: "Answers a link that works once, for 5 minutes, and the command that unpacks it into the project (`curl -sf \"<url>\" | tar -x -C \"<project folder>\"`): the .p9m folder with .gitignore, p9m.env and docker/{ca,cert,key}.pem, the keys checked first. Run the command yourself; never copy a key. Then the docker context commands (a context keeps its own copies of the files: remove it and create it again after new keys or any TLS error, with a new link). An expired or used link answers 410: ask for a new one.",
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],
   responses: {

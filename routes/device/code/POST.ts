@@ -2,7 +2,7 @@ import { startDevice, DEVICE_TTL_MS } from '../../../services/deviceAuth'
 import { publicUrl } from '../../../services/session'
 
 export const openapi = {
-  // No auth: the user approves the code in the browser (/activate); /p7y:init calls this
+  // No auth: the user approves the code in the browser (/activate); /p9m:init calls this
   mcp: false,
   summary: 'Start a device approval: a device code (secret) and a user code to approve in the browser',
   tags: ['device'],

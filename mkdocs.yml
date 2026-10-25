@@ -1,12 +1,12 @@
 # The documentation site: MkDocs Material, one version per release series (mike), published to GitHub Pages
 # by .github/workflows/docs.yml. Locally: pip install -r docs/requirements.txt && mkdocs serve
-site_name: Purgatory (p7y)
+site_name: Purgatorium (p9m)
 site_description: Self-hosted sandboxes for your team and their AI agents
-site_url: https://csakaszamok.github.io/p7y/
-repo_url: https://github.com/csakaszamok/p7y
-repo_name: csakaszamok/p7y
+site_url: https://csakaszamok.github.io/p9m/
+repo_url: https://github.com/csakaszamok/p9m
+repo_name: csakaszamok/p9m
 edit_uri: ""
-copyright: AGPL-3.0 · Based on Purgatory (p7y)
+copyright: AGPL-3.0 · Based on Purgatorium (p9m)
 
 exclude_docs: |
   superpowers/
@@ -71,7 +71,7 @@ nav:
       - With Claude Code: tutorials/claude-code.md
       - With any agent: tutorials/other-agents.md
       - Share on the Hub: tutorials/hub.md
-  - Using Purgatory:
+  - Using Purgatorium:
       - Web UI and sign-in: web-ui.md
       - Runtimes and templates: runtimes-templates.md
       - Sleep and wake: sleep-wake.md
@@ -99,10 +99,10 @@ nav:
 plugins:
   - search
   - llmstxt:
-      # The version's own address (https://…/p7y/0.4/): docs.yml sets it for each version it publishes
-      base_url: !ENV [LLMSTXT_BASE_URL, 'https://csakaszamok.github.io/p7y/latest/']
+      # The version's own address (https://…/p9m/0.4/): docs.yml sets it for each version it publishes
+      base_url: !ENV [LLMSTXT_BASE_URL, 'https://csakaszamok.github.io/p9m/latest/']
       markdown_description: >-
-        Purgatory (p7y) gives each user of a team their own Docker daemon on demand: a sandbox with Portainer,
+        Purgatorium (p9m) gives each user of a team their own Docker daemon on demand: a sandbox with Portainer,
         a public URL for every app, sleep when idle and wake on the next request, archive on delete.
         A REST API and an MCP server (at /mcp) let coding agents create, wake and deploy to sandboxes.
       full_output: llms-full.txt
@@ -117,7 +117,7 @@ plugins:
           - tutorials/claude-code.md
           - tutorials/other-agents.md
           - tutorials/hub.md
-        Using Purgatory:
+        Using Purgatorium:
           - web-ui.md
           - runtimes-templates.md
           - sleep-wake.md

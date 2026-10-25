@@ -11,7 +11,7 @@ import { volumeTarget } from './dataVolumes'
  * the sandbox (root in it) that host folder, read-only or not.
  *
  * Kept in the sandbox's compose file: a long-syntax bind per mount on the sandbox service, and the list itself in its
- * p7y.mounts label (JSON), which says which binds are ours. Both travel with the file through sleep, deep sleep and
+ * p9m.mounts label (JSON), which says which binds are ours. Both travel with the file through sleep, deep sleep and
  * the migrations.
  */
 export interface HostMount {
@@ -22,7 +22,7 @@ export interface HostMount {
   readonly: boolean
 }
 
-export const MOUNTS_LABEL = 'p7y.mounts'
+export const MOUNTS_LABEL = 'p9m.mounts'
 
 /** Never a mount target, nor anything under one: the container's own system. */
 export const SYSTEM_DIRS = ['/bin', '/boot', '/dev', '/etc', '/lib', '/lib32', '/lib64', '/libx32', '/proc', '/run', '/sbin', '/sys', '/usr', '/var/run']
@@ -62,7 +62,7 @@ function load(text: string): Doc | null {
   try { return yaml.load(text) as Doc | null } catch { return null }
 }
 
-/** The mounts as the p7y.mounts label lists them; [] without the label, or with one that cannot be read. */
+/** The mounts as the p9m.mounts label lists them; [] without the label, or with one that cannot be read. */
 export function readMounts(text: string): HostMount[] {
   const raw = load(text)?.services?.sandbox?.labels?.[MOUNTS_LABEL]
   if (typeof raw !== 'string') return []

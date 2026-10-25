@@ -113,13 +113,13 @@ describe('followLogs', () => {
 
 describe('acquireViewer', () => {
   it('lets 5 watch one sandbox at once; a slot comes back once (release is idempotent)', () => {
-    const r = Array.from({ length: 5 }, () => acquireViewer('p7y-v'))
+    const r = Array.from({ length: 5 }, () => acquireViewer('p9m-v'))
     expect(r.every(Boolean)).toBe(true)
-    expect(acquireViewer('p7y-v')).toBeNull()
-    expect(acquireViewer('p7y-other')).not.toBeNull()
+    expect(acquireViewer('p9m-v')).toBeNull()
+    expect(acquireViewer('p9m-other')).not.toBeNull()
     r[0]!(); r[0]!()
-    expect(acquireViewer('p7y-v')).not.toBeNull()
-    expect(acquireViewer('p7y-v')).toBeNull()
+    expect(acquireViewer('p9m-v')).not.toBeNull()
+    expect(acquireViewer('p9m-v')).toBeNull()
   })
 })
 
@@ -127,7 +127,7 @@ describe('innerLogSource', () => {
   // A quiet app may not log for hours: a request timeout would cut its followed stream
   it('lists with a 5 s timeout but follows logs with none', () => {
     const make = vi.fn((_n: string, _d?: string, timeout?: number) => ({ timeout }) as never)
-    innerLogSource('p7y-a', '/x', make)
+    innerLogSource('p9m-a', '/x', make)
     expect(make.mock.calls.map(c => c[2])).toEqual([5000, 0])
   })
 })

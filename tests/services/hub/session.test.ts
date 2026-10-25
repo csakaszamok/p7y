@@ -4,7 +4,7 @@ import { createHubSession, readHubSession, hubCookieHeader, hubViewer, HUB_COOKI
 beforeEach(() => {
   process.env.SESSION_SECRET = 'test-secret'
   process.env.HOST_DOMAIN = 'example.com'
-  process.env.PUBLIC_URL = 'https://p7y.example.com'
+  process.env.PUBLIC_URL = 'https://p9m.example.com'
   process.env.OIDC_ALLOWED_EMAILS = 'anna@example.com'
   process.env.HUB_ALLOWED_DOMAINS = 'example.com'
 })
@@ -20,13 +20,13 @@ describe('hub session', () => {
   })
   it('is a Secure, host-only cookie on an https Hub', () => {
     const h = hubCookieHeader(HUB_COOKIE, 'v', 60)
-    expect(h).toContain('p7y_hub=v; Path=/; HttpOnly; SameSite=Lax; Max-Age=60; Secure')
+    expect(h).toContain('p9m_hub=v; Path=/; HttpOnly; SameSite=Lax; Max-Age=60; Secure')
     expect(h).not.toContain('Domain=')
   })
   it('hubViewer re-checks the lists', () => {
-    expect(hubViewer(req(`p7y_hub=${createHubSession('peter@example.com', null)}`))?.sub).toBe('peter@example.com')
-    expect(hubViewer(req(`p7y_hub=${createHubSession('admin', null)}`))?.sub).toBe('admin')
-    expect(hubViewer(req(`p7y_hub=${createHubSession('eve@other.org', null)}`))).toBeNull()
+    expect(hubViewer(req(`p9m_hub=${createHubSession('peter@example.com', null)}`))?.sub).toBe('peter@example.com')
+    expect(hubViewer(req(`p9m_hub=${createHubSession('admin', null)}`))?.sub).toBe('admin')
+    expect(hubViewer(req(`p9m_hub=${createHubSession('eve@other.org', null)}`))).toBeNull()
     expect(hubViewer(req())).toBeNull()
   })
 })

@@ -7,9 +7,9 @@
 //
 // Needs the server's SESSION_SECRET to sign the users' sessions (as tests/load/workshop.mjs): run it on the server,
 // never put the secret in a file in the repository. Node 18+, no packages; on a server without Node, soak.sh runs it
-// in a container (sh soak.sh USERS SANDBOXES MINUTES, next to Purgatory's .env).
+// in a container (sh soak.sh USERS SANDBOXES MINUTES, next to Purgatorium's .env).
 //
-//   P7Y_URL=https://p7y.demo.example.com SESSION_SECRET=… USERS=10 SANDBOXES=3 MINUTES=30 node tests/load/soak.mjs
+//   P9M_URL=https://p9m.demo.example.com SESSION_SECRET=… USERS=10 SANDBOXES=3 MINUTES=30 node tests/load/soak.mjs
 //
 // USERS (10), SANDBOXES per user (2), MINUTES (15), RATE requests a second per sandbox (1), SLEEP_EVERY minutes
 // (5; 0 = never), CPUS (0.5) and MEMORY (512m) per sandbox, USER_DOMAIN for the users' e-mails (example.com: must
@@ -20,7 +20,7 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 
-const P7Y_URL = (process.env.P7Y_URL ?? '').replace(/\/$/, '')
+const P9M_URL = (process.env.P9M_URL ?? '').replace(/\/$/, '')
 const SECRET = process.env.SESSION_SECRET
 const USERS = Number(process.env.USERS ?? 10)
 const SANDBOXES = Number(process.env.SANDBOXES ?? 2)
@@ -32,13 +32,13 @@ const MEMORY = process.env.MEMORY ?? '512m'
 const USER_DOMAIN = process.env.USER_DOMAIN ?? 'example.com'
 const MAX_ERRORS = Number(process.env.MAX_ERRORS ?? 0.001)
 const KEEP = process.env.KEEP === '1'
-if (!P7Y_URL || !SECRET) { console.error('set P7Y_URL and SESSION_SECRET'); process.exit(2) }
+if (!P9M_URL || !SECRET) { console.error('set P9M_URL and SESSION_SECRET'); process.exit(2) }
 if (process.env.INSECURE === '1') process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
-const DOMAIN = new URL(P7Y_URL).host.replace(/^p7y\./, '')
+const DOMAIN = new URL(P9M_URL).host.replace(/^p9m\./, '')
 const RUN = crypto.randomBytes(2).toString('hex')
 const TIMEOUT = 15_000
 
-// A session as Purgatory signs it (services/session.ts): base64url(JSON) "." HMAC-SHA256 in base64url
+// A session as Purgatorium signs it (services/session.ts): base64url(JSON) "." HMAC-SHA256 in base64url
 const session = (sub, role = 'user') => {
   const data = Buffer.from(JSON.stringify({ sub, role, exp: Math.floor(Date.now() / 1000) + 3600 + MINUTES * 60 })).toString('base64url')
   return `${data}.${crypto.createHmac('sha256', SECRET).update(data).digest('base64url')}`
@@ -59,9 +59,9 @@ process.on('SIGINT', () => { if (stopping) process.exit(130); stopping = true; c
 function userOf(i) {
   const n = String(i + 1).padStart(2, '0')
   const sub = `soak${n}@${USER_DOMAIN}`
-  const cookie = `p7y_session=${session(sub)}`
+  const cookie = `p9m_session=${session(sub)}`
   // Creating and archiving take minutes under load: those get a longer timeout
-  const api = (path, init = {}, timeout) => get(`${P7Y_URL}${path}`, { ...init, headers: { cookie, origin: P7Y_URL, 'content-type': 'application/json', ...(init.headers ?? {}) } }, timeout)
+  const api = (path, init = {}, timeout) => get(`${P9M_URL}${path}`, { ...init, headers: { cookie, origin: P9M_URL, 'content-type': 'application/json', ...(init.headers ?? {}) } }, timeout)
   return { sub, n, api, sandboxes: [] }
 }
 
@@ -69,7 +69,7 @@ const compose = `services:
   web:
     image: traefik/whoami:latest
     ports: ["8080:80"]
-    labels: { p7y.subdomain: web }
+    labels: { p9m.subdomain: web }
     restart: unless-stopped
 `
 
@@ -100,7 +100,7 @@ async function hit(sb, step = 'app request') {
     const r = await get(sb.url)
     const body = await r.text()
     if (r.status !== 200) return failed(step, `status ${r.status}`)
-    if (body.includes('data-p7y-waiting')) return failed(step, 'asleep (the waiting page)')
+    if (body.includes('data-p9m-waiting')) return failed(step, 'asleep (the waiting page)')
     const ms = performance.now() - t
     record(step, ms); minute.ok++; minute.ms.push(ms)
   } catch (err) { failed(step, why(err)) }
@@ -117,7 +117,7 @@ async function sleepAndWake(sb) {
     for (let i = 0; i < 90; i++) {
       const r = await get(sb.url).catch(() => null)
       const body = r ? await r.text() : ''
-      if (r?.status === 200 && !body.includes('data-p7y-waiting')) return record('wake by a request (until the app answers)', performance.now() - t)
+      if (r?.status === 200 && !body.includes('data-p9m-waiting')) return record('wake by a request (until the app answers)', performance.now() - t)
       await sleep(1000)
     }
     failed('wake', 'not awake within 90 s')
@@ -149,7 +149,7 @@ async function poll(u, until) {
   }
 }
 
-// The admin's pages meanwhile, every 10 s, as the UI asks for them: is Purgatory still usable for the one watching it?
+// The admin's pages meanwhile, every 10 s, as the UI asks for them: is Purgatorium still usable for the one watching it?
 const ADMIN_STEPS = [
   ['admin: All sandboxes list', () => '/sandboxes'],
   ['admin: Overview (summary)', () => '/sandboxes/summary'],
@@ -158,14 +158,14 @@ const ADMIN_STEPS = [
   ['admin: a sandbox opened', sb => `/sandboxes/${sb.full}`],
 ]
 async function adminPoll(sandboxes, until) {
-  const cookie = `p7y_session=${session('admin', 'admin')}`
+  const cookie = `p9m_session=${session('admin', 'admin')}`
   let k = 0
   while (!stopping && Date.now() < until) {
     const sb = sandboxes[k++ % sandboxes.length]
     for (const [step, path] of ADMIN_STEPS) {
       const t = performance.now()
       try {
-        const r = await get(`${P7Y_URL}${path(sb)}`, { headers: { cookie } })
+        const r = await get(`${P9M_URL}${path(sb)}`, { headers: { cookie } })
         await r.arrayBuffer()
         if (r.status !== 200) failed(step, `status ${r.status}`)
         else record(step, performance.now() - t)
@@ -189,11 +189,11 @@ const stat = xs => {
   return { n: s.length, p50: q(0.5), p95: q(0.95), max: s[s.length - 1] }
 }
 
-console.log(`${USERS} users × ${SANDBOXES} sandboxes for ${MINUTES} min against ${P7Y_URL} (sandboxes sk${RUN}…), ${RATE} req/s each, sleep every ${SLEEP_EVERY || '–'} min${host()}`)
+console.log(`${USERS} users × ${SANDBOXES} sandboxes for ${MINUTES} min against ${P9M_URL} (sandboxes sk${RUN}…), ${RATE} req/s each, sleep every ${SLEEP_EVERY || '–'} min${host()}`)
 const users = Array.from({ length: USERS }, (_, i) => userOf(i))
 for (const u of users) {
   const me = await u.api('/me').catch(err => err)
-  if (me instanceof Error) { console.error(`cannot reach ${P7Y_URL}: ${why(me)}${/CERT|SIGNATURE|ISSUER/.test(why(me)) ? ' (a certificate this container does not trust: INSECURE=1)' : ''}`); process.exit(2) }
+  if (me instanceof Error) { console.error(`cannot reach ${P9M_URL}: ${why(me)}${/CERT|SIGNATURE|ISSUER/.test(why(me)) ? ' (a certificate this container does not trust: INSECURE=1)' : ''}`); process.exit(2) }
   if (me.status !== 200) { console.error(`sign in as ${u.sub}: ${me.status} (is SESSION_SECRET right, ${USER_DOMAIN} allowed to sign in?)`); process.exit(2) }
 }
 

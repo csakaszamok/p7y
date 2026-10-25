@@ -3,7 +3,7 @@ import { checkName, checkContent, mask, isText } from '../../services/secretRule
 
 describe('file names', () => {
   it('flags env files, keys and credential files; not the samples or public keys', () => {
-    for (const f of ['app/.env', '.env.local', 'srv/.env.production', 'a.p12', 'b.pfx', 'home/u/.ssh/id_rsa', 'id_ed25519', 'credentials.json', '.git-credentials', 'p7y.env', 'root/.docker/config.json'])
+    for (const f of ['app/.env', '.env.local', 'srv/.env.production', 'a.p12', 'b.pfx', 'home/u/.ssh/id_rsa', 'id_ed25519', 'credentials.json', '.git-credentials', 'p9m.env', 'root/.docker/config.json'])
       expect(checkName(f), f).not.toBeNull()
     for (const f of ['.env.example', 'app/.env.sample', '.env.template', 'src/env.ts', 'README.md', 'package.json', 'home/u/.ssh/id_ed25519.pub', 'environment.yml', 'pip/_vendor/certifi/cacert.pem', 'certs/server.pem', 'x.key'])
       expect(checkName(f), f).toBeNull()
@@ -21,13 +21,16 @@ describe('contents', () => {
     ['slack-token', 'xoxb-' + '1234567890-abcdefghij'],
     ['stripe-live-key', 'sk_live_' + 'abcdefghijklmnopqrstuvwx'],
     ['google-api-key', 'AIza' + 'SyA1234567890abcdefghijklmnopqrstuv'],
-    ['p7y-token', 'P7Y_TOKEN=p7y_abcdefghijklmnopqrstuvwxyz'],
+    ['p9m-token', 'P9M_TOKEN=p9m_abcdefghijklmnopqrstuvwxyz'],
   ]
   it.each(cases)('finds %s', (rule, text) => {
     expect(checkContent('src/x.js', text).map(f => f.rule)).toContain(rule)
   })
   it('an Anthropic key is not also reported as an OpenAI key', () => {
     expect(checkContent('a', 'sk-ant-api03-abcdefghijklmnopqrstuvwxyz012345').map(f => f.rule)).toEqual(['anthropic-key'])
+  })
+  it('a p7y_… value (the old token prefix) is not reported as a p9m token', () => {
+    expect(checkContent('a', 'P9M_TOKEN=p7y_abcdefghijklmnopqrstuvwxyz').map(f => f.rule)).not.toContain('p9m-token')
   })
   it('flags .npmrc only with a token', () => {
     expect(checkContent('.npmrc', 'registry=https://registry.npmjs.org/')).toEqual([])

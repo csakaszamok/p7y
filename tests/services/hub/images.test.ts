@@ -49,7 +49,7 @@ describe('imageKind', () => {
 
 const entry = (extra: Partial<HubEntry> = {}): HubEntry => ({
   id: 'shop-web.example.com', url: 'https://shop-web.example.com', title: 'Shop', description: '', service: 'web', port: 8080, image: null, access: 'public',
-  owner: 'anna@example.com', owner_name: null, sandbox: 'p7y-shop', status: 'running', updated_at: '2026-10-20T10:00:00.000Z', last_ran_at: null, last_ran_estimated: false, ...extra,
+  owner: 'anna@example.com', owner_name: null, sandbox: 'p9m-shop', status: 'running', updated_at: '2026-10-20T10:00:00.000Z', last_ran_at: null, last_ran_estimated: false, ...extra,
 })
 const page = (html: string): Fetched => ({ status: 200, body: Buffer.from(html) })
 const png: Fetched = { status: 200, body: PNG }
@@ -71,7 +71,7 @@ describe('refreshImages', () => {
     const { deps, asked, routes } = setup()
     routes['/shot.png'] = png
     await refreshImages([entry({ image: '/shot.png' })], deps)
-    expect(asked).toEqual(['p7y-shop:8080/shot.png'])
+    expect(asked).toEqual(['p9m-shop:8080/shot.png'])
     const img = imageOf('shop-web.example.com', deps)
     expect(img?.type).toBe('image/png')
     expect(fs.readFileSync(img!.file)).toEqual(PNG)
@@ -81,7 +81,7 @@ describe('refreshImages', () => {
     routes['/'] = page('<meta property="og:image" content="/og.jpg">')
     routes['/og.jpg'] = { status: 200, body: JPEG }
     await refreshImages([entry()], deps)
-    expect(asked).toEqual(['p7y-shop:8080/', 'p7y-shop:8080/og.jpg'])
+    expect(asked).toEqual(['p9m-shop:8080/', 'p9m-shop:8080/og.jpg'])
     expect(imageOf('shop-web.example.com', deps)?.type).toBe('image/jpeg')
   })
   it('never asks an app that is not running (it would wake it), and keeps its last image', async () => {

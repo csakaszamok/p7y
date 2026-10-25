@@ -3,8 +3,8 @@ import { readSessionExpiries } from './sleepTimes'
 import { deepSleepIntervalMs } from './deepSleep'
 
 /**
- * Sablier only puts a sandbox to sleep once it has a session, and p7y opens one after every start it makes.
- * A sandbox started any other way (Docker restarting it, `docker compose start`, or p7y restarted while it was
+ * Sablier only puts a sandbox to sleep once it has a session, and p9m opens one after every start it makes.
+ * A sandbox started any other way (Docker restarting it, `docker compose start`, or p9m restarted while it was
  * opening the session) would run without one: never sleeping, "no traffic yet" until someone opens an app.
  * Each scan finds those and opens their session.
  */
@@ -48,7 +48,7 @@ export function createSessionWatch(over: Partial<SessionWatchDeps> = {}) {
         for (const { name, startedAt } of await d.running()) {
           if (expiries.has(name)) continue
           if (missing.get(name) !== startedAt) { seen.set(name, startedAt); continue }
-          d.log(`${name} was running without a Sablier session (started outside p7y?): opening one, so it sleeps after its idle timeout`)
+          d.log(`${name} was running without a Sablier session (started outside p9m?): opening one, so it sleeps after its idle timeout`)
           await d.prime(name)
         }
         missing = seen

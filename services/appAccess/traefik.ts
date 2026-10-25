@@ -6,14 +6,14 @@ import { rebuildIndex } from './index'
 
 /**
  * What Traefik's HTTP provider reads every 2 s: access-<name> for every sandbox, used by its router before Sablier.
- * All its apps public: a no-op (it only removes a client-sent X-P7y-User), so the apps do not depend on Purgatory;
+ * All its apps public: a no-op (it only removes a client-sent X-P9m-User), so the apps do not depend on Purgatorium;
  * otherwise a forwardAuth to /auth/app. Every known sandbox has one: a router referencing a missing one is disabled.
  */
 export interface TraefikDeps { sandboxes: () => string[]; access: (name: string) => AccessMap | null }
 const defaults: TraefikDeps = { sandboxes: () => listSandboxDirs().map(e => e.name), access: rememberedAccess }
 
-const NOOP = { headers: { customRequestHeaders: { 'X-P7y-User': '' } } }
-const AUTH = { forwardAuth: { address: 'http://p7y:3001/auth/app', trustForwardHeader: true, authResponseHeaders: ['X-P7y-User', 'Cookie'] } }
+const NOOP = { headers: { customRequestHeaders: { 'X-P9m-User': '' } } }
+const AUTH = { forwardAuth: { address: 'http://p9m:3001/auth/app', trustForwardHeader: true, authResponseHeaders: ['X-P9m-User', 'Cookie'] } }
 
 export function traefikAccessConfig(deps: Partial<TraefikDeps> = {}) {
   const d = { ...defaults, ...deps }
@@ -30,7 +30,7 @@ const refreshDefaults: RefreshDeps = {
   links: name => { forgetAppLinks(name); return appLinks(name) },
 }
 
-/** Reads the running sandboxes' app links (and so their p7y.access) every 10 s: a new label applies within seconds. */
+/** Reads the running sandboxes' app links (and so their p9m.access) every 10 s: a new label applies within seconds. */
 export async function refreshRunningLinks(deps: Partial<RefreshDeps> = {}): Promise<Map<string, AppLink[]>> {
   const d = { ...refreshDefaults, ...deps }
   const live = new Map<string, AppLink[]>()

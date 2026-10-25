@@ -10,7 +10,7 @@ const servicesOf = (name: string) => loadRuntime(name, DIR).docker_compose.servi
 
 function expectSshMounts(name: string) {
   const sb = (loadRuntime(name, DIR).docker_compose.services as Record<string, { image: string; volumes: string[] }>).sandbox
-  expect(sb.image).toBe(`ghcr.io/p7y-dev/foxglove:0.8.0-${name}`)
+  expect(sb.image).toBe(`ghcr.io/csakaszamok/foxglove:0.9.0-${name}`)
   expect(sb.volumes).toEqual(expect.arrayContaining(['${sandbox_dir}/authorized_keys:/etc/instance/authorized_keys:ro', '${sandbox_dir}/ssh-host-keys:/etc/ssh/host-keys']))
   expect(sb).toMatchObject({ cpus: '${cpus}', mem_limit: '${memory}', memswap_limit: '${memory}' })
 }
@@ -23,10 +23,10 @@ describe('loadRuntime', () => {
     const s = servicesOf('dind')
     expect(Object.keys(s)).toEqual(['sandbox', 'frps', 'socat'])
     expect(s.sandbox.privileged).toBe(true)
-    expect(s.sandbox.labels?.['p7y.runtime']).toBe('${runtime_name}')
-    expect(s.sandbox.labels?.['p7y.template']).toBe('${template_name}')
-    expect(s.sandbox.labels?.['p7y.compose']).toBe('${compose_source}')
-    expect(s.sandbox.labels?.['p7y.ssh']).toBe('true')
+    expect(s.sandbox.labels?.['p9m.runtime']).toBe('${runtime_name}')
+    expect(s.sandbox.labels?.['p9m.template']).toBe('${template_name}')
+    expect(s.sandbox.labels?.['p9m.compose']).toBe('${compose_source}')
+    expect(s.sandbox.labels?.['p9m.ssh']).toBe('true')
     expect(r.daemon_json).toBeUndefined()
     expectSshMounts('dind')
   })
@@ -36,9 +36,9 @@ describe('loadRuntime', () => {
     const s = servicesOf('sysbox')
     expect(s.sandbox.runtime).toBe('sysbox-runc')
     expect(s.sandbox.privileged).toBeUndefined()
-    expect(s.sandbox.labels?.['p7y.runtime']).toBe('${runtime_name}')
-    expect(s.sandbox.labels?.['p7y.compose']).toBe('${compose_source}')
-    expect(s.sandbox.labels?.['p7y.ssh']).toBe('true')
+    expect(s.sandbox.labels?.['p9m.runtime']).toBe('${runtime_name}')
+    expect(s.sandbox.labels?.['p9m.compose']).toBe('${compose_source}')
+    expect(s.sandbox.labels?.['p9m.ssh']).toBe('true')
     expect(r.daemon_json?.tlsverify).toBe(true)
     expectSshMounts('sysbox')
   })
@@ -62,7 +62,7 @@ describe('listRuntimes', () => {
   })
 
   it('skips a runtime whose YAML does not parse', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-runtimes-'))
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-runtimes-'))
     try {
       fs.writeFileSync(path.join(dir, 'good.yaml'), 'description: ok\ndocker_compose: {}\n')
       fs.writeFileSync(path.join(dir, 'bad.yaml'), 'docker_compose: [\n')
@@ -82,7 +82,7 @@ describe('the sandbox router reaches socat by name', () => {
 })
 
 describe('the sandbox router exists only while the sandbox runs', () => {
-  // Asleep, its requests fall to p7y's catch-all, which wakes it within the owner's limits
+  // Asleep, its requests fall to p9m's catch-all, which wakes it within the owner's limits
   it.each(['dind', 'sysbox'])('%s', name => {
     expect(servicesOf(name).socat.labels?.['traefik.docker.allownonrunning']).toBeUndefined()
   })

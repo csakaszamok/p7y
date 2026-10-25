@@ -11,11 +11,11 @@ import { readSleepSettings, withSleepSettings, validateSleepSettings, updateSlee
 import { composeUpService } from '../../services/compose'
 import { nudgeTraefik } from '../../services/project'
 
-const NAME = 'leander-a1'
+const NAME = 'p9m-a1'
 const IDLE = `traefik.http.middlewares.sablier-${NAME}.plugin.sablier.sessionDuration`
 const compose = (idle = '30m', deep = '7d') => yaml.dump({
   services: {
-    sandbox: { image: 'dind', labels: { 'leander.name': NAME, 'leander.deep_sleep_after': deep } },
+    sandbox: { image: 'dind', labels: { 'p9m.name': NAME, 'p9m.deep_sleep_after': deep } },
     frps: { image: 'frps' },
     socat: { image: 'socat', labels: { [IDLE]: idle, 'traefik.enable': 'true' } }
   }

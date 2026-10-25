@@ -26,25 +26,25 @@ describe('usageFromStats', () => {
 describe('sampleOnce', () => {
   // A stats call that never answers must not stop sampling for good
   it('gives up on a stats call that hangs, and the others still count', async () => {
-    const list = vi.fn(async () => [{ name: 'p7y-hang', status: 'running' }, { name: 'p7y-ok', status: 'running' }])
-    const st = vi.fn((n: string) => (n === 'p7y-hang' ? new Promise(() => {}) : Promise.resolve(stats(2e8, 1e8, 2e9, 1e9))))
+    const list = vi.fn(async () => [{ name: 'p9m-hang', status: 'running' }, { name: 'p9m-ok', status: 'running' }])
+    const st = vi.fn((n: string) => (n === 'p9m-hang' ? new Promise(() => {}) : Promise.resolve(stats(2e8, 1e8, 2e9, 1e9))))
     const started = Date.now()
     await sampleOnce({ list, stats: st as never, timeoutMs: 50 })
     expect(Date.now() - started).toBeLessThan(1000)
-    expect(usageOf('p7y-ok')).toEqual({ cpu: 2, memory: 500, memory_limit: 4000 })
-    expect(usageOf('p7y-hang')).toBeNull()
+    expect(usageOf('p9m-ok')).toEqual({ cpu: 2, memory: 500, memory_limit: 4000 })
+    expect(usageOf('p9m-hang')).toBeNull()
   })
 
   it('samples running sandboxes, drops stopped ones, and survives one vanishing mid-way', async () => {
     const list = vi.fn()
-      .mockResolvedValueOnce([{ name: 'p7y-a', status: 'running' }, { name: 'p7y-b', status: 'running' }, { name: 'p7y-c', status: 'exited' }])
-      .mockResolvedValueOnce([{ name: 'p7y-a', status: 'exited' }])
-    const st = vi.fn(async (n: string) => { if (n === 'p7y-b') throw new Error('No such container'); return stats(2e8, 1e8, 2e9, 1e9) })
+      .mockResolvedValueOnce([{ name: 'p9m-a', status: 'running' }, { name: 'p9m-b', status: 'running' }, { name: 'p9m-c', status: 'exited' }])
+      .mockResolvedValueOnce([{ name: 'p9m-a', status: 'exited' }])
+    const st = vi.fn(async (n: string) => { if (n === 'p9m-b') throw new Error('No such container'); return stats(2e8, 1e8, 2e9, 1e9) })
     await sampleOnce({ list, stats: st as never })
-    expect(usageOf('p7y-a')).toEqual({ cpu: 2, memory: 500, memory_limit: 4000 })
-    expect(usageOf('p7y-b')).toBeNull()
-    expect(usageOf('p7y-c')).toBeNull()
+    expect(usageOf('p9m-a')).toEqual({ cpu: 2, memory: 500, memory_limit: 4000 })
+    expect(usageOf('p9m-b')).toBeNull()
+    expect(usageOf('p9m-c')).toBeNull()
     await sampleOnce({ list, stats: st as never })
-    expect(usageOf('p7y-a')).toBeNull() // asleep now
+    expect(usageOf('p9m-a')).toBeNull() // asleep now
   })
 })

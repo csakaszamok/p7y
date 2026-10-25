@@ -49,7 +49,7 @@ jobs:
           newest=$(echo "$tags" | sort -V | tail -1 | sed 's/^v//' | cut -d. -f1,2)
           title="$series"
           echo "$tags" | grep -q "^v$series\." || title="$series (unreleased)"
-          export LLMSTXT_BASE_URL="https://csakaszamok.github.io/p7y/$series/"
+          export LLMSTXT_BASE_URL="https://csakaszamok.github.io/p9m/$series/"
           if [ "$series" = "$newest" ]; then
             mike deploy --push --update-aliases --title "$title" "$series" latest
             mike set-default --push latest

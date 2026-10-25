@@ -1,10 +1,10 @@
-import { beginLogin, oidcEnabled, purgatoryRedirectUri, OIDC_FLOW_COOKIE } from '../../../services/oidc'
+import { beginLogin, oidcEnabled, purgatoriumRedirectUri, OIDC_FLOW_COOKIE } from '../../../services/oidc'
 import { cookieHeader } from '../../../services/session'
 
 export default async (_req: Request): Promise<Response> => {
   if (!oidcEnabled()) return new Response(null, { status: 303, headers: { location: '/login' } })
   try {
-    const { url, flow } = await beginLogin(purgatoryRedirectUri())
+    const { url, flow } = await beginLogin(purgatoriumRedirectUri())
     return new Response(null, { status: 302, headers: { location: url, 'set-cookie': cookieHeader(OIDC_FLOW_COOKIE, flow, 600) } })
   } catch (err) {
     console.error('[oidc] discovery failed:', err instanceof Error ? err.message : err)

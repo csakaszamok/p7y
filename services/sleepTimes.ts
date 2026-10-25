@@ -10,7 +10,7 @@ export interface SleepTimes {
   stops_at: string | null
   /** Seconds until stops_at by the server's clock: clients count down from this, so their own clock does not matter. */
   stops_in: number | null
-  /** When Purgatory takes the asleep sandbox down (asleep and deep_sleep_after is a duration). */
+  /** When Purgatorium takes the asleep sandbox down (asleep and deep_sleep_after is a duration). */
   deep_sleep_at: string | null
   /** Seconds until deep_sleep_at by the server's clock. */
   deep_sleep_in: number | null

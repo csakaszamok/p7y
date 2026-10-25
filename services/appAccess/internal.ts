@@ -1,5 +1,5 @@
 /**
- * Paths only Traefik asks, on Purgatory's internal port (not published like the API port, not routed by Traefik):
+ * Paths only Traefik asks, on Purgatorium's internal port (not published like the API port, not routed by Traefik):
  * the forwardAuth decision, the HTTP provider's middlewares and the error-page middleware's 404 page. Elsewhere they
  * are 404, so nobody outside learns the sandboxes' names or their apps' levels from them.
  */

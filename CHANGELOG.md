@@ -4,6 +4,17 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+**Purgatory (p7y) is now Purgatorium (p9m).** There is no upgrade from Purgatory: install Purgatorium afresh ([install](docs/install.md)) in a new directory called `p9m`. Sandboxes, archives, users, tokens and settings are not carried over.
+
+### Changed
+
+- **The new name everywhere:** the repository `github.com/csakaszamok/p9m`, the image `ghcr.io/csakaszamok/p9m`, the documentation `csakaszamok.github.io/p9m`, the UI address `p9m.<domain>`, the Claude Code plugin (`/plugin marketplace add csakaszamok/p9m`, `/p9m:init`), the MCP Registry name `io.github.p9m-team/p9m` (remote `https://{purgatorium_host}/mcp`), settings `P9M_*` (`P9M_VERSION`, `P9M_API_BIND`; the scripts' `P9M_API`, `P9M_TOKEN`), labels `p9m.*` (`p9m.subdomain`, `p9m.access`, `p9m.publish`, …), sandboxes `p9m-<name>`, tokens `p9m_…`, the project folder `.p9m`.
+- New sandboxes run foxglove 0.9.0 (`ghcr.io/csakaszamok/foxglove`), which names an app only after `p9m.subdomain`; the image is built on rododentron 0.4.0 (`ghcr.io/csakaszamok/rododentron`).
+
+### Removed
+
+- Everything that carried an older installation forward: the Leander names (`leander-*` sandboxes, `leander.*` labels, `ldr_` tokens, `LEANDER_*` settings, the `leander.<domain>` redirect), the label `frpc.subdomain`, `HOST_USERS_DIR` and the `./opt/users` mount, and the startup migrations of sandboxes from older versions (sandbox directories, archives, routers, the frps API password, socat's check, data volumes, resource limits).
+
 ## [0.11.12] - 2026-10-24
 
 Upgrading from 0.11.11: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version).

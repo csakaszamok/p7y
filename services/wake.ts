@@ -49,8 +49,8 @@ export function findSandboxDirByHost(host: string): string | null {
   return matches[0] ?? null
 }
 
-// Every p7y waiting page has it (the limit page does not): a request answered by one did not reach the sandbox
-const WAKE_PAGE_MARKER = 'data-p7y-waiting'
+// Every p9m waiting page has it (the limit page does not): a request answered by one did not reach the sandbox
+const WAKE_PAGE_MARKER = 'data-p9m-waiting'
 
 /**
  * Send one request through Traefik to the sandbox's own router so the Sablier
@@ -90,7 +90,7 @@ export function requestViaTraefik(hostHeader: string, method: string, path: stri
 /** Opens (or renews) the sandbox's Sablier session; false if it could not within `attempts`. */
 export async function primeSablierSession(name: string, attempts = 30, delayMs = 1000): Promise<boolean> {
   const raw = rawNameOf(name) ?? name
-  const host = `${raw}-p7y-wake.${hostDomain()}`
+  const host = `${raw}-p9m-wake.${hostDomain()}`
   for (let i = 0; i < attempts; i++) {
     try {
       // Through the sandbox router the request passes Sablier (session opened) and
@@ -112,7 +112,7 @@ const wokenAt = new Map<string, number>()
 // From the start of a wake until its router is there: compose up from deep sleep, then socat healthy (up to 2 min)
 const ROUTER_GRACE_MS = 180_000
 
-/** A sandbox p7y just started (any path): for a minute its address may still reach us instead of its router. */
+/** A sandbox p9m just started (any path): for a minute its address may still reach us instead of its router. */
 export function markWoken(name: string): void { wokenAt.set(name, Date.now()) }
 
 export async function wakeByHost(host: string): Promise<{ result: 'not_found' | 'started' | 'in_progress' | 'outdated' | 'no_route' | 'limit'; name?: string; from?: 'asleep' | 'deep_sleep'; refusal?: WakeRefusal }> {
@@ -127,18 +127,18 @@ export async function wakeByHost(host: string): Promise<{ result: 'not_found' | 
   // Being created: the create starts it, a request meanwhile must not start it a second time
   if (creating.has(name)) return { result: 'in_progress', name, from: 'asleep' }
   const live = (await listManagedContainers()).find(c => c.name === name)
-  // p7y's own Sablier session probe (primeSablierSession) must never wake a sandbox someone has just put to sleep
-  if (host.toLowerCase().startsWith(`${rawNameOf(name) ?? name}-p7y-wake.`) && live?.status !== 'running') return { result: 'in_progress', name }
+  // p9m's own Sablier session probe (primeSablierSession) must never wake a sandbox someone has just put to sleep
+  if (host.toLowerCase().startsWith(`${rawNameOf(name) ?? name}-p9m-wake.`) && live?.status !== 'running') return { result: 'in_progress', name }
   if (live?.status === 'running') {
     // Running, so the request should have hit the sandbox router: right after a wake (any path) Traefik may not
     // have it yet; later, no router matches this address at all
     const woke = wokenAt.get(name)
     return { result: woke !== undefined && Date.now() - woke < ROUTER_GRACE_MS ? 'in_progress' : 'no_route', name }
   }
-  // Asleep (its router exists only while it runs) or in deep sleep (no containers): p7y wakes it, within the limits
+  // Asleep (its router exists only while it runs) or in deep sleep (no containers): p9m wakes it, within the limits
   const from = live ? 'asleep' as const : 'deep_sleep' as const
   const composePath = `${sandboxParent(name)}/${name}/docker-compose.yml`
-  const owner = live?.owner ?? /^\s*(?:p7y|leander)\.owner:\s*["']?([^"'\s]+)["']?\s*$/m.exec(fs.readFileSync(composePath, 'utf8'))?.[1] ?? 'admin'
+  const owner = live?.owner ?? /^\s*p9m\.owner:\s*["']?([^"'\s]+)["']?\s*$/m.exec(fs.readFileSync(composePath, 'utf8'))?.[1] ?? 'admin'
   const { reserveWake } = await import('./quota')
   const slot = await reserveWake(owner, name, live ? live.status : 'deep_sleep')
   if (!slot.ok) return { result: 'limit', name, refusal: slot.refusal }

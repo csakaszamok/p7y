@@ -14,7 +14,7 @@ function readString(buf: Buffer, off: number): [Buffer, number] {
 describe('generateSshKeyPair', () => {
   it('gives a public key our own parser accepts, with the comment', () => {
     const { publicKey } = generateSshKeyPair()
-    expect(parsePublicKey(publicKey)).toMatchObject({ type: 'ssh-ed25519', comment: 'p7y-generated' })
+    expect(parsePublicKey(publicKey)).toMatchObject({ type: 'ssh-ed25519', comment: 'p9m-generated' })
   })
 
   it('gives an unencrypted openssh-key-v1 private key holding the same public key', () => {
@@ -45,7 +45,7 @@ describe('generateSshKeyPair', () => {
   it('is loaded by ssh-keygen when it is available', () => {
     const probe = spawnSync('ssh-keygen', ['-?'])
     if (probe.error) return // no ssh-keygen here: the live check covers it
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-kg-'))
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-kg-'))
     const { publicKey, privateKey } = generateSshKeyPair()
     const f = path.join(dir, 'k')
     fs.writeFileSync(f, privateKey, { mode: 0o600 })

@@ -1,4 +1,4 @@
-// The /activate card (approving a /p7y:init code), shared by its GET and POST
+// The /activate card (approving a /p9m:init code), shared by its GET and POST
 import { escapeHtml, html } from './layout'
 import { brandTitle, faviconTag, logoImg } from './brand'
 import { rawNameOf, sandboxName } from '../naming'
@@ -32,5 +32,5 @@ ${faviconTag()}</head>
 </body></html>`, status)
 }
 
-export const expiredPage = () => activatePage('<p class="error">This code has expired or is unknown: run /p7y:init again.</p>', 404)
+export const expiredPage = () => activatePage('<p class="error">This code has expired or is unknown: run /p9m:init again.</p>', 404)
 export const messagePage = (text: string, status = 200, cls = 'muted') => activatePage(`<p class="${cls}">${escapeHtml(text)}</p>`, status)

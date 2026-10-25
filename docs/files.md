@@ -27,7 +27,7 @@ The sandbox has to be running: asleep, the tab offers to wake it. A file can be 
 | `GET` | `/sandboxes/:name/volumes` | The apps' volumes: `name`, `path` (e.g. `/var/lib/docker/volumes/shop_db/_data`, for the routes above), `project`, `containers` (`name`, `service`, `running`, `mount`) |
 
 ```bash
-curl -T notes.md -H "Authorization: Bearer $P7Y_TOKEN" "https://p7y.example.com/sandboxes/p7y-shop/files/content?path=/root/notes.md"
+curl -T notes.md -H "Authorization: Bearer $P9M_TOKEN" "https://p9m.example.com/sandboxes/p9m-shop/files/content?path=/root/notes.md"
 ```
 
 A token limited to the sandbox may use all of them. Over [MCP](mcp.md) they are `list_sandbox_files`, `read_sandbox_file`, `write_sandbox_file` (text), `create_sandbox_folder`, `delete_sandbox_file` and `list_sandbox_volumes`; a download is left out, since a tool result carries no file.

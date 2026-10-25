@@ -12,7 +12,7 @@ import { parseComposeText } from './composeCache'
  * volumes) is in its one `docker_data` volume, measured from outside with `du`. Nothing is stopped or refused.
  */
 
-const LABEL = 'p7y.disk_limit'
+const LABEL = 'p9m.disk_limit'
 const FALLBACK = '20g'
 
 export interface DiskInfo { limit: number; used: number | null; measured_at: string | null; over: boolean }
@@ -130,7 +130,7 @@ export async function measureVolume(name: string): Promise<number> {
     Cmd: [],
     NetworkDisabled: true,
     HostConfig: { Binds: measureBinds(volumes), AutoRemove: false },
-    Labels: { 'p7y.helper': 'disk-usage' },
+    Labels: { 'p9m.helper': 'disk-usage' },
   })
   try {
     await container.start()

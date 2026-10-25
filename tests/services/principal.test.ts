@@ -2,13 +2,13 @@ import { describe, it, expect, vi } from 'vitest'
 import bcrypt from 'bcryptjs'
 
 vi.stubEnv('SESSION_SECRET', 'test-secret')
-vi.stubEnv('PUBLIC_URL', 'http://p7y.lvh.me')
+vi.stubEnv('PUBLIC_URL', 'http://p9m.lvh.me')
 vi.stubEnv('ADMIN_TOKEN', 'admin-secret')
 
 vi.mock('../../services/tokens', () => ({
   resolveToken: vi.fn((t: string) =>
     t === 'ldr_good' ? { owner: 'alice@example.com', sandbox: null }
-    : t === 'p7y_scoped' ? { owner: 'alice@example.com', sandbox: 'p7y-shop' }
+    : t === 'p9m_scoped' ? { owner: 'alice@example.com', sandbox: 'p9m-shop' }
     : null)
 }))
 
@@ -16,7 +16,7 @@ import { getPrincipal, requirePrincipal, checkAdminLogin, scopedTokenAllows } fr
 import { createSession } from '../../services/session'
 
 const req = (headers: Record<string, string> = {}, method = 'GET') =>
-  new Request('http://p7y.lvh.me/sandboxes', { method, headers: { host: 'p7y.lvh.me', ...headers } })
+  new Request('http://p9m.lvh.me/sandboxes', { method, headers: { host: 'p9m.lvh.me', ...headers } })
 
 describe('getPrincipal with OIDC_ALLOWED_DOMAINS', () => {
   // Taken off the list: their session and tokens stop at once, not in 7 days or never
@@ -24,10 +24,10 @@ describe('getPrincipal with OIDC_ALLOWED_DOMAINS', () => {
     vi.stubEnv('OIDC_ALLOWED_DOMAINS', 'partner.org')
     try {
       expect(getPrincipal(req({ authorization: 'Bearer ldr_good' }))).toBeNull()
-      expect(getPrincipal(req({ cookie: `p7y_session=${createSession('bob@example.com', 'user')}` }))).toBeNull()
-      expect(getPrincipal(req({ cookie: `p7y_session=${createSession('carol@partner.org', 'user')}` }))).toMatchObject({ sub: 'carol@partner.org' })
+      expect(getPrincipal(req({ cookie: `p9m_session=${createSession('bob@example.com', 'user')}` }))).toBeNull()
+      expect(getPrincipal(req({ cookie: `p9m_session=${createSession('carol@partner.org', 'user')}` }))).toMatchObject({ sub: 'carol@partner.org' })
       expect(getPrincipal(req({ authorization: 'Bearer admin-secret' }))).toMatchObject({ role: 'admin' })
-      expect(getPrincipal(req({ cookie: `p7y_session=${createSession('admin', 'admin')}` }))).toMatchObject({ role: 'admin' })
+      expect(getPrincipal(req({ cookie: `p9m_session=${createSession('admin', 'admin')}` }))).toMatchObject({ role: 'admin' })
     } finally { vi.stubEnv('OIDC_ALLOWED_DOMAINS', '') }
   })
 })
@@ -36,14 +36,14 @@ describe('getPrincipal', () => {
   it('resolves admin token, personal token and session cookie', () => {
     expect(getPrincipal(req({ authorization: 'Bearer admin-secret' }))).toEqual({ sub: 'admin', role: 'admin', via: 'admin-token' })
     expect(getPrincipal(req({ authorization: 'Bearer ldr_good' }))).toEqual({ sub: 'alice@example.com', role: 'user', via: 'token' })
-    const cookie = `p7y_session=${createSession('bob@example.com', 'user')}`
+    const cookie = `p9m_session=${createSession('bob@example.com', 'user')}`
     expect(getPrincipal(req({ cookie }))).toEqual({ sub: 'bob@example.com', role: 'user', via: 'session' })
   })
 
   it('treats unknown bearer tokens and bad cookies as anonymous', () => {
     expect(getPrincipal(req({ authorization: 'Bearer ldr_bad' }))).toBeNull()
     expect(getPrincipal(req({ authorization: 'Bearer something' }))).toBeNull()
-    expect(getPrincipal(req({ cookie: 'p7y_session=forged.sig' }))).toBeNull()
+    expect(getPrincipal(req({ cookie: 'p9m_session=forged.sig' }))).toBeNull()
     expect(getPrincipal(req())).toBeNull()
   })
 
@@ -64,14 +64,14 @@ describe('getPrincipal', () => {
   })
 
   it('does not fall through to session cookie when bearer token is invalid', () => {
-    const cookie = `p7y_session=${createSession('bob@example.com', 'user')}`
+    const cookie = `p9m_session=${createSession('bob@example.com', 'user')}`
     // Bad bearer should not fall through to the valid cookie
     expect(getPrincipal(req({ authorization: 'Bearer bad', cookie }))).toBeNull()
   })
 })
 
 describe('requirePrincipal', () => {
-  const session = `p7y_session=${createSession('bob@example.com', 'user')}`
+  const session = `p9m_session=${createSession('bob@example.com', 'user')}`
 
   it('401s anonymous requests', async () => {
     const r = requirePrincipal(req())
@@ -86,8 +86,8 @@ describe('requirePrincipal', () => {
       const r = requirePrincipal(req(h, 'POST'))
       expect((r as Response).status).toBe(403)
     }
-    expect(requirePrincipal(req({ cookie: session, origin: 'http://p7y.lvh.me' }, 'POST'))).toMatchObject({ sub: 'bob@example.com' })
-    expect(requirePrincipal(req({ cookie: session, referer: 'http://p7y.lvh.me/admin' }, 'DELETE'))).toMatchObject({ sub: 'bob@example.com' })
+    expect(requirePrincipal(req({ cookie: session, origin: 'http://p9m.lvh.me' }, 'POST'))).toMatchObject({ sub: 'bob@example.com' })
+    expect(requirePrincipal(req({ cookie: session, referer: 'http://p9m.lvh.me/admin' }, 'DELETE'))).toMatchObject({ sub: 'bob@example.com' })
     expect(requirePrincipal(req({ cookie: session }, 'GET'))).toMatchObject({ sub: 'bob@example.com' })
   })
 
@@ -112,41 +112,41 @@ describe('checkAdminLogin', () => {
 })
 
 const at = (method: string, path: string, headers: Record<string, string> = {}) =>
-  new Request(`http://p7y.lvh.me${path}`, { method, headers: { host: 'p7y.lvh.me', ...headers } })
+  new Request(`http://p9m.lvh.me${path}`, { method, headers: { host: 'p9m.lvh.me', ...headers } })
 
 describe('sandbox-scoped tokens', () => {
   it('carries the sandbox on the principal, always as a user', () => {
-    expect(getPrincipal(req({ authorization: 'Bearer p7y_scoped' })))
-      .toEqual({ sub: 'alice@example.com', role: 'user', via: 'token', sandbox: 'p7y-shop' })
+    expect(getPrincipal(req({ authorization: 'Bearer p9m_scoped' })))
+      .toEqual({ sub: 'alice@example.com', role: 'user', via: 'token', sandbox: 'p9m-shop' })
     expect(getPrincipal(req({ authorization: 'Bearer ldr_good' }))).not.toHaveProperty('sandbox')
   })
 
   it('allows exactly the listed routes', () => {
     const allowed: Array<[string, string]> = [
-      ['GET', '/sandboxes'], ['GET', '/sandboxes/p7y-shop'], ['PATCH', '/sandboxes/p7y-shop'],
-      ['POST', '/sandboxes/p7y-shop/start'], ['POST', '/sandboxes/p7y-shop/stop'], ['POST', '/sandboxes/p7y-shop/restart'], ['POST', '/sandboxes/p7y-shop/deep-sleep'], ['GET', '/sandboxes/p7y-shop/compose'], ['GET', '/sandboxes/p7y-shop/ssh-key'], ['POST', '/sandboxes/p7y-shop/ssh-key'], ['GET', '/sandboxes/p7y-shop/logs/stream'], ['POST', '/sandboxes/p7y-shop/keep-awake'], ['GET', '/sandboxes/p7y-shop/registry'], ['DELETE', '/sandboxes/p7y-shop/registry/todo/sha256:a'],
+      ['GET', '/sandboxes'], ['GET', '/sandboxes/p9m-shop'], ['PATCH', '/sandboxes/p9m-shop'],
+      ['POST', '/sandboxes/p9m-shop/start'], ['POST', '/sandboxes/p9m-shop/stop'], ['POST', '/sandboxes/p9m-shop/restart'], ['POST', '/sandboxes/p9m-shop/deep-sleep'], ['GET', '/sandboxes/p9m-shop/compose'], ['GET', '/sandboxes/p9m-shop/ssh-key'], ['POST', '/sandboxes/p9m-shop/ssh-key'], ['GET', '/sandboxes/p9m-shop/logs/stream'], ['POST', '/sandboxes/p9m-shop/keep-awake'], ['GET', '/sandboxes/p9m-shop/registry'], ['DELETE', '/sandboxes/p9m-shop/registry/todo/sha256:a'],
       ['GET', '/me'], ['GET', '/templates'], ['GET', '/runtimes'], ['GET', '/sandboxes/'],
       // its files (the Files tab, and an agent over MCP)
-      ['GET', '/sandboxes/p7y-shop/files'], ['DELETE', '/sandboxes/p7y-shop/files'], ['POST', '/sandboxes/p7y-shop/files/mkdir'], ['GET', '/sandboxes/p7y-shop/files/content'], ['PUT', '/sandboxes/p7y-shop/files/content'], ['GET', '/sandboxes/p7y-shop/files/text'], ['GET', '/sandboxes/p7y-shop/volumes'],
-      // a single-use link to the .p7y folder (get_sandbox gives it the keys anyway)
-      ['POST', '/sandboxes/p7y-shop/project-link'],
+      ['GET', '/sandboxes/p9m-shop/files'], ['DELETE', '/sandboxes/p9m-shop/files'], ['POST', '/sandboxes/p9m-shop/files/mkdir'], ['GET', '/sandboxes/p9m-shop/files/content'], ['PUT', '/sandboxes/p9m-shop/files/content'], ['GET', '/sandboxes/p9m-shop/files/text'], ['GET', '/sandboxes/p9m-shop/volumes'],
+      // a single-use link to the .p9m folder (get_sandbox gives it the keys anyway)
+      ['POST', '/sandboxes/p9m-shop/project-link'],
     ]
     for (const [m, p] of allowed) expect(scopedTokenAllows(m, p), `${m} ${p}`).toBe(true)
     const denied: Array<[string, string]> = [
-      ['POST', '/sandboxes'], ['DELETE', '/sandboxes/p7y-shop'], ['GET', '/tokens'], ['POST', '/tokens'],
-      ['DELETE', '/tokens/abc'], ['POST', '/sandboxes/p7y-shop/exec'], ['GET', '/sandboxes/p7y-shop/logs'],
-      ['PUT', '/sandboxes/p7y-shop'], ['GET', '/Sandboxes'], ['GET', '/admin'], ['GET', '/settings/tokens'],
+      ['POST', '/sandboxes'], ['DELETE', '/sandboxes/p9m-shop'], ['GET', '/tokens'], ['POST', '/tokens'],
+      ['DELETE', '/tokens/abc'], ['POST', '/sandboxes/p9m-shop/exec'], ['GET', '/sandboxes/p9m-shop/logs'],
+      ['PUT', '/sandboxes/p9m-shop'], ['GET', '/Sandboxes'], ['GET', '/admin'], ['GET', '/settings/tokens'],
       ['GET', '/ssh-keys'], ['POST', '/ssh-keys'], ['DELETE', '/ssh-keys/abc'],
     ]
     for (const [m, p] of denied) expect(scopedTokenAllows(m, p), `${m} ${p}`).toBe(false)
   })
 
   it('requirePrincipal 403s a scoped token outside the allowlist and lets the rest through', async () => {
-    const denied = requirePrincipal(at('POST', '/sandboxes', { authorization: 'Bearer p7y_scoped' }))
+    const denied = requirePrincipal(at('POST', '/sandboxes', { authorization: 'Bearer p9m_scoped' }))
     expect(denied).toBeInstanceOf(Response)
     expect((denied as Response).status).toBe(403)
-    expect(await (denied as Response).json()).toEqual({ error: 'This token is limited to sandbox p7y-shop' })
-    expect(requirePrincipal(at('GET', '/sandboxes/p7y-shop', { authorization: 'Bearer p7y_scoped' }))).toMatchObject({ sandbox: 'p7y-shop' })
+    expect(await (denied as Response).json()).toEqual({ error: 'This token is limited to sandbox p9m-shop' })
+    expect(requirePrincipal(at('GET', '/sandboxes/p9m-shop', { authorization: 'Bearer p9m_scoped' }))).toMatchObject({ sandbox: 'p9m-shop' })
     expect(requirePrincipal(at('POST', '/sandboxes', { authorization: 'Bearer ldr_good' }))).toMatchObject({ sub: 'alice@example.com' })
   })
 })
@@ -206,6 +206,6 @@ describe('scoped-token allowlist against the real routes', () => {
     const withArchive = new Set(['archive'])
     expect(scopedTokenAllows('GET', '/sandboxes/archive', withArchive)).toBe(false)
     expect(scopedTokenAllows('GET', '/sandboxes/archive/', withArchive)).toBe(false)
-    expect(scopedTokenAllows('GET', '/sandboxes/p7y-shop', withArchive)).toBe(true)
+    expect(scopedTokenAllows('GET', '/sandboxes/p9m-shop', withArchive)).toBe(true)
   })
 })

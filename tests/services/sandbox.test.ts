@@ -43,8 +43,8 @@ vi.mock('../../services/project', () => ({
   removeVolume: vi.fn().mockResolvedValue(undefined)
 }))
 
-// Sandbox directories on the mocked fs: legacy flat /opt/users; new sandboxes are written to /opt/sandboxes/<owner>/<name>
-vi.mock('../../services/sandboxPaths', async orig => (await import('../helpers/legacySandboxPaths')).legacySandboxPaths(orig))
+// Sandbox directories on the mocked fs: /opt/sandboxes/admin; new sandboxes are written to /opt/sandboxes/<owner>/<name>
+vi.mock('../../services/sandboxPaths', async orig => (await import('../helpers/flatSandboxPaths')).flatSandboxPaths(orig))
 
 vi.mock('fs', async (orig) => {
   const actual = await orig<typeof import('fs')>()
@@ -73,7 +73,6 @@ vi.stubEnv('HOST_ADDRESS', '127.0.0.1')
 vi.stubEnv('TEMPLATES_DIR', './templates')
 vi.stubEnv('RUNTIMES_DIR', './runtimes')
 vi.stubEnv('SANDBOXES_DIR', '/opt/sandboxes')
-vi.stubEnv('LEGACY_USERS_DIR', '/opt/users')
 vi.stubEnv('ARCHIVE_DIR', '/opt/archive')
 
 import { sandboxService } from '../../services/sandbox'
@@ -96,20 +95,20 @@ describe('sandbox service', () => {
     // answer every poll the same way a healthy frps would.
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ proxies: [{ conf: { customDomains: ['leander-u1-inner-http-echo-port5678.my.local'] } }] })
+      json: async () => ({ proxies: [{ conf: { customDomains: ['p9m-u1-inner-http-echo-port5678.my.local'] } }] })
     })
   })
 
   it('creates a sandbox and returns certs + extras', async () => {
     const result = await sandboxService.createSandbox('u1')
-    expect(result.name).toBe('p7y-u1')
+    expect(result.name).toBe('p9m-u1')
     expect(result.docker_host).toBe('')
     expect(result.ca_cert).toMatch(/BEGIN CERTIFICATE/)
     expect(result.client_cert).toMatch(/BEGIN CERTIFICATE/)
     expect(result.client_key).toMatch(/BEGIN.*PRIVATE KEY/)
     // The starter has no Portainer
     expect(result.extras).toEqual({})
-    expect(result.tunnel_urls).toEqual(['leander-u1-inner-http-echo-port5678.my.local'])
+    expect(result.tunnel_urls).toEqual(['p9m-u1-inner-http-echo-port5678.my.local'])
   }, 60000)
 
   it('the portainer template returns its address and password', async () => {
@@ -122,7 +121,7 @@ describe('sandbox service', () => {
     mockFetch.mockReset()
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ proxies: [{ conf: { customDomains: ['leander-u3-inner-http-echo-port5678.my.local'] } }] })
+      json: async () => ({ proxies: [{ conf: { customDomains: ['p9m-u3-inner-http-echo-port5678.my.local'] } }] })
     })
     mockFetch.mockResolvedValue({ ok: false, json: async () => ({}) })
     // Every later poll fails, so the loop runs all 10 × 3s waits: fast-forward them.
@@ -132,7 +131,7 @@ describe('sandbox service', () => {
       const pending = sandboxService.createSandbox('u3').finally(() => { done = true })
       while (!done) await vi.advanceTimersByTimeAsync(3000)
       const result = await pending
-      expect(result.tunnel_urls).toEqual(['leander-u3-inner-http-echo-port5678.my.local'])
+      expect(result.tunnel_urls).toEqual(['p9m-u3-inner-http-echo-port5678.my.local'])
     } finally {
       vi.useRealTimers()
     }
@@ -151,37 +150,37 @@ describe('sandbox service', () => {
 
   it('throws if name already exists', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      sandboxMeta({ name: 'leander-dup', template: 't', status: 'running', container_id: 'abc', created_at: '' })
+      sandboxMeta({ name: 'p9m-dup', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     await expect(sandboxService.createSandbox('dup')).rejects.toThrow('already exists')
   }, 60000)
 
   it('rejects a new name that is an existing name plus "-something" (would steal its Traefik routes)', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      sandboxMeta({ name: 'leander-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })
+      sandboxMeta({ name: 'p9m-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     await expect(sandboxService.createSandbox('alice-inner')).rejects.toThrow('conflicts with an existing sandbox')
   }, 60000)
 
   it('rejects a new name that an existing longer name would shadow (reverse direction)', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      sandboxMeta({ name: 'leander-alice-inner', template: 't', status: 'running', container_id: 'abc', created_at: '' })
+      sandboxMeta({ name: 'p9m-alice-inner', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     await expect(sandboxService.createSandbox('alice')).rejects.toThrow('conflicts with an existing sandbox')
   }, 60000)
 
   it('allows a name that merely starts with an existing name but is not prefix+dash', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      sandboxMeta({ name: 'leander-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })
+      sandboxMeta({ name: 'p9m-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     const result = await sandboxService.createSandbox('alicex', false)
-    expect(result.name).toBe('p7y-alicex')
+    expect(result.name).toBe('p9m-alicex')
   }, 60000)
 
   it('rejects a name-prefix conflict against a deep-sleeping sandbox dir, not just live containers', async () => {
     const realExists = vi.mocked(fs.existsSync).getMockImplementation()!
-    vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/users' || realExists(p))
-    vi.spyOn(fs, 'readdirSync').mockReturnValue(['leander-bob'] as unknown as ReturnType<typeof fs.readdirSync>)
+    vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/sandboxes/admin' || realExists(p))
+    vi.spyOn(fs, 'readdirSync').mockReturnValue(['p9m-bob'] as unknown as ReturnType<typeof fs.readdirSync>)
     try {
       await expect(sandboxService.createSandbox('bob-inner')).rejects.toThrow('conflicts with an existing sandbox')
     } finally {
@@ -198,7 +197,7 @@ describe('sandbox service', () => {
     vi.mocked(fs.writeFileSync).mockClear()
     await sandboxService.createSandbox('idle1', false)
     const compose = vi.mocked(fs.writeFileSync).mock.calls
-      .find(c => c[0] === '/opt/sandboxes/admin/p7y-idle1/docker-compose.yml')?.[1] as string
+      .find(c => c[0] === '/opt/sandboxes/admin/p9m-idle1/docker-compose.yml')?.[1] as string
     expect(compose).toMatch(/plugin\.sablier\.sessionDuration: 30m/)
     expect(compose).not.toContain('${idle_timeout}')
   }, 60000)
@@ -207,7 +206,7 @@ describe('sandbox service', () => {
     vi.mocked(fs.writeFileSync).mockClear()
     await sandboxService.createSandbox('idle2', false, '2m')
     const compose = vi.mocked(fs.writeFileSync).mock.calls
-      .find(c => c[0] === '/opt/sandboxes/admin/p7y-idle2/docker-compose.yml')?.[1] as string
+      .find(c => c[0] === '/opt/sandboxes/admin/p9m-idle2/docker-compose.yml')?.[1] as string
     expect(compose).toMatch(/plugin[.]sablier[.]sessionDuration: 2m/)
   }, 60000)
 
@@ -215,7 +214,7 @@ describe('sandbox service', () => {
     vi.mocked(fs.writeFileSync).mockClear()
     await sandboxService.createSandbox('idle3', false, 'off')
     const compose = vi.mocked(fs.writeFileSync).mock.calls
-      .find(c => c[0] === '/opt/sandboxes/admin/p7y-idle3/docker-compose.yml')?.[1] as string
+      .find(c => c[0] === '/opt/sandboxes/admin/p9m-idle3/docker-compose.yml')?.[1] as string
     expect(compose).toMatch(/plugin[.]sablier[.]sessionDuration: 87600h/)
   }, 60000)
 
@@ -224,28 +223,28 @@ describe('sandbox service', () => {
     await sandboxService.createSandbox('ds1', false)
     await sandboxService.createSandbox('ds2', false, undefined, '12h')
     const compose = (n: string) => vi.mocked(fs.writeFileSync).mock.calls
-      .find(c => c[0] === `/opt/sandboxes/admin/p7y-${n}/docker-compose.yml`)?.[1] as string
-    expect(compose('ds1')).toMatch(/p7y\.deep_sleep_after: 7d/)
-    expect(compose('ds2')).toMatch(/p7y\.deep_sleep_after: 12h/)
+      .find(c => c[0] === `/opt/sandboxes/admin/p9m-${n}/docker-compose.yml`)?.[1] as string
+    expect(compose('ds1')).toMatch(/p9m\.deep_sleep_after: 7d/)
+    expect(compose('ds2')).toMatch(/p9m\.deep_sleep_after: 12h/)
   }, 60000)
 
   it('labels the sandbox with its owner', async () => {
     vi.mocked(fs.writeFileSync).mockClear()
     await sandboxService.createSandbox('own1', false, undefined, undefined, 'alice@example.com')
     const compose = vi.mocked(fs.writeFileSync).mock.calls
-      .find(c => c[0] === '/opt/sandboxes/alice@example.com/p7y-own1/docker-compose.yml')?.[1] as string
-    expect(compose).toMatch(/p7y\.owner: "alice@example\.com"/)
+      .find(c => c[0] === '/opt/sandboxes/alice@example.com/p9m-own1/docker-compose.yml')?.[1] as string
+    expect(compose).toMatch(/p9m\.owner: "alice@example\.com"/)
   }, 60000)
 
   it("writes a new sandbox into its owner's directory, its bind mounts pointing there on the host", async () => {
     vi.mocked(fs.writeFileSync).mockClear()
     await sandboxService.createSandbox('dir1', false, undefined, undefined, 'Bob@Example.com')
     const compose = vi.mocked(fs.writeFileSync).mock.calls
-      .find(c => c[0] === '/opt/sandboxes/bob@example.com/p7y-dir1/docker-compose.yml')?.[1] as string
+      .find(c => c[0] === '/opt/sandboxes/bob@example.com/p9m-dir1/docker-compose.yml')?.[1] as string
     const doc = yaml.load(compose) as { services: { sandbox: { volumes: string[] } } }
     const binds = doc.services.sandbox.volumes.filter(v => v.startsWith('/'))
     expect(binds.length).toBeGreaterThan(3)
-    for (const b of binds) expect(b).toMatch(/^\/host\/opt\/sandboxes\/bob@example\.com\/p7y-dir1\//)
+    for (const b of binds) expect(b).toMatch(/^\/host\/opt\/sandboxes\/bob@example\.com\/p9m-dir1\//)
   }, 60000)
 
   it('refuses to create a sandbox when opt/sandboxes is not mounted from the host', async () => {
@@ -257,7 +256,7 @@ describe('sandbox service', () => {
 
   it('refuses a name that exists only in the legacy layout (not moved yet)', async () => {
     const realExists = vi.mocked(fs.existsSync).getMockImplementation()!
-    vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/users/p7y-old1' || realExists(p))
+    vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/sandboxes/admin/p9m-old1' || realExists(p))
     try {
       await expect(sandboxService.createSandbox('old1')).rejects.toThrow('Sandbox already exists')
     } finally { vi.mocked(fs.existsSync).mockImplementation(realExists) }
@@ -277,23 +276,23 @@ describe('sandbox service', () => {
       await sandboxService.createSandbox(rawName, false, undefined, undefined, owner)
       const compose = vi.mocked(fs.writeFileSync).mock.calls
         
-        .find(c => c[0] === `/opt/sandboxes/${ownerDirName(owner)}/p7y-${rawName}/docker-compose.yml`)?.[1] as string
+        .find(c => c[0] === `/opt/sandboxes/${ownerDirName(owner)}/p9m-${rawName}/docker-compose.yml`)?.[1] as string
       const parsed = yaml.load(compose) as { services: { sandbox: { labels: Record<string, string> } } }
-      expect(parsed.services.sandbox.labels['p7y.owner']).toBe(expected)
+      expect(parsed.services.sandbox.labels['p9m.owner']).toBe(expected)
     }
   }, 60000)
 
   const written = (name: string, file: string) => vi.mocked(fs.writeFileSync).mock.calls
     .find(c => /^\/opt\/sandboxes\/[^/]+\//.test(String(c[0])) && String(c[0]).endsWith(`/${name}/${file}`))?.[1] as string | undefined
-  // ${…} that Purgatory itself fills in; anything else is left for docker compose
+  // ${…} that Purgatorium itself fills in; anything else is left for docker compose
   const OURS = /\$\{(name|raw_name|template_name|runtime_name|compose_source|created_at|host_users_dir|host_domain|frp_token|frps_api_auth|idle_timeout|deep_sleep_after|owner|demo_password|cpus|memory|portainer_[a-z_]+)\}/
 
   it("gives a new sandbox's frps API a password, which socat's health check uses", async () => {
     vi.mocked(fs.writeFileSync).mockClear()
     await sandboxService.createSandbox('fa1', false)
-    const auth = /\[webServer\][\s\S]*user = "(\w+)"\npassword = "([0-9a-f]{32})"/.exec(written('p7y-fa1', 'frps.toml')!)
+    const auth = /\[webServer\][\s\S]*user = "(\w+)"\npassword = "([0-9a-f]{32})"/.exec(written('p9m-fa1', 'frps.toml')!)
     expect(auth).not.toBeNull()
-    const socat = (yaml.load(written('p7y-fa1', 'docker-compose.yml')!) as { services: { socat: { environment: Record<string, string>; healthcheck: { test: string[] } } } }).services.socat
+    const socat = (yaml.load(written('p9m-fa1', 'docker-compose.yml')!) as { services: { socat: { environment: Record<string, string>; healthcheck: { test: string[] } } } }).services.socat
     expect(socat.environment.FRPS_API_AUTH).toBe(`${auth![1]}:${auth![2]}`)
     expect(socat.healthcheck.test[1]).toContain('http://$$FRPS_API_AUTH@127.0.0.1:7500/')
   }, 60000)
@@ -302,7 +301,7 @@ describe('sandbox service', () => {
   it("keeps socat's start_interval on an engine that takes it", async () => {
     vi.mocked(fs.writeFileSync).mockClear()
     await sandboxService.createSandbox('si1', false)
-    const socat = (yaml.load(written('p7y-si1', 'docker-compose.yml')!) as { services: { socat: { healthcheck: Record<string, unknown> } } }).services.socat
+    const socat = (yaml.load(written('p9m-si1', 'docker-compose.yml')!) as { services: { socat: { healthcheck: Record<string, unknown> } } }).services.socat
     expect(socat.healthcheck.start_interval).toBe('500ms')
   }, 60000)
 
@@ -311,11 +310,11 @@ describe('sandbox service', () => {
     const { markCreating, creatingDone } = await import('../../services/wake')
     vi.mocked(markCreating).mockClear(); vi.mocked(creatingDone).mockClear()
     await sandboxService.createSandbox('mc1', false)
-    expect(markCreating).toHaveBeenCalledWith('p7y-mc1')
-    expect(creatingDone).toHaveBeenCalledWith('p7y-mc1')
+    expect(markCreating).toHaveBeenCalledWith('p9m-mc1')
+    expect(creatingDone).toHaveBeenCalledWith('p9m-mc1')
     vi.mocked(markCreating).mockClear(); vi.mocked(creatingDone).mockClear()
     await expect(sandboxService.createSandbox('mc2', false, undefined, undefined, 'admin', 'no-such-template')).rejects.toThrow()
-    expect(creatingDone).toHaveBeenCalledWith('p7y-mc2')
+    expect(creatingDone).toHaveBeenCalledWith('p9m-mc2')
   }, 60000)
 
   // Its app links must work when the create answers: the request that opens the Sablier session goes through the
@@ -325,25 +324,25 @@ describe('sandbox service', () => {
     vi.mocked(primeSablierSession).mockResolvedValueOnce(true as never)
     await sandboxService.createSandbox('ps1', false)
     expect(primeSablierSession).toHaveBeenCalledTimes(1)
-    expect(primeSablierSession).toHaveBeenCalledWith('p7y-ps1', 40, 250)
+    expect(primeSablierSession).toHaveBeenCalledWith('p9m-ps1', 40, 250)
   }, 60000)
 
   it('a router not there within those tries: the session keeps being opened in the background', async () => {
     vi.mocked(primeSablierSession).mockClear()
     vi.mocked(primeSablierSession).mockResolvedValueOnce(false as never)
     await sandboxService.createSandbox('ps2', false)
-    expect(primeSablierSession).toHaveBeenCalledWith('p7y-ps2', 40, 250)
-    await vi.waitFor(() => expect(primeSablierSession).toHaveBeenCalledWith('p7y-ps2', 150))
+    expect(primeSablierSession).toHaveBeenCalledWith('p9m-ps2', 40, 250)
+    await vi.waitFor(() => expect(primeSablierSession).toHaveBeenCalledWith('p9m-ps2', 150))
   }, 60000)
 
   it('skips the inner stack and the before_script when createInnerStack is false', async () => {
     vi.mocked(fs.writeFileSync).mockClear()
     const result = await sandboxService.createSandbox('u2', false)
-    expect(result.name).toBe('p7y-u2')
+    expect(result.name).toBe('p9m-u2')
     expect(vi.mocked(composeUpInner)).not.toHaveBeenCalled()
     expect(result.tunnel_urls).toEqual([])
     expect(result.extras).toEqual({})
-    expect(written('p7y-u2', 'inner/docker-compose.yml')).toBeUndefined()
+    expect(written('p9m-u2', 'inner/docker-compose.yml')).toBeUndefined()
   }, 60000)
 
   for (const runtime of ['dind', 'sysbox']) {
@@ -352,10 +351,10 @@ describe('sandbox service', () => {
         vi.mocked(fs.writeFileSync).mockClear()
         const raw = `m-${runtime}-${template}`
         await sandboxService.createSandbox(raw, false, undefined, undefined, 'admin', template, runtime)
-        const outer = written(`p7y-${raw}`, 'docker-compose.yml')!
+        const outer = written(`p9m-${raw}`, 'docker-compose.yml')!
         const labels = (yaml.load(outer) as { services: { sandbox: { labels: Record<string, string> } } }).services.sandbox.labels
-        expect(labels['p7y.runtime']).toBe(runtime)
-        expect(labels['p7y.template']).toBe(template)
+        expect(labels['p9m.runtime']).toBe(runtime)
+        expect(labels['p9m.template']).toBe(template)
         expect(outer).not.toMatch(OURS)
         if (runtime === 'sysbox') expect(outer).toContain('runtime: sysbox-runc')
         else expect(outer).toContain('privileged: true')
@@ -367,25 +366,25 @@ describe('sandbox service', () => {
     vi.mocked(fs.writeFileSync).mockClear()
     const result = await sandboxService.createSandbox('demo9', true, undefined, undefined, 'admin', 'tcp-demo', 'dind')
     expect(result.extras.demo_password).toMatch(/^[0-9a-f]{24}$/)
-    const inner = written('p7y-demo9', 'inner/docker-compose.yml')!
+    const inner = written('p9m-demo9', 'inner/docker-compose.yml')!
     expect(Object.keys((yaml.load(inner) as { services: Record<string, unknown> }).services)).toEqual(['db', 'redis', 'ssh', 'pgweb'])
     expect(inner).toContain(`POSTGRES_PASSWORD: ${result.extras.demo_password}`)
     expect(inner).not.toMatch(OURS)
-    expect(vi.mocked(composeUpInner)).toHaveBeenCalledWith('/opt/sandboxes/admin/p7y-demo9/inner/docker-compose.yml', 'tcp://p7y-demo9:2376', '/opt/sandboxes/admin/p7y-demo9/certs/client', 'inner')
+    expect(vi.mocked(composeUpInner)).toHaveBeenCalledWith('/opt/sandboxes/admin/p9m-demo9/inner/docker-compose.yml', 'tcp://p9m-demo9:2376', '/opt/sandboxes/admin/p9m-demo9/certs/client', 'inner')
   }, 60000)
 
   it('builds the inner stack from a given compose text: comments kept, variables filled, template before_script run', async () => {
     vi.mocked(fs.writeFileSync).mockClear()
     const text = '# my edit\nservices:\n  portainer:\n    image: portainer/portainer-ce:2.21.5\n    command: ["--admin-password", "${portainer_admin_password_hash}"]\n  extra:\n    image: hashicorp/http-echo\n    command: ["-text=hi ${name}"]\n'
     const result = await sandboxService.createSandbox('ed1', true, undefined, undefined, 'admin', 'portainer', 'dind', text)
-    const inner = written('p7y-ed1', 'inner/docker-compose.yml')!
+    const inner = written('p9m-ed1', 'inner/docker-compose.yml')!
     expect(inner.startsWith('# my edit\n')).toBe(true)
-    expect(inner).toContain('-text=hi p7y-ed1')
+    expect(inner).toContain('-text=hi p9m-ed1')
     expect(inner).not.toContain('${portainer_admin_password_hash}')
     expect(inner).toMatch(/\$\$2[aby]\$\$10\$\$/) // the bcrypt hash, $ escaped for compose
     expect(result.extras.portainer_password).toBeTruthy()
-    const labels = (yaml.load(written('p7y-ed1', 'docker-compose.yml')!) as { services: { sandbox: { labels: Record<string, string> } } }).services.sandbox.labels
-    expect(labels['p7y.compose']).toBe('edited')
+    const labels = (yaml.load(written('p9m-ed1', 'docker-compose.yml')!) as { services: { sandbox: { labels: Record<string, string> } } }).services.sandbox.labels
+    expect(labels['p9m.compose']).toBe('edited')
   }, 60000)
 
   it('checks a given compose text with docker compose before starting anything, and removes the sandbox dir when it fails', async () => {
@@ -394,9 +393,9 @@ describe('sandbox service', () => {
     vi.mocked(fs.rmSync).mockClear()
     await expect(sandboxService.createSandbox('ed3', true, undefined, undefined, 'admin', 'starter', 'dind', 'services:\n  a:\n    image: x\n'))
       .rejects.toThrow("compose is not a valid compose file: volumes.echo2 additional properties 'image' not allowed")
-    expect(composeConfigCheck).toHaveBeenCalledWith(expect.stringContaining('image: x'), { cwd: '/opt/sandboxes/admin/p7y-ed3/inner' })
+    expect(composeConfigCheck).toHaveBeenCalledWith(expect.stringContaining('image: x'), { cwd: '/opt/sandboxes/admin/p9m-ed3/inner' })
     expect(composeUp).not.toHaveBeenCalled()
-    expect(vi.mocked(fs.rmSync)).toHaveBeenCalledWith('/opt/sandboxes/admin/p7y-ed3', { recursive: true, force: true })
+    expect(vi.mocked(fs.rmSync)).toHaveBeenCalledWith('/opt/sandboxes/admin/p9m-ed3', { recursive: true, force: true })
   }, 60000)
 
   it('does not run the docker compose check for a template text', async () => {
@@ -408,8 +407,8 @@ describe('sandbox service', () => {
   it('labels a sandbox built from its template text as compose: template', async () => {
     vi.mocked(fs.writeFileSync).mockClear()
     await sandboxService.createSandbox('ed2', false)
-    const labels = (yaml.load(written('p7y-ed2', 'docker-compose.yml')!) as { services: { sandbox: { labels: Record<string, string> } } }).services.sandbox.labels
-    expect(labels['p7y.compose']).toBe('template')
+    const labels = (yaml.load(written('p9m-ed2', 'docker-compose.yml')!) as { services: { sandbox: { labels: Record<string, string> } } }).services.sandbox.labels
+    expect(labels['p9m.compose']).toBe('template')
   }, 60000)
 
   it('prepares SSH before the sandbox starts: host-key dir, extra keys file, authorized_keys', async () => {
@@ -419,9 +418,9 @@ describe('sandbox service', () => {
     vi.mocked(composeUp).mockImplementationOnce(async () => { order.push('up') })
     const extra = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILQbLq+klAOn7bvdZ+bf7t83dWYc3AfKM/YVFsjF6tLa'
     await sandboxService.createSandbox('ssh1', false, undefined, undefined, 'alice@example.com', undefined, undefined, undefined, [extra])
-    expect(vi.mocked(fs.mkdirSync).mock.calls.map(c => c[0])).toContain('/opt/sandboxes/alice@example.com/p7y-ssh1/ssh-host-keys')
-    expect(written('p7y-ssh1', 'ssh-extra-keys')).toBe(`${extra}\n`)
-    expect(writeAuthorizedKeys).toHaveBeenCalledWith('p7y-ssh1', 'alice@example.com')
+    expect(vi.mocked(fs.mkdirSync).mock.calls.map(c => c[0])).toContain('/opt/sandboxes/alice@example.com/p9m-ssh1/ssh-host-keys')
+    expect(written('p9m-ssh1', 'ssh-extra-keys')).toBe(`${extra}\n`)
+    expect(writeAuthorizedKeys).toHaveBeenCalledWith('p9m-ssh1', 'alice@example.com')
     expect(order).toEqual(['keys', 'up'])
   }, 60000)
 
@@ -431,32 +430,32 @@ describe('sandbox service', () => {
     vi.mocked(fs.writeFileSync).mockClear(); vi.mocked(fs.mkdirSync).mockClear()
     await expect(sandboxService.createSandbox('ssh3', false)).rejects.toThrow('SSH key store unreadable')
     const touched = [...vi.mocked(fs.writeFileSync).mock.calls, ...vi.mocked(fs.mkdirSync).mock.calls].map(c => String(c[0]))
-    expect(touched.filter(p => p.includes('p7y-ssh3'))).toEqual([])
+    expect(touched.filter(p => p.includes('p9m-ssh3'))).toEqual([])
   }, 60000)
 
   it('generates the SSH key of an SSH sandbox and returns it once', async () => {
     const { createGeneratedKey } = await import('../../services/sandboxSsh')
     vi.mocked(createGeneratedKey).mockClear()
     const r = await sandboxService.createSandbox('gk1', false)
-    expect(createGeneratedKey).toHaveBeenCalledWith('p7y-gk1', 'admin')
+    expect(createGeneratedKey).toHaveBeenCalledWith('p9m-gk1', 'admin')
     expect(r.ssh_private_key).toMatch(/^-----BEGIN OPENSSH PRIVATE KEY-----/)
   }, 60000)
 
   it('limits the sandbox container: the given limits, else the defaults', async () => {
     vi.mocked(fs.writeFileSync).mockClear()
     await sandboxService.createSandbox('lim1', false)
-    const d = yaml.load(written('p7y-lim1', 'docker-compose.yml')!) as { services: { sandbox: Record<string, unknown>; frps: Record<string, unknown> } }
+    const d = yaml.load(written('p9m-lim1', 'docker-compose.yml')!) as { services: { sandbox: Record<string, unknown>; frps: Record<string, unknown> } }
     expect(d.services.sandbox).toMatchObject({ cpus: 2, mem_limit: '4096m', memswap_limit: '4096m' })
     expect(d.services.frps.mem_limit).toBeUndefined()
     vi.mocked(fs.writeFileSync).mockClear()
     await sandboxService.createSandbox('lim2', false, undefined, undefined, 'admin', undefined, undefined, undefined, undefined, { cpus: 0.5, memory: 512 * 1024 * 1024 })
-    expect((yaml.load(written('p7y-lim2', 'docker-compose.yml')!) as { services: { sandbox: Record<string, unknown> } }).services.sandbox).toMatchObject({ cpus: 0.5, mem_limit: '512m' })
+    expect((yaml.load(written('p9m-lim2', 'docker-compose.yml')!) as { services: { sandbox: Record<string, unknown> } }).services.sandbox).toMatchObject({ cpus: 0.5, mem_limit: '512m' })
   }, 60000)
 
   it('writes no extra keys file without extra keys', async () => {
     vi.mocked(fs.writeFileSync).mockClear()
     await sandboxService.createSandbox('ssh2', false)
-    expect(written('p7y-ssh2', 'ssh-extra-keys')).toBeUndefined()
+    expect(written('p9m-ssh2', 'ssh-extra-keys')).toBeUndefined()
   }, 60000)
 
   it('refuses an unknown template or runtime before writing anything for the sandbox', async () => {
@@ -465,13 +464,13 @@ describe('sandbox service', () => {
     await expect(sandboxService.createSandbox('x9', true, undefined, undefined, 'admin', 'dind-standard')).rejects.toThrow('Template not found: dind-standard')
     await expect(sandboxService.createSandbox('x9', true, undefined, undefined, 'admin', 'starter', 'nope')).rejects.toThrow('Runtime not found: nope')
     const touched = [...vi.mocked(fs.writeFileSync).mock.calls, ...vi.mocked(fs.mkdirSync).mock.calls].map(c => String(c[0]))
-    expect(touched.filter(p => p.includes('p7y-x9'))).toEqual([])
+    expect(touched.filter(p => p.includes('p9m-x9'))).toEqual([])
   })
 })
 
 describe('archiveSandbox', () => {
-  const name = 'leander-arc1'
-  const dir = `/opt/users/${name}`
+  const name = 'p9m-arc1'
+  const dir = `/opt/sandboxes/admin/${name}`
   const vol = `${name}_docker_data`
   let steps: string[]
   let realExists: (p: fs.PathLike) => boolean
@@ -527,7 +526,7 @@ describe('archiveSandbox', () => {
     const realRead = vi.mocked(fs.readFileSync).getMockImplementation()!
     vi.mocked(fs.readFileSync).mockImplementation(((p: unknown, opts?: unknown) =>
       String(p) === `${dir}/docker-compose.yml`
-        ? 'services:\n  sandbox:\n    labels:\n      p7y.template: dind-standard\n      p7y.created_at: 2026-09-28T10:00:00.000Z\n'
+        ? 'services:\n  sandbox:\n    labels:\n      p9m.template: dind-standard\n      p9m.created_at: 2026-09-28T10:00:00.000Z\n'
         : realRead(p as string, opts as BufferEncoding)) as typeof fs.readFileSync)
     await sandboxService.archiveSandbox(name)
     vi.mocked(fs.readFileSync).mockImplementation(realRead)
@@ -547,7 +546,7 @@ describe('archiveSandbox', () => {
   })
 
   it('reports not found when there is no sandbox directory', async () => {
-    await expect(sandboxService.archiveSandbox('leander-nobody')).rejects.toThrow('not found')
+    await expect(sandboxService.archiveSandbox('p9m-nobody')).rejects.toThrow('not found')
   })
 })
 
@@ -563,10 +562,10 @@ describe('sysbox runtime', () => {
 
   it('keeps the dind daemon.json free of hosts/tls (its entrypoint passes those as flags)', async () => {
     await sandboxService.createSandbox('dj1', false)
-    const cfg = JSON.parse(written('/opt/sandboxes/admin/p7y-dj1/daemon.json'))
+    const cfg = JSON.parse(written('/opt/sandboxes/admin/p9m-dj1/daemon.json'))
     expect(cfg['registry-mirrors']).toBeDefined()
     expect(cfg.hosts).toBeUndefined()
-    // The p7y registry, reached through Traefik inside: its public certificate is not verifiable there
+    // The p9m registry, reached through Traefik inside: its public certificate is not verifiable there
     expect(cfg['insecure-registries']).toContain(`registry.${process.env.HOST_DOMAIN ?? 'lvh.me'}`)
   }, 60000)
 
@@ -577,7 +576,7 @@ describe('sysbox runtime', () => {
     } finally {
       vi.stubEnv('DEFAULT_RUNTIME', 'dind')
     }
-    const cfg = JSON.parse(written('/opt/sandboxes/admin/p7y-sb1/daemon.json'))
+    const cfg = JSON.parse(written('/opt/sandboxes/admin/p9m-sb1/daemon.json'))
     expect(cfg['registry-mirrors']).toBeDefined()
     expect(cfg.hosts).toContain('tcp://0.0.0.0:2376')
     expect(cfg.tlsverify).toBe(true)
@@ -591,7 +590,7 @@ describe('sysbox runtime', () => {
     } finally {
       vi.stubEnv('DEFAULT_RUNTIME', 'dind')
     }
-    const compose = yaml.load(written('/opt/sandboxes/admin/p7y-sb2/docker-compose.yml')) as {
+    const compose = yaml.load(written('/opt/sandboxes/admin/p9m-sb2/docker-compose.yml')) as {
       services: Record<string, { runtime?: string; privileged?: boolean; image?: string; labels?: Record<string, string>; volumes?: string[] }>
       volumes: Record<string, unknown>
     }
@@ -600,18 +599,18 @@ describe('sysbox runtime', () => {
     expect(sandbox.privileged).toBeUndefined()
     expect(sandbox.image).toMatch(/-sysbox$/)
     expect(sandbox.volumes).toContain('docker_data:/var/lib/docker')
-    expect(sandbox.labels?.['sablier.group']).toBe('p7y-sb2')
+    expect(sandbox.labels?.['sablier.group']).toBe('p9m-sb2')
     expect(compose.volumes).toHaveProperty('docker_data')
     const socat = compose.services.socat.labels!
-    expect(socat['traefik.http.routers.frps-p7y-sb2.middlewares']).toBe('access-p7y-sb2@http,sablier-p7y-sb2')
+    expect(socat['traefik.http.routers.frps-p9m-sb2.middlewares']).toBe('access-p9m-sb2@http,sablier-p9m-sb2')
     expect(socat['traefik.docker.allownonrunning']).toBeUndefined() // its router exists only while it runs
-    expect(compose.services.frps.labels?.['sablier.group']).toBe('p7y-sb2')
+    expect(compose.services.frps.labels?.['sablier.group']).toBe('p9m-sb2')
   }, 60000)
 })
 
 describe('deep-sleeping sandboxes in the API', () => {
-  const name = 'leander-ds9'
-  const dir = `/opt/users/${name}`
+  const name = 'p9m-ds9'
+  const dir = `/opt/sandboxes/admin/${name}`
   let realExists: (p: fs.PathLike) => boolean
   let realRead: typeof fs.readFileSync
 
@@ -619,11 +618,11 @@ describe('deep-sleeping sandboxes in the API', () => {
     realExists = vi.mocked(fs.existsSync).getMockImplementation()! as (p: fs.PathLike) => boolean
     realRead = vi.mocked(fs.readFileSync).getMockImplementation()! as typeof fs.readFileSync
     vi.mocked(listManagedContainers).mockResolvedValue([])
-    vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/users' || String(p).startsWith(dir) || realExists(p))
-    vi.spyOn(fs, 'readdirSync').mockReturnValue([name, 'Bad..Name', 'leander-nocompose'] as unknown as ReturnType<typeof fs.readdirSync>)
+    vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/sandboxes/admin' || String(p).startsWith(dir) || realExists(p))
+    vi.spyOn(fs, 'readdirSync').mockReturnValue([name, 'Bad..Name', 'p9m-nocompose'] as unknown as ReturnType<typeof fs.readdirSync>)
     vi.mocked(fs.readFileSync).mockImplementation(((p: unknown, o?: unknown) =>
       p === `${dir}/docker-compose.yml`
-        ? 'services:\n  sandbox:\n    labels:\n      leander.template: dind-standard\n      leander.created_at: "2026-09-01T00:00:00Z"\n      leander.owner: alice@example.com\n'
+        ? 'services:\n  sandbox:\n    labels:\n      p9m.template: dind-standard\n      p9m.created_at: "2026-09-01T00:00:00Z"\n      p9m.owner: alice@example.com\n'
         : p === `${dir}/extras.json` ? '{}'
         : realRead(p as string, o as BufferEncoding)) as typeof fs.readFileSync)
   })
@@ -644,10 +643,10 @@ describe('deep-sleeping sandboxes in the API', () => {
   it('lists states and owners without asking any sandbox for its apps', async () => {
     const { appLinks } = await import('../../services/appLinks')
     const { listManagedContainers } = await import('../../services/docker')
-    vi.mocked(listManagedContainers).mockResolvedValueOnce([{ name: 'p7y-run', status: 'running', owner: 'bob@x', template: 't', runtime: 'dind', compose: 'template', ssh: false, container_id: 'c', created_at: '' }] as never)
+    vi.mocked(listManagedContainers).mockResolvedValueOnce([{ name: 'p9m-run', status: 'running', owner: 'bob@x', template: 't', runtime: 'dind', compose: 'template', ssh: false, container_id: 'c', created_at: '' }] as never)
     vi.mocked(appLinks).mockClear()
     const states = await sandboxService.listSandboxStates()
-    expect(states.map(s => [s.name, s.status, s.owner])).toEqual([['p7y-run', 'running', 'bob@x'], [name, 'deep_sleep', 'alice@example.com']])
+    expect(states.map(s => [s.name, s.status, s.owner])).toEqual([['p9m-run', 'running', 'bob@x'], [name, 'deep_sleep', 'alice@example.com']])
     expect(appLinks).not.toHaveBeenCalled()
   })
 
@@ -678,14 +677,14 @@ describe('deep-sleeping sandboxes in the API', () => {
 describe('tunnel URLs only for running sandboxes', () => {
   // A stopped sandbox's frps/socat hosts do not resolve; asking them stalls the
   // request for seconds (DNS timeout) and can only ever return nothing.
-  const name = 'leander-asleep1'
+  const name = 'p9m-asleep1'
   let realExists: (p: fs.PathLike) => boolean
 
   beforeEach(() => {
     mockFetch.mockReset()
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({ proxies: [] }) })
     realExists = vi.mocked(fs.existsSync).getMockImplementation()! as (p: fs.PathLike) => boolean
-    vi.mocked(fs.existsSync).mockImplementation(p => String(p) === `/opt/users/${name}/frps.toml` || realExists(p))
+    vi.mocked(fs.existsSync).mockImplementation(p => String(p) === `/opt/sandboxes/admin/${name}/frps.toml` || realExists(p))
     vi.mocked(listManagedContainers).mockResolvedValue([
       sandboxMeta({ name, owner: 'admin', template: 't', status: 'exited', container_id: 'x', created_at: '' })
     ])
@@ -704,7 +703,7 @@ describe('tunnel URLs only for running sandboxes', () => {
     const realRead = vi.mocked(fs.readFileSync).getMockImplementation()!
     const apps = [{ url: 'asleep1-inner-web-port8080.lvh.me', port: 8080, service: 'web' }, { url: 'asleep1-portainer.lvh.me', port: 9000, service: 'portainer' }]
     vi.mocked(fs.readFileSync).mockImplementation(((p: fs.PathOrFileDescriptor, o?: unknown) =>
-      String(p) === `/opt/users/${name}/apps.json` ? JSON.stringify(apps) : realRead(p, o as never)) as typeof fs.readFileSync)
+      String(p) === `/opt/sandboxes/admin/${name}/apps.json` ? JSON.stringify(apps) : realRead(p, o as never)) as typeof fs.readFileSync)
     try {
       const info = await sandboxService.getSandbox(name)
       expect(info.tunnel_urls).toEqual(['asleep1-inner-web-port8080.lvh.me', 'asleep1-portainer.lvh.me'])
@@ -726,7 +725,7 @@ describe('HTTPS routing in runtimes', () => {
 
   it('builds the Portainer URL with the PUBLIC_URL scheme', async () => {
     const prev = process.env.PUBLIC_URL
-    process.env.PUBLIC_URL = 'https://p7y.example.com'
+    process.env.PUBLIC_URL = 'https://p9m.example.com'
     try {
       vi.mocked(listManagedContainers).mockResolvedValue([])
       // the portainer template's before_script makes the URL; it only runs with the template's stack
@@ -740,7 +739,7 @@ describe('HTTPS routing in runtimes', () => {
 })
 
 describe('startSandbox and the limits', () => {
-  const refusal = { reason: 'running', title: 'Running limit reached', message: 'Running limit reached: 1 running sandbox allowed, running now: shop. Put one to sleep first.', limit: 1, running: ['p7y-shop'] }
+  const refusal = { reason: 'running', title: 'Running limit reached', message: 'Running limit reached: 1 running sandbox allowed, running now: shop. Put one to sleep first.', limit: 1, running: ['p9m-shop'] }
   beforeEach(() => { vi.mocked(composeUp).mockClear(); vi.mocked(composeStart).mockClear(); vi.mocked(composeStop).mockClear(); slot = { ok: true, release: vi.fn() } })
 
   it('asleep or in deep sleep: refused at the limit, nothing started', async () => {
@@ -748,9 +747,9 @@ describe('startSandbox and the limits', () => {
     const spy = vi.spyOn(sandboxService, 'getSandbox')
     slot = { ok: false, refusal }
     for (const status of ['exited', 'deep_sleep']) {
-      spy.mockResolvedValueOnce({ name: 'p7y-x', owner: 'u@x', status } as never)
-      await expect(sandboxService.startSandbox('p7y-x')).rejects.toMatchObject({ code: 'LIMIT', refusal })
-      expect(reserveWake).toHaveBeenLastCalledWith('u@x', 'p7y-x', status)
+      spy.mockResolvedValueOnce({ name: 'p9m-x', owner: 'u@x', status } as never)
+      await expect(sandboxService.startSandbox('p9m-x')).rejects.toMatchObject({ code: 'LIMIT', refusal })
+      expect(reserveWake).toHaveBeenLastCalledWith('u@x', 'p9m-x', status)
     }
     expect(composeStart).not.toHaveBeenCalled(); expect(composeUp).not.toHaveBeenCalled()
     spy.mockRestore()
@@ -759,32 +758,32 @@ describe('startSandbox and the limits', () => {
   it('starts within the limit and releases the reservation; a running one is not checked', async () => {
     const { reserveWake } = await import('../../services/quota')
     const spy = vi.spyOn(sandboxService, 'getSandbox')
-    spy.mockResolvedValueOnce({ name: 'p7y-x', owner: 'u@x', status: 'exited' } as never)
-    await sandboxService.startSandbox('p7y-x')
-    expect(composeStart).toHaveBeenCalledWith('/opt/users/p7y-x/docker-compose.yml')
+    spy.mockResolvedValueOnce({ name: 'p9m-x', owner: 'u@x', status: 'exited' } as never)
+    await sandboxService.startSandbox('p9m-x')
+    expect(composeStart).toHaveBeenCalledWith('/opt/sandboxes/admin/p9m-x/docker-compose.yml')
     expect((slot as { release: () => void }).release).toHaveBeenCalled()
     vi.mocked(reserveWake).mockClear()
-    spy.mockResolvedValueOnce({ name: 'p7y-x', owner: 'u@x', status: 'running' } as never)
-    await sandboxService.startSandbox('p7y-x')
+    spy.mockResolvedValueOnce({ name: 'p9m-x', owner: 'u@x', status: 'running' } as never)
+    await sandboxService.startSandbox('p9m-x')
     expect(reserveWake).not.toHaveBeenCalled()
     spy.mockRestore()
   })
 
   it('swap: puts the named running sandbox of the same owner to sleep first, then wakes this one', async () => {
     const spy = vi.spyOn(sandboxService, 'getSandbox')
-    spy.mockImplementation(async (n: string) => ({ name: n, owner: 'u@x', status: n === 'p7y-shop' ? 'running' : 'exited' }) as never)
-    await sandboxService.startSandbox('p7y-x', { sleep: 'p7y-shop' })
-    expect(composeStop).toHaveBeenCalledWith('/opt/users/p7y-shop/docker-compose.yml')
-    expect(composeStart).toHaveBeenCalledWith('/opt/users/p7y-x/docker-compose.yml')
+    spy.mockImplementation(async (n: string) => ({ name: n, owner: 'u@x', status: n === 'p9m-shop' ? 'running' : 'exited' }) as never)
+    await sandboxService.startSandbox('p9m-x', { sleep: 'p9m-shop' })
+    expect(composeStop).toHaveBeenCalledWith('/opt/sandboxes/admin/p9m-shop/docker-compose.yml')
+    expect(composeStart).toHaveBeenCalledWith('/opt/sandboxes/admin/p9m-x/docker-compose.yml')
     expect(vi.mocked(composeStop).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(composeStart).mock.invocationCallOrder[0])
     spy.mockRestore()
   })
 
   it("swap refused, nothing put to sleep: itself, not running, or someone else's", async () => {
     const spy = vi.spyOn(sandboxService, 'getSandbox')
-    spy.mockImplementation(async (n: string) => ({ name: n, owner: n === 'p7y-theirs' ? 'v@x' : 'u@x', status: n === 'p7y-idle' ? 'exited' : n === 'p7y-x' ? 'exited' : 'running' }) as never)
-    for (const sleep of ['p7y-x', 'p7y-idle', 'p7y-theirs']) {
-      await expect(sandboxService.startSandbox('p7y-x', { sleep })).rejects.toMatchObject({ code: 'BAD_SWAP' })
+    spy.mockImplementation(async (n: string) => ({ name: n, owner: n === 'p9m-theirs' ? 'v@x' : 'u@x', status: n === 'p9m-idle' ? 'exited' : n === 'p9m-x' ? 'exited' : 'running' }) as never)
+    for (const sleep of ['p9m-x', 'p9m-idle', 'p9m-theirs']) {
+      await expect(sandboxService.startSandbox('p9m-x', { sleep })).rejects.toMatchObject({ code: 'BAD_SWAP' })
     }
     expect(composeStop).not.toHaveBeenCalled()
     spy.mockRestore()
@@ -792,14 +791,14 @@ describe('startSandbox and the limits', () => {
 })
 
 describe('final review fixes: restart, wake timing, swap order', () => {
-  const refusal = { reason: 'running', title: 'Running limit reached', message: 'Running limit reached: 1 running sandbox allowed, running now: shop. Put one to sleep first.', limit: 1, running: ['p7y-shop'] }
+  const refusal = { reason: 'running', title: 'Running limit reached', message: 'Running limit reached: 1 running sandbox allowed, running now: shop. Put one to sleep first.', limit: 1, running: ['p9m-shop'] }
   beforeEach(() => { vi.mocked(composeStart).mockClear(); vi.mocked(composeStop).mockClear(); slot = { ok: true, release: vi.fn() } })
 
   it('restart of an asleep sandbox is a wake: refused at the limit, nothing stopped or started', async () => {
     const spy = vi.spyOn(sandboxService, 'getSandbox')
-    spy.mockResolvedValue({ name: 'p7y-b', owner: 'u@x', status: 'exited' } as never)
+    spy.mockResolvedValue({ name: 'p9m-b', owner: 'u@x', status: 'exited' } as never)
     slot = { ok: false, refusal }
-    await expect(sandboxService.restartSandbox('p7y-b')).rejects.toMatchObject({ code: 'LIMIT' })
+    await expect(sandboxService.restartSandbox('p9m-b')).rejects.toMatchObject({ code: 'LIMIT' })
     expect(composeStop).not.toHaveBeenCalled(); expect(composeStart).not.toHaveBeenCalled()
     spy.mockRestore()
   })
@@ -807,13 +806,13 @@ describe('final review fixes: restart, wake timing, swap order', () => {
   it('marks the sandbox woken before its start (its router appears only later), also on a restart', async () => {
     const { markWoken } = await import('../../services/wake')
     const spy = vi.spyOn(sandboxService, 'getSandbox')
-    spy.mockResolvedValue({ name: 'p7y-b', owner: 'u@x', status: 'exited' } as never)
+    spy.mockResolvedValue({ name: 'p9m-b', owner: 'u@x', status: 'exited' } as never)
     vi.mocked(markWoken).mockClear()
-    await sandboxService.startSandbox('p7y-b')
+    await sandboxService.startSandbox('p9m-b')
     expect(vi.mocked(markWoken).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(composeStart).mock.invocationCallOrder[0])
-    spy.mockResolvedValue({ name: 'p7y-b', owner: 'u@x', status: 'running' } as never)
+    spy.mockResolvedValue({ name: 'p9m-b', owner: 'u@x', status: 'running' } as never)
     vi.mocked(markWoken).mockClear(); vi.mocked(composeStop).mockClear()
-    await sandboxService.restartSandbox('p7y-b')
+    await sandboxService.restartSandbox('p9m-b')
     expect(vi.mocked(markWoken).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(composeStop).mock.invocationCallOrder[0])
     spy.mockRestore()
   })
@@ -821,10 +820,10 @@ describe('final review fixes: restart, wake timing, swap order', () => {
   it('a swap reserves first, counting the one to sleep as gone: still over the limit → nothing put to sleep', async () => {
     const { reserveWake } = await import('../../services/quota')
     const spy = vi.spyOn(sandboxService, 'getSandbox')
-    spy.mockImplementation(async (n: string) => ({ name: n, owner: 'u@x', status: n === 'p7y-shop' ? 'running' : 'exited' }) as never)
+    spy.mockImplementation(async (n: string) => ({ name: n, owner: 'u@x', status: n === 'p9m-shop' ? 'running' : 'exited' }) as never)
     slot = { ok: false, refusal }
-    await expect(sandboxService.startSandbox('p7y-x', { sleep: 'p7y-shop' })).rejects.toMatchObject({ code: 'LIMIT' })
-    expect(reserveWake).toHaveBeenLastCalledWith('u@x', 'p7y-x', 'exited', 'p7y-shop')
+    await expect(sandboxService.startSandbox('p9m-x', { sleep: 'p9m-shop' })).rejects.toMatchObject({ code: 'LIMIT' })
+    expect(reserveWake).toHaveBeenLastCalledWith('u@x', 'p9m-x', 'exited', 'p9m-shop')
     expect(composeStop).not.toHaveBeenCalled()
     spy.mockRestore()
   })

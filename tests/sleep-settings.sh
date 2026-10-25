@@ -8,8 +8,8 @@
 # Usage: bash tests/sleep-settings.sh
 #
 # Env vars (all optional):
-#   P7Y_API    - default http://localhost:8081
-#   P7Y_TOKEN  - default abc123
+#   P9M_API    - default http://localhost:8081
+#   P9M_TOKEN  - default abc123
 #   HOST_DOMAIN    - default lvh.me
 #   TRAEFIK_URL    - default http://localhost  (requests are sent here with a Host header)
 #   STOP_DEADLINE  - default 180 (seconds idle before we give up waiting for the stop)
@@ -17,8 +17,8 @@
 
 set -euo pipefail
 
-P7Y_API="${P7Y_API:-${LEANDER_API:-http://localhost:8081}}"
-P7Y_TOKEN="${P7Y_TOKEN:-${LEANDER_TOKEN:-abc123}}"
+P9M_API="${P9M_API:-http://localhost:8081}"
+P9M_TOKEN="${P9M_TOKEN:-abc123}"
 HOST_DOMAIN="${HOST_DOMAIN:-lvh.me}"
 TRAEFIK_URL="${TRAEFIK_URL:-http://localhost}"
 STOP_DEADLINE="${STOP_DEADLINE:-180}"
@@ -37,11 +37,11 @@ fetch() {
   out=$(curl -s -m 10 -w '\n%{http_code}' -H "Host: $ECHO_HOST" "$TRAEFIK_URL/" 2>/dev/null || true)
   echo "$(echo "$out" | tail -1) $(echo "$out" | sed '$d' | head -c 300 | tr '\n' ' ')"
 }
-details() { curl -sf -H "Authorization: Bearer $P7Y_TOKEN" "$P7Y_API/sandboxes/$FULL_NAME"; }
+details() { curl -sf -H "Authorization: Bearer $P9M_TOKEN" "$P9M_API/sandboxes/$FULL_NAME"; }
 field() { details | grep -o "\"$1\":\"[^\"]*\"" | head -1 | cut -d'"' -f4; }
 patch() {
-  curl -s -o /dev/stderr -w '%{http_code}' -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $P7Y_TOKEN" \
-    -d "$1" "$P7Y_API/sandboxes/$FULL_NAME" 2>/dev/null
+  curl -s -o /dev/stderr -w '%{http_code}' -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $P9M_TOKEN" \
+    -d "$1" "$P9M_API/sandboxes/$FULL_NAME" 2>/dev/null
 }
 wait_app() {
   local deadline=$1 T R
@@ -61,15 +61,15 @@ echo ""
 # ── 1. Create with a long idle timeout ─────────────────────────────────────────
 info "[1/5] Creating sandbox (idle_timeout 10m)..."
 RESPONSE=$(curl -sf -X POST \
-  -H "Content-Type: application/json" -H "Authorization: Bearer $P7Y_TOKEN" \
+  -H "Content-Type: application/json" -H "Authorization: Bearer $P9M_TOKEN" \
   -d "{\"name\":\"$NAME\",\"idle_timeout\":\"10m\"}" \
-  "$P7Y_API/sandboxes") || fail "POST /sandboxes failed"
+  "$P9M_API/sandboxes") || fail "POST /sandboxes failed"
 FULL_NAME=$(echo "$RESPONSE" | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
 [ -n "$FULL_NAME" ] || fail "Could not parse sandbox name from response"
 cleanup() {
   echo ""
   info "Cleanup: deleting $FULL_NAME"
-  curl -sf -X DELETE -H "Authorization: Bearer $P7Y_TOKEN" "$P7Y_API/sandboxes/$FULL_NAME" >/dev/null 2>&1 || true
+  curl -sf -X DELETE -H "Authorization: Bearer $P9M_TOKEN" "$P9M_API/sandboxes/$FULL_NAME" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 R=$(wait_app 120) || fail "App never answered, last: $R"

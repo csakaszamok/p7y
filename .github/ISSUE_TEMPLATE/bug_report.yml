@@ -22,7 +22,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Purgatory version or commit
+      label: Purgatorium version or commit
       placeholder: v0.6.4 (shown in the top bar), or the output of git rev-parse --short HEAD
     validations:
       required: true
@@ -36,5 +36,5 @@ body:
     id: logs
     attributes:
       label: Logs
-      description: Relevant output of `docker compose logs p7y` (and of the sandbox, `docker logs p7y-<name>`). Remove secrets and tokens.
+      description: Relevant output of `docker compose logs p9m` (and of the sandbox, `docker logs p9m-<name>`). Remove secrets and tokens.
       render: text

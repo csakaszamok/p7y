@@ -14,7 +14,7 @@ describe('hub config', () => {
     expect(hubHost(env({ HOST_DOMAIN: 'example.com', HUB_HOST: 'Apps.Example.com' }))).toBe('apps.example.com')
   })
   it('takes the scheme from PUBLIC_URL', () => {
-    expect(hubUrl(env({ HOST_DOMAIN: 'example.com', PUBLIC_URL: 'https://p7y.example.com' }))).toBe('https://hub.example.com')
+    expect(hubUrl(env({ HOST_DOMAIN: 'example.com', PUBLIC_URL: 'https://p9m.example.com' }))).toBe('https://hub.example.com')
     expect(hubUrl(env({ HOST_DOMAIN: 'lvh.me' }))).toBe('http://hub.lvh.me')
   })
   it('titles the page Hub by default', () => {
@@ -25,7 +25,7 @@ describe('hub config', () => {
     const e = env({ HOST_DOMAIN: 'example.com' })
     expect(isHubHost('hub.example.com', e)).toBe(true)
     expect(isHubHost('HUB.example.com:443', e)).toBe(true)
-    expect(isHubHost('p7y.example.com', e)).toBe(false)
+    expect(isHubHost('p9m.example.com', e)).toBe(false)
     expect(isHubHost('hub.example.com.evil.io', e)).toBe(false)
     expect(isHubHost(undefined, e)).toBe(false)
   })

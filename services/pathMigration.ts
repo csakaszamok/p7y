@@ -14,8 +14,8 @@ export function mountedUsersDir(text: string, name: string): string | null {
   return m ? m[1] : null
 }
 
-// The admin's host mounts (services/hostMounts.ts): a long-syntax `source:` and the p7y.mounts label, never moved
-const HOST_MOUNT_LINE = /^\s*(?:-\s+)?(?:source|["']?p7y\.mounts["']?):/
+// The admin's host mounts (services/hostMounts.ts): a long-syntax `source:` and the p9m.mounts label, never moved
+const HOST_MOUNT_LINE = /^\s*(?:-\s+)?(?:source|["']?p9m\.mounts["']?):/
 
 /** The compose file with every `<from>/<name>/` bind source moved to `<to>/<name>/` (the host mounts left as they are). */
 export function withUsersDir(text: string, name: string, from: string, to: string): string {
@@ -23,19 +23,19 @@ export function withUsersDir(text: string, name: string, from: string, to: strin
 }
 
 /**
- * Sandbox compose files hold absolute host paths (${sandbox_dir}), so a checkout that was moved or renamed
- * (leander/ → p7y/) leaves every sandbox pointing at a directory that no longer has its files: Docker then creates
- * empty directories there and the sandbox fails to start ("not a directory"). Rewrites those paths to the current
- * directory (<host sandboxes dir>/<owner>/<name>/) and recreates the sandbox's containers: started if it was running
- * or its last start failed, otherwise left stopped (asleep); a deep-sleeping one only gets the file rewritten.
- * Sandboxes not moved into opt/sandboxes yet are left to the startup move. `flatDir` + `hostDir`: one flat directory
- * whose sandboxes' mounts should point at `hostDir` (tests). Returns the migrated sandbox names.
+ * Sandbox compose files hold absolute host paths (${sandbox_dir}), so an install directory that was moved or renamed
+ * (or a changed HOST_SANDBOXES_DIR) leaves every sandbox pointing at a directory that no longer has its files: Docker
+ * then creates empty directories there and the sandbox fails to start ("not a directory"). Rewrites those paths to the
+ * current directory (<host sandboxes dir>/<owner>/<name>/) and recreates the sandbox's containers: started if it was
+ * running or its last start failed, otherwise left stopped (asleep); a deep-sleeping one only gets the file rewritten.
+ * `flatDir` + `hostDir`: one flat directory whose sandboxes' mounts should point at `hostDir` (tests). Returns the
+ * migrated sandbox names.
  */
 export async function migrateHostPaths(flatDir?: string, hostDir?: string): Promise<string[]> {
   const host = hostDir ?? await resolveHostSandboxesDir()
   // The resolvers fall back to the container path when they cannot tell: never rewrite to a guess
-  if (host === '/opt/sandboxes' || host === '/opt/users') return []
-  const entries = flatDir === undefined ? listSandboxDirs().filter(e => !e.legacy) : entriesIn(flatDir)
+  if (host === '/opt/sandboxes') return []
+  const entries = flatDir === undefined ? listSandboxDirs() : entriesIn(flatDir)
   const migrated: string[] = []
   for (const { name, dir } of entries) {
     const composePath = `${dir}/docker-compose.yml`

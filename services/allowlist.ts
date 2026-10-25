@@ -46,13 +46,13 @@ export function hubAllowed(email: string, env: NodeJS.ProcessEnv = process.env):
   return emails.has(e) || (at > 0 && domains.has(e.slice(at + 1)))
 }
 
-/** May use the Hub but not Purgatory itself. */
+/** May use the Hub but not Purgatorium itself. */
 export function viewerOnly(email: string, env: NodeJS.ProcessEnv = process.env): boolean {
   return !signInAllowed(email, env) && hubAllowed(email, env)
 }
 
-/** Why Purgatory's own sign-in refuses this e-mail, or null to let it in. */
-export function purgatorySignInRefusal(email: string, env: NodeJS.ProcessEnv = process.env): string | null {
+/** Why Purgatorium's own sign-in refuses this e-mail, or null to let it in. */
+export function purgatoriumSignInRefusal(email: string, env: NodeJS.ProcessEnv = process.env): string | null {
   if (signInAllowed(email, env)) return null
   if (hubEnabled(env) && viewerOnly(email, env)) return `You have access to the Hub only: ${hubUrl(env)}`
   return `Your account (${email}) may not sign in here. Ask the administrator.`

@@ -22,21 +22,21 @@ describe('project helpers', () => {
 
   it('stops all containers carrying the compose project label', async () => {
     psOutput = 'aaa\nbbb\n'
-    await stopProjectContainers('leander-x')
+    await stopProjectContainers('p9m-x')
     expect(calls).toEqual([
-      ['docker', 'ps', '-aq', '--filter', 'label=com.docker.compose.project=leander-x'],
+      ['docker', 'ps', '-aq', '--filter', 'label=com.docker.compose.project=p9m-x'],
       ['docker', 'stop', 'aaa', 'bbb']
     ])
   })
 
   it('does nothing when the project has no containers', async () => {
-    await removeProjectContainers('leander-x')
+    await removeProjectContainers('p9m-x')
     expect(calls).toHaveLength(1)
   })
 
   it('force-removes leftover containers', async () => {
     psOutput = 'ccc\n'
-    await removeProjectContainers('leander-x')
+    await removeProjectContainers('p9m-x')
     expect(calls[1]).toEqual(['docker', 'rm', '-f', 'ccc'])
   })
 
@@ -46,7 +46,7 @@ describe('project helpers', () => {
   })
 
   it('lists project volumes by label', async () => {
-    psOutput = 'leander-x_docker_data\n\n'
-    expect(await listProjectVolumes('leander-x')).toEqual(['leander-x_docker_data'])
+    psOutput = 'p9m-x_docker_data\n\n'
+    expect(await listProjectVolumes('p9m-x')).toEqual(['p9m-x_docker_data'])
   })
 })

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.stubEnv('SESSION_SECRET', 'test-secret')
-vi.stubEnv('PUBLIC_URL', 'http://p7y.lvh.me')
+vi.stubEnv('PUBLIC_URL', 'http://p9m.lvh.me')
 vi.stubEnv('ADMIN_USER', 'admin')
 vi.stubEnv('ADMIN_PASSWORD', 'pw')
 vi.stubEnv('OIDC_ISSUER', 'https://accounts.example.com')
@@ -33,10 +33,10 @@ const callback = (await import('../../routes/auth/callback/GET')).default
 const cookieValue = (res: Response, name: string) =>
   res.headers.getSetCookie().find(c => c.startsWith(`${name}=`))?.split(';')[0].slice(name.length + 1)
 
-const form = (fields: Record<string, string>, origin = 'http://p7y.lvh.me') =>
-  new Request('http://p7y.lvh.me/login', {
+const form = (fields: Record<string, string>, origin = 'http://p9m.lvh.me') =>
+  new Request('http://p9m.lvh.me/login', {
     method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded', origin, host: 'p7y.lvh.me' },
+    headers: { 'content-type': 'application/x-www-form-urlencoded', origin, host: 'p9m.lvh.me' },
     body: new URLSearchParams(fields).toString()
   })
 
@@ -45,7 +45,7 @@ describe('admin login', () => {
     const res = await loginPost(form({ username: 'admin', password: 'pw' }))
     expect(res.status).toBe(303)
     expect(res.headers.get('location')).toBe('/')
-    expect(readSession(cookieValue(res, 'p7y_session'))).toMatchObject({ sub: 'admin', role: 'admin' })
+    expect(readSession(cookieValue(res, 'p9m_session'))).toMatchObject({ sub: 'admin', role: 'admin' })
   })
 
   it('sends wrong credentials and cross-site posts back to the login page', async () => {
@@ -56,22 +56,22 @@ describe('admin login', () => {
     expect(csrf.status).toBe(403)
   })
 
-  it('after signing in for a sandbox app (p7y_next): back to /auth/app/start, and the cookie cleared', async () => {
+  it('after signing in for a sandbox app (p9m_next): back to /auth/app/start, and the cookie cleared', async () => {
     const req = form({ username: 'admin', password: 'pw' })
-    req.headers.set('cookie', `p7y_next=${signNext('/auth/app/start?rd=https%3A%2F%2Fshop-web.lvh.me%2F')}`)
+    req.headers.set('cookie', `p9m_next=${signNext('/auth/app/start?rd=https%3A%2F%2Fshop-web.lvh.me%2F')}`)
     const res = await loginPost(req)
     expect(res.headers.get('location')).toBe('/auth/app/start?rd=https%3A%2F%2Fshop-web.lvh.me%2F')
-    expect(res.headers.getSetCookie().some(c => /^p7y_next=;.*Max-Age=0/.test(c))).toBe(true)
+    expect(res.headers.getSetCookie().some(c => /^p9m_next=;.*Max-Age=0/.test(c))).toBe(true)
     // Anything else in it: home, as without it
     const other = form({ username: 'admin', password: 'pw' })
-    other.headers.set('cookie', `p7y_next=${encodeURIComponent('https://evil.example/')}`)
+    other.headers.set('cookie', `p9m_next=${encodeURIComponent('https://evil.example/')}`)
     expect((await loginPost(other)).headers.get('location')).toBe('/')
   })
 
   it('logs out by clearing the cookie', async () => {
-    const res = await logout(new Request('http://p7y.lvh.me/logout', { method: 'POST', headers: { origin: 'http://p7y.lvh.me', host: 'p7y.lvh.me' } }))
+    const res = await logout(new Request('http://p9m.lvh.me/logout', { method: 'POST', headers: { origin: 'http://p9m.lvh.me', host: 'p9m.lvh.me' } }))
     expect(res.status).toBe(303)
-    expect(res.headers.getSetCookie()[0]).toMatch(/^p7y_session=; .*Max-Age=0/)
+    expect(res.headers.getSetCookie()[0]).toMatch(/^p9m_session=; .*Max-Age=0/)
   })
 })
 
@@ -79,29 +79,29 @@ describe('OIDC login', () => {
   beforeEach(() => { claims = { email: 'Alice@Example.com', email_verified: true } })
 
   async function start() {
-    const res = await oidcStart(new Request('http://p7y.lvh.me/auth/oidc'))
+    const res = await oidcStart(new Request('http://p9m.lvh.me/auth/oidc'))
     expect(res.status).toBe(302)
     const target = new URL(res.headers.get('location')!)
-    expect(target.searchParams.get('redirect_uri')).toBe('http://p7y.lvh.me/auth/callback')
+    expect(target.searchParams.get('redirect_uri')).toBe('http://p9m.lvh.me/auth/callback')
     expect(target.searchParams.get('code_challenge_method')).toBe('S256')
-    return cookieValue(res, 'p7y_oidc')!
+    return cookieValue(res, 'p9m_oidc')!
   }
   const cb = (flow: string | undefined, state = 'state-1') =>
-    callback(new Request(`http://p7y.lvh.me/auth/callback?code=abc&state=${state}`, { headers: flow ? { cookie: `p7y_oidc=${flow}` } : {} }))
+    callback(new Request(`http://p9m.lvh.me/auth/callback?code=abc&state=${state}`, { headers: flow ? { cookie: `p9m_oidc=${flow}` } : {} }))
 
   it('creates a user session from a verified email', async () => {
     const res = await cb(await start())
     expect(res.status).toBe(303)
     expect(res.headers.get('location')).toBe('/')
-    expect(readSession(cookieValue(res, 'p7y_session'))).toMatchObject({ sub: 'alice@example.com', role: 'user' })
-    expect(res.headers.getSetCookie().some(c => /^p7y_oidc=; .*Max-Age=0/.test(c))).toBe(true)
+    expect(readSession(cookieValue(res, 'p9m_session'))).toMatchObject({ sub: 'alice@example.com', role: 'user' })
+    expect(res.headers.getSetCookie().some(c => /^p9m_oidc=; .*Max-Age=0/.test(c))).toBe(true)
   })
 
-  it('signed in for a sandbox app (p7y_next): back to /auth/app/start', async () => {
+  it('signed in for a sandbox app (p9m_next): back to /auth/app/start', async () => {
     const flow = await start()
-    const res = await callback(new Request('http://p7y.lvh.me/auth/callback?code=abc&state=state-1', { headers: { cookie: `p7y_oidc=${flow}; p7y_next=${signNext('/auth/app/start?rd=x')}` } }))
+    const res = await callback(new Request('http://p9m.lvh.me/auth/callback?code=abc&state=state-1', { headers: { cookie: `p9m_oidc=${flow}; p9m_next=${signNext('/auth/app/start?rd=x')}` } }))
     expect(res.headers.get('location')).toBe('/auth/app/start?rd=x')
-    expect(res.headers.getSetCookie().some(c => /^p7y_next=;.*Max-Age=0/.test(c))).toBe(true)
+    expect(res.headers.getSetCookie().some(c => /^p9m_next=;.*Max-Age=0/.test(c))).toBe(true)
   })
 
   it('rejects missing flow, bad state, no email and unverified email', async () => {
@@ -113,7 +113,7 @@ describe('OIDC login', () => {
     ]) {
       expect(res.status).toBe(303)
       expect(res.headers.get('location')).toMatch(/^\/login\?error=/)
-      expect(cookieValue(res, 'p7y_session')).toBeUndefined()
+      expect(cookieValue(res, 'p9m_session')).toBeUndefined()
     }
   })
 
@@ -124,9 +124,9 @@ describe('OIDC login', () => {
       const res = await cb(await start())
       expect(res.status).toBe(303)
       expect(decodeURIComponent(res.headers.get('location')!)).toContain('mallory@gmail.com) may not sign in here')
-      expect(cookieValue(res, 'p7y_session')).toBeUndefined()
+      expect(cookieValue(res, 'p9m_session')).toBeUndefined()
       claims = { email: 'Alice@Example.com', email_verified: true }
-      expect(readSession(cookieValue(await cb(await start()), 'p7y_session'))).toMatchObject({ sub: 'alice@example.com' })
+      expect(readSession(cookieValue(await cb(await start()), 'p9m_session'))).toMatchObject({ sub: 'alice@example.com' })
     } finally { vi.stubEnv('OIDC_ALLOWED_DOMAINS', '') }
   })
 
@@ -135,6 +135,6 @@ describe('OIDC login', () => {
     const res = await cb(await start())
     expect(res.status).toBe(303)
     expect(res.headers.get('location')).toMatch(/^\/login\?error=/)
-    expect(cookieValue(res, 'p7y_session')).toBeUndefined()
+    expect(cookieValue(res, 'p9m_session')).toBeUndefined()
   })
 })

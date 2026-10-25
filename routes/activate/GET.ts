@@ -29,7 +29,7 @@ export default async (req: Request): Promise<Response> => {
     try { fixed = await getOwnedSandbox({ sub: session.sub, role: session.role, via: 'session' }, fullSandboxName(device.sandbox)) } catch { /* pick */ }
   }
   const short = (full: string) => rawNameOf(full) ?? full
-  const what = (s: string, it = 'this') => `Claude Code asks for access to ${s}: a token for ${it} sandbox only and its Docker keys, written into the project's <code>.p7y</code> folder.`
+  const what = (s: string, it = 'this') => `Claude Code asks for access to ${s}: a token for ${it} sandbox only and its Docker keys, written into the project's <code>.p9m</code> folder.`
   let choice: string
   let approve = 'Approve'
   let restarts = false
@@ -40,7 +40,7 @@ export default async (req: Request): Promise<Response> => {
     // Only the user's own, also for the admin: never another user's sandbox name
     const own = (await sandboxService.listSandboxStates()).filter(s => s.owner === session.sub).sort((a, b) => a.name.localeCompare(b.name))
     if (!own.length) {
-      choice = `<p class="error">You have no sandbox to give Claude Code: create one first, then run /p7y:init again.</p>`
+      choice = `<p class="error">You have no sandbox to give Claude Code: create one first, then run /p9m:init again.</p>`
       approve = ''
     } else {
       const options = own.map(s => {
@@ -56,7 +56,7 @@ export default async (req: Request): Promise<Response> => {
     <input type="hidden" name="code" value="${escapeHtml(pretty)}">
     ${choice}
     ${restarts ? '<p class="muted">The sandbox restarts to turn on Docker access (~30 s).</p>' : ''}
-    <p class="approve-warn">Approve only if you just ran /p7y:init yourself and Claude Code shows this same code. Never approve a code someone sent you.</p>
+    <p class="approve-warn">Approve only if you just ran /p9m:init yourself and Claude Code shows this same code. Never approve a code someone sent you.</p>
     <div class="actions">${approve ? `<button class="primary" name="decision" value="approve">${approve}</button>` : ''}<button name="decision" value="deny" formnovalidate>Deny</button></div>
   </form>`)
 }

@@ -32,7 +32,7 @@ export function ensureKeyPair(): KeyPair {
     cert.validity.notBefore = new Date()
     cert.validity.notAfter = new Date()
     cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 10)
-    const attrs = [{ name: 'commonName', value: 'p7y-registry-auth' }]
+    const attrs = [{ name: 'commonName', value: 'p9m-registry-auth' }]
     cert.setSubject(attrs)
     cert.setIssuer(attrs)
     cert.sign(kp.privateKey, forge.md.sha256.create())
@@ -83,7 +83,7 @@ export function issueToken(subject: string, service: string, access: RegistryAcc
 
   const header = Buffer.from(JSON.stringify({ typ: 'JWT', alg: 'RS256', kid })).toString('base64url')
   const payload = Buffer.from(JSON.stringify({
-    iss: 'p7y',
+    iss: 'p9m',
     sub: subject,
     aud: service,
     exp: now + 300,

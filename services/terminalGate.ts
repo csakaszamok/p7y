@@ -23,7 +23,7 @@ export async function checkTerminalUpgrade(url: string, headers: Record<string, 
   let originHost = ''
   try { originHost = new URL(one(headers.origin)).host } catch { /* missing or bad */ }
   if (!originHost || originHost !== one(headers.host)) {
-    return cookie.includes('p7y_session=') ? { ok: false, status: 403, reason: 'Cross-site request rejected' } : { ok: false, status: 401, reason: 'Sign in first' }
+    return cookie.includes('p9m_session=') ? { ok: false, status: 403, reason: 'Cross-site request rejected' } : { ok: false, status: 401, reason: 'Sign in first' }
   }
   // Only the session cookie counts: a bearer token never opens a terminal
   const p = getPrincipal(new Request(`http://localhost${url}`, { headers: { cookie } }))

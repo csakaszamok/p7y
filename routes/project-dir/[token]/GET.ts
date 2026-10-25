@@ -8,7 +8,7 @@ import { tarFiles } from '../../../services/tar'
 export const openapi = {
   // The link itself is the authorization (single use, 5 minutes); project_dir_link makes it
   mcp: false,
-  summary: "A project's .p7y folder as a tar, from a single-use link",
+  summary: "A project's .p9m folder as a tar, from a single-use link",
   tags: ['sandboxes'],
   responses: {
     200: { description: 'application/x-tar' },

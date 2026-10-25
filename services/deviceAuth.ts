@@ -1,4 +1,4 @@
-// The device-approval flow behind /p7y:init: the agent asks for a code, the user approves it in the browser, the agent
+// The device-approval flow behind /p9m:init: the agent asks for a code, the user approves it in the browser, the agent
 // polls. In memory and single-use like the project link: a restart just means asking again.
 import crypto from 'node:crypto'
 
