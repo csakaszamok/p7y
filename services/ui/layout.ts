@@ -44,6 +44,16 @@ export function repoBadge(info: RepoInfo): string {
   return `<a class="repo-badge" href="${info.url}" target="_blank" rel="noopener" title="Purgatorium on GitHub">${GITHUB_ICON}<span class="meta"><span class="name">${info.repo}</span>${stats ? `<span class="stats">${stats}</span>` : ''}</span></a>`
 }
 
+/** Next to the repo card, for the admin: a newer release of the running series, else of a later series (quieter:
+ *  its upgrade notes may ask for more than a pull). Links to the release notes. */
+export function updateNotice(info: RepoInfo): string {
+  const v = info.updates.patch ?? info.updates.next
+  if (!v) return ''
+  const later = !info.updates.patch
+  const title = later ? `Purgatorium ${v} is out: read its upgrade notes first` : `Purgatorium ${v} is out: see the release notes for the upgrade`
+  return `<a class="update-notice${later ? ' later' : ''}" href="${info.url}/releases/tag/v${escapeHtml(v)}" target="_blank" rel="noopener" title="${title}">v${escapeHtml(v)} ${later ? 'out' : 'available'}</a>`
+}
+
 export function renderPage(opts: { title: string; view: 'overview' | 'mine' | 'all' | 'tokens' | 'ssh-keys'; session: Session; body: string }): string {
   const { title, view, session, body } = opts
   recordSeen(session.sub)
@@ -78,6 +88,7 @@ ${faviconTag()}
   </nav>
   <span class="places" data-places hidden></span>
   ${githubLinkEnabled() ? repoBadge(repoInfo()) : ''}
+  ${session.role === 'admin' ? updateNotice(repoInfo()) : ''}
   ${canSwitchView(session.role) ? `<span class="mode-switch" role="group" aria-label="View">${modeButton('simple', 'Simple')}${modeButton('advanced', 'Advanced')}</span>` : ''}
   <form method="post" action="/logout" class="who"><span>${escapeHtml(session.sub)}</span><button class="link">Sign out</button></form>
   <a class="about-link" href="/about" title="License and source code">About</a>

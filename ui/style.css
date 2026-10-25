@@ -72,6 +72,9 @@ body:not([data-mode="simple"]) .simple-only { display: none !important }
 .repo-badge .stats { display: flex; gap: 10px }
 .repo-badge .stats span { display: inline-flex; align-items: center; gap: 3px }
 .repo-badge .stats svg { width: 12px; height: 12px; fill: currentColor }
+.update-notice { padding: 3px 8px; border-radius: 8px; border: 1px solid #3fb950; color: #3fb950; font-size: 12px; text-decoration: none; white-space: nowrap }
+.update-notice:hover { background: #3fb95022 }
+.update-notice.later { border-color: #555; color: #aaa }
 main { padding: 20px }
 .split { display: flex; gap: 20px; align-items: flex-start }
 .list { flex: 3; min-width: 0 }
