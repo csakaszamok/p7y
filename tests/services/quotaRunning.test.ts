@@ -33,6 +33,10 @@ describe('wakeRefusal', () => {
     expect((await wakeRefusal('u@x', 'deep_sleep'))?.reason).toBe('running')
     expect(await wakeRefusal('admin', 'deep_sleep')).toBeNull()
   })
+  it('an OIDC_ADMIN_EMAILS address is never refused either', async () => {
+    vi.stubEnv('OIDC_ADMIN_EMAILS', 'u@x')
+    try { expect(await wakeRefusal('u@x', 'exited')).toBeNull() } finally { vi.stubEnv('OIDC_ADMIN_EMAILS', '') }
+  })
   it('counts the sandboxes being woken right now as running', async () => {
     all = [u('exited', 'p9m-a'), u('exited', 'p9m-b')]
     expect(await wakeRefusal('u@x', 'exited', ['p9m-a'])).toMatchObject({ reason: 'running', running: ['p9m-a'] })

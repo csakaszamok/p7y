@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { signInAllowed, subAllowed, openSignInWarning, hubAllowed, viewerOnly, purgatoriumSignInRefusal } from '../../services/allowlist'
+import { signInAllowed, subAllowed, openSignInWarning, hubAllowed, viewerOnly, purgatoriumSignInRefusal, oidcAdmin, sessionRole, isAdminOwner } from '../../services/allowlist'
 
 const env = (over: Record<string, string>) => ({ ...over }) as NodeJS.ProcessEnv
 
@@ -74,5 +74,31 @@ describe('purgatoriumSignInRefusal', () => {
   it('refuses others as before', () => {
     expect(purgatoriumSignInRefusal('eve@other.org', env({ OIDC_ALLOWED_EMAILS: 'anna@example.com' })))
       .toBe('Your account (eve@other.org) may not sign in here. Ask the administrator.')
+  })
+})
+
+describe('OIDC_ADMIN_EMAILS', () => {
+  const e = env({ OIDC_ADMIN_EMAILS: ' Boss@Example.com , ops@partner.org', OIDC_ALLOWED_DOMAINS: 'example.com' })
+  it('names the addresses that are the admin when they sign in, any case', () => {
+    expect(oidcAdmin('boss@example.com', e)).toBe(true)
+    expect(oidcAdmin('OPS@partner.org', e)).toBe(true)
+    expect(oidcAdmin('alice@example.com', e)).toBe(false)
+    expect(oidcAdmin('admin', e)).toBe(false)
+    expect(oidcAdmin('boss@example.com', env({}))).toBe(false)
+  })
+  it('may sign in even when OIDC_ALLOWED_* leaves them out', () => {
+    expect(signInAllowed('ops@partner.org', e)).toBe(true)
+    expect(purgatoriumSignInRefusal('ops@partner.org', e)).toBeNull()
+  })
+  it("a session's role now: an address taken off the list is a user again; the local admin stays", () => {
+    expect(sessionRole('boss@example.com', 'admin', e)).toBe('admin')
+    expect(sessionRole('boss@example.com', 'admin', env({}))).toBe('user')
+    expect(sessionRole('admin', 'admin', env({}))).toBe('admin')
+    expect(sessionRole('alice@example.com', 'user', e)).toBe('user')
+  })
+  it('their sandboxes have no limits, as the local admin\'s', () => {
+    expect(isAdminOwner('admin', env({}))).toBe(true)
+    expect(isAdminOwner('Boss@example.com', e)).toBe(true)
+    expect(isAdminOwner('alice@example.com', e)).toBe(false)
   })
 })

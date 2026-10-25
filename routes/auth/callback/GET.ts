@@ -1,6 +1,6 @@
 import { finishLogin, LoginError, OIDC_FLOW_COOKIE } from '../../../services/oidc'
 import { cookieHeader, createSession, getCookie, publicUrl, SESSION_COOKIE, SESSION_MAX_AGE } from '../../../services/session'
-import { purgatoriumSignInRefusal } from '../../../services/allowlist'
+import { purgatoriumSignInRefusal, oidcAdmin } from '../../../services/allowlist'
 import { rememberName } from '../../../services/hub/names'
 import { nextAfterSignIn, NEXT_COOKIE } from '../../../services/appAccess/start'
 import { recordSignIn } from '../../../services/userStats'
@@ -13,7 +13,7 @@ export default async (req: Request): Promise<Response> => {
     const { email, name } = await finishLogin(callbackUrl, getCookie(req, OIDC_FLOW_COOKIE), e => purgatoriumSignInRefusal(e))
     rememberName(email, name)
     recordSignIn(email)
-    headers.append('set-cookie', cookieHeader(SESSION_COOKIE, createSession(email, 'user'), SESSION_MAX_AGE))
+    headers.append('set-cookie', cookieHeader(SESSION_COOKIE, createSession(email, oidcAdmin(email) ? 'admin' : 'user'), SESSION_MAX_AGE))
     // Signed in for a sandbox app (p9m.access): back to it
     const next = nextAfterSignIn(req)
     headers.set('location', next ?? '/')

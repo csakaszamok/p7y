@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { isAdminOwner } from './allowlist'
 import { quotaLimit, serverLimit, runningLimit } from './quota'
 import { archiveDir, ownerOfCompose } from './sandboxPaths'
 
@@ -63,7 +64,7 @@ function counts(live: Array<{ status: string }>, archived: number, quota: number
 export async function summaryFor(p: { sub: string; role: 'user' | 'admin' }, deps: Deps = defaultDeps): Promise<Summary> {
   const [live, archived] = await Promise.all([deps.list(), deps.archived()])
   // The admin has no quota (as at create)
-  const quotaOf = (owner: string) => (owner === 'admin' ? null : deps.quota())
+  const quotaOf = (owner: string) => (isAdminOwner(owner) ? null : deps.quota())
   const server = deps.server()
   // Places on the server (SANDBOX_MAX_TOTAL): the running sandboxes, the admin's too; asleep ones take none
   const used = live.filter(s => s.status === 'running').length
@@ -73,7 +74,7 @@ export async function summaryFor(p: { sub: string; role: 'user' | 'admin' }, dep
   const owners = [...new Set([...live.map(s => s.owner), ...archived])].sort()
   return {
     ...counts(live, archived.length, null),
-    by_owner: owners.map(owner => ({ owner, ...counts(live.filter(s => s.owner === owner), archived.filter(o => o === owner).length, quotaOf(owner)), max_running: owner === 'admin' ? null : deps.running() })),
+    by_owner: owners.map(owner => ({ owner, ...counts(live.filter(s => s.owner === owner), archived.filter(o => o === owner).length, quotaOf(owner)), max_running: isAdminOwner(owner) ? null : deps.running() })),
     server_limit: server,
     server_used: used,
     resources: await deps.resources(live),

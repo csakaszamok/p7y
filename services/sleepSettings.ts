@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { isAdminOwner } from './allowlist'
 import yaml from 'js-yaml'
 import { composeUpService } from './compose'
 import { nudgeTraefik } from './project'
@@ -65,7 +66,7 @@ export function sleepLimitError(s: Partial<Record<SleepKind, string>>, role: 'us
 /** A template's default for a user's new sandbox, cut to the server's limit. */
 export function cappedSleepDefault(kind: SleepKind, value: string, owner: string, env: NodeJS.ProcessEnv = process.env): string {
   const lim = limitOf(kind, env)
-  if (owner === 'admin' || !lim) return value
+  if (isAdminOwner(owner, env) || !lim) return value
   const ms = value === 'off' ? Infinity : msOf(kind, value) ?? Infinity
   if (ms <= lim.ms) return value
   return kind === 'idle_timeout' ? normalizeIdleTimeout(lim.text) ?? value : lim.text

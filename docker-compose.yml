@@ -70,6 +70,7 @@ services:
       # Who may sign in with OIDC (comma lists); without either, anyone with an account at the provider
       OIDC_ALLOWED_DOMAINS: ${OIDC_ALLOWED_DOMAINS:-}
       OIDC_ALLOWED_EMAILS: ${OIDC_ALLOWED_EMAILS:-}
+      OIDC_ADMIN_EMAILS: ${OIDC_ADMIN_EMAILS:-}
       # App access (docs: app-access.md): who opens an app without p9m.access; the key of its cookies and tickets
       APPS_ACCESS_DEFAULT: ${APPS_ACCESS_DEFAULT:-public}
       APP_ACCESS_SECRET: ${APP_ACCESS_SECRET:-}
