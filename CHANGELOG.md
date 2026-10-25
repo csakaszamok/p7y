@@ -13,7 +13,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Removed
 
-- Everything that carried an older installation forward: the Leander names (`leander-*` sandboxes, `leander.*` labels, `ldr_` tokens, `LEANDER_*` settings, the `leander.<domain>` redirect), the label `frpc.subdomain`, `HOST_USERS_DIR` and the `./opt/users` mount, and the startup migrations of sandboxes from older versions (sandbox directories, archives, host paths, routers, the frps API password, socat's check, data volumes, resource limits).
+- Everything that carried an older installation forward: the Leander names (`leander-*` sandboxes, `leander.*` labels, `ldr_` tokens, `LEANDER_*` settings, the `leander.<domain>` redirect), the label `frpc.subdomain`, `HOST_USERS_DIR` and the `./opt/users` mount, and the startup migrations of sandboxes from older versions (sandbox directories, archives, routers, the frps API password, socat's check, data volumes, resource limits).
 
 ## [0.11.12] - 2026-10-24
 

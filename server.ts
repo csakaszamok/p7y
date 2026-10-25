@@ -8,6 +8,7 @@ import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
 import { openSignInWarning } from "./services/allowlist";
 import { insecureConfigWarnings, insecureConfigErrors, hostMountWarnings } from "./services/configWarnings";
 import { syncTlsConfig } from "./services/tlsConfig";
+import { migrateHostPaths } from "./services/pathMigration";
 import { startTcpGateway } from "./services/tcpGateway";
 import { resolveTcpHost, resolveDockerHost } from "./services/tcpRoutes";
 import { findSandboxDirByHost, primeSablierSession } from "./services/wake";
@@ -334,6 +335,8 @@ startRegistryGc();
 // Scans interrupted by a restart run again (their repos stay private meanwhile)
 void resumeScans().catch(err => console.error("[registry] resuming scans:", err));
 for (const w of resourceDefaults().warnings) console.warn(`[resources] ${w}`);
+// Sandboxes whose install directory was moved or renamed: point their mounts at the current directory
+migrateHostPaths().catch(err => console.error("[paths] migration failed:", err));
 for (const warning of [...insecureConfigWarnings(process.env), ...hostMountWarnings(process.env)]) console.warn(warning);
 
 

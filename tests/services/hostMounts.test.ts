@@ -7,6 +7,7 @@ import {
   MOUNTS_LABEL, SYSTEM_DIRS, hostMountRoots, parseHostMountRoots, cleanPath, underRoot, ownTargets,
   validateMount, readMounts, withMounts, mountsOf, setMounts, type HostMount,
 } from '../../services/hostMounts'
+import { withUsersDir, mountedUsersDir } from '../../services/pathMigration'
 
 // The sandbox's compose file as created from runtimes/dind.yaml (its mounts are what the targets must keep clear of)
 const RUNTIME = yaml.load(fs.readFileSync(path.join(__dirname, '..', '..', 'runtimes', 'dind.yaml'), 'utf8')) as { docker_compose: unknown }
@@ -121,6 +122,17 @@ describe('withMounts / readMounts', () => {
     expect(readMounts(compose())).toEqual([])
     expect(readMounts(': not yaml [')).toEqual([])
     expect(() => withMounts(yaml.dump({ services: { other: {} } }), [m1])).toThrow(/no sandbox service/)
+  })
+
+  it('kept by the host-path migration (a moved install directory)', () => {
+    // A host mount that happens to sit in the sandbox's old directory is not moved with it
+    const inDir = { host: `${HOST}/p9m-shop/shared`, target: '/mnt/x', readonly: false }
+    const text = withMounts(compose(), [inDir])
+    expect(mountedUsersDir(text, 'p9m-shop')).toBe(HOST)
+    const moved = withUsersDir(text, 'p9m-shop', HOST, '/new/sandboxes/admin')
+    expect(readMounts(moved)).toEqual([inDir])
+    expect(sandbox(moved).volumes).toContainEqual(expect.objectContaining({ source: inDir.host }))
+    expect(sandbox(moved).volumes).toContain('/new/sandboxes/admin/p9m-shop/certs:/certs')
   })
 })
 
