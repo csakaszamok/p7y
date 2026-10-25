@@ -2,10 +2,11 @@ import fs from 'fs'
 import { isAdminOwner } from './allowlist'
 import { quotaLimit, serverLimit, runningLimit } from './quota'
 import { archiveDir, ownerOfCompose } from './sandboxPaths'
+import type { Capacity } from './capacity'
 
 export interface Counts { max_running?: number | null; quota: number | null; total: number; free: number | null; running: number; asleep: number; deep_sleep: number; archived: number }
 /** The host's CPU (cores) and memory (bytes): what running sandboxes use now, and what their limits reserve; disk as measured. */
-export interface Resources { cpu: { used: number; reserved: number; host: number }; memory: { used: number; reserved: number; host: number }; disk: { used: number; over: number } }
+export interface Resources { cpu: { used: number; reserved: number; host: number }; memory: { used: number; reserved: number; host: number }; disk: { used: number; over: number }; capacity?: Capacity | null }
 export type Summary = Counts & {
   by_owner?: Array<Counts & { owner: string }>
   /** The admin: SANDBOX_MAX_TOTAL and the users' sandboxes counted against it */
@@ -36,7 +37,7 @@ const defaultDeps: Deps = {
   server: () => serverLimit(),
   resources: async live => {
     try {
-      const [{ usageOf }, { limitsOf }, { diskOf }, { hostResources }] = await Promise.all([import('./usageSampler'), import('./resourceSettings'), import('./diskUsage'), import('./docker')])
+      const [{ usageOf }, { limitsOf }, { diskOf, diskDefault }, { hostResources }, { capacity, dockerDiskFree }, { resourceDefaults }] = await Promise.all([import('./usageSampler'), import('./resourceSettings'), import('./diskUsage'), import('./docker'), import('./capacity'), import('./resources')])
       const host = await hostResources()
       const running = live.filter(s => s.status === 'running' && s.name)
       const r: Resources = { cpu: { used: 0, reserved: 0, host: host.cpus }, memory: { used: 0, reserved: 0, host: host.memory }, disk: { used: 0, over: 0 } }
@@ -47,6 +48,9 @@ const defaultDeps: Deps = {
       }
       for (const s of live) if (s.name) { const d = diskOf(s.name); r.disk.used += d.used ?? 0; if (d.over) r.disk.over++ }
       r.cpu.used = Math.round(r.cpu.used * 100) / 100
+      // The disk for sandboxes: what is free, and what theirs already take
+      const free = await dockerDiskFree()
+      r.capacity = capacity({ ...host, disk: free === null ? null : free + r.disk.used }, { ...resourceDefaults().limits, disk: diskDefault().bytes })
       return r
     } catch { return null }
   },

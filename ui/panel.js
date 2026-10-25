@@ -334,10 +334,11 @@
       ${warning}
       <div class="files-bar"><span class="files-crumbs">${crumbs}</span>
         <span class="files-tools"><label class="button-like">Upload…<input type="file" multiple data-files-input hidden></label>
+        <label class="button-like" title="A folder with everything in it">Upload folder…<input type="file" webkitdirectory data-files-input hidden></label>
         <form data-files-mkdir><input name="folder" placeholder="new folder" aria-label="New folder name" required><button>New folder</button></form>
         <a href="${href(d.path)}" download title="This folder as a .tar">Download folder</a></span></div>
-      ${rows.length ? table(['Name', 'Size', 'Modified', ''], rows, 'files-table') : '<p class="muted files-empty">Empty: drop files here, or Upload…</p>'}
-      <p class="muted files-note">Drop files here to upload them, up to ${fmtBytes(d.max_upload)} a file. ${note}</p>
+      ${rows.length ? table(['Name', 'Size', 'Modified', ''], rows, 'files-table') : '<p class="muted files-empty">Empty: drop files or folders here, or Upload…</p>'}
+      <p class="muted files-note">Drop files or whole folders here to upload them, up to ${fmtBytes(d.max_upload)} a file; folders that are not there yet are made. ${note}</p>
       <p class="muted" data-files-status hidden></p>`
   }
 
@@ -404,6 +405,17 @@
    * The Overview page. sum: GET /sandboxes/summary; list: GET /sandboxes (the caller's, or for the admin everyone's).
    * ctx.isAdmin: the server view (users' sandboxes against SANDBOX_MAX_TOTAL, host resources, disk, owners).
    */
+  /** The suggested SANDBOX_MAX_TOTAL for the host (services/capacity.ts), against the one set. */
+  function suggestion(cap, lim) {
+    if (!cap) return ''
+    const by = { cpu: 'CPU', memory: 'memory', disk: 'disk' }[cap.by]
+    const why = cap.by === 'disk'
+      ? `the disk holds about ${cap.disk} sandboxes at their disk limit, asleep ones too`
+      : `${cap.ideal} can use their full CPU and memory limits at once (${by} first), twice that since most idle or sleep`
+    const over = lim && lim > cap.suggested * 1.5 ? `<br><span class="warn">⚠ SANDBOX_MAX_TOTAL is ${lim}: more running at once than the host can serve when they all work</span>` : ''
+    return `<p class="ov-suggest">Suggested server limit: <strong>${cap.suggested}</strong> running <span class="muted">· ${why}</span>${over}</p>`
+  }
+
   function overviewHtml(sum, list, ctx) {
     const name = n => esc(ctx.shortName ? ctx.shortName(n) : n)
     const c = countsOf(list, sum.quota ?? null, sum.archived ?? 0)
@@ -461,7 +473,7 @@
       const top = list.filter(s => s.disk && s.disk.used !== null).sort((a, b) => b.disk.used - a.disk.used).slice(0, 4)
       const disk = r ? `<div class="ov-big">${fmtBytes(r.disk.used)}</div><div class="muted">used by ${list.length} sandbox${list.length === 1 ? '' : 'es'}${r.disk.over ? ` · <span class="warn">⚠ ${r.disk.over} over its limit</span>` : ''}</div>` : ''
       const topList = `<ul class="ov-top3">${top.map(s => `<li class="${s.disk.over ? 'over' : ''}"><span>${s.disk.over ? '⚠ ' : ''}${name(s.name)}</span><span class="bar"><span style="width:${Math.min(100, s.disk.used / s.disk.limit * 100).toFixed(1)}%"></span></span><span class="v">${fmtBytes(s.disk.used)}</span></li>`).join('')}</ul>`
-      out += `<div class="ov-grid2"><section class="ov-box"><h2>Host resources</h2>${res}<p class="ov-note">Solid: what running sandboxes use now. Striped: what their limits reserve. Asleep sandboxes use nothing.</p></section>
+      out += `<div class="ov-grid2"><section class="ov-box"><h2>Host resources</h2>${res}<p class="ov-note">Solid: what running sandboxes use now. Striped: what their limits reserve. Asleep sandboxes use nothing.</p>${suggestion(r && r.capacity, sum.server_limit)}</section>
         <section class="ov-box"><h2>Disk</h2>${disk}${topList}</section></div>`
       const owners = (sum.by_owner || []).map(o => ({ ...o, ...countsOf(list.filter(s => (s.owner || 'admin') === o.owner), o.quota, o.archived) }))
       const ownerRows = owners.map(o => {

@@ -26,7 +26,7 @@
 | `POST` | `/sandboxes/:name/restart` | Restart a sandbox |
 | `GET` | `/sandboxes/:name/files` | List a folder of the sandbox's files (`path`, default `/root`): `/root`, `/home`, `/srv` and `/opt`, the folders kept over a deep sleep, and the apps' volumes; the sandbox must be running (409 `not_running` otherwise). See [Files](files.md) |
 | `GET` | `/sandboxes/:name/files/content` | Download a file (`path`), or a folder as a tar |
-| `PUT` | `/sandboxes/:name/files/content` | Upload a file to `path` (the body is the file; its folder must exist), up to `FILES_MAX_UPLOAD` |
+| `PUT` | `/sandboxes/:name/files/content` | Upload a file to `path` (the body is the file; missing folders on the path are made), up to `FILES_MAX_UPLOAD` |
 | `GET` | `/sandboxes/:name/files/text` | A text file's content as JSON (UTF-8, up to 1 MB): for agents |
 | `POST` | `/sandboxes/:name/files/mkdir` | Create a folder (`{"path": "/srv/data"}`) |
 | `DELETE` | `/sandboxes/:name/files` | Delete a file or a folder (`path`), not the four folders themselves (nor a volume's folder) |
