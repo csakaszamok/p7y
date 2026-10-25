@@ -79,6 +79,11 @@ label.check input { width: auto }
 .topbar nav { display: flex; gap: 16px; flex: 1 }
 .topbar nav a { color: var(--dim); text-decoration: none }
 .topbar nav a.active { color: var(--strong); font-weight: 600 }
+/* My area's tabs, in a row below the topbar on its pages */
+.subnav { display: flex; gap: 18px; padding: 0 20px; border-bottom: 1px solid var(--line-2); font-size: 14px; overflow-x: auto }
+.subnav a { color: var(--dim); text-decoration: none; padding: 8px 0 6px; border-bottom: 2px solid transparent; white-space: nowrap }
+.subnav a:hover { color: var(--strong) }
+.subnav a.active { color: var(--strong); font-weight: 600; border-bottom-color: #ea580c }
 .who { display: flex; gap: 12px; align-items: center; margin: 0; color: var(--dim) }
 /* Simple | Advanced: Simple hides what is marked adv (it does not restrict anything) */
 body[data-mode="simple"] .adv { display: none !important }
@@ -350,6 +355,7 @@ a.ov-card:hover { border-color: #ea580c; transform: translateY(-1px) }
   .topbar { flex-wrap: wrap; gap: 8px 16px; padding: 10px 16px }
   .topbar nav { order: 3; flex-basis: 100%; overflow-x: auto; flex-wrap: nowrap; gap: 18px; padding-bottom: 2px }
   .topbar nav a { white-space: nowrap }
+  .subnav { padding: 0 16px }
   .repo-badge .name { display: none }
   .who { margin-left: auto }
   /* The list filter gets its own row */

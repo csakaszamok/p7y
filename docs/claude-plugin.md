@@ -33,7 +33,7 @@ In Claude Code, in the project's root folder, run the line that **Let your agent
 
 Claude Code prints a link. Open it in your browser (sign in first if Purgatorium asks). The page shows a code and the sandbox; check that the code is the one Claude Code printed and click **Approve** (or **Deny**). Only the sandbox's owner (or the admin) can approve. The code works once and expires in 10 minutes.
 
-Then Claude Code unpacks the project's `.p9m` folder straight to disk: a new token for that sandbox only (in `.p9m/p9m.env`, 90 days) and the sandbox's Docker keys. The token never shows on the screen or in the chat. The folder keeps itself out of git, and the token is listed in Purgatorium under **Access tokens** as `Claude Code init <date>`, where you can revoke it.
+Then Claude Code unpacks the project's `.p9m` folder straight to disk: a new token for that sandbox only (in `.p9m/p9m.env`, 90 days) and the sandbox's Docker keys. The token never shows on the screen or in the chat. The folder keeps itself out of git, and the token is listed in Purgatorium under **My area → Access tokens** as `Claude Code init <date>`, where you can revoke it.
 
 Run `/p9m:init` again whenever the token has expired or was revoked. A project can be tied to one sandbox at a time; another project in another folder can be tied to another sandbox, or to another Purgatorium.
 

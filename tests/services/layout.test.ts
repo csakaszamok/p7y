@@ -57,12 +57,27 @@ describe('renderPage: Simple / Advanced', () => {
     expect(html).not.toContain('class="mode-switch"')
     expect(page(admin)).toMatch(/<button[^>]*data-mode-set="advanced"[^>]*aria-pressed="true"/)
   })
-  it('marks what Simple hides: Overview, Access tokens and SSH keys in the nav', () => {
+  it('marks what Simple hides: Overview in the nav, the whole My area row', () => {
     const html = page(user)
     expect(html).toMatch(/<a class="adv" href="\/overview"/)
+    expect(html).toMatch(/<nav class="subnav adv"/)
     expect(html).toMatch(/<a class="adv" href="\/settings\/tokens"/)
     expect(html).toMatch(/<a class="adv" href="\/settings\/ssh-keys"/)
-    expect(html).toMatch(/<a class="active" href="\/"/)
+  })
+  it('My area: one link in the nav, its pages as tabs in a row below, only on those pages', () => {
+    const at = (view: 'overview' | 'mine' | 'all' | 'tokens' | 'ssh-keys') => renderPage({ title: 'x', view, session: admin, body: '' })
+    const nav = (html: string) => /<nav>([\s\S]*?)<\/nav>/.exec(html)![1]
+    expect(nav(at('mine'))).toMatch(/<a class="active" href="\/">My area<\/a>/)
+    expect(nav(at('mine'))).not.toContain('/settings/tokens')
+    expect(nav(at('mine'))).not.toContain('/settings/ssh-keys')
+    expect(at('mine')).toMatch(/<a class="active" href="\/">Sandboxes<\/a>/)
+    expect(nav(at('tokens'))).toMatch(/<a class="active" href="\/">My area<\/a>/)
+    expect(at('tokens')).toMatch(/<a class="adv active" href="\/settings\/tokens">Access tokens<\/a>/)
+    expect(at('ssh-keys')).toMatch(/<a class="adv active" href="\/settings\/ssh-keys">SSH keys<\/a>/)
+    for (const v of ['overview', 'all'] as const) {
+      expect(at(v)).not.toContain('class="subnav')
+      expect(nav(at(v))).toMatch(/<a href="\/">My area<\/a>/)
+    }
   })
   describe('Let your agent deploy (the same window in both views)', () => {
     const dlg = /<dialog data-export-dialog>[\s\S]*?<\/dialog>/.exec(SANDBOX_VIEW_BODY)?.[0] ?? ''
