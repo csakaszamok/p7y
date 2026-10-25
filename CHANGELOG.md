@@ -7,6 +7,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 ### Added
 
 - **`OIDC_ADMIN_EMAILS`:** the addresses on it are the admin when they sign in with Google (OIDC) in the browser, as the local admin is, and their sandboxes have no limits. Their tokens stay a user's; taken off the list (after a restart), their session is a user's again at once. The local admin stays.
+- **`UI_HOST`:** the UI's address, `p9m.<HOST_DOMAIN>` by default, e.g. `console.example.com` while the sandbox apps stay `<sandbox>-<subdomain>.example.com`. `setup.sh` makes `PUBLIC_URL` from it. A sandbox name whose app addresses would include it is refused. See [Configuration](docs/configuration.md).
 
 ## [0.12.4] - 2026-10-25
 

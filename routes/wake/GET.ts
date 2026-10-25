@@ -2,6 +2,7 @@ import { wakeByHost } from '../../services/wake'
 import { waitingPage } from '../../services/ui/waitingPage'
 import type { WakeRefusal } from '../../services/quota'
 import { decide } from '../../services/appAccess/decide'
+import { uiHost } from '../../services/uiHost'
 
 export default async (req: Request): Promise<Response> => {
   const host = req.headers.get('host') ?? ''
@@ -27,7 +28,7 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
 }
 
-const publicBase = () => (process.env.PUBLIC_URL ?? `https://p9m.${(process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()}`).replace(/\/$/, '')
+const publicBase = () => (process.env.PUBLIC_URL ?? `https://${uiHost()}`).replace(/\/$/, '')
 
 /** readyUrl: asked before opening the address, so the page waits until its app answers, not only its tunnel. */
 function wakingPage(name: string, from: 'asleep' | 'deep_sleep' | undefined, readyUrl: string): string {

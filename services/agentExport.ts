@@ -2,6 +2,7 @@ import fs from 'fs'
 import { rawNameOf } from './naming'
 import { dockerHostName } from './dockerAccess'
 import { sandboxParent } from './sandboxPaths'
+import { uiHost } from './uiHost'
 
 /**
  * The files of an export, in a .p9m folder for the project's folder: p9m.env, the sandbox's Docker client
@@ -16,7 +17,7 @@ export function prepareExport(
   const withDocker = opts.docker !== false
   const raw = rawNameOf(sandbox) ?? sandbox
   const domain = (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()
-  const url = (process.env.PUBLIC_URL ?? `https://p9m.${domain}`).replace(/\/$/, '')
+  const url = (process.env.PUBLIC_URL ?? `https://${uiHost()}`).replace(/\/$/, '')
   const docker = dockerHostName(sandbox, domain)
   const registry = `registry.${domain}`
   const dir = '.p9m'
