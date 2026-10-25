@@ -95,12 +95,10 @@ function removeDynamicConfig(name: string): void {
   try { fs.unlinkSync(file) } catch { /* already gone */ }
 }
 
+/** Empty for a sandbox whose directory is gone (a leftover): its panel still opens, so it can be deleted. */
 function readClientCerts(name: string): { ca_cert: string; client_cert: string; client_key: string } {
-  return {
-    ca_cert: fs.readFileSync(`${dirOf(name)}/certs/server/ca.pem`, 'utf8'),
-    client_cert: fs.readFileSync(`${dirOf(name)}/certs/client/cert.pem`, 'utf8'),
-    client_key: fs.readFileSync(`${dirOf(name)}/certs/client/key.pem`, 'utf8')
-  }
+  const read = (f: string) => { try { return fs.readFileSync(`${dirOf(name)}/certs/${f}`, 'utf8') } catch { return '' } }
+  return { ca_cert: read('server/ca.pem'), client_cert: read('client/cert.pem'), client_key: read('client/key.pem') }
 }
 
 /**
@@ -470,7 +468,7 @@ async function archive(name: string): Promise<string> {
   if (!SANDBOX_NAME.test(name)) throw new Error(`Invalid sandbox name: ${name}`)
   // Only a known sandbox directory: dirOf's fallback for an unknown name could be another directory, removed below
   const dir = sandboxDir(name)
-  if (!dir || !fs.existsSync(dir)) throw new Error(`Sandbox not found: ${name}`)
+  if (!dir || !fs.existsSync(dir)) return removeLeftover(name)
   const composePath = `${dir}/docker-compose.yml`
   const hasCompose = fs.existsSync(composePath)
   // In deep sleep there are no containers to read labels from: the compose file has the same ones
@@ -503,6 +501,30 @@ async function archive(name: string): Promise<string> {
   fs.rmSync(dir, { recursive: true, force: true })
   forgetSandboxDir(name)
   removeEmptyOwnerDir(dir)
+  removeDynamicConfig(name)
+  return dest
+}
+
+/**
+ * A sandbox whose directory is gone but whose containers or volumes are not (a delete or a create that broke off half
+ * way): its volumes are saved as an archive without a config (as orphan volumes are), then everything of it removed.
+ * Empty when it had no volumes.
+ */
+async function removeLeftover(name: string): Promise<string> {
+  const meta = (await listManagedContainers()).find(c => c.name === name)
+  const volumes = await listProjectVolumes(name)
+  if (!meta && !volumes.length) throw new Error(`Sandbox not found: ${name}`)
+  await stopProjectContainers(name)
+  let dest = ''
+  if (volumes.length) {
+    const archivedAt = new Date()
+    dest = `${archiveRoot(meta?.owner || 'admin')}/${name}-${archivedAt.toISOString().replace(/[:.]/g, '-')}`
+    fs.mkdirSync(`${dest}/volumes`, { recursive: true })
+    for (const volume of volumes) await exportVolume(volume, `${dest}/volumes/${volume}.tar.gz`)
+    fs.writeFileSync(`${dest}/manifest.json`, JSON.stringify({ name, owner: meta?.owner || 'admin', leftover: true, archived_at: archivedAt.toISOString(), volumes }, null, 2))
+  }
+  await removeProjectContainers(name)
+  for (const volume of volumes) await removeVolume(volume)
   removeDynamicConfig(name)
   return dest
 }

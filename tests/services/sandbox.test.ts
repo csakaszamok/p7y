@@ -490,7 +490,7 @@ describe('archiveSandbox', () => {
     vi.mocked(listManagedContainers).mockResolvedValue([
       sandboxMeta({ name, template: 'dind-standard', status: 'exited', container_id: 'abc', created_at: '1700000000' })
     ])
-    vi.mocked(listProjectVolumes).mockResolvedValue([vol])
+    vi.mocked(listProjectVolumes).mockImplementation(async n => n === name ? [vol] : [])
     vi.mocked(stopProjectContainers).mockImplementation(async () => { steps.push('stop') })
     vi.mocked(removeProjectContainers).mockImplementation(async () => { steps.push('rmcontainers') })
     vi.mocked(exportVolume).mockImplementation(async v => { steps.push(`export:${v}`) })
@@ -560,12 +560,47 @@ describe('archiveSandbox', () => {
   it('removes nothing for an unknown sandbox even when a path of its name exists (e.g. an owner directory)', async () => {
     const known = vi.mocked(sandboxDir).getMockImplementation()!
     vi.mocked(sandboxDir).mockReturnValue(null)
+    vi.mocked(listManagedContainers).mockResolvedValue([])
+    vi.mocked(listProjectVolumes).mockResolvedValue([])
     try {
       await expect(sandboxService.archiveSandbox(name)).rejects.toThrow('not found')
     } finally {
       vi.mocked(sandboxDir).mockImplementation(known)
     }
     expect(steps).toEqual([])
+  })
+
+  it("a leftover's panel opens (no certificates to read), so it can be deleted", async () => {
+    const known = vi.mocked(sandboxDir).getMockImplementation()!
+    vi.mocked(sandboxDir).mockReturnValue(null)
+    vi.mocked(fs.existsSync).mockImplementation(() => false)
+    const realRead = vi.mocked(fs.readFileSync).getMockImplementation()!
+    vi.mocked(fs.readFileSync).mockImplementation(((p: unknown, opts?: unknown) => {
+      if (String(p).includes('/certs/')) throw Object.assign(new Error(`ENOENT: no such file or directory, open '${p}'`), { code: 'ENOENT' })
+      return realRead(p as string, opts as BufferEncoding)
+    }) as typeof fs.readFileSync)
+    try {
+      expect(await sandboxService.getSandbox(name)).toMatchObject({ name, status: 'exited', ca_cert: '', client_cert: '', client_key: '' })
+    } finally {
+      vi.mocked(sandboxDir).mockImplementation(known)
+      vi.mocked(fs.readFileSync).mockImplementation(realRead)
+    }
+  })
+
+  it('a leftover (its directory gone, its container and volumes not): volumes archived without config, the rest removed', async () => {
+    const known = vi.mocked(sandboxDir).getMockImplementation()!
+    vi.mocked(sandboxDir).mockReturnValue(null)
+    vi.mocked(listManagedContainers).mockResolvedValue([{ name, template: 't', status: 'exited', container_id: 'abc', created_at: '1', owner: 'ann@x.io' } as never])
+    try {
+      const archive = await sandboxService.archiveSandbox(name)
+      expect(archive).toMatch(new RegExp(`^/opt/archive/ann@x\.io/${name}-`))
+    } finally {
+      vi.mocked(sandboxDir).mockImplementation(known)
+    }
+    // no config to copy, no directory to remove
+    expect(steps).toEqual(['stop', `export:${vol}`, 'manifest', 'rmcontainers', `rmvol:${vol}`])
+    const manifest = JSON.parse(vi.mocked(fs.writeFileSync).mock.calls.find(c => String(c[0]).endsWith('manifest.json'))![1] as string)
+    expect(manifest).toMatchObject({ name, owner: 'ann@x.io', leftover: true, volumes: [vol] })
   })
 })
 
