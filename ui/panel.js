@@ -334,10 +334,11 @@
       ${warning}
       <div class="files-bar"><span class="files-crumbs">${crumbs}</span>
         <span class="files-tools"><label class="button-like">Upload…<input type="file" multiple data-files-input hidden></label>
+        <label class="button-like" title="A folder with everything in it">Upload folder…<input type="file" webkitdirectory data-files-input hidden></label>
         <form data-files-mkdir><input name="folder" placeholder="new folder" aria-label="New folder name" required><button>New folder</button></form>
         <a href="${href(d.path)}" download title="This folder as a .tar">Download folder</a></span></div>
-      ${rows.length ? table(['Name', 'Size', 'Modified', ''], rows, 'files-table') : '<p class="muted files-empty">Empty: drop files here, or Upload…</p>'}
-      <p class="muted files-note">Drop files here to upload them, up to ${fmtBytes(d.max_upload)} a file. ${note}</p>
+      ${rows.length ? table(['Name', 'Size', 'Modified', ''], rows, 'files-table') : '<p class="muted files-empty">Empty: drop files or folders here, or Upload…</p>'}
+      <p class="muted files-note">Drop files or whole folders here to upload them, up to ${fmtBytes(d.max_upload)} a file; folders that are not there yet are made. ${note}</p>
       <p class="muted" data-files-status hidden></p>`
   }
 

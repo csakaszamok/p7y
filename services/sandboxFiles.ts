@@ -71,6 +71,13 @@ export function createSandboxFiles(deps: FilesDeps) {
     if (!f) throw new Error(`Not a file: ${p}`)
     return f.body
   }
+  async function mkdir(name: string, p: string): Promise<void> {
+    // mkdir -p would make a volume that is not there into a stray folder of the sandbox's dockerd
+    const vol = volumeOf(p)
+    const r = await deps.exec(name, vol ? ['sh', '-c', '[ -d "$2" ] || exit 3; mkdir -p -- "$1"', 'sh', p, vol.root] : ['mkdir', '-p', '--', p])
+    if (vol && r.code === 3) throw new Error(`No such volume: ${vol.name}`)
+    if (r.code !== 0) throw new Error(r.stderr.trim() || `Could not make ${p}`)
+  }
 
   return {
     async list(name: string, p: string): Promise<FileEntry[]> {
@@ -102,22 +109,18 @@ export function createSandboxFiles(deps: FilesDeps) {
       } catch { throw new Error(`Not a text file: ${p}`) }
     },
 
-    /** Writes (or replaces) a file; its folder must exist. */
+    /** Writes (or replaces) a file; a folder it needs that is not there yet is made (a folder upload's). */
     async write(name: string, p: string, data: Buffer): Promise<void> {
       const dir = path.posix.dirname(p)
-      try { await deps.putArchive(name, dir, tarFile(path.posix.basename(p), data)) } catch (err) {
-        if ((err as { statusCode?: number }).statusCode === 404) throw new Error(`No such folder: ${dir}`)
-        throw err
+      const put = () => deps.putArchive(name, dir, tarFile(path.posix.basename(p), data))
+      try { await put() } catch (err) {
+        if ((err as { statusCode?: number }).statusCode !== 404) throw err
+        await mkdir(name, dir)
+        await put()
       }
     },
 
-    async mkdir(name: string, p: string): Promise<void> {
-      // mkdir -p would make a volume that is not there into a stray folder of the sandbox's dockerd
-      const vol = volumeOf(p)
-      const r = await deps.exec(name, vol ? ['sh', '-c', '[ -d "$2" ] || exit 3; mkdir -p -- "$1"', 'sh', p, vol.root] : ['mkdir', '-p', '--', p])
-      if (vol && r.code === 3) throw new Error(`No such volume: ${vol.name}`)
-      if (r.code !== 0) throw new Error(r.stderr.trim() || `Could not make ${p}`)
-    },
+    mkdir,
 
     async remove(name: string, p: string): Promise<void> {
       if (FILE_ROOTS.includes(p)) throw new Error(`${p} itself cannot be removed`)
