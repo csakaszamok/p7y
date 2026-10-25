@@ -9,7 +9,7 @@
 #   docker run --rm --privileged -e DOCKER_TLS_CERTDIR= -e DOCKER_HOST=unix:///var/run/docker.sock \
 #     -v "$PWD:/src:ro" docker:dind sh -c \
 #     'dockerd-entrypoint.sh >/dev/null 2>&1 & until docker info >/dev/null 2>&1; do sleep 1; done; \
-#      apk add -q bash curl git && cp -r /src /p9m && bash /p9m/tests/install.sh'
+#      apk add -q bash curl && cp -r /src /p9m && bash /p9m/tests/install.sh'
 #
 # Usage: bash tests/install.sh
 set -euo pipefail

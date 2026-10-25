@@ -450,8 +450,8 @@ export const sandboxService = {
    * Explicit delete: nothing is destroyed until the sandbox's volumes and
    * config are safely in /opt/archive. Stop (not down) first so a failed
    * archive leaves containers Sablier can still wake. Containers are found by
-   * compose project label, so sandboxes without a compose file (created by
-   * older versions) are handled too. Returns the archive dir.
+   * compose project label, so a sandbox without a compose file is handled
+   * too. Returns the archive dir.
    */
   async archiveSandbox(name: string): Promise<string> {
     return archiving(() => archive(name))
@@ -464,8 +464,9 @@ const archiving = concurrency(4)
 
 async function archive(name: string): Promise<string> {
   if (!SANDBOX_NAME.test(name)) throw new Error(`Invalid sandbox name: ${name}`)
-  const dir = dirOf(name)
-  if (!fs.existsSync(dir)) throw new Error(`Sandbox not found: ${name}`)
+  // Only a known sandbox directory: dirOf's fallback for an unknown name could be another directory, removed below
+  const dir = sandboxDir(name)
+  if (!dir || !fs.existsSync(dir)) throw new Error(`Sandbox not found: ${name}`)
   const composePath = `${dir}/docker-compose.yml`
   const hasCompose = fs.existsSync(composePath)
   // In deep sleep there are no containers to read labels from: the compose file has the same ones
