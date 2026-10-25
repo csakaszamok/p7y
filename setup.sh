@@ -45,6 +45,21 @@ set_value() {
   fi
 }
 
+# size_mb SIZE: 4g, 512m, 1024k → megabytes
+size_mb() { awk -v s="$1" 'BEGIN { n = s + 0; u = tolower(substr(s, length(s))); print int(u == "g" ? n * 1024 : u == "m" ? n : u == "k" ? n / 1024 : n / 1048576) }'; }
+# suggest CPUS MEMORY_MB DISK_GB PER_CPUS PER_MEMORY_MB PER_DISK_MB → "suggested ideal bottleneck" (DISK_GB empty: unknown).
+# As services/capacity.ts: how many can use their full CPU and memory at once (2 GB kept for the rest),
+# twice that (most idle or sleep), at most as many as the disk holds at SANDBOX_DISK each.
+suggest() {
+  awk -v c="$1" -v m="$2" -v d="$3" -v pc="$4" -v pm="$5" -v pd="$6" 'BEGIN {
+    cpu = pc > 0 ? int(c / pc) : 0; mem = pm > 0 ? int((m - 2048) / pm) : 0; if (mem < 0) mem = 0
+    ideal = cpu < mem ? cpu : mem; if (ideal < 1) ideal = 1
+    s = ideal * 2; by = cpu <= mem ? "CPU" : "memory"
+    if (d != "" && pd > 0) { disk = int(d * 1024 / pd); if (disk < s) { s = disk; by = "disk" } }
+    if (s < 1) s = 1
+    print s, ideal, by }'
+}
+
 generated=()
 fill_secret() { # KEY BYTES placeholder...: set KEY to a random value if it is empty or a placeholder
   local key=$1 bytes=$2; shift 2
@@ -67,6 +82,24 @@ if [ "$(get HOST_ADDRESS)" = "192.168.1.100" ]; then
   address=$(hostname -I 2>/dev/null | awk '{print $1}' || true)  # no -I (macOS, busybox): localhost
   set_value HOST_ADDRESS "${address:-localhost}"
 fi
+
+# SANDBOX_MAX_TOTAL: the example's 200 becomes the number suggested for this host; one of your own stays.
+# P9M_HOST_*: the host's size, for the tests.
+case "$(get SANDBOX_MAX_TOTAL)" in
+  ""|200)
+    host_mb=${P9M_HOST_MEMORY_MB:-$(awk '/MemTotal/ {print int($2 / 1024)}' /proc/meminfo 2>/dev/null || true)}
+    if [ -n "$host_mb" ]; then
+      docker_root=$(docker info --format '{{.DockerRootDir}}' 2>/dev/null || true)
+      host_disk=${P9M_HOST_DISK_GB-$(df -BG --output=avail "${docker_root:-/nonexistent}" 2>/dev/null | tail -1 | tr -dc 0-9 || true)}
+      per_cpus=$(get SANDBOX_CPUS) per_mem=$(get SANDBOX_MEMORY) per_disk=$(get SANDBOX_DISK)
+      read -r max ideal by < <(suggest "${P9M_HOST_CPUS:-$(nproc 2>/dev/null || echo 1)}" "$host_mb" "$host_disk" \
+        "${per_cpus:-2}" "$(size_mb "${per_mem:-4g}")" "$(size_mb "${per_disk:-20g}")")
+      set_value SANDBOX_MAX_TOTAL "$max"
+      if [ "$by" = disk ]; then why="as many as the disk holds at ${per_disk:-20g} each"
+      else why="$ideal can use their full CPU and memory at once ($by first), twice that since most idle or sleep"; fi
+      echo "SANDBOX_MAX_TOTAL=$max running sandboxes, suggested for this host: $why"
+    fi ;;
+esac
 
 if [ ${#generated[@]} -gt 0 ]; then
   echo "Generated in .env: ${generated[*]}"

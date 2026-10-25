@@ -16,6 +16,20 @@ warn() { printf '  \033[33m⚠\033[0m %s\n' "$1"; [ -n "${2:-}" ] && printf '   
 fail() { printf '  \033[31m✘\033[0m %s\n' "$1"; [ -n "${2:-}" ] && printf '      → %s\n' "$2"; fails=$((fails + 1)); }
 section() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 has() { command -v "$1" >/dev/null 2>&1; }
+# size_mb SIZE: 4g, 512m, 1024k → megabytes
+size_mb() { awk -v s="$1" 'BEGIN { n = s + 0; u = tolower(substr(s, length(s))); print int(u == "g" ? n * 1024 : u == "m" ? n : u == "k" ? n / 1024 : n / 1048576) }'; }
+# suggest CPUS MEMORY_MB DISK_GB PER_CPUS PER_MEMORY_MB PER_DISK_MB → "suggested ideal bottleneck" (DISK_GB empty: unknown).
+# As services/capacity.ts: how many can use their full CPU and memory at once (2 GB kept for the rest),
+# twice that (most idle or sleep), at most as many as the disk holds at SANDBOX_DISK each.
+suggest() {
+  awk -v c="$1" -v m="$2" -v d="$3" -v pc="$4" -v pm="$5" -v pd="$6" 'BEGIN {
+    cpu = pc > 0 ? int(c / pc) : 0; mem = pm > 0 ? int((m - 2048) / pm) : 0; if (mem < 0) mem = 0
+    ideal = cpu < mem ? cpu : mem; if (ideal < 1) ideal = 1
+    s = ideal * 2; by = cpu <= mem ? "CPU" : "memory"
+    if (d != "" && pd > 0) { disk = int(d * 1024 / pd); if (disk < s) { s = disk; by = "disk" } }
+    if (s < 1) s = 1
+    print s, ideal, by }'
+}
 # version_ge A B: A >= B (dotted versions)
 version_ge() { [ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -1)" = "$2" ]; }
 
@@ -107,6 +121,25 @@ if $docker_ok; then
   elif [ "$free_gb" -lt 10 ]; then fail "$free_gb GB free for Docker ($root)" "sandbox images and volumes need at least 10 GB, more with every sandbox"
   elif [ "$free_gb" -lt 50 ]; then warn "$free_gb GB free for Docker ($root)" "enough to start; sandboxes are flagged above 20 GB each (SANDBOX_DISK)"
   else ok "$free_gb GB free for Docker ($root)"; fi
+fi
+
+section "How many sandboxes"
+# The per-sandbox limits of .env, if there is one already, else the defaults
+env_get() { [ -f .env ] && sed -n "s/^$1=//p" .env | tail -1; }
+per_cpus=$(env_get SANDBOX_CPUS) per_mem=$(env_get SANDBOX_MEMORY) per_disk=$(env_get SANDBOX_DISK)
+host_mb=$(awk '/MemTotal/ {print int($2 / 1024)}' /proc/meminfo 2>/dev/null)
+if [ -z "$host_mb" ]; then
+  warn "could not read the memory size: no suggested SANDBOX_MAX_TOTAL"
+else
+  read -r max ideal by < <(suggest "$cpus" "$host_mb" "${free_gb:-}" "${per_cpus:-2}" "$(size_mb "${per_mem:-4g}")" "$(size_mb "${per_disk:-20g}")")
+  if [ "$by" = disk ]; then why="as many as the disk holds at ${per_disk:-20g} each, asleep ones too"
+  else why="$ideal can use their full ${per_cpus:-2} CPUs and ${per_mem:-4g} at once ($by first), twice that since most idle or sleep"; fi
+  set_max=$(env_get SANDBOX_MAX_TOTAL)
+  if [ -n "$set_max" ] && [ "$set_max" != 0 ] && [ "$set_max" -gt $((max * 3 / 2)) ]; then
+    warn "SANDBOX_MAX_TOTAL=$set_max in .env; $max suggested for this host: $why" "more running at once than the host can serve when they all work: lower it"
+  else
+    ok "SANDBOX_MAX_TOTAL=$max suggested: $why${set_max:+ (.env: $set_max)}"
+  fi
 fi
 
 section "Ports"

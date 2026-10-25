@@ -312,6 +312,19 @@ describe('overview', () => {
     expect(html).toContain('1 / 3</td>') // u@x: running / quota
     expect(html).toContain('∞')
   })
+  it("the admin sees the suggested server limit, and a warning when SANDBOX_MAX_TOTAL is far above it", () => {
+    const G = 1024 ** 3
+    const resources = { cpu: { used: 0, reserved: 0, host: 8 }, memory: { used: 0, reserved: 0, host: 32 * G }, disk: { used: 0, over: 0 },
+      capacity: { ideal: 4, suggested: 8, by: 'cpu', cpu: 4, memory: 7, disk: 40 } }
+    const html = P.overviewHtml({ archived: 0, server_limit: 200, server_used: 0, by_owner: [], resources }, [], { isAdmin: true })
+    expect(html).toContain('Suggested server limit: <strong>8</strong>')
+    expect(html).toContain('4 can use their full CPU and memory limits at once (CPU first)')
+    expect(html).toContain('SANDBOX_MAX_TOTAL is 200')
+    const fits = P.overviewHtml({ archived: 0, server_limit: 10, server_used: 0, by_owner: [], resources: { ...resources, capacity: { ...resources.capacity, suggested: 3, by: 'disk', disk: 3 } } }, [], { isAdmin: true })
+    expect(fits).toContain('the disk holds about 3 sandboxes')
+    expect(fits).toContain('SANDBOX_MAX_TOTAL is 10')
+    expect(P.overviewHtml({ archived: 0, server_limit: 8, server_used: 0, by_owner: [], resources }, [], { isAdmin: true })).not.toContain('⚠ SANDBOX_MAX_TOTAL')
+  })
   it('the admin without a server limit', () => {
     expect(P.overviewHtml({ archived: 0, server_limit: null, server_used: 0, by_owner: [], resources: null }, [], { isAdmin: true })).toContain('no server limit')
   })
