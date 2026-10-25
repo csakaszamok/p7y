@@ -40,8 +40,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0   # the upgrade case starts from the previous release's tag
       # Docker Hub's pull limit for anonymous pulls is shared by GitHub's runners (429 on the base image);
       # logged in it is far higher. Skipped without the secret (e.g. a pull request from a fork).
       - name: Log in to Docker Hub

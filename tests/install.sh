@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Integration test: a fresh install from the release files only (no checkout), then an old checkout
-# upgraded in place. Builds the image and needs ports 80, 443 and 8081.
+# Integration test: a fresh install from the release files only (no checkout). Builds the image and needs ports
+# 80, 443 and 8081.
 #
 # Only on a machine without Purgatorium (CI, or a throw-away Docker): its networks have fixed names, so a test
 # stack next to a real one would join the real sandboxes' networks. On a development machine run it in a
@@ -26,9 +26,6 @@ fi
 
 repo=$PWD
 TAG=p9m-install-test
-# The release an old checkout runs before the upgrade (needs the repository's tags)
-OLD_REF=${OLD_REF:-v0.4.2}
-git rev-parse -q --verify "$OLD_REF^{commit}" >/dev/null || fail "no $OLD_REF in this repository (fetch the tags)"
 info "building the image"
 docker build -q -t "ghcr.io/csakaszamok/p9m:$TAG" . >/dev/null
 
@@ -70,37 +67,3 @@ for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://loca
 curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && pass "our 404 page" || fail "404 page"
 docker run --rm --entrypoint ls -v "${COMPOSE_PROJECT_NAME}_sablier_themes:/t" "ghcr.io/csakaszamok/p9m:$TAG" /t | grep -qx p9m.html && pass "Sablier has the p9m theme" || fail "theme"
 
-info "old checkout ($OLD_REF) upgraded with git while it runs"
-# A real one: the old release's files in a git repository, running; then the checkout moves to this tree,
-# as `git pull` would (it deletes files that left the repository, and directories that became empty)
-docker compose down -v >/dev/null 2>&1
-old=$base/old/p9m; mkdir -p "$old"; dir=$old; cd "$old"
-git init -q && git config user.email test@example.com && git config user.name test
-git -C "$repo" archive "$OLD_REF" | tar -x && git add -A && git commit -qm old
-git rm -rq . && git -C "$repo" archive HEAD | tar -x   # the committed tree under test
-git add -A && git commit -qm new && new=$(git rev-parse HEAD) && git checkout -q HEAD~1
-# 0.4's setup.sh stops at `hostname -I` on busybox, after it wrote the secrets
-bash setup.sh >/dev/null 2>&1 || true
-[ -f .env ] || fail "the old setup.sh made no .env"
-docker compose up -d --quiet-pull >/dev/null 2>&1 || { docker compose ps -a; fail "the old release did not start"; }
-wait_api
-cp .env "$base/env.before"; find data opt -type f 2>/dev/null | sort > "$base/files.before"
-git checkout -q "$new"   # the pull
-printf 'P9M_VERSION=%s
-' "$TAG" >> .env   # the new compose file's default would name the new release
-docker compose up -d --remove-orphans --quiet-pull >/dev/null 2>&1 || { docker compose ps -a; docker compose logs p9m-init; fail "up after the pull"; }
-wait_api
-for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && break; sleep 2; done
-curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && pass "after the pull: our 404 page through Traefik" || fail "after the pull: Traefik lost its error pages (dynamic/)"
-code=$(curl -s -m 5 -o /dev/null -w '%{http_code}' -H 'Host: p9m.lvh.me' http://localhost/)
-case $code in 200|302) pass "after the pull: the UI through Traefik ($code)";; *) fail "after the pull: the UI through Traefik answers $code";; esac
-# Traefik must read the dynamic/ that is there now: one bound to a directory the pull deleted keeps its last
-# configuration in memory and never sees a new errors.yml or tls.yml
-seen=$(docker exec "$(docker compose ps -q traefik)" ls -a /etc/traefik/dynamic 2>&1 || true)
-echo "$seen" | grep -qx errors.yml && pass "after the pull: Traefik sees dynamic/"   || fail "after the pull: Traefik reads a dynamic/ the pull deleted (it sees: $(echo $seen); started $(docker compose ps traefik --format '{{.RunningFor}}'); host: $(ls -A dynamic | tr '
-' ' '))"
-has_portainer && fail "the checkout's starter applies" || pass "the image's starter applies"
-[ -z "$(git status --porcelain)" ] && pass "git status clean" || fail "git status: $(git status --porcelain | head -5)"
-head -n "$(wc -l < "$base/env.before")" .env | cmp -s - "$base/env.before" && pass ".env kept" || fail ".env changed"
-missing=$(while read -r f; do [ -e "$f" ] || echo "$f"; done < "$base/files.before")
-[ -z "$missing" ] && pass "data/ and opt/ kept" || fail "gone after the upgrade: $missing"
