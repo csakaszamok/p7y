@@ -1,5 +1,5 @@
 import { readSession, getCookie, SESSION_COOKIE, type Session } from '../session'
-import { subAllowed } from '../allowlist'
+import { subAllowed, sessionRole } from '../allowlist'
 import { sandboxPrefix } from '../naming'
 import { repoInfo, type RepoInfo } from '../repoInfo'
 import { viewOf, canSwitchView, themeOf } from '../userPrefs'
@@ -12,8 +12,10 @@ export function escapeHtml(s: string): string {
 
 export function pageSession(req: Request): Session | null {
   const session = readSession(getCookie(req, SESSION_COOKIE))
-  // Taken off OIDC_ALLOWED_DOMAINS / OIDC_ALLOWED_EMAILS: signed out at once
-  return session && subAllowed(session.sub, session.role) ? session : null
+  if (!session) return null
+  // Taken off OIDC_ADMIN_EMAILS: a user again at once; off OIDC_ALLOWED_DOMAINS / OIDC_ALLOWED_EMAILS: signed out
+  const role = sessionRole(session.sub, session.role)
+  return subAllowed(session.sub, role) ? { ...session, role } : null
 }
 
 export function redirect(location: string): Response {

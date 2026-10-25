@@ -130,6 +130,15 @@ describe('OIDC login', () => {
     } finally { vi.stubEnv('OIDC_ALLOWED_DOMAINS', '') }
   })
 
+  it('an address on OIDC_ADMIN_EMAILS gets an admin session; anyone else a user one', async () => {
+    vi.stubEnv('OIDC_ADMIN_EMAILS', 'alice@example.com')
+    try {
+      expect(readSession(cookieValue(await cb(await start()), 'p9m_session'))).toMatchObject({ sub: 'alice@example.com', role: 'admin' })
+      claims = { email: 'bob@example.com', email_verified: true }
+      expect(readSession(cookieValue(await cb(await start()), 'p9m_session'))).toMatchObject({ sub: 'bob@example.com', role: 'user' })
+    } finally { vi.stubEnv('OIDC_ADMIN_EMAILS', '') }
+  })
+
   it('rejects a claims email with no "@" (a lax provider could otherwise hand out sub "admin")', async () => {
     claims = { email: 'admin', email_verified: true }
     const res = await cb(await start())

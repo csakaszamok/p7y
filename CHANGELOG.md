@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **`OIDC_ADMIN_EMAILS`:** the addresses on it are the admin when they sign in with Google (OIDC) in the browser, as the local admin is, and their sandboxes have no limits. Their tokens stay a user's; taken off the list (after a restart), their session is a user's again at once. The local admin stays.
+
 ## [0.12.4] - 2026-10-25
 
 Upgrading from 0.12.3: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (only the version changes). A `docker-compose.yml` you keep from before stays on 0.12.3.
