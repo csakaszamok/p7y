@@ -1610,8 +1610,13 @@
 <td>The host's address, put into the sandbox TLS certificates and used for the registry token URL when <code>PUBLIC_URL</code> is not set</td>
 </tr>
 <tr>
+<td><code>UI_HOST</code></td>
+<td><code>p9m.&lt;HOST_DOMAIN&gt;</code></td>
+<td>The UI's own address, e.g. <code>console.example.com</code> with <code>HOST_DOMAIN=example.com</code>: the sandbox apps stay <code>&lt;sandbox&gt;-&lt;subdomain&gt;.example.com</code>. Under <code>HOST_DOMAIN</code>, the wildcard DNS record and certificate cover it. Set <code>PUBLIC_URL</code> to it too, and register its <code>/auth/callback</code> with the OIDC provider. A sandbox whose apps' addresses would include it (a sandbox <code>console</code> with <code>console-admin.example.com</code>) cannot be created</td>
+</tr>
+<tr>
 <td><code>PUBLIC_URL</code></td>
-<td><code>http://p9m.&lt;HOST_DOMAIN&gt;</code></td>
+<td><code>http://&lt;UI_HOST&gt;</code></td>
 <td>The address of the UI as users see it; <code>https://…</code> turns on the HTTPS checks (see <a href="../https/">HTTPS</a>)</td>
 </tr>
 <tr>
@@ -1623,6 +1628,11 @@
 <td><code>OIDC_ALLOWED_DOMAINS</code>, <code>OIDC_ALLOWED_EMAILS</code></td>
 <td>— (anyone)</td>
 <td>Who may sign in with OIDC, as comma lists: domains (<code>example.com,partner.org</code>, the exact domain, not its subdomains) and single addresses (<code>guest@gmail.com</code>). Without either, anyone with an account at the provider can sign in, with Google any Google account; Purgatorium says so in its log at startup. Checked at sign-in and on every request: someone taken off the list (after a restart) is signed out and their tokens stop working at once. The admin is never limited</td>
+</tr>
+<tr>
+<td><code>OIDC_ADMIN_EMAILS</code></td>
+<td>— (none)</td>
+<td>Addresses (comma list) that are the admin when they sign in with OIDC in the browser, as the local admin is: all sandboxes, the Overview, users, no limits, host folders. They may sign in even if <code>OIDC_ALLOWED_*</code> leaves them out. Their tokens stay a user's. Taken off the list (after a restart), their session is a user's again at once. The local admin (<code>ADMIN_USER</code>) stays</td>
 </tr>
 <tr>
 <td><code>APPS_ACCESS_DEFAULT</code></td>
