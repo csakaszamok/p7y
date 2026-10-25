@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-10-25
+
+Upgrading from 0.12.1: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (only the version changes). A `docker-compose.yml` you keep from before stays on 0.12.1.
+
 ### Added
 
 - **A newer release in the topbar** (the admin only): next to the version, `v0.12.3 available` when the running series has a newer release, or a quieter `v0.13.0 out` for a later series, linking to its release notes. The server checks GitHub's releases along with the star and fork counts, at most once an hour, and sends nothing about the installation; `GITHUB_STATS=off` turns it off.
