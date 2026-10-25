@@ -4,6 +4,8 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-25
+
 **Purgatory (p7y) is now Purgatorium (p9m).** There is no upgrade from Purgatory: install Purgatorium afresh ([install](docs/install.md)) in a new directory called `p9m`. Sandboxes, archives, users, tokens and settings are not carried over.
 
 ### Changed
