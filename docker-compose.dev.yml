@@ -1,9 +1,9 @@
-# Development: run Purgatory from this checkout instead of the released image's code and files.
+# Development: run Purgatorium from this checkout instead of the released image's code and files.
 # Enable with COMPOSE_PATH_SEPARATOR=: and COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml in .env;
 # code, template, runtime and error page edits apply on the next request; errors.yml on the next `docker compose up -d`;
 # Sablier themes and the registry config also need `docker compose restart sablier registry` (they read them at start).
 services:
-  p7y:
+  p9m:
     build: .
     volumes:
       - ./server.ts:/app/server.ts
@@ -13,8 +13,8 @@ services:
       - ./templates:/app/templates
       - ./runtimes:/app/runtimes
       - ./error-pages:/app/error-pages:ro
-      - ./package.json:/app/p7y/package.json:ro
-  p7y-init:
+      - ./package.json:/app/p9m/package.json:ro
+  p9m-init:
     build: .
     volumes:
       - ./sablier-themes:/app/assets/sablier-themes:ro

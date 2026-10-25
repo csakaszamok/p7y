@@ -72,7 +72,7 @@ export async function runTerminal(ws: WsLike, name: string, overrides: Partial<T
   ping() // at once: the session may be about to run out
   keepAlive = setInterval(ping, d.keepAliveMs)
   const decoder = new StringDecoder('utf8') // a character split across two chunks stays whole
-  // A tab that does not keep up (or a `yes`) must not pile output up in Purgatory's memory
+  // A tab that does not keep up (or a `yes`) must not pile output up in Purgatorium's memory
   const behind = () => ((ws as { bufferedAmount?: number }).bufferedAmount ?? 0) > MAX_BUFFERED
   const resumeWhenDrained = () => {
     if (closed) return

@@ -1,20 +1,17 @@
 services:
-  p7y:
-    # The released image: it carries the templates, runtimes and the files p7y-init installs.
+  p9m:
+    # The released image: it carries the templates, runtimes and the files p9m-init installs.
     # To work on the code, add docker-compose.dev.yml (COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml,
     # and COMPOSE_PATH_SEPARATOR=: on Windows, in .env).
-    image: ghcr.io/p7y-dev/p7y:${P7Y_VERSION:-0.11.10}
+    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.0}
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
-      # to localhost (P7Y_API_BIND=127.0.0.1) so everything goes through HTTPS.
-      # LEANDER_API_BIND is the pre-rename name of the same setting.
-      - "${P7Y_API_BIND:-${LEANDER_API_BIND:-0.0.0.0}}:8081:3000"
+      # to localhost (P9M_API_BIND=127.0.0.1) so everything goes through HTTPS.
+      - "${P9M_API_BIND:-0.0.0.0}:8081:3000"
     volumes:
       - ./data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
       - ./opt/sandboxes:/opt/sandboxes
-      # Sandboxes from before opt/sandboxes/<owner>/<name>: read by the startup move; removed in a later version
-      - ./opt/users:/opt/users
       - ./opt/archive:/opt/archive
       - ./certs:/app/certs:ro
       - ./dynamic:/app/traefik-dynamic
@@ -34,7 +31,7 @@ services:
       USER_VIEW_SWITCH: ${USER_VIEW_SWITCH:-false}
       # The name and logo at the top left, on the sign-in page and in the tab titles: none hides them;
       # the logo can be an https:// address or an image file in the container (e.g. /app/data/logo.png)
-      UI_TITLE: ${UI_TITLE:-Purgatory}
+      UI_TITLE: ${UI_TITLE:-Purgatorium}
       UI_LOGO: ${UI_LOGO:-}
       # off: the public sign-in page does not show the sandbox places (taken / free)
       LOGIN_CAPACITY: ${LOGIN_CAPACITY:-on}
@@ -54,17 +51,15 @@ services:
       # Whether images that passed the secret scan can be pulled without a login
       REGISTRY_PUBLIC_PULL: ${REGISTRY_PUBLIC_PULL:-true}
       TRAEFIK_DYNAMIC_DIR: /app/traefik-dynamic
-      API_TITLE: "Purgatory API"
+      API_TITLE: "Purgatorium API"
       # Host path of ./opt/sandboxes; override only if auto-detect fails (e.g. HOST_SANDBOXES_DIR=C:/m/docker/.../opt/sandboxes).
-      # HOST_USERS_DIR (the old ./opt/users) still works: its sibling `sandboxes` is used.
       HOST_SANDBOXES_DIR: ${HOST_SANDBOXES_DIR:-}
-      HOST_USERS_DIR: ${HOST_USERS_DIR:-}
       # How often to look for sandboxes to put into deep sleep (e.g. 30s, 1m, 1h)
       DEEP_SLEEP_CHECK_INTERVAL: ${DEEP_SLEEP_CHECK_INTERVAL:-1m}
       # Max sandboxes per signed-in user (0 = unlimited); the admin is not limited
       SANDBOX_QUOTA: ${SANDBOX_QUOTA:-3}
       # UI sign-in. Admin: local account. Everyone else: OIDC (Google or any OpenID Connect provider).
-      PUBLIC_URL: ${PUBLIC_URL:-http://p7y.${HOST_DOMAIN:-lvh.me}}
+      PUBLIC_URL: ${PUBLIC_URL:-http://p9m.${HOST_DOMAIN:-lvh.me}}
       SESSION_SECRET: ${SESSION_SECRET:-}
       ADMIN_USER: ${ADMIN_USER:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
@@ -75,7 +70,7 @@ services:
       # Who may sign in with OIDC (comma lists); without either, anyone with an account at the provider
       OIDC_ALLOWED_DOMAINS: ${OIDC_ALLOWED_DOMAINS:-}
       OIDC_ALLOWED_EMAILS: ${OIDC_ALLOWED_EMAILS:-}
-      # App access (docs: app-access.md): who opens an app without p7y.access; the key of its cookies and tickets
+      # App access (docs: app-access.md): who opens an app without p9m.access; the key of its cookies and tickets
       APPS_ACCESS_DEFAULT: ${APPS_ACCESS_DEFAULT:-public}
       APP_ACCESS_SECRET: ${APP_ACCESS_SECRET:-}
       # The Hub (docs: hub.md): off unless true; viewers besides the builders by domain or address
@@ -89,43 +84,35 @@ services:
       - traefik-net
       - sablier-net   # read Sablier's /metrics (session expiry per sandbox)
     # A name that does not resolve (a sandbox just removed or asleep) waits for the host's resolver: 5 s by default,
-    # holding up Purgatory's other lookups meanwhile. Give up after 1 s, once more
+    # holding up Purgatorium's other lookups meanwhile. Give up after 1 s, once more
     dns_opt:
       - timeout:1
       - attempts:2
     labels:
       traefik.enable: "true"
-      traefik.http.routers.p7y.rule: "Host(`p7y.${HOST_DOMAIN:-lvh.me}`)"
-      traefik.http.routers.p7y.entrypoints: web,websecure
-      traefik.http.routers.p7y.service: p7y
-      traefik.http.services.p7y.loadbalancer.server.port: "3000"
-      # The Hub's own host (HUB_ENABLED=true), served by Purgatory; 404 while the Hub is off
-      traefik.http.routers.p7y-hub.rule: "Host(`${HUB_HOST:-hub.${HOST_DOMAIN:-lvh.me}}`)"
-      traefik.http.routers.p7y-hub.entrypoints: web,websecure
-      traefik.http.routers.p7y-hub.service: p7y
+      traefik.http.routers.p9m.rule: "Host(`p9m.${HOST_DOMAIN:-lvh.me}`)"
+      traefik.http.routers.p9m.entrypoints: web,websecure
+      traefik.http.routers.p9m.service: p9m
+      traefik.http.services.p9m.loadbalancer.server.port: "3000"
+      # The Hub's own host (HUB_ENABLED=true), served by Purgatorium; 404 while the Hub is off
+      traefik.http.routers.p9m-hub.rule: "Host(`${HUB_HOST:-hub.${HOST_DOMAIN:-lvh.me}}`)"
+      traefik.http.routers.p9m-hub.entrypoints: web,websecure
+      traefik.http.routers.p9m-hub.service: p9m
       # TLS-only TCP addresses for sandbox ports (<http-name>-tcp.<domain>:443) and sandbox Docker APIs
       # (<raw>-docker.<domain>:443), passed through to the TCP gateway
-      traefik.tcp.routers.p7y-tcp.rule: "HostSNIRegexp(`^[a-z0-9-]+-(tcp|docker)[.]${HOST_DOMAIN:-lvh.me}$$`)"
-      traefik.tcp.routers.p7y-tcp.entrypoints: websecure
-      traefik.tcp.routers.p7y-tcp.tls.passthrough: "true"
-      traefik.tcp.routers.p7y-tcp.service: p7y-tcp
-      traefik.tcp.services.p7y-tcp.loadbalancer.server.port: "4443"
+      traefik.tcp.routers.p9m-tcp.rule: "HostSNIRegexp(`^[a-z0-9-]+-(tcp|docker)[.]${HOST_DOMAIN:-lvh.me}$$`)"
+      traefik.tcp.routers.p9m-tcp.entrypoints: websecure
+      traefik.tcp.routers.p9m-tcp.tls.passthrough: "true"
+      traefik.tcp.routers.p9m-tcp.service: p9m-tcp
+      traefik.tcp.services.p9m-tcp.loadbalancer.server.port: "4443"
       traefik.docker.network: traefik-net
-      # The UI's pre-rename address (Leander) redirects to the new one.
-      traefik.http.routers.p7y-legacy-host.rule: "Host(`leander.${HOST_DOMAIN:-lvh.me}`)"
-      traefik.http.routers.p7y-legacy-host.entrypoints: web,websecure
-      traefik.http.routers.p7y-legacy-host.middlewares: "legacy-host-redirect@docker"
-      traefik.http.routers.p7y-legacy-host.service: p7y
-      traefik.http.middlewares.legacy-host-redirect.redirectregex.regex: "^(https?)://leander[.](.*)$$"
-      traefik.http.middlewares.legacy-host-redirect.redirectregex.replacement: "$${1}://p7y.$${2}"
-      traefik.http.middlewares.legacy-host-redirect.redirectregex.permanent: "true"
       # Catch-all (lowest priority): hosts without a sandbox router — deep-sleeping
       # or unknown sandboxes — go to /wake, which rebuilds or 404s.
-      traefik.http.routers.p7y-wake.rule: "HostRegexp(`.+`)"
-      traefik.http.routers.p7y-wake.priority: "1"
-      traefik.http.routers.p7y-wake.entrypoints: web,websecure
-      traefik.http.routers.p7y-wake.middlewares: "wake-path@docker"
-      traefik.http.routers.p7y-wake.service: p7y
+      traefik.http.routers.p9m-wake.rule: "HostRegexp(`.+`)"
+      traefik.http.routers.p9m-wake.priority: "1"
+      traefik.http.routers.p9m-wake.entrypoints: web,websecure
+      traefik.http.routers.p9m-wake.middlewares: "wake-path@docker"
+      traefik.http.routers.p9m-wake.service: p9m
       traefik.http.middlewares.wake-path.replacepath.path: "/wake"
     restart: unless-stopped
     healthcheck:
@@ -137,8 +124,8 @@ services:
 
   # One-shot, on every up: copies this release's Sablier themes, registry config and
   # dynamic/errors.yml from the image, so they always match it (no files from a checkout).
-  p7y-init:
-    image: ghcr.io/p7y-dev/p7y:${P7Y_VERSION:-0.11.10}
+  p9m-init:
+    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.0}
     entrypoint: ["sh", "/app/assets/install-assets.sh"]
     volumes:
       - sablier_themes:/out/sablier-themes
@@ -151,17 +138,17 @@ services:
     image: registry:2.8.3
     environment:
       REGISTRY_AUTH: token
-      # Where docker clients get registry tokens: p7y via PUBLIC_URL when set (https in a public deployment)
+      # Where docker clients get registry tokens: p9m via PUBLIC_URL when set (https in a public deployment)
       REGISTRY_AUTH_TOKEN_REALM: "${PUBLIC_URL:-http://${HOST_ADDRESS:-localhost}:8081}/v2/auth"
       REGISTRY_AUTH_TOKEN_SERVICE: "registry.${HOST_DOMAIN:-lvh.me}"
-      REGISTRY_AUTH_TOKEN_ISSUER: p7y
+      REGISTRY_AUTH_TOKEN_ISSUER: p9m
       REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE: /auth/registry-auth.crt
       REGISTRY_HTTP_SECRET: "${REGISTRY_HTTP_SECRET:-changeme}"
-    # config.yml (from the image, via p7y-init) adds push notifications (to Purgatory, for secret scanning) and deletes
-    entrypoint: ["/bin/sh", "-c", "sed \"s|__NOTIFY_SECRET__|$$(cat /auth/registry-notify.secret)|\" /etc/p7y/config.yml > /etc/docker/registry/config.yml && exec registry serve /etc/docker/registry/config.yml"]
+    # config.yml (from the image, via p9m-init) adds push notifications (to Purgatorium, for secret scanning) and deletes
+    entrypoint: ["/bin/sh", "-c", "sed \"s|__NOTIFY_SECRET__|$$(cat /auth/registry-notify.secret)|\" /etc/p9m/config.yml > /etc/docker/registry/config.yml && exec registry serve /etc/docker/registry/config.yml"]
     volumes:
       - registry_data:/var/lib/registry
-      - registry_conf:/etc/p7y:ro
+      - registry_conf:/etc/p9m:ro
       - ./data:/auth:ro
     networks:
       - traefik-net
@@ -173,9 +160,9 @@ services:
       traefik.docker.network: traefik-net
     restart: unless-stopped
     depends_on:
-      p7y:
+      p9m:
         condition: service_healthy
-      p7y-init:
+      p9m-init:
         condition: service_completed_successfully
         restart: true
 
@@ -196,8 +183,8 @@ services:
 
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--providers.file.watch=true"
-      # The app access middleware of every sandbox (p7y.access), from Purgatory every 2 s
-      - "--providers.http.endpoint=http://p7y:3001/traefik/access"
+      # The app access middleware of every sandbox (p9m.access), from Purgatorium every 2 s
+      - "--providers.http.endpoint=http://p9m:3001/traefik/access"
       - "--providers.http.pollInterval=2s"
       - "--entrypoints.web.http.middlewares=global-error-pages@file"
       - "--entrypoints.websecure.http.middlewares=global-error-pages@file"
@@ -213,16 +200,16 @@ services:
         aliases:
           # Sandboxes reach the registry and its token endpoint through Traefik by name (not 127.0.0.1)
           - registry.${HOST_DOMAIN:-lvh.me}
-          - p7y.${HOST_DOMAIN:-lvh.me}
+          - p9m.${HOST_DOMAIN:-lvh.me}
       sablier-net: {}
     restart: unless-stopped
-    # Its error-page middleware is in dynamic/errors.yml, which p7y-init writes; restarted when a new release
-    # recreates p7y-init. Pulling 0.5 into an old checkout recreates dynamic/ under a running Traefik, which would keep
+    # Its error-page middleware is in dynamic/errors.yml, which p9m-init writes; restarted when a new release
+    # recreates p9m-init. Pulling 0.5 into an old checkout recreates dynamic/ under a running Traefik, which would keep
     # reading the deleted directory: this label is new in 0.5, so the upgrade's `up` recreates Traefik once.
     labels:
-      p7y.compose: "0.5"
+      p9m.compose: "0.5"
     depends_on:
-      p7y-init:
+      p9m-init:
         condition: service_completed_successfully
         restart: true
 
@@ -234,15 +221,15 @@ services:
       # Persist sessions so restarting Sablier does not put running sandboxes to sleep
       # (auto-stop-on-startup stops every instance it has no session for).
       - --storage.file=/data/state.json
-      # Read-only /metrics: p7y shows each sandbox's session expiry (time until sleep).
+      # Read-only /metrics: p9m shows each sandbox's session expiry (time until sleep).
       - --server.metrics.enabled
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - sablier_themes:/etc/sablier/themes:ro
       - sablier_data:/data
-    # Themes are read at start: a new release's p7y-init run restarts it
+    # Themes are read at start: a new release's p9m-init run restarts it
     depends_on:
-      p7y-init:
+      p9m-init:
         condition: service_completed_successfully
         restart: true
     # Only Traefik talks to Sablier; keep it off traefik-net so sandboxes cannot reach its API.

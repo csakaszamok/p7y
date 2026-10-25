@@ -25,7 +25,7 @@ describe('the API routes as MCP tools', () => {
   const namesFor = (p: Parameters<typeof mcpToolsFor>[0]) => routes.map(asRoute).filter(mcpToolsFor(p)).map(r => (r.openapi.mcp as { name: string }).name).sort()
 
   it('a token for one sandbox sees only the tools it may call; a token for all of them sees every tool', () => {
-    const scoped = namesFor({ sub: 'u@x', role: 'user', via: 'token', sandbox: 'p7y-shop' })
+    const scoped = namesFor({ sub: 'u@x', role: 'user', via: 'token', sandbox: 'p9m-shop' })
     for (const n of ['wake_sandbox', 'sleep_sandbox', 'restart_sandbox', 'get_sandbox', 'list_sandboxes', 'set_sleep_settings', 'who_am_i']) expect(scoped).toContain(n)
     for (const n of ['create_sandbox', 'archive_sandbox', 'create_token', 'list_tokens', 'add_ssh_key', 'sandbox_summary', 'add_sandbox_mount', 'remove_sandbox_mount']) expect(scoped).not.toContain(n)
     expect(scoped).toContain('list_sandbox_mounts')
@@ -57,6 +57,6 @@ describe('mcpCaller', () => {
   it('401 without one, or with a browser session only (the tools would not get its cookie)', () => {
     expect((mcpCaller(req({})) as Response).status).toBe(401)
     expect((mcpCaller(req({ authorization: 'Bearer nope' })) as Response).status).toBe(401)
-    expect((mcpCaller(req({ cookie: 'p7y_session=good' })) as Response).status).toBe(401)
+    expect((mcpCaller(req({ cookie: 'p9m_session=good' })) as Response).status).toBe(401)
   })
 })

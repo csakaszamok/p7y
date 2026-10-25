@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 
 vi.stubEnv('SESSION_SECRET', 'test-secret')
-vi.stubEnv('PUBLIC_URL', 'http://p7y.lvh.me')
+vi.stubEnv('PUBLIC_URL', 'http://p9m.lvh.me')
 
 import { createSession, readSession, signValue, verifyValue, getCookie, cookieHeader, publicUrl, SESSION_MAX_AGE } from '../../services/session'
 
@@ -31,16 +31,16 @@ describe('session cookie', () => {
 
 describe('cookie helpers', () => {
   it('reads a cookie by name', () => {
-    const req = new Request('http://x/', { headers: { cookie: 'a=1; p7y_session=abc.def; b=2' } })
-    expect(getCookie(req, 'p7y_session')).toBe('abc.def')
+    const req = new Request('http://x/', { headers: { cookie: 'a=1; p9m_session=abc.def; b=2' } })
+    expect(getCookie(req, 'p9m_session')).toBe('abc.def')
     expect(getCookie(req, 'missing')).toBeUndefined()
   })
 
   it('builds HttpOnly Lax cookies, Secure only on https', () => {
     expect(cookieHeader('n', 'v', 60)).toBe('n=v; Path=/; HttpOnly; SameSite=Lax; Max-Age=60')
-    vi.stubEnv('PUBLIC_URL', 'https://p7y.example.com/')
+    vi.stubEnv('PUBLIC_URL', 'https://p9m.example.com/')
     expect(cookieHeader('n', 'v', 0)).toBe('n=v; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Secure')
-    expect(publicUrl()).toBe('https://p7y.example.com')
-    vi.stubEnv('PUBLIC_URL', 'http://p7y.lvh.me')
+    expect(publicUrl()).toBe('https://p9m.example.com')
+    vi.stubEnv('PUBLIC_URL', 'http://p9m.lvh.me')
   })
 })

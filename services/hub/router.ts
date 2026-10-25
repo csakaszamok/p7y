@@ -30,7 +30,7 @@ const IMAGE = /^\/api\/hub\/apps\/([a-z0-9.-]+)\/image$/
 
 interface Deps { entries?: () => Promise<HubEntry[]>; refresh?: (list: HubEntry[]) => void }
 
-/** Everything on the Hub host. Purgatory's own routes never answer here. */
+/** Everything on the Hub host. Purgatorium's own routes never answer here. */
 export async function handleHub(req: Request, deps: Deps = {}): Promise<Response> {
   if (!hubEnabled()) return notFound()
   const url = new URL(req.url)
@@ -126,7 +126,7 @@ export async function handleHub(req: Request, deps: Deps = {}): Promise<Response
   return notFound()
 }
 
-/** A domain app shows to viewers who can sign in to Purgatory itself; Hub-only viewers see public apps only. */
+/** A domain app shows to viewers who can sign in to Purgatorium itself; Hub-only viewers see public apps only. */
 export function visibleTo(app: { access?: 'public' | 'domain' }, viewerSub: string, env: NodeJS.ProcessEnv = process.env): boolean {
   return app.access !== 'domain' || subAllowed(viewerSub, viewerSub === 'admin' ? 'admin' : 'user', env)
 }

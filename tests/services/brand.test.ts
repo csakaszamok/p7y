@@ -11,11 +11,11 @@ const page = () => renderPage({ title: 'x', view: 'mine', session: { sub: 'root'
 describe('brand', () => {
   afterEach(() => { vi.unstubAllEnvs() })
 
-  it('defaults: Purgatory, the built-in logo, the GitHub card', () => {
-    expect(brandTitle(env({}))).toBe('Purgatory')
+  it('defaults: Purgatorium, the built-in logo, the GitHub card', () => {
+    expect(brandTitle(env({}))).toBe('Purgatorium')
     expect(brandLogo(env({}))).toBe('/assets/logo.svg')
     expect(githubLinkEnabled(env({}))).toBe(true)
-    expect(titleSuffix(env({}))).toBe(' — Purgatory')
+    expect(titleSuffix(env({}))).toBe(' — Purgatorium')
   })
   it('UI_TITLE: an own name, or none', () => {
     expect(brandTitle(env({ UI_TITLE: 'Example <Lab>' }))).toBe('Example <Lab>')
@@ -43,7 +43,7 @@ describe('brand', () => {
   it('the topbar: GITHUB_LINK=off drops the card, none drops the name and the logo', () => {
     vi.stubEnv('USER_PREFS_FILE', path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'prefs-')), 'user-prefs.json'))
     expect(page()).toContain('class="repo-badge"')
-    expect(page()).toMatch(/<span class="brand"><img src="\/assets\/logo.svg"[^>]*>Purgatory<\/span>/)
+    expect(page()).toMatch(/<span class="brand"><img src="\/assets\/logo.svg"[^>]*>Purgatorium<\/span>/)
     vi.stubEnv('GITHUB_LINK', 'off')
     vi.stubEnv('UI_TITLE', 'none')
     vi.stubEnv('UI_LOGO', 'none')

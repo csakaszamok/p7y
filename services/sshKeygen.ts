@@ -9,7 +9,7 @@ const str = (b: Buffer | string): Buffer => {
 const u32 = (n: number): Buffer => { const b = Buffer.alloc(4); b.writeUInt32BE(n >>> 0); return b }
 
 /** An ed25519 key pair in the formats OpenSSH reads: `ssh-ed25519 …` and an unencrypted openssh-key-v1 file. */
-export function generateSshKeyPair(comment = 'p7y-generated'): { publicKey: string; privateKey: string } {
+export function generateSshKeyPair(comment = 'p9m-generated'): { publicKey: string; privateKey: string } {
   const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519')
   const pub = Buffer.from(publicKey.export({ format: 'jwk' }).x as string, 'base64url')
   const seed = Buffer.from(privateKey.export({ format: 'jwk' }).d as string, 'base64url')

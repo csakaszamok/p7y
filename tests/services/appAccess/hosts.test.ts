@@ -4,7 +4,7 @@ import { accessOfHost, sandboxAccess } from '../../../services/appAccess/hosts'
 // Each app's level by its link name (the first label of its address), as read from the containers' labels
 const map = { 'shop-web': 'public' as const, 'shop-dom': 'domain' as const }
 const deps = (over: Record<string, unknown> = {}) => ({
-  sandboxOf: (h: string) => h.startsWith('shop-') ? 'p7y-shop' : null,
+  sandboxOf: (h: string) => h.startsWith('shop-') ? 'p9m-shop' : null,
   ownerOf: () => 'bob@example.com',
   accessMap: () => map,
   fresh: async () => null,
@@ -14,8 +14,8 @@ const deps = (over: Record<string, unknown> = {}) => ({
 
 describe('accessOfHost', () => {
   it('an app host: its own level and the sandbox owner', async () => {
-    expect(await accessOfHost('shop-dom.example.com', deps())).toEqual({ sandbox: 'p7y-shop', owner: 'bob@example.com', access: 'domain' })
-    expect(await accessOfHost('SHOP-WEB.example.com:443', deps())).toEqual({ sandbox: 'p7y-shop', owner: 'bob@example.com', access: 'public' })
+    expect(await accessOfHost('shop-dom.example.com', deps())).toEqual({ sandbox: 'p9m-shop', owner: 'bob@example.com', access: 'domain' })
+    expect(await accessOfHost('SHOP-WEB.example.com:443', deps())).toEqual({ sandbox: 'p9m-shop', owner: 'bob@example.com', access: 'public' })
   })
   it('an address of the sandbox whose app is not known: read the labels afresh', async () => {
     expect((await accessOfHost('shop-own.example.com', deps({ fresh: async () => ({ ...map, 'shop-own': 'owner' }) })))!.access).toBe('owner')
@@ -27,12 +27,12 @@ describe('accessOfHost', () => {
     expect((await accessOfHost('shop-own.example.com', deps({ accessMap: () => null, fresh: async () => null })))!.access).toBe('owner')
   })
   // primeSablierSession's request must pass to Sablier, or a sandbox with a non-public app never gets a session
-  it("p7y's own Sablier probe address: public, unless an app has taken it", async () => {
-    expect((await accessOfHost('shop-p7y-wake.example.com', deps()))!.access).toBe('public')
-    expect((await accessOfHost('shop-p7y-wake.example.com', deps({ accessMap: () => ({ 'shop-p7y-wake': 'owner' }) })))!.access).toBe('owner')
+  it("p9m's own Sablier probe address: public, unless an app has taken it", async () => {
+    expect((await accessOfHost('shop-p9m-wake.example.com', deps()))!.access).toBe('public')
+    expect((await accessOfHost('shop-p9m-wake.example.com', deps({ accessMap: () => ({ 'shop-p9m-wake': 'owner' }) })))!.access).toBe('owner')
   })
   it('not a sandbox host: null', async () => {
-    expect(await accessOfHost('p7y.example.com', deps())).toBeNull()
+    expect(await accessOfHost('p9m.example.com', deps())).toBeNull()
   })
   it('sandboxAccess: the strictest of its apps; nothing known: null (unknown)', () => {
     expect(sandboxAccess(map)).toBe('domain')

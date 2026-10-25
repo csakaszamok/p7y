@@ -4,6 +4,40 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-25
+
+**Purgatory (p7y) is now Purgatorium (p9m).** There is no upgrade from Purgatory: install Purgatorium afresh ([install](docs/install.md)) in a new directory called `p9m`. Sandboxes, archives, users, tokens and settings are not carried over.
+
+### Changed
+
+- **The new name everywhere:** the repository `github.com/csakaszamok/p9m`, the image `ghcr.io/csakaszamok/p9m`, the documentation `csakaszamok.github.io/p9m`, the UI address `p9m.<domain>`, the Claude Code plugin (`/plugin marketplace add csakaszamok/p9m`, `/p9m:init`), the MCP Registry name `io.github.p9m-team/p9m` (remote `https://{purgatorium_host}/mcp`), settings `P9M_*` (`P9M_VERSION`, `P9M_API_BIND`; the scripts' `P9M_API`, `P9M_TOKEN`), labels `p9m.*` (`p9m.subdomain`, `p9m.access`, `p9m.publish`, …), sandboxes `p9m-<name>`, tokens `p9m_…`, the project folder `.p9m`.
+- New sandboxes run foxglove 0.9.0 (`ghcr.io/csakaszamok/foxglove`), which names an app only after `p9m.subdomain`; the image is built on rododentron 0.4.0 (`ghcr.io/csakaszamok/rododentron`).
+
+### Removed
+
+- Everything that carried an older installation forward: the Leander names (`leander-*` sandboxes, `leander.*` labels, `ldr_` tokens, `LEANDER_*` settings, the `leander.<domain>` redirect), the label `frpc.subdomain`, `HOST_USERS_DIR` and the `./opt/users` mount, and the startup migrations of sandboxes from older versions (sandbox directories, archives, routers, the frps API password, socat's check, data volumes, resource limits).
+
+## [0.11.12] - 2026-10-24
+
+Upgrading from 0.11.11: `docker compose pull && docker compose up -d` (the `docker-compose.yml` is unchanged but for the version).
+
+### Changed
+
+- **Lists ask Docker less:** a sandbox's container is inspected again only when its status changed since the last list (started, stopped, or a minute older), an asleep one's start error only when its state changed, and each compose file is parsed once per change instead of four times per row on every poll.
+
+### Fixed
+
+- **The MCP Registry entry under the new name** (`io.github.csakaszamok/p7y`) could not be published: the registry takes one server per remote address, and `https://p7y.{domain}/mcp` is the old `io.github.p7y-dev/p7y`'s, which stays at 0.11.10. The address is now `https://{purgatory_host}/mcp`, `purgatory_host` being Purgatory's own (its `PUBLIC_URL`), which also fits a server not at `p7y.<domain>`.
+
+## [0.11.11] - 2026-10-24
+
+Upgrading from 0.11.10: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p7y/releases/latest/download/docker-compose.yml` (it pulls the image from `ghcr.io/csakaszamok/p7y`), then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.11.10.
+
+### Changed
+
+- **The project moved to `github.com/csakaszamok/p7y`**, and with it its image: `ghcr.io/csakaszamok/p7y` (until 0.11.10 `ghcr.io/p7y-dev/p7y`, where those versions stay), the documentation (`csakaszamok.github.io/p7y`; the old address does not redirect), the Claude Code plugin's marketplace (`/plugin marketplace add csakaszamok/p7y`; one added as `p7y-dev/p7y` keeps working through GitHub's redirect) and the MCP Registry name (`io.github.csakaszamok/p7y`). The new `docker-compose.yml` pulls from the new place; one downloaded before keeps pulling the old versions from the old place.
+
+
 ## [0.11.10] - 2026-10-24
 
 Upgrading from 0.11.9: download the new `docker-compose.yml` (its cache default is 30 days), then `docker compose up -d`. A `REGISTRY_CACHE_TTL` in `.env` still wins.
@@ -192,7 +226,7 @@ Upgrading from 0.8: download the new `docker-compose.yml` (Traefik now also read
 
 ### Added
 
-- **App access** ([docs](https://p7y-dev.github.io/p7y/latest/app-access/)): who opens each web app of a sandbox, with a `p7y.access` label: `public` (anyone, as before), `domain` (anyone who can sign in to this Purgatory) or `owner` (the sandbox's owner); the admin opens all. `APPS_ACCESS_DEFAULT` (default `public`) for apps without the label; an invalid value means `owner`. The first visit makes a short sign-in hop to Purgatory and back; the app gets `X-P7y-User` (who is viewing), never Purgatory's sign-in. An asleep app wakes only for someone who may open it. Owner-only apps are not published on the Hub; Hub-only viewers see public apps. HTTP only: TCP addresses are not covered. Upgrading recreates each sandbox's socat container once (its apps are unreachable for a few seconds), and Traefik reads Purgatory's new HTTP provider (`docker-compose.yml`).
+- **App access** ([docs](https://csakaszamok.github.io/p7y/latest/app-access/)): who opens each web app of a sandbox, with a `p7y.access` label: `public` (anyone, as before), `domain` (anyone who can sign in to this Purgatory) or `owner` (the sandbox's owner); the admin opens all. `APPS_ACCESS_DEFAULT` (default `public`) for apps without the label; an invalid value means `owner`. The first visit makes a short sign-in hop to Purgatory and back; the app gets `X-P7y-User` (who is viewing), never Purgatory's sign-in. An asleep app wakes only for someone who may open it. Owner-only apps are not published on the Hub; Hub-only viewers see public apps. HTTP only: TCP addresses are not covered. Upgrading recreates each sandbox's socat container once (its apps are unreachable for a few seconds), and Traefik reads Purgatory's new HTTP provider (`docker-compose.yml`).
 
 ## [0.8.0] - 2026-10-19
 
@@ -201,12 +235,12 @@ Upgrading from 0.7: download the new `docker-compose.yml` (and see `env.example`
 ### Added
 
 - *Sleep after no traffic* (`idle_timeout`) takes days too, as the deep sleep time does: `1d` is kept as `24h` (Sablier's durations have no days).
-- **Tutorials** in the docs ([Tutorials](https://p7y-dev.github.io/p7y/latest/tutorials/)), for people who just want their app online: with Claude Code and the p7y plugin, with any agent and the zip, and sharing an app on the Hub. The plugin's deploy skill also knows the Hub's labels.
+- **Tutorials** in the docs ([Tutorials](https://csakaszamok.github.io/p7y/latest/tutorials/)), for people who just want their app online: with Claude Code and the p7y plugin, with any agent and the zip, and sharing an app on the Hub. The plugin's deploy skill also knows the Hub's labels.
 - **The `.p7y` folder**: an export for coding agents (and the Claude Code plugin's deploy skill) puts a project's sandbox access in a `.p7y` folder in the project's root: `p7y.env`, the Docker keys, a README, and a `.gitignore` of `*`, so git leaves it out without changing the project's own `.gitignore`. The zip used to hold a `p7y-<sandbox>/` folder; agents still read that. In the Simple view, **Let your agent deploy…** offers the Claude Code plugin (**Create token** makes a token for the sandbox and a two-line command with it to paste into a terminal: `claude plugin marketplace add …`, `claude plugin install … --config …`) or the zip for other agents, which the agent unpacks itself.
-- **Claude Code plugin** ([docs](https://p7y-dev.github.io/p7y/latest/claude-plugin/)): `/plugin marketplace add p7y-dev/p7y`, `/plugin install p7y@p7y`. It asks for your Purgatory's address and a token (kept in the system's secure storage), connects its MCP server, and adds a deploy skill (`/p7y:deploy`): *put my app online* picks or creates a sandbox, wakes it, deploys with Docker, checks the app answers and gives its address. Also in the Claude desktop app's Code tab; Claude chat and Cowork get only the skill.
-- **Simple and Advanced views** ([docs](https://p7y-dev.github.io/p7y/latest/web-ui/#simple-and-advanced)): a switch in the top bar, remembered per account. Simple, the default for users, shows only what someone who wants an app online needs: the apps' web addresses, **Let your agent deploy…**, Wake/Sleep, when it last ran and the sleep times. Advanced, the default for the admin, is the UI as it was. **Let your agent deploy…** (on the Apps tab in both, and on Access in Advanced; it replaces *Export for coding agents…* and *Copy as .env*) is the same window in both views: the Claude Code plugin or a zip for other agents; Advanced adds its **Options** (token name and expiry, a zip without the Docker keys, **Copy as .env**), Simple uses a token for 90 days. Simple only hides; permissions, the API and MCP are the same. `PUT /me/view`, and `view` in `GET /me`.
+- **Claude Code plugin** ([docs](https://csakaszamok.github.io/p7y/latest/claude-plugin/)): `/plugin marketplace add csakaszamok/p7y`, `/plugin install p7y@p7y`. It asks for your Purgatory's address and a token (kept in the system's secure storage), connects its MCP server, and adds a deploy skill (`/p7y:deploy`): *put my app online* picks or creates a sandbox, wakes it, deploys with Docker, checks the app answers and gives its address. Also in the Claude desktop app's Code tab; Claude chat and Cowork get only the skill.
+- **Simple and Advanced views** ([docs](https://csakaszamok.github.io/p7y/latest/web-ui/#simple-and-advanced)): a switch in the top bar, remembered per account. Simple, the default for users, shows only what someone who wants an app online needs: the apps' web addresses, **Let your agent deploy…**, Wake/Sleep, when it last ran and the sleep times. Advanced, the default for the admin, is the UI as it was. **Let your agent deploy…** (on the Apps tab in both, and on Access in Advanced; it replaces *Export for coding agents…* and *Copy as .env*) is the same window in both views: the Claude Code plugin or a zip for other agents; Advanced adds its **Options** (token name and expiry, a zip without the Docker keys, **Copy as .env**), Simple uses a token for 90 days. Simple only hides; permissions, the API and MCP are the same. `PUT /me/view`, and `view` in `GET /me`.
 - **When a sandbox last ran**: a sandbox that is asleep or in deep sleep says so on its panel's Details tab (*Last ran: 3 weeks ago*) and its apps on the Hub (*asleep · ran 3 weeks ago*); `GET /sandboxes/:name` gives `last_running_at`. Asleep, it is when its container stopped; Purgatory now keeps that time when it takes a sandbox into deep sleep. A sandbox already in deep sleep before this upgrade gets an estimate (`~`, `last_running_estimated`).
-- **The Hub** ([docs](https://p7y-dev.github.io/p7y/latest/hub/)): the apps builders publish with a `p7y.publish: "true"` label (or `"1"`), at their own address `hub.<HOST_DOMAIN>`, for colleagues who only use them: search, *Popular* and *New*, whether an app runs or sleeps, **Open** (an asleep app wakes). Viewers sign in with the same single sign-on but only to the Hub (`HUB_ALLOWED_DOMAINS`, `HUB_ALLOWED_EMAILS`); everyone signed in can vote once per app, their own too. A card shows the app's image: `p7y.image` (a path inside the app) or its page's og:image, fetched in the background without waking anything; else the title's letter. An RSS and a JSON feed with a secret key (*Overview → Create feed link*). Off unless `HUB_ENABLED=true`; with single sign-on, add `https://hub.<HOST_DOMAIN>/auth/callback` at the provider. A published app has an *On the Hub* marker on the *Apps* tab.
+- **The Hub** ([docs](https://csakaszamok.github.io/p7y/latest/hub/)): the apps builders publish with a `p7y.publish: "true"` label (or `"1"`), at their own address `hub.<HOST_DOMAIN>`, for colleagues who only use them: search, *Popular* and *New*, whether an app runs or sleeps, **Open** (an asleep app wakes). Viewers sign in with the same single sign-on but only to the Hub (`HUB_ALLOWED_DOMAINS`, `HUB_ALLOWED_EMAILS`); everyone signed in can vote once per app, their own too. A card shows the app's image: `p7y.image` (a path inside the app) or its page's og:image, fetched in the background without waking anything; else the title's letter. An RSS and a JSON feed with a secret key (*Overview → Create feed link*). Off unless `HUB_ENABLED=true`; with single sign-on, add `https://hub.<HOST_DOMAIN>/auth/callback` at the provider. A published app has an *On the Hub* marker on the *Apps* tab.
 
 ### Changed
 
@@ -243,12 +277,12 @@ Upgrading from 0.7.0: download the new `docker-compose.yml`, then `docker compos
 
 ### Added
 
-- Purgatory is in the official MCP Registry as `io.github.p7y-dev/p7y` (`server.json`): a client that reads the registry asks for your server's domain and a token.
-- `scripts/mcp-stdio.mjs`: the MCP server over stdio, for clients that only start a local process. Node.js 18+, no packages; it passes each message to `/mcp` with `P7Y_TOKEN` ([MCP](https://p7y-dev.github.io/p7y/latest/mcp/)).
+- Purgatory is in the official MCP Registry as `io.github.csakaszamok/p7y` (`server.json`): a client that reads the registry asks for your server's domain and a token.
+- `scripts/mcp-stdio.mjs`: the MCP server over stdio, for clients that only start a local process. Node.js 18+, no packages; it passes each message to `/mcp` with `P7Y_TOKEN` ([MCP](https://csakaszamok.github.io/p7y/latest/mcp/)).
 
 ### Changed
 
-- The OpenAPI document (`/swagger.json`) gives Purgatory's own version instead of `1.0.0`, and the API page says how to generate a client from it ([OpenAPI and clients](https://p7y-dev.github.io/p7y/latest/api/#openapi-and-clients)).
+- The OpenAPI document (`/swagger.json`) gives Purgatory's own version instead of `1.0.0`, and the API page says how to generate a client from it ([OpenAPI and clients](https://csakaszamok.github.io/p7y/latest/api/#openapi-and-clients)).
 
 ## [0.7.0] - 2026-10-16
 
@@ -267,11 +301,11 @@ Upgrading from 0.6: download the new `docker-compose.yml` (it names this version
 
 ## [0.6.4] - 2026-10-15
 
-Upgrading from 0.6.3: download the new `docker-compose.yml` (see [Upgrading](https://p7y-dev.github.io/p7y/latest/upgrading/)), because the image has moved to `ghcr.io/p7y-dev/p7y`; then `docker compose pull && docker compose up -d`. Images up to 0.6.3 stay at `ghcr.io/csakaszamok/p7y`.
+Upgrading from 0.6.3: download the new `docker-compose.yml` (see [Upgrading](https://csakaszamok.github.io/p7y/latest/upgrading/)), because the image has moved to `ghcr.io/csakaszamok/p7y`; then `docker compose pull && docker compose up -d`. Images up to 0.6.3 stay at `ghcr.io/csakaszamok/p7y`.
 
 ### Changed
 
-- The project has moved to [github.com/p7y-dev/p7y](https://github.com/p7y-dev/p7y): the documentation is at [p7y-dev.github.io/p7y](https://p7y-dev.github.io/p7y/latest/), the image at `ghcr.io/p7y-dev/p7y`. Links to the old repository redirect; the old documentation address does not.
+- The project has moved to [github.com/csakaszamok/p7y](https://github.com/csakaszamok/p7y): the documentation is at [csakaszamok.github.io/p7y](https://csakaszamok.github.io/p7y/latest/), the image at `ghcr.io/csakaszamok/p7y`. Links to the old repository redirect; the old documentation address does not.
 
 ## [0.6.3] - 2026-10-11
 
@@ -353,7 +387,7 @@ Upgrading from 0.4: check that Docker Compose is 2.17 or newer **before** `git p
 
 ### Changed
 
-- **Installed without a git clone**: `docker-compose.yml`, `setup.sh`, `check-host.sh` and `env.example` are files of each GitHub release (`releases/latest/download/…`), and the image carries everything else. A new one-shot service, `p7y-init`, copies the image's Sablier themes, error pages, registry config and `dynamic/errors.yml` into place on every `docker compose up`, so they always match the running version. Purgatory reads templates and runtimes from its image: **templates or runtimes edited in a checkout no longer apply**. See [Upgrading](https://p7y-dev.github.io/p7y/latest/upgrading/).
+- **Installed without a git clone**: `docker-compose.yml`, `setup.sh`, `check-host.sh` and `env.example` are files of each GitHub release (`releases/latest/download/…`), and the image carries everything else. A new one-shot service, `p7y-init`, copies the image's Sablier themes, error pages, registry config and `dynamic/errors.yml` into place on every `docker compose up`, so they always match the running version. Purgatory reads templates and runtimes from its image: **templates or runtimes edited in a checkout no longer apply**. See [Upgrading](https://csakaszamok.github.io/p7y/latest/upgrading/).
 - `setup.sh` prepares the current directory (it no longer needs to sit in a checkout) and creates `data/`, `opt/`, `certs/`, `dynamic/`.
 - Docker Compose 2.17 or newer is required; `check-host.sh` fails below it.
 - Traefik waits for `p7y-init` and restarts when a new release recreates it; the upgrade from 0.4 recreates it once (the pull recreates `dynamic/`, which is now kept in git with a `.gitkeep`).
@@ -375,7 +409,7 @@ Upgrading from 0.4: check that Docker Compose is 2.17 or newer **before** `git p
 
 ### Changed
 
-- Documentation: the `sysbox` runtime is used in production; on a shared server the recommended setting is sysbox on the host and `ALLOWED_RUNTIMES=sysbox` ([Security](https://p7y-dev.github.io/p7y/latest/security/)). The README no longer says that the default runtime is the privileged `dind`: with `DEFAULT_RUNTIME=auto` it is `sysbox` wherever sysbox is installed.
+- Documentation: the `sysbox` runtime is used in production; on a shared server the recommended setting is sysbox on the host and `ALLOWED_RUNTIMES=sysbox` ([Security](https://csakaszamok.github.io/p7y/latest/security/)). The README no longer says that the default runtime is the privileged `dind`: with `DEFAULT_RUNTIME=auto` it is `sysbox` wherever sysbox is installed.
 
 ### Fixed
 
@@ -523,13 +557,13 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/p7y-dev/p7y/compare/v0.6.0...HEAD
-[0.6.0]: https://github.com/p7y-dev/p7y/releases/tag/v0.6.0
-[0.5.2]: https://github.com/p7y-dev/p7y/releases/tag/v0.5.2
-[0.5.1]: https://github.com/p7y-dev/p7y/releases/tag/v0.5.1
-[0.5.0]: https://github.com/p7y-dev/p7y/releases/tag/v0.5.0
-[0.4.2]: https://github.com/p7y-dev/p7y/releases/tag/v0.4.2
-[0.4.1]: https://github.com/p7y-dev/p7y/releases/tag/v0.4.1
-[0.4.0]: https://github.com/p7y-dev/p7y/releases/tag/v0.4.0
-[0.3.1]: https://github.com/p7y-dev/p7y/releases/tag/v0.3.1
-[0.3.0]: https://github.com/p7y-dev/p7y/releases/tag/v0.3.0
+[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.6.0
+[0.5.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.2
+[0.5.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.1
+[0.5.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.0
+[0.4.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.2
+[0.4.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.1
+[0.4.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.0
+[0.3.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.1
+[0.3.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.0

@@ -3,7 +3,7 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
-vi.stubEnv('REGISTRY_SCANS_FILE', path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-scan-')), 'scans.json'))
+vi.stubEnv('REGISTRY_SCANS_FILE', path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-scan-')), 'scans.json'))
 const S = await import('../../services/registryScans')
 
 describe('registryScans', () => {
@@ -54,7 +54,7 @@ describe('registryScans', () => {
 describe('review fixes: the gate', () => {
   beforeEach(() => { try { fs.rmSync(process.env.REGISTRY_SCANS_FILE!) } catch { /* fresh */ } })
 
-  // A version the registry has but p7y never heard of (a lost notification, a push by digest) is not clean
+  // A version the registry has but p9m never heard of (a lost notification, a push by digest) is not clean
   it('allows anonymous pull only when every tag in the registry points at a known, clean version', async () => {
     S.markPushed('shop/app', 'sha256:a', '1')
     await S.scanImage('shop/app', 'sha256:a', { walk: async () => {} })
@@ -87,7 +87,7 @@ describe('review fixes: the gate', () => {
     expect(S.versionsOf('shop/q').every(v => v.state === 'clean')).toBe(true)
   })
 
-  it('resumes scans that were running when p7y stopped', async () => {
+  it('resumes scans that were running when p9m stopped', async () => {
     S.markPushed('shop/r', 'sha256:r', '1') // left "scanning"
     await S.resumeScans({ walk: async () => {} })
     expect(S.versionsOf('shop/r')[0].state).toBe('clean')

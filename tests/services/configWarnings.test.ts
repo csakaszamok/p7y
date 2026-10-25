@@ -35,7 +35,7 @@ describe('insecureConfigErrors', () => {
   const strong = { ADMIN_TOKEN: 'x'.repeat(32), SESSION_SECRET: 'y'.repeat(64), ADMIN_PASSWORD: 'pw-strong' }
 
   it('blocks a public (https) start with default or example secrets', () => {
-    const https = { PUBLIC_URL: 'https://p7y.example.com' }
+    const https = { PUBLIC_URL: 'https://p9m.example.com' }
     for (const [key, value] of [['ADMIN_TOKEN', 'abc123'], ['ADMIN_TOKEN', 'change-me-to-a-strong-secret'],
       ['SESSION_SECRET', 'change-me-to-a-long-random-string'], ['SESSION_SECRET', ''], ['ADMIN_PASSWORD', 'change-me']]) {
       const errors = insecureConfigErrors({ ...https, ...strong, [key]: value })
@@ -47,7 +47,7 @@ describe('insecureConfigErrors', () => {
   })
 
   it('never blocks a plain-http (local) start', () => {
-    expect(insecureConfigErrors({ PUBLIC_URL: 'http://p7y.lvh.me', ADMIN_TOKEN: 'abc123' })).toEqual([])
+    expect(insecureConfigErrors({ PUBLIC_URL: 'http://p9m.lvh.me', ADMIN_TOKEN: 'abc123' })).toEqual([])
     expect(insecureConfigErrors({ ADMIN_TOKEN: 'abc123' })).toEqual([])
   })
 })

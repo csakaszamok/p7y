@@ -16,14 +16,14 @@ export function checkCompose(text: unknown): string | null {
     return 'compose needs at least one service under services:'
   }
   const local = localReadKey(doc as Record<string, unknown>)
-  if (local) return `compose may not use ${local}: it would read files or settings of the Purgatory server (build images and the like through DOCKER_HOST or Portainer)`
+  if (local) return `compose may not use ${local}: it would read files or settings of the Purgatorium server (build images and the like through DOCKER_HOST or Portainer)`
   return null
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 
 /**
- * The compose CLI runs inside the Purgatory container: these keys make it read files there (other
+ * The compose CLI runs inside the Purgatorium container: these keys make it read files there (other
  * sandboxes' TLS keys, the token store) or its environment, and hand what it read to the sandbox.
  * Bind mounts are fine: those are resolved by the sandbox's own Docker.
  */

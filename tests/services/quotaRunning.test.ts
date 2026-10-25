@@ -9,7 +9,7 @@ const u = (status: string, name: string, owner = 'u@x') => ({ name, owner, statu
 
 beforeEach(() => {
   vi.stubEnv('SANDBOX_QUOTA', '1'); vi.stubEnv('SANDBOX_MAX_TOTAL', '0')
-  all = [u('running', 'p7y-shop'), u('exited', 'p7y-blog'), u('deep_sleep', 'p7y-old')]
+  all = [u('running', 'p9m-shop'), u('exited', 'p9m-blog'), u('deep_sleep', 'p9m-old')]
 })
 
 describe('runningLimit', () => {
@@ -23,29 +23,29 @@ describe('runningLimit', () => {
 describe('wakeRefusal', () => {
   it('an asleep sandbox: refused while the running limit is used, with the running ones', async () => {
     const r = await wakeRefusal('u@x', 'exited')
-    expect(r).toEqual({ reason: 'running', title: 'Running limit reached', limit: 1, running: ['p7y-shop'],
+    expect(r).toEqual({ reason: 'running', title: 'Running limit reached', limit: 1, running: ['p9m-shop'],
       message: 'Running limit reached: 1 running sandbox allowed, running now: shop. Put one to sleep first.' })
     vi.stubEnv('SANDBOX_QUOTA', '2')
     expect(await wakeRefusal('u@x', 'exited')).toBeNull()
   })
   it('a deep-sleeping one: only the running limit, however many sleep; the admin never', async () => {
-    all.push(u('exited', 'p7y-four'))
+    all.push(u('exited', 'p9m-four'))
     expect((await wakeRefusal('u@x', 'deep_sleep'))?.reason).toBe('running')
     expect(await wakeRefusal('admin', 'deep_sleep')).toBeNull()
   })
   it('counts the sandboxes being woken right now as running', async () => {
-    all = [u('exited', 'p7y-a'), u('exited', 'p7y-b')]
-    expect(await wakeRefusal('u@x', 'exited', ['p7y-a'])).toMatchObject({ reason: 'running', running: ['p7y-a'] })
+    all = [u('exited', 'p9m-a'), u('exited', 'p9m-b')]
+    expect(await wakeRefusal('u@x', 'exited', ['p9m-a'])).toMatchObject({ reason: 'running', running: ['p9m-a'] })
   })
 })
 
 describe('reserveWake', () => {
   it('two asleep sandboxes woken at once with a limit of 1: one passes', async () => {
-    all = [u('exited', 'p7y-a'), u('exited', 'p7y-b')]
-    const [a, b] = await Promise.all([reserveWake('u@x', 'p7y-a', 'exited'), reserveWake('u@x', 'p7y-b', 'exited')])
+    all = [u('exited', 'p9m-a'), u('exited', 'p9m-b')]
+    const [a, b] = await Promise.all([reserveWake('u@x', 'p9m-a', 'exited'), reserveWake('u@x', 'p9m-b', 'exited')])
     expect([a.ok, b.ok].filter(Boolean).length).toBe(1)
     for (const r of [a, b]) if (r.ok) r.release()
-    const again = await reserveWake('u@x', 'p7y-b', 'exited')
+    const again = await reserveWake('u@x', 'p9m-b', 'exited')
     expect(again.ok).toBe(true)
     if (again.ok) again.release()
   })
@@ -61,7 +61,7 @@ describe('runningStatus', () => {
 describe('reserveSandboxSlot: a new sandbox runs', () => {
   it('refused at the running limit, with scope running', async () => {
     const { reserveSandboxSlot } = await import('../../services/quota')
-    all = [u('running', 'p7y-shop')]
+    all = [u('running', 'p9m-shop')]
     expect(await reserveSandboxSlot({ sub: 'u@x', role: 'user', via: 'session' })).toEqual({ ok: false, limit: 1, scope: 'running' })
     vi.stubEnv('SANDBOX_QUOTA', '2')
     const r = await reserveSandboxSlot({ sub: 'u@x', role: 'user', via: 'session' })
@@ -72,18 +72,18 @@ describe('reserveSandboxSlot: a new sandbox runs', () => {
 
 describe('final review fixes', () => {
   it('a swap: the sandbox to sleep does not count; still over the limit when more run', async () => {
-    all = [u('running', 'p7y-a'), u('exited', 'p7y-x')]
-    const ok = await reserveWake('u@x', 'p7y-x', 'exited', 'p7y-a')
+    all = [u('running', 'p9m-a'), u('exited', 'p9m-x')]
+    const ok = await reserveWake('u@x', 'p9m-x', 'exited', 'p9m-a')
     expect(ok.ok).toBe(true)
     if (ok.ok) ok.release()
-    all = [u('running', 'p7y-a'), u('running', 'p7y-b'), u('exited', 'p7y-x')]
-    const r = await reserveWake('u@x', 'p7y-x', 'exited', 'p7y-a')
+    all = [u('running', 'p9m-a'), u('running', 'p9m-b'), u('exited', 'p9m-x')]
+    const r = await reserveWake('u@x', 'p9m-x', 'exited', 'p9m-a')
     expect(r).toMatchObject({ ok: false, refusal: { reason: 'running', limit: 1 } })
   })
   it('a create and a wake at the same moment: one passes', async () => {
     const { reserveSandboxSlot } = await import('../../services/quota')
-    all = [u('exited', 'p7y-x')]
-    const [create, wake] = await Promise.all([reserveSandboxSlot({ sub: 'u@x', role: 'user', via: 'session' }), reserveWake('u@x', 'p7y-x', 'exited')])
+    all = [u('exited', 'p9m-x')]
+    const [create, wake] = await Promise.all([reserveSandboxSlot({ sub: 'u@x', role: 'user', via: 'session' }), reserveWake('u@x', 'p9m-x', 'exited')])
     expect([create.ok, wake.ok].filter(Boolean).length).toBe(1)
     for (const r of [create, wake]) if (r.ok) r.release()
   })
@@ -93,8 +93,8 @@ describe('a sandbox being woken that already runs is counted once', () => {
   it('a create next to 2 running, one of them still in its wake: allowed with a quota of 3', async () => {
     const { reserveSandboxSlot } = await import('../../services/quota')
     vi.stubEnv('SANDBOX_QUOTA', '3')
-    all = [u('running', 'p7y-c03'), u('running', 'p7y-c04')]
-    const wake = await reserveWake('u@x', 'p7y-c03', 'exited') // c03's wake is still finishing
+    all = [u('running', 'p9m-c03'), u('running', 'p9m-c04')]
+    const wake = await reserveWake('u@x', 'p9m-c03', 'exited') // c03's wake is still finishing
     expect(wake.ok).toBe(true)
     const create = await reserveSandboxSlot({ sub: 'u@x', role: 'user', via: 'session' })
     expect(create.ok).toBe(true)

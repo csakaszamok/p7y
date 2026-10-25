@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Checks whether this machine is ready for Purgatory, before the first `docker compose up`.
+# Checks whether this machine is ready for Purgatorium, before the first `docker compose up`.
 # Changes nothing on the host; the sysbox check runs one `docker run --rm alpine` (pulls alpine).
 #
-#   curl -fsSL https://github.com/p7y-dev/p7y/releases/latest/download/check-host.sh | bash -s -- [domain]
-#   ./check-host.sh [domain]     # domain: the HOST_DOMAIN you plan to use, e.g. dev.example.com (UI: p7y.dev.example.com)
+#   curl -fsSL https://github.com/csakaszamok/p9m/releases/latest/download/check-host.sh | bash -s -- [domain]
+#   ./check-host.sh [domain]     # domain: the HOST_DOMAIN you plan to use, e.g. dev.example.com (UI: p9m.dev.example.com)
 #
 # Exit code 1 if any check failed (✘), 0 otherwise (warnings ⚠ allowed).
 set -uo pipefail
@@ -21,7 +21,7 @@ version_ge() { [ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -1)" = "$2" ]; 
 
 section "System"
 if [ "$(uname -s)" != Linux ]; then
-  fail "Not Linux ($(uname -s))" "Purgatory runs on a Linux host (Docker Desktop works for trying it, not for a server)"
+  fail "Not Linux ($(uname -s))" "Purgatorium runs on a Linux host (Docker Desktop works for trying it, not for a server)"
 else
   # shellcheck disable=SC1091
   os=$( (. /etc/os-release 2>/dev/null && echo "$PRETTY_NAME") || echo Linux)
@@ -48,13 +48,13 @@ else
   docker_ok=true
   engine=$(docker version --format '{{.Server.Version}}' 2>/dev/null)
   if version_ge "$engine" 24; then ok "Docker Engine $engine"
-  else warn "Docker Engine $engine" "Purgatory is tested on Docker 24 or newer"; fi
+  else warn "Docker Engine $engine" "Purgatorium is tested on Docker 24 or newer"; fi
   if compose=$(docker compose version --short 2>/dev/null); then
     compose=${compose#v}
     if version_ge "$compose" 2.20; then ok "Docker Compose $compose"
-    # p7y-init: depends_on with restart: true needs 2.17
-    elif version_ge "$compose" 2.17; then warn "Docker Compose $compose" "Purgatory is tested on Compose 2.20 or newer"
-    else fail "Docker Compose $compose" "Purgatory needs Compose 2.17 or newer: update docker-compose-plugin"; fi
+    # p9m-init: depends_on with restart: true needs 2.17
+    elif version_ge "$compose" 2.17; then warn "Docker Compose $compose" "Purgatorium is tested on Compose 2.20 or newer"
+    else fail "Docker Compose $compose" "Purgatorium needs Compose 2.17 or newer: update docker-compose-plugin"; fi
   else
     fail "the docker compose plugin is not installed" "install docker-compose-plugin (Compose v2)"
   fi
@@ -85,7 +85,7 @@ if $docker_ok; then
   pools=$(docker info 2>/dev/null | awk '/Default Address Pools:/ {on=1; next} on && /Base:/ {print $2, $4; next} on {exit}' | tr -d ',')
   if [ -z "$pools" ]; then
     warn "Docker's default address pools: about 30 networks, so about 30 sandboxes" \
-         'set "default-address-pools": [{"base": "10.10.0.0/16", "size": 28}] in /etc/docker/daemon.json and restart Docker (see https://p7y-dev.github.io/p7y/latest/install/)'
+         'set "default-address-pools": [{"base": "10.10.0.0/16", "size": 28}] in /etc/docker/daemon.json and restart Docker (see https://csakaszamok.github.io/p9m/latest/install/)'
   else
     total=0
     while read -r base size; do
@@ -94,7 +94,7 @@ if $docker_ok; then
     done <<< "$pools"
     used=$(docker network ls -q | wc -l)
     if [ "$total" -lt 200 ]; then
-      warn "address pools allow $total networks ($used in use)" "SANDBOX_MAX_TOTAL defaults to 200 sandboxes: use smaller subnets (e.g. size 28, see https://p7y-dev.github.io/p7y/latest/install/)"
+      warn "address pools allow $total networks ($used in use)" "SANDBOX_MAX_TOTAL defaults to 200 sandboxes: use smaller subnets (e.g. size 28, see https://csakaszamok.github.io/p9m/latest/install/)"
     else
       ok "address pools allow $total networks ($used in use)"
     fi
@@ -113,15 +113,15 @@ section "Ports"
 for port in 80 443 8081; do
   if has ss; then busy=$(ss -ltnH "sport = :$port" 2>/dev/null | head -1); else busy=""; fi
   if [ -z "$busy" ]; then ok "port $port is free"; continue; fi
-  # Already used by Purgatory's own stack (a re-run after `docker compose up`) is fine
+  # Already used by Purgatorium's own stack (a re-run after `docker compose up`) is fine
   owner=""
   if $docker_ok; then
     owner=$(docker ps --filter "publish=$port" --format '{{.Label "com.docker.compose.project"}}' | head -1)
   fi
-  if [ -n "$owner" ] && [ -n "$(docker ps -q --filter "label=com.docker.compose.project=$owner" --filter label=com.docker.compose.service=p7y)" ]; then
-    ok "port $port is used by Purgatory (compose project $owner)"
+  if [ -n "$owner" ] && [ -n "$(docker ps -q --filter "label=com.docker.compose.project=$owner" --filter label=com.docker.compose.service=p9m)" ]; then
+    ok "port $port is used by Purgatorium (compose project $owner)"
   else
-    fail "port $port is in use" "Purgatory's Traefik needs 80 and 443, its API 8081: $(echo "$busy" | grep -o 'users:.*' || echo 'see: ss -ltnp')"
+    fail "port $port is in use" "Purgatorium's Traefik needs 80 and 443, its API 8081: $(echo "$busy" | grep -o 'users:.*' || echo 'see: ss -ltnp')"
   fi
 done
 
@@ -134,7 +134,7 @@ else
   if [ "$code" = 401 ] || [ "$code" = 200 ]; then ok "Docker Hub is reachable (sandbox, Traefik and Sablier images)"
   else fail "Docker Hub is not reachable (HTTP $code)" "the sandbox images come from there; check the proxy / firewall, or set a registry mirror"; fi
   code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 https://ghcr.io/v2/)
-  if [ "$code" = 401 ] || [ "$code" = 200 ]; then ok "ghcr.io is reachable (the Purgatory image)"
+  if [ "$code" = 401 ] || [ "$code" = 200 ]; then ok "ghcr.io is reachable (the Purgatorium image)"
   else warn "ghcr.io is not reachable (HTTP $code)" "build the image here instead: docker compose up -d --build"; fi
 fi
 
@@ -153,7 +153,7 @@ if [ -n "$DOMAIN" ]; then
       ok "$1 → $ip ($2)"
     fi
   }
-  check_name "p7y.$DOMAIN" "the UI" fail
+  check_name "p9m.$DOMAIN" "the UI" fail
   # A made-up name: only a wildcard record resolves it (every sandbox app has its own name)
   check_name "check-$RANDOM-web.$DOMAIN" "wildcard record for sandbox apps" warn
 
@@ -178,7 +178,7 @@ if [ -n "$DOMAIN" ]; then
       if openssl x509 -in certs/tls.crt -noout -ext subjectAltName 2>/dev/null | grep -qF "DNS:*.$DOMAIN"; then
         ok "covers *.$DOMAIN"
       else
-        warn "does not cover *.$DOMAIN" "sandbox addresses (and p7y.$DOMAIN) would get a certificate warning"
+        warn "does not cover *.$DOMAIN" "sandbox addresses (and p9m.$DOMAIN) would get a certificate warning"
       fi
     fi
   fi

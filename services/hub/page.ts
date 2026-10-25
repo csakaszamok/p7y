@@ -6,7 +6,7 @@ const head = (title: string) => `<!doctype html><html lang="en"><head><meta char
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title>
 ${faviconTag()}<link rel="stylesheet" href="/assets/hub.css"></head>`
 
-/** The Hub: no Purgatory navigation, no sandboxes; the list comes from /api/hub (ui/hub.js). */
+/** The Hub: no Purgatorium navigation, no sandboxes; the list comes from /api/hub (ui/hub.js). */
 export function hubPage(opts: { title: string; viewer: HubSession }): string {
   const who = escapeHtml(opts.viewer.name ?? opts.viewer.sub)
   return `${head(`${opts.title} — Hub`)}<body>
@@ -17,8 +17,8 @@ export function hubPage(opts: { title: string; viewer: HubSession }): string {
 <div class="seg" id="sort"><button data-v="popular" class="on">Popular</button><button data-v="new">New</button></div>
 <div class="seg" id="filter"><button data-v="all" class="on">All</button><button data-v="running">Running</button><button data-v="asleep">Asleep</button></div></div>
 <ul id="apps" class="apps" aria-live="polite"></ul>
-<div id="empty" class="empty" hidden><p>No apps here yet.</p><p>To publish one, add <code>p7y.publish: "true"</code> to its container's labels.
-<a href="https://p7y-dev.github.io/p7y/latest/hub/" target="_blank" rel="noopener">How to publish</a></p></div>
+<div id="empty" class="empty" hidden><p>No apps here yet.</p><p>To publish one, add <code>p9m.publish: "true"</code> to its container's labels.
+<a href="https://csakaszamok.github.io/p9m/latest/hub/" target="_blank" rel="noopener">How to publish</a></p></div>
 </main><footer class="about-foot"><a href="/about">About · AGPL-3.0</a></footer><script src="/assets/hub.js"></script></body></html>`
 }
 

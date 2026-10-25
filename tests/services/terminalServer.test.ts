@@ -3,7 +3,7 @@ import http from 'node:http'
 import net from 'node:net'
 import { attachTerminals } from '../../services/terminalServer'
 
-const UPGRADE = 'GET /sandboxes/p7y-a1/terminal HTTP/1.1\r\nHost: a\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n\r\n'
+const UPGRADE = 'GET /sandboxes/p9m-a1/terminal HTTP/1.1\r\nHost: a\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n\r\n'
 let server: http.Server | undefined
 afterEach(() => new Promise<void>(r => (server ? server.close(() => r()) : r())))
 
@@ -12,7 +12,7 @@ async function start(gateDelayMs = 0) {
   const run = vi.fn(async () => {})
   server = http.createServer((_req, res) => res.end('ok'))
   attachTerminals(server, {
-    check: async () => { await new Promise(r => setTimeout(r, gateDelayMs)); return { ok: true as const, name: 'p7y-a1', sub: 'alice', release } },
+    check: async () => { await new Promise(r => setTimeout(r, gateDelayMs)); return { ok: true as const, name: 'p9m-a1', sub: 'alice', release } },
     run,
   })
   await new Promise<void>(r => server!.listen(0, '127.0.0.1', r))

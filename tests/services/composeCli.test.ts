@@ -3,8 +3,8 @@ import { innerCliEnv, composeConfigCheck, composeUpInner } from '../../services/
 
 describe('innerCliEnv', () => {
   // docker compose fills any ${VAR} it is not given from its own environment: a compose text
-  // written by a user must not see Purgatory's secrets
-  it("passes only what the compose CLI needs, never Purgatory's own settings", () => {
+  // written by a user must not see Purgatorium's secrets
+  it("passes only what the compose CLI needs, never Purgatorium's own settings", () => {
     const env = innerCliEnv({ PATH: '/bin', HOME: '/root', ADMIN_TOKEN: 'secret', SESSION_SECRET: 's', OIDC_CLIENT_SECRET: 'o', DOCKER_CONFIG: '/root/.docker' },
       { DOCKER_HOST: 'tcp://x:2376', DOCKER_TLS_VERIFY: '1', DOCKER_CERT_PATH: '/certs' })
     expect(env).toEqual({ PATH: '/bin', HOME: '/root', DOCKER_CONFIG: '/root/.docker', DOCKER_HOST: 'tcp://x:2376', DOCKER_TLS_VERIFY: '1', DOCKER_CERT_PATH: '/certs' })
@@ -26,15 +26,15 @@ describe('composeUpInner', () => {
   it('tries again every half second while the inner dockerd is starting, and says how many tries it took', async () => {
     let calls = 0
     const waits: number[] = []
-    const tries = await composeUpInner('/x/docker-compose.yml', 'tcp://p7y-x:2376', '/certs', 'inner', {
-      run: async () => { if (++calls < 3) throw new Error('Cannot connect to the Docker daemon at tcp://p7y-x:2376'); return { stderr: '' } },
+    const tries = await composeUpInner('/x/docker-compose.yml', 'tcp://p9m-x:2376', '/certs', 'inner', {
+      run: async () => { if (++calls < 3) throw new Error('Cannot connect to the Docker daemon at tcp://p9m-x:2376'); return { stderr: '' } },
       sleep: async ms => { waits.push(ms) },
     })
     expect(tries).toBe(3)
     expect(waits).toEqual([500, 500])
   })
   it('does not try again after another error', async () => {
-    await expect(composeUpInner('/x/docker-compose.yml', 'tcp://p7y-x:2376', '/certs', 'inner', {
+    await expect(composeUpInner('/x/docker-compose.yml', 'tcp://p9m-x:2376', '/certs', 'inner', {
       run: async () => { throw new Error('services.web.ports must be a list') }, sleep: async () => {},
     })).rejects.toThrow('must be a list')
   })

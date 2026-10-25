@@ -8,7 +8,7 @@ export const openapi = {
   description: 'Wakes an asleep or deep-sleeping sandbox. At the owner\'s limit (running sandboxes, slots, or a full server) it answers 409 with `reason` and the `running` sandboxes; `{"sleep": "<name>"}` puts one of them to sleep first.',
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],
-  requestBody: { required: false, content: { 'application/json': { schema: { type: 'object', properties: { sleep: { type: 'string', example: 'p7y-shop' } } } } } },
+  requestBody: { required: false, content: { 'application/json': { schema: { type: 'object', properties: { sleep: { type: 'string', example: 'p9m-shop' } } } } } },
   responses: {
     200: { description: 'Sandbox started' },
     401: { description: 'Unauthorized' },

@@ -8,12 +8,7 @@ import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
 import { openSignInWarning } from "./services/allowlist";
 import { insecureConfigWarnings, insecureConfigErrors, hostMountWarnings } from "./services/configWarnings";
 import { syncTlsConfig } from "./services/tlsConfig";
-import { migrateRouters } from "./services/routerMigration";
-import { migrateFrpsApiAuth } from "./services/frpsApi";
-import { migrateSocatCheck } from "./services/socatHealthcheck";
-import { migrateDataVolumes } from "./services/dataVolumes";
 import { migrateHostPaths } from "./services/pathMigration";
-import { migrateSandboxDirs, migrateArchives } from "./services/sandboxDirMigration";
 import { startTcpGateway } from "./services/tcpGateway";
 import { resolveTcpHost, resolveDockerHost } from "./services/tcpRoutes";
 import { findSandboxDirByHost, primeSablierSession } from "./services/wake";
@@ -27,17 +22,16 @@ import { filesMaxUpload } from "./services/sandboxFiles";
 import { attachTerminals } from "./services/terminalServer";
 import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
-import { repoInfo, p7yVersion } from "./services/repoInfo";
+import { repoInfo, p9mVersion } from "./services/repoInfo";
 import { isHubHost } from "./services/hub/config";
 import { handleHub } from "./services/hub/router";
 import { mcpCaller, mcpToolsFor } from "./services/mcp";
-// From the base image (ghcr.io/p7y-dev/rododentron): the API routes as MCP tools
+// From the base image (ghcr.io/csakaszamok/rododentron): the API routes as MCP tools
 import { createMcpHandler } from "./mcp-core";
 import { defaultRuntime, runtimeAllowed } from "./services/defaultRuntime";
 import { startRegistryGc } from "./services/registryGc";
 import { resumeScans } from "./services/registryScans";
 import { notifySecret } from "./services/notifySecret";
-import { migrateResourceLimits } from "./services/resourceMigration";
 import { resourceDefaults } from "./services/resources";
 
 // Supports both old-style handler.ts (handle(req,res)) and
@@ -145,7 +139,7 @@ async function buildSpec(): Promise<object> {
   const apiTitle = process.env.API_TITLE ?? "Rododentron API";
   return {
     openapi: "3.0.0",
-    info: { title: apiTitle, version: p7yVersion() ?? "0.0.0" },
+    info: { title: apiTitle, version: p9mVersion() ?? "0.0.0" },
     components: { securitySchemes: { bearerAuth: { type: "http", scheme: "bearer" } } },
     ...(hasAuth ? { security: [{ bearerAuth: [] }] } : {}),
     paths,
@@ -227,7 +221,7 @@ async function handle(req: IncomingMessage, res: ServerResponse, internal: boole
     return;
   }
 
-  // The Hub host: only the Hub's own routes; Purgatory's API, /mcp and /swagger never answer here
+  // The Hub host: only the Hub's own routes; Purgatorium's API, /mcp and /swagger never answer here
   if (isHubHost(req.headers.host)) {
     try {
       await writeWebResponse(await handleHub(await toWebRequest(req)), res);
@@ -249,7 +243,7 @@ async function handle(req: IncomingMessage, res: ServerResponse, internal: boole
       const caller = mcpCaller(webReq);
       const out = caller instanceof Response ? caller
         // Per request: the tools listed depend on the caller's token
-        : await createMcpHandler({ name: "p7y", version: repoInfo().version ?? undefined, include: mcpToolsFor(caller) })(webReq);
+        : await createMcpHandler({ name: "p9m", version: repoInfo().version ?? undefined, include: mcpToolsFor(caller) })(webReq);
       await writeWebResponse(out, res);
     } catch (err) {
       if (tooLarge(err, res)) return;
@@ -320,9 +314,9 @@ startTcpGateway({
   .then(() => console.log(`[tcp] gateway on :${tcpPort} (certificate: ${tcpCreds.source})`))
   .catch(err => console.error("[tcp] gateway failed to start:", err));
 startDeepSleepScheduler();
-// p7y.access of the running sandboxes' apps, read every 10 s (Traefik reads the middlewares every 2 s)
+// p9m.access of the running sandboxes' apps, read every 10 s (Traefik reads the middlewares every 2 s)
 startAccessRefresher();
-// A running sandbox without a Sablier session (started outside p7y) would never sleep: open its session
+// A running sandbox without a Sablier session (started outside p9m) would never sleep: open its session
 startSessionWatch();
 startUsageSampler(10_000);
 startDiskSampler();
@@ -341,28 +335,8 @@ startRegistryGc();
 // Scans interrupted by a restart run again (their repos stay private meanwhile)
 void resumeScans().catch(err => console.error("[registry] resuming scans:", err));
 for (const w of resourceDefaults().warnings) console.warn(`[resources] ${w}`);
-// Sandboxes from before opt/sandboxes/<owner>/<name> (and their archives): moved into it.
-// Then sandboxes whose checkout was moved or renamed: point their mounts at the current directory.
-// Then sandboxes created before HTTPS support: put their router on websecure too.
-migrateSandboxDirs()
-  .then(() => migrateArchives())
-  .catch(err => console.error("[sandbox-dirs] migration failed:", err))
-  .then(() => migrateHostPaths())
-  .catch(err => console.error("[paths] migration failed:", err))
-  .then(() => migrateRouters())
-  .catch(err => console.error("[routers] migration failed:", err))
-  // Then sandboxes whose frps API has no password: frps.toml and socat's health check get one
-  .then(() => migrateFrpsApiAuth())
-  .catch(err => console.error("[frps] migration failed:", err))
-  // Then sandboxes whose socat checks its tunnel every 2 s: every 10 s
-  .then(() => migrateSocatCheck())
-  .catch(err => console.error("[socat] migration failed:", err))
-  // Then sandboxes from before the data volumes: /opt, /root, /home, /srv copied into volumes
-  .then(() => migrateDataVolumes())
-  .catch(err => console.error("[data-volumes] migration failed:", err))
-  // Then sandboxes created before CPU/memory limits: give them the default
-  .then(() => migrateResourceLimits())
-  .catch(err => console.error("[resources] migration failed:", err));
+// Sandboxes whose install directory was moved or renamed: point their mounts at the current directory
+migrateHostPaths().catch(err => console.error("[paths] migration failed:", err));
 for (const warning of [...insecureConfigWarnings(process.env), ...hostMountWarnings(process.env)]) console.warn(warning);
 
 

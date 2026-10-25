@@ -2,16 +2,16 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { startDevice, normalizeUserCode, deviceByUserCode, approveDevice, denyDevice, pollDevice, _resetDevices, DEVICE_TTL_MS, DEVICE_MAX_PENDING } from '../../services/deviceAuth'
 
 const T = 1_000_000
-const grant = { sandbox: 'p7y-shop', owner: 'alice' }
+const grant = { sandbox: 'p9m-shop', owner: 'alice' }
 
 beforeEach(() => _resetDevices())
 
 describe('device codes', () => {
   it('start, pending, approve, approved once, then expired', () => {
-    const { device_code, user_code } = startDevice('p7y-shop', T)
+    const { device_code, user_code } = startDevice('p9m-shop', T)
     expect(device_code).toMatch(/^[A-Za-z0-9_-]{40,}$/)
     expect(pollDevice(device_code, T + 1)).toEqual({ status: 'pending' })
-    expect(deviceByUserCode(user_code, T + 1)).toEqual({ sandbox: 'p7y-shop', status: 'pending' })
+    expect(deviceByUserCode(user_code, T + 1)).toEqual({ sandbox: 'p9m-shop', status: 'pending' })
     expect(approveDevice(user_code, grant, T + 2)).toBe(true)
     expect(deviceByUserCode(user_code, T + 3)?.status).toBe('approved')
     expect(approveDevice(user_code, grant, T + 3)).toBe(false)

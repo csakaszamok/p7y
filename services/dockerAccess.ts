@@ -33,7 +33,7 @@ export function dockerAccessInfo(name: string, status: string, usersDir = sandbo
   return info
 }
 
-/** The sandbox's daemon.json with the p7y registry among its insecure registries; everything else
+/** The sandbox's daemon.json with the p9m registry among its insecure registries; everything else
  * (a sysbox runtime's TLS settings) stays as it is. */
 function withOwnRegistry(file: string): string {
   let cfg: Record<string, unknown> = {}

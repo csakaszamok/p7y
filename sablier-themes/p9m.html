@@ -18,11 +18,11 @@ body { background: #0a0705; color: #ece6e1; font-family: -apple-system, BlinkMac
 .coal { width: 64px; height: 64px; margin: 0 auto 18px; position: relative }
 .coal .core { position: absolute; inset: 14px; border-radius: 50%;
               background: radial-gradient(circle at 50% 60%, #ffd9a0 0 12%, #ff9a3c 35%, #c2410c 70%, #5a1604);
-              animation: p7y-heat 2.4s infinite ease-in-out; transition: opacity .6s }
+              animation: p9m-heat 2.4s infinite ease-in-out; transition: opacity .6s }
 .coal svg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .6s }
 .coal.ready .core { opacity: 0 }
 .coal.ready svg { opacity: 1 }
-@keyframes p7y-heat { 0%,100% { box-shadow: 0 0 14px 4px rgba(230,90,20,.35); transform: scale(.96); filter: brightness(.85) }
+@keyframes p9m-heat { 0%,100% { box-shadow: 0 0 14px 4px rgba(230,90,20,.35); transform: scale(.96); filter: brightness(.85) }
                       50% { box-shadow: 0 0 30px 10px rgba(255,120,30,.6); transform: scale(1.04); filter: brightness(1.15) } }
 h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px }
 .name { color: #9a8f88; font: 13px ui-monospace, SFMono-Regular, Consolas, monospace; margin-bottom: 24px }
@@ -31,11 +31,11 @@ li { padding: 7px 0; border-top: 1px solid rgba(255,255,255,.06); display: flex;
 li span:first-child { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .status { font-size: 13px; color: #b9aea7 }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: middle }
-.dot.starting { background: #ea580c; animation: p7y-breathe 1.6s infinite ease-in-out }
+.dot.starting { background: #ea580c; animation: p9m-breathe 1.6s infinite ease-in-out }
 .dot.ready { background: radial-gradient(circle at 50% 60%, #fff3c4 0 18%, #ffb347 40%, #ff6a00 75%); box-shadow: 0 0 6px 2px rgba(255,120,20,.6) }
 .dot.error { background: #ef4444 }
 .error { color: #f87171 }
-@keyframes p7y-breathe { 0%,100% { opacity: .45 } 50% { opacity: 1 } }
+@keyframes p9m-breathe { 0%,100% { opacity: .45 } 50% { opacity: 1 } }
 .hint { margin-top: 22px; font-size: 12px; color: #6f6560 }
 @media (prefers-reduced-motion: reduce) { .coal .core, .dot.starting { animation: none } }
 </style>
@@ -43,8 +43,8 @@ li span:first-child { font-family: ui-monospace, SFMono-Regular, Consolas, monos
 <body>
 <canvas data-embers aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
 <div class="heat"></div>
-<div class="wrap"><div class="card" data-p7y-waiting data-refresh="{{ .RefreshFrequency }}">
-  <div class="coal" data-coal><div class="core"></div><svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="p7y-wf" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff5a00"/><stop offset=".6" stop-color="#ff9a2e"/><stop offset="1" stop-color="#ffe0a0"/></linearGradient></defs><path fill="url(#p7y-wf)" d="M32 4c5 13 18 19 18 36a18 18 0 0 1-36 0c0-11 7-15 9-24 4 5 6 10 5 16 6-7 8-15 4-28Z"/><path fill="#fff1c9" d="M32 30c3 5 7 7 7 13a7 7 0 0 1-14 0c0-4 3-6 4-9 1 2 2 4 2 6 2-3 2-6 1-10Z"/></svg></div>
+<div class="wrap"><div class="card" data-p9m-waiting data-refresh="{{ .RefreshFrequency }}">
+  <div class="coal" data-coal><div class="core"></div><svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="p9m-wf" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff5a00"/><stop offset=".6" stop-color="#ff9a2e"/><stop offset="1" stop-color="#ffe0a0"/></linearGradient></defs><path fill="url(#p9m-wf)" d="M32 4c5 13 18 19 18 36a18 18 0 0 1-36 0c0-11 7-15 9-24 4 5 6 10 5 16 6-7 8-15 4-28Z"/><path fill="#fff1c9" d="M32 30c3 5 7 7 7 13a7 7 0 0 1-14 0c0-4 3-6 4-9 1 2 2 4 2 6 2-3 2-6 1-10Z"/></svg></div>
   <h1>Sandbox is waking up</h1>
   <div class="name">{{ .DisplayName }}</div>
   <ul data-states>
@@ -155,11 +155,11 @@ li span:first-child { font-family: ui-monospace, SFMono-Regular, Consolas, monos
 // (the app answers, or an error page), reload to show it. Without JavaScript the
 // page's <noscript> meta refresh does the same, more plainly.
 ;(() => {
-  const root = document.querySelector('[data-p7y-waiting]')
+  const root = document.querySelector('[data-p9m-waiting]')
   if (!root) return
   const every = Math.max(1, Number(root.getAttribute('data-refresh')) || 3) * 1000
   const coal = document.querySelector('[data-coal]')
-  // Purgatory's /wake/ready: the sandbox's router comes up with its first tunnel, but the app asked for may not
+  // Purgatorium's /wake/ready: the sandbox's router comes up with its first tunnel, but the app asked for may not
   // answer yet (frps shows 404 meanwhile), so this is asked before opening it; for at most 5 minutes
   const readyUrl = root.getAttribute('data-ready')
   const until = Date.now() + 5 * 60 * 1000
@@ -173,7 +173,7 @@ li span:first-child { font-family: ui-monospace, SFMono-Regular, Consolas, monos
       if (el) el.innerHTML = `<span class="dot starting"></span>starting ${String(r.service || 'the app').replace(/[&<>"']/g, '')}…`
       return true
     } catch {
-      return false // Purgatory not reachable: open it as it is
+      return false // Purgatorium not reachable: open it as it is
     }
   }
 
@@ -187,7 +187,7 @@ li span:first-child { font-family: ui-monospace, SFMono-Regular, Consolas, monos
       const res = await fetch(location.href, { cache: 'no-store', credentials: 'same-origin' })
       const text = await res.text()
       const doc = new DOMParser().parseFromString(text, 'text/html')
-      const next = doc.querySelector('[data-p7y-waiting]')
+      const next = doc.querySelector('[data-p9m-waiting]')
       // The app answers: everything is ready. Let the ember become a flame for a moment, then open it
       if (!next) {
         if (await appStarting()) return void setTimeout(poll, every)

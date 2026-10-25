@@ -15,7 +15,7 @@ daemon_json:
 docker_compose:
   services:
     sandbox:
-      image: ghcr.io/p7y-dev/foxglove:0.8.0-sysbox
+      image: ghcr.io/csakaszamok/foxglove:0.9.0-sysbox
       container_name: ${name}
       runtime: sysbox-runc
       environment:
@@ -44,15 +44,15 @@ docker_compose:
         - default
         - traefik-net
       labels:
-        p7y.managed: "true"
-        p7y.name: ${name}
-        p7y.template: ${template_name}
-        p7y.runtime: ${runtime_name}
-        p7y.compose: ${compose_source}
-        p7y.ssh: "true"
-        p7y.created_at: ${created_at}
-        p7y.deep_sleep_after: ${deep_sleep_after}
-        p7y.owner: ${owner}
+        p9m.managed: "true"
+        p9m.name: ${name}
+        p9m.template: ${template_name}
+        p9m.runtime: ${runtime_name}
+        p9m.compose: ${compose_source}
+        p9m.ssh: "true"
+        p9m.created_at: ${created_at}
+        p9m.deep_sleep_after: ${deep_sleep_after}
+        p9m.owner: ${owner}
         sablier.enable: "true"
         sablier.group: ${name}
 
@@ -95,14 +95,14 @@ docker_compose:
         timeout: 2s
         retries: 12
         # Every 0.5 s while it starts, so its router (and its app address) shows up as soon as the tunnel does;
-        # needs Docker Engine 25, below which Purgatory leaves start_interval out
+        # needs Docker Engine 25, below which Purgatorium leaves start_interval out
         start_period: 60s
         start_interval: 500ms
       labels:
         sablier.enable: "true"
         sablier.group: ${name}
         # No allownonrunning: the router exists only while the sandbox runs, so running traffic never goes
-        # through p7y; asleep, its requests fall to p7y's catch-all (p7y-wake), which wakes it within the limits
+        # through p9m; asleep, its requests fall to p9m's catch-all (p9m-wake), which wakes it within the limits
         traefik.enable: "true"
         traefik.http.routers.frps-${name}.rule: "HostRegexp(`^${raw_name}-[a-z0-9-]+[.]${host_domain}$`)"
         traefik.http.routers.frps-${name}.middlewares: access-${name}@http,sablier-${name}
@@ -110,7 +110,7 @@ docker_compose:
         traefik.http.middlewares.sablier-${name}.plugin.sablier.group: ${name}
         traefik.http.middlewares.sablier-${name}.plugin.sablier.sessionDuration: ${idle_timeout}
         traefik.http.middlewares.sablier-${name}.plugin.sablier.dynamic.displayName: ${raw_name}
-        traefik.http.middlewares.sablier-${name}.plugin.sablier.dynamic.theme: p7y
+        traefik.http.middlewares.sablier-${name}.plugin.sablier.dynamic.theme: p9m
         traefik.http.middlewares.sablier-${name}.plugin.sablier.dynamic.refreshFrequency: 3s
         traefik.http.routers.frps-${name}.entrypoints: web,websecure
         # By name, not the container's address: Traefik learns a woken container's address only ~1.5 s after

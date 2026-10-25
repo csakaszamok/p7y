@@ -1,28 +1,28 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.p7y-dev/p7y",
-  "title": "Purgatory (p7y)",
+  "name": "io.github.p9m-team/p9m",
+  "title": "Purgatorium (p9m)",
   "description": "Self-hosted Docker sandboxes for agents: create one, deploy a compose stack, read its files and URLs",
-  "version": "0.11.10",
+  "version": "0.12.0",
   "repository": {
-    "url": "https://github.com/p7y-dev/p7y",
+    "url": "https://github.com/csakaszamok/p9m",
     "source": "github"
   },
-  "websiteUrl": "https://p7y-dev.github.io/p7y/latest/mcp/",
+  "websiteUrl": "https://csakaszamok.github.io/p9m/latest/mcp/",
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://p7y.{domain}/mcp",
+      "url": "https://{purgatorium_host}/mcp",
       "variables": {
-        "domain": {
-          "description": "The HOST_DOMAIN of your Purgatory server (its UI is at p7y.<domain>), e.g. example.com",
+        "purgatorium_host": {
+          "description": "Your Purgatorium server's address, where its UI is (PUBLIC_URL without https://), e.g. p9m.example.com",
           "isRequired": true
         }
       },
       "headers": [
         {
           "name": "Authorization",
-          "description": "Bearer <token>: a Purgatory access token (Access tokens page); a token limited to one sandbox gets only that sandbox's tools",
+          "description": "Bearer <token>: a Purgatorium access token (Access tokens page); a token limited to one sandbox gets only that sandbox's tools",
           "isRequired": true,
           "isSecret": true
         }

@@ -14,7 +14,7 @@ function labelsOf(name: string, usersDir: string): Record<string, string> {
   } catch { return {} }
 }
 
-/** Created with SSH (runtime label p7y.ssh): sandboxes from before have no sshd. */
+/** Created with SSH (runtime label p9m.ssh): sandboxes from before have no sshd. */
 export function sandboxHasSsh(name: string, usersDir = sandboxParent(name)): boolean {
   return String(readLabel(labelsOf(name, usersDir), 'ssh')) === 'true'
 }

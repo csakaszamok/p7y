@@ -15,10 +15,9 @@ export default async (req: Request): Promise<Response> => {
   if (result === 'limit' && refusal) return limitPage(name, refusal)
   if (result === 'outdated') return messageResponse(409, name, 'This sandbox needs to be re-created',
     `It was created before HTTPS was enabled, so its address only works over plain HTTP, which now redirects to HTTPS.
-  Delete it in Purgatory (its data is archived) and create it again to get an HTTPS address.`)
+  Delete it in Purgatorium (its data is archived) and create it again to get an HTTPS address.`)
   if (result === 'no_route') return messageResponse(502, name, 'This address does not reach the sandbox',
-    `The sandbox is running, but none of its routes matches this address. If you opened it over https://, try http://;
-  restarting Purgatory updates the routes of sandboxes created before HTTPS support.`)
+    `The sandbox is running, but none of its routes matches this address. If you opened it over https://, try http://.`)
   return new Response(wakingPage(name, from, `${publicBase()}/wake/ready?host=${encodeURIComponent(host)}`), {
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }
   })
@@ -28,7 +27,7 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
 }
 
-const publicBase = () => (process.env.PUBLIC_URL ?? `https://p7y.${(process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()}`).replace(/\/$/, '')
+const publicBase = () => (process.env.PUBLIC_URL ?? `https://p9m.${(process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()}`).replace(/\/$/, '')
 
 /** readyUrl: asked before opening the address, so the page waits until its app answers, not only its tunnel. */
 function wakingPage(name: string, from: 'asleep' | 'deep_sleep' | undefined, readyUrl: string): string {
@@ -56,7 +55,7 @@ function limitPage(name: string, r: WakeRefusal): Response {
     : `This sandbox cannot wake up: the server is full (${r.limit} sandboxes running).`
   const link = r.reason === 'running'
     ? `<a href="${escapeHtml(`${base}/?wake=${encodeURIComponent(name)}`)}">Choose what sleeps (owner)</a>`
-    : `<a href="${escapeHtml(`${base}/`)}">Open Purgatory (owner)</a>`
+    : `<a href="${escapeHtml(`${base}/`)}">Open Purgatorium (owner)</a>`
   return messageResponse(409, name, escapeHtml(r.title), `${text}</p><p>${link} · this page tries again every 30 seconds.`, '<meta http-equiv="refresh" content="30">')
 }
 

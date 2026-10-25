@@ -1,7 +1,7 @@
 import * as client from 'openid-client'
 import { signValue, verifyValue, publicUrl } from './session'
 
-export const OIDC_FLOW_COOKIE = 'p7y_oidc'
+export const OIDC_FLOW_COOKIE = 'p9m_oidc'
 const FLOW_TTL_SEC = 600
 
 export class LoginError extends Error {}
@@ -18,8 +18,8 @@ export function providerName(): string {
   return process.env.OIDC_PROVIDER_NAME ?? 'Google'
 }
 
-/** Purgatory's own callback address. */
-export function purgatoryRedirectUri(): string {
+/** Purgatorium's own callback address. */
+export function purgatoriumRedirectUri(): string {
   return `${publicUrl()}/auth/callback`
 }
 

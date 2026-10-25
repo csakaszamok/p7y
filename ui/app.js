@@ -1,4 +1,4 @@
-// Purgatory UI: one script for the sandbox views ("mine", "all") and the tokens view.
+// Purgatorium UI: one script for the sandbox views ("mine", "all") and the tokens view.
 const view = document.body.dataset.view
 const isAdmin = document.body.dataset.role === 'admin'
 const me = document.body.dataset.sub
@@ -6,7 +6,7 @@ const me = document.body.dataset.sub
 const simpleView = () => document.body.dataset.mode === 'simple'
 const $ = sel => document.querySelector(sel)
 // Shared with the details panel (ui/panel.js, loaded first)
-const { esc, remaining, countdown, statusLabel, statusClass, fmtBytes, meter } = window.P7yPanel
+const { esc, remaining, countdown, statusLabel, statusClass, fmtBytes, meter } = window.P9mPanel
 
 async function api(path, options = {}) {
   const res = await fetch(path, {
@@ -21,9 +21,9 @@ async function api(path, options = {}) {
   return body
 }
 
-// New sandboxes are <prefix>-<name> (p7y by default); legacy ones leander-<name>.
-const prefix = document.body.dataset.prefix || 'p7y'
-const shortName = n => n.startsWith(`${prefix}-`) ? n.slice(prefix.length + 1) : n.replace(/^leander-/, '')
+// Sandboxes are <prefix>-<name> (p9m by default).
+const prefix = document.body.dataset.prefix || 'p9m'
+const shortName = n => n.startsWith(`${prefix}-`) ? n.slice(prefix.length + 1) : n
 const age = iso => {
   const t = Date.parse(iso); if (isNaN(t)) return ''
   // The browser's clock can be a little behind the server's: never show a negative age
@@ -78,7 +78,7 @@ function filtered() {
   if (view !== 'mine' && view !== 'all') return list
   const text = $('[data-filter-text]').value
   const status = $('[data-filter-status]').value
-  return list.filter(s => P7yPanel.matchesFilter(s, text) && (!status || (s.status === 'created' ? 'exited' : s.status) === status))
+  return list.filter(s => P9mPanel.matchesFilter(s, text) && (!status || (s.status === 'created' ? 'exited' : s.status) === status))
 }
 
 function renderRows() {
@@ -97,7 +97,7 @@ function renderRows() {
       ${view === 'all' ? `<td>${esc(s.owner === 'admin' ? 'admin API' : s.owner)}</td>` : ''}
       <td>${busy.has(s.name)
         ? `<span class="status starting">${esc(ACTIONS[busy.get(s.name)].row)}</span>`
-        : `<span class="status ${esc(statusClass(s))}">${esc(s.start_error ? 'failed to start' : statusLabel(s.status))}</span>`}${s.apps_stale ? ` <span class="warn" title="${esc(P7yPanel.STALE_APPS)}">⚠</span><span class="sr-only">${esc(P7yPanel.STALE_APPS)}</span>` : ''}</td>
+        : `<span class="status ${esc(statusClass(s))}">${esc(s.start_error ? 'failed to start' : statusLabel(s.status))}</span>`}${s.apps_stale ? ` <span class="warn" title="${esc(P9mPanel.STALE_APPS)}">⚠</span><span class="sr-only">${esc(P9mPanel.STALE_APPS)}</span>` : ''}</td>
       <td>${sleepCell(s)}</td>
       <td class="adv">${deepSleepCell(s)}</td>
       <td class="adv">${usageCell(s)}</td>
@@ -116,7 +116,7 @@ async function loadQuota() {
     if (me.quota === null) { el.textContent = ''; $('[data-new]').disabled = false; return }
     // Running and asleep sandboxes hold a slot; deep sleep frees it
     // The quota counts running sandboxes; asleep and deep-sleeping ones are free
-    const line = P7yPanel.quotaLine(me)
+    const line = P9mPanel.quotaLine(me)
     el.textContent = line.text
     el.title = line.title
     // The server limit (SANDBOX_MAX_TOTAL) can stop a user under their own quota
@@ -134,7 +134,7 @@ async function loadOverview() {
     const [sum, list, users] = await Promise.all([api('/sandboxes/summary'), api('/sandboxes'), isAdmin ? api('/users').then(r => r.users).catch(() => []) : []])
     // The admin's /sandboxes is everyone's: the server view; a user's is their own
     $('[data-ov-scope]').textContent = isAdmin ? 'the whole server' : 'your sandboxes'
-    $('[data-overview]').innerHTML = P7yPanel.overviewHtml(sum, list, { isAdmin, shortName }) + P7yPanel.usersTable(users)
+    $('[data-overview]').innerHTML = P9mPanel.overviewHtml(sum, list, { isAdmin, shortName }) + P9mPanel.usersTable(users)
   } catch (e) { if (e.message !== 'signed out') $('[data-overview]').innerHTML = `<p class="error">${esc(e.message)}</p>` }
 }
 function initOverview() {
@@ -185,10 +185,10 @@ for (const b of document.querySelectorAll('[data-mode-set]')) b.addEventListener
   if (selected) { renderedJSON = null; void showPanel(selected) }
 })
 
-const TAB_KEY = 'p7y.panelTab'
+const TAB_KEY = 'p9m.panelTab'
 let panelTab = (() => { try { return localStorage.getItem(TAB_KEY) || 'apps' } catch { return 'apps' } })()
 function selectTab(tab, focus = false) {
-  if (!P7yPanel.TABS.some(([id]) => id === tab)) tab = 'apps'
+  if (!P9mPanel.TABS.some(([id]) => id === tab)) tab = 'apps'
   panelTab = tab
   try { localStorage.setItem(TAB_KEY, tab) } catch { /* no storage: remembered for this page only */ }
   const panel = $('[data-panel]')
@@ -208,7 +208,7 @@ async function loadRegistry(name) {
   if (!box) return
   try {
     const data = await api(`/sandboxes/${encodeURIComponent(name)}/registry`)
-    if (selected === name && box.isConnected) box.innerHTML = P7yPanel.registryTable(data)
+    if (selected === name && box.isConnected) box.innerHTML = P9mPanel.registryTable(data)
   } catch (e) { if (box.isConnected) box.innerHTML = `<p class="error">${esc(e.message)}</p>` }
 }
 async function deleteVersion(b) {
@@ -238,7 +238,7 @@ async function loadFiles(name, path = filesAt.get(name) || '/root') {
       const volumes = await listVolumes(name)
       if (selected !== name || !box.isConnected) return
       filesAt.set(name, 'volumes')
-      box.innerHTML = P7yPanel.volumesView({ volumes }, { name, now: Date.now(), roots: filesListing?.roots })
+      box.innerHTML = P9mPanel.volumesView({ volumes }, { name, now: Date.now(), roots: filesListing?.roots })
       return
     }
     const [d, volumes] = await Promise.all([api(`${filesBase(name)}?path=${encodeURIComponent(path)}`),
@@ -246,7 +246,7 @@ async function loadFiles(name, path = filesAt.get(name) || '/root') {
     if (selected !== name || !box.isConnected) return
     filesAt.set(name, d.path); filesListing = d
     const volume = volumes?.find(v => d.path === v.path || d.path.startsWith(`${v.path}/`))
-    box.innerHTML = P7yPanel.filesView(d, { name, now: Date.now(), volume })
+    box.innerHTML = P9mPanel.filesView(d, { name, now: Date.now(), volume })
   } catch (e) {
     // A folder removed meanwhile (or in a terminal): back to /root
     if (path !== '/root' && /^No such|^Not a folder/.test(e.message)) { filesAt.delete(name); return loadFiles(name, '/root') }
@@ -263,7 +263,7 @@ async function uploadFiles(fileList) {
   if (dir === 'volumes') return filesStatus('Open a volume first, then drop the files in it.', true)
   const max = filesListing?.max_upload ?? Infinity, failed = []
   for (const [i, f] of files.entries()) {
-    if (f.size > max) { failed.push(`${f.name}: larger than ${P7yPanel.fmtBytes(max)}`); continue }
+    if (f.size > max) { failed.push(`${f.name}: larger than ${P9mPanel.fmtBytes(max)}`); continue }
     filesStatus(`Uploading ${f.name} (${i + 1} of ${files.length})…`)
     try {
       const res = await fetch(`${filesBase(name)}/content?path=${encodeURIComponent(`${dir}/${f.name}`)}`, { method: 'PUT', body: f, headers: { 'Content-Type': 'application/octet-stream' }, credentials: 'same-origin' })
@@ -317,7 +317,7 @@ async function changeMount(form, target) {
 }
 
 // ---------- export for coding agents ----------
-// A new token for the sandbox as p7y.env text, to the clipboard (or shown to copy by hand without one)
+// A new token for the sandbox as p9m.env text, to the clipboard (or shown to copy by hand without one)
 async function copyEnv(name, b = $('[data-panel] [data-act="copy-env"]'), opts = {}) {
   // It may wake the sandbox to make its Portainer token: seconds, not instant
   if (b) { b.disabled = true; b.textContent = 'Preparing…' }
@@ -326,7 +326,7 @@ async function copyEnv(name, b = $('[data-panel] [data-act="copy-env"]'), opts =
       body: JSON.stringify({ format: 'env', name: opts.name || `copied ${new Date().toISOString().slice(0, 10)}`, expires_in: opts.expires_in || '90d' }) })
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
     const text = await res.text()
-    const skipped = res.headers.get('X-P7y-Portainer')
+    const skipped = res.headers.get('X-P9m-Portainer')
     try {
       await navigator.clipboard.writeText(text)
       if (b) { b.textContent = skipped ? 'Copied, without Portainer' : 'Copied'; b.title = skipped || ''; setTimeout(() => { b.textContent = 'Copy as .env' }, skipped ? 4000 : 1500) }
@@ -347,7 +347,7 @@ function openExportDialog(name) {
   dlg.dataset.sandbox = name
   // The line to paste into Claude Code in the project's folder
   const initLine = $('[data-init-cmd]')
-  try { initLine.textContent = P7yPanel.initCommand(location.origin, shortName(name)) } catch { initLine.textContent = '' }
+  try { initLine.textContent = P9mPanel.initCommand(location.origin, shortName(name)) } catch { initLine.textContent = '' }
   let ready = false
   try { ready = JSON.parse(renderedJSON || '{}').docker_access?.state === 'ready' } catch { /* not rendered yet */ }
   $('[data-export-needs-certs]').hidden = ready
@@ -392,7 +392,7 @@ function initExportDialog() {
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
       const a = document.createElement('a')
       a.href = URL.createObjectURL(await res.blob())
-      a.download = `p7y-${shortName(name)}.zip`
+      a.download = `p9m-${shortName(name)}.zip`
       a.click()
       setTimeout(() => URL.revokeObjectURL(a.href), 1000)
       dlg.close(); form.reset()
@@ -418,7 +418,7 @@ async function showPanel(name) {
   if (pending.has(name)) { panel.innerHTML = `<h2>${esc(shortName(name))}</h2><p class="muted">Creating… usually 10–30 s.</p>`; renderedName = name; renderedJSON = null; return }
   // Another sandbox than the one shown: its name and status at once, never the previous one's details while its load
   if (renderedName !== name) {
-    panel.innerHTML = P7yPanel.loadingPanel(sandboxes.find(s => s.name === name) ?? { name, status: '' }, { shortName })
+    panel.innerHTML = P9mPanel.loadingPanel(sandboxes.find(s => s.name === name) ?? { name, status: '' }, { shortName })
     renderedName = name
     renderedJSON = null
   }
@@ -430,12 +430,12 @@ async function showPanel(name) {
   s = onLocalClock(s)
   if (renderedName === name && renderedJSON === sJSON) {
     const cell = panel.querySelector('[data-resources]') // only the use changed: update just its meters
-    if (cell) cell.innerHTML = P7yPanel.resourcesTable(s)
+    if (cell) cell.innerHTML = P9mPanel.resourcesTable(s)
     return
   }
   renderedName = name
   renderedJSON = sJSON
-  panel.innerHTML = P7yPanel.renderPanel(s, { isAdmin, me, shortName, tab: panelTab, protocol: location.protocol, simple: simpleView() })
+  panel.innerHTML = P9mPanel.renderPanel(s, { isAdmin, me, shortName, tab: panelTab, protocol: location.protocol, simple: simpleView() })
   if (panelTab === 'registry') void loadRegistry(name)
   if (panelTab === 'files') void loadFiles(name)
   if (busy.has(name)) markBusy(panel, busy.get(name))
@@ -881,7 +881,7 @@ function initSandboxes() {
   $('[data-panel]').addEventListener('drop', e => { const z = e.target.closest('[data-files]'); if (!z) return; e.preventDefault(); z.classList.remove('drop'); void uploadFiles(e.dataTransfer.files) })
   $('[data-panel]').addEventListener('keydown', e => {
     const t = e.target.closest('[role="tab"]'); if (!t) return
-    const ids = P7yPanel.TABS.map(([id]) => id), i = ids.indexOf(t.dataset.tab)
+    const ids = P9mPanel.TABS.map(([id]) => id), i = ids.indexOf(t.dataset.tab)
     const next = { ArrowRight: ids[(i + 1) % ids.length], ArrowLeft: ids[(i - 1 + ids.length) % ids.length], Home: ids[0], End: ids[ids.length - 1] }[e.key]
     if (next) { e.preventDefault(); selectTab(next, true) }
   })
@@ -906,7 +906,7 @@ function initSandboxes() {
   initExportDialog()
   initComposeDialog()
   $('[data-new-form] input[name=name]').addEventListener('input', e => {
-    $('[data-name-hint]').textContent = `lowercase letters, digits, - and _ · URLs look like ${e.target.value || 'name'}-….${location.hostname.replace(/^(p7y|leander)\./, '')}`
+    $('[data-name-hint]').textContent = `lowercase letters, digits, - and _ · URLs look like ${e.target.value || 'name'}-….${location.hostname.replace(/^p9m\./, '')}`
   })
   initSwapDialog()
   loadList().then(() => { if (view === 'mine') wakeFromLink() })
@@ -992,7 +992,7 @@ function initTokenDialog(onCreated) {
     const text = agentEnv({ url: location.origin, token: $('[data-created-token]').textContent, sandbox })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([text], { type: 'application/octet-stream' }))
-    a.download = 'p7y.env' // a leading-dot name is renamed by browsers (Chrome saves .env as env.txt)
+    a.download = 'p9m.env' // a leading-dot name is renamed by browsers (Chrome saves .env as env.txt)
     a.click()
     setTimeout(() => URL.revokeObjectURL(a.href), 1000)
   })
@@ -1000,11 +1000,11 @@ function initTokenDialog(onCreated) {
 
 function agentEnv({ url, token, sandbox }) {
   return [
-    '# Purgatory sandbox access for a coding agent. A secret: keep this file out of git.',
-    `P7Y_URL=${url}`,
-    `P7Y_TOKEN=${token}`,
-    ...(sandbox ? [`P7Y_SANDBOX=${sandbox}`] : []),
-    'P7Y_AGENT_GUIDE=https://p7y-dev.github.io/p7y/latest/agent-guide/index.md',
+    '# Purgatorium sandbox access for a coding agent. A secret: keep this file out of git.',
+    `P9M_URL=${url}`,
+    `P9M_TOKEN=${token}`,
+    ...(sandbox ? [`P9M_SANDBOX=${sandbox}`] : []),
+    'P9M_AGENT_GUIDE=https://csakaszamok.github.io/p9m/latest/agent-guide/index.md',
     '',
   ].join('\n')
 }
@@ -1044,7 +1044,7 @@ function initTokens() {
 // ---------- topbar: the server's places, on every page ----------
 async function loadPlaces() {
   try {
-    const b = P7yPanel.placesBadge((await api('/me')).server_places)
+    const b = P9mPanel.placesBadge((await api('/me')).server_places)
     const el = $('[data-places]')
     el.hidden = !b
     if (b) { el.textContent = b.text; el.title = b.title; el.className = `places ${b.state}` }

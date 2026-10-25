@@ -54,7 +54,7 @@ export function reposOf(raw: string): string[] {
   return Object.keys(load()).filter(r => r.startsWith(`${raw}/`)).sort()
 }
 
-/** Every version p7y knows of is clean (and there is one). See publicPullAllowed for the registry's side. */
+/** Every version p9m knows of is clean (and there is one). See publicPullAllowed for the registry's side. */
 export function repoIsClean(repo: string): boolean {
   const vs = versionsOf(repo)
   return vs.length > 0 && vs.every(v => v.state === 'clean')
@@ -86,7 +86,7 @@ const MANIFEST_TYPES = [
   'application/vnd.oci.image.index.v1+json', 'application/vnd.docker.distribution.manifest.list.v2+json',
   'application/vnd.oci.image.manifest.v1+json', 'application/vnd.docker.distribution.manifest.v2+json',
 ].join(', ')
-const pullAuth = (repo: string) => ({ Authorization: `Bearer ${issueToken('p7y-scanner', service(), [{ type: 'repository', name: repo, actions: ['pull'] }])}` })
+const pullAuth = (repo: string) => ({ Authorization: `Bearer ${issueToken('p9m-scanner', service(), [{ type: 'repository', name: repo, actions: ['pull'] }])}` })
 
 /** Every file of every layer, and the config (ENV, labels, history), of each platform of the image. */
 const registryWalk: Walk = async (repo, digest, onFile, signal) => {
@@ -155,7 +155,7 @@ export async function scanImage(repo: string, digest: string, deps: { walk?: Wal
   } finally { clearTimeout(timer) }
 }
 
-// At most two scans at once: they run inside Purgatory itself
+// At most two scans at once: they run inside Purgatorium itself
 const MAX_PARALLEL = 2
 let running = 0
 const waiting: Array<() => void> = []
@@ -165,7 +165,7 @@ export async function enqueueScan(repo: string, digest: string, deps: { walk?: W
   try { await scanImage(repo, digest, deps) } finally { running--; waiting.shift()?.() }
 }
 
-/** Scans that were running when Purgatory stopped (left "scanning") run again. */
+/** Scans that were running when Purgatorium stopped (left "scanning") run again. */
 export async function resumeScans(deps: { walk?: Walk } = {}): Promise<void> {
   const s = load()
   const todo = Object.entries(s).flatMap(([repo, vs]) => Object.entries(vs).filter(([, v]) => v.state === 'scanning').map(([d]) => [repo, d] as const))
@@ -188,8 +188,8 @@ const registryDeps: RegistryDeps = {
 const pullCache = new Map<string, { at: number; ok: boolean }>()
 
 /**
- * Anonymous pull of a repo (the registry's tokens are per repo): every version p7y knows is clean, and every tag
- * the registry has points at one of them — a version p7y never heard of (a lost notification) keeps it private.
+ * Anonymous pull of a repo (the registry's tokens are per repo): every version p9m knows is clean, and every tag
+ * the registry has points at one of them — a version p9m never heard of (a lost notification) keeps it private.
  * Cached 10 s; any doubt (the registry not answering) is a no.
  */
 export async function publicPullAllowed(repo: string, deps: RegistryDeps = registryDeps): Promise<boolean> {

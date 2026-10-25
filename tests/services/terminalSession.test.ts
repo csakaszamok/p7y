@@ -38,8 +38,8 @@ describe('runTerminal', () => {
     const ws = fakeWs(); const s = fakeShell()
     let running = false
     const wake = vi.fn(async () => { running = true })
-    await runTerminal(ws, 'p7y-a1', { state: async () => ({ status: running ? 'running' : 'exited' }), wake, openShell: async () => s.shell, keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 2000, pollMs: 10 })
-    expect(wake).toHaveBeenCalledWith('p7y-a1')
+    await runTerminal(ws, 'p9m-a1', { state: async () => ({ status: running ? 'running' : 'exited' }), wake, openShell: async () => s.shell, keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 2000, pollMs: 10 })
+    expect(wake).toHaveBeenCalledWith('p9m-a1')
     expect(ws.sent.slice(0, 2)).toEqual([{ type: 'status', text: 'waking…' }, { type: 'status', text: 'connected' }])
     ws.emit('message', JSON.stringify({ type: 'input', data: 'ls\r' }))
     expect(s.written).toContain('ls\r')
@@ -57,7 +57,7 @@ describe('runTerminal', () => {
     try {
       const ws = fakeWs(); const s = fakeShell()
       const keepAlive = vi.fn(async () => {})
-      await runTerminal(ws, 'p7y-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell: async () => s.shell, keepAlive, keepAliveMs: 1000, wakeTimeoutMs: 1000, pollMs: 10 })
+      await runTerminal(ws, 'p9m-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell: async () => s.shell, keepAlive, keepAliveMs: 1000, wakeTimeoutMs: 1000, pollMs: 10 })
       expect(keepAlive).toHaveBeenCalledTimes(1) // at once: the idle timeout may be shorter than the interval
       vi.advanceTimersByTime(2500)
       expect(keepAlive).toHaveBeenCalledTimes(3)
@@ -69,7 +69,7 @@ describe('runTerminal', () => {
 
   it('sends exit and closes when the shell ends', async () => {
     const ws = fakeWs(); const s = fakeShell()
-    await runTerminal(ws, 'p7y-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell: async () => s.shell, keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 1000, pollMs: 10 })
+    await runTerminal(ws, 'p9m-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell: async () => s.shell, keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 1000, pollMs: 10 })
     s.out.end()
     s.out.resume()
     await new Promise(r => setTimeout(r, 30))
@@ -80,7 +80,7 @@ describe('runTerminal', () => {
   // The exec stream is a hijacked socket: it errors when the sandbox goes away under it
   it('reports a broken shell connection and closes, instead of an unhandled error', async () => {
     const ws = fakeWs(); const s = fakeShell()
-    await runTerminal(ws, 'p7y-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell: async () => s.shell, keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 1000, pollMs: 10 })
+    await runTerminal(ws, 'p9m-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell: async () => s.shell, keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 1000, pollMs: 10 })
     s.out.emit('error', Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' }))
     expect(ws.sent.at(-1)).toEqual({ type: 'error', text: 'The connection to the sandbox was lost' })
     expect(ws.closed).toBe(true)
@@ -90,7 +90,7 @@ describe('runTerminal', () => {
   it('closing the tab ends the shell in the sandbox and destroys its connection', async () => {
     const ws = fakeWs(); const s = fakeShell()
     const kill = vi.fn(async () => {})
-    await runTerminal(ws, 'p7y-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell: async () => ({ ...s.shell, kill }), keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 1000, pollMs: 10 })
+    await runTerminal(ws, 'p9m-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell: async () => ({ ...s.shell, kill }), keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 1000, pollMs: 10 })
     ws.close()
     expect(s.out.destroyed).toBe(true)
     expect(kill).toHaveBeenCalled()
@@ -101,7 +101,7 @@ describe('runTerminal', () => {
     const keepAlive = vi.fn(async () => {})
     let done!: () => void
     const opening = new Promise<void>(r => { done = r })
-    const p = runTerminal(ws, 'p7y-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell: async () => { await opening; return s.shell }, keepAlive, keepAliveMs: 10, wakeTimeoutMs: 1000, pollMs: 10 })
+    const p = runTerminal(ws, 'p9m-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell: async () => { await opening; return s.shell }, keepAlive, keepAliveMs: 10, wakeTimeoutMs: 1000, pollMs: 10 })
     await new Promise(r => setTimeout(r, 5))
     ws.close()
     done(); await p
@@ -113,7 +113,7 @@ describe('runTerminal', () => {
   it('pauses the shell while the browser is not keeping up, and resumes when it has', async () => {
     const ws = Object.assign(fakeWs(), { bufferedAmount: 0 })
     const s = fakeShell()
-    await runTerminal(ws, 'p7y-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell: async () => s.shell, keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 1000, pollMs: 10 })
+    await runTerminal(ws, 'p9m-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell: async () => s.shell, keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 1000, pollMs: 10 })
     ws.bufferedAmount = 2 * 1024 * 1024
     s.out.push(Buffer.from('lots'))
     await new Promise(r => setTimeout(r, 10))
@@ -126,14 +126,14 @@ describe('runTerminal', () => {
 
   it('says so when the sandbox does not wake in time', async () => {
     const ws = fakeWs()
-    await runTerminal(ws, 'p7y-a1', { state: async () => ({ status: 'exited' }), wake: async () => {}, openShell: vi.fn(), keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 50, pollMs: 10 })
+    await runTerminal(ws, 'p9m-a1', { state: async () => ({ status: 'exited' }), wake: async () => {}, openShell: vi.fn(), keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 50, pollMs: 10 })
     expect(ws.sent.at(-1)).toEqual({ type: 'error', text: 'The sandbox did not wake up in time: try again' })
     expect(ws.closed).toBe(true)
   })
 
   it('at the limit: says why and closes, without waiting', async () => {
     const ws = fakeWs()
-    await runTerminal(ws, 'p7y-a1', { state: async () => ({ status: 'exited' }) as never, wake: async () => { throw Object.assign(new Error('Running limit reached: 1 running sandbox allowed, running now: shop. Put one to sleep first.'), { code: 'LIMIT' }) }, wakeTimeoutMs: 60_000, pollMs: 10 })
+    await runTerminal(ws, 'p9m-a1', { state: async () => ({ status: 'exited' }) as never, wake: async () => { throw Object.assign(new Error('Running limit reached: 1 running sandbox allowed, running now: shop. Put one to sleep first.'), { code: 'LIMIT' }) }, wakeTimeoutMs: 60_000, pollMs: 10 })
     expect(ws.sent).toContainEqual({ type: 'error', text: 'Running limit reached: 1 running sandbox allowed, running now: shop. Put one to sleep first. Choose one to put to sleep with Wake in its panel.' })
     expect(ws.closed).toBe(true)
   })

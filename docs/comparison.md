@@ -1,12 +1,12 @@
-# Why Purgatory, and how it compares
+# Why Purgatorium, and how it compares
 
 *As of October 2026. What is said about other products comes from the public sources listed at the bottom, and can change quickly.*
 
-## What Purgatory is for
+## What Purgatorium is for
 
 **A place where a team's apps run: the ones people build with AI agents or vibe-code in an afternoon.** Everyone gets their own space, every app gets a URL colleagues can open, and what nobody uses costs nothing. On your own server, not in someone else's cloud.
 
-Think of it as **a self-hosted Vercel or Railway for the whole team**: you hand an agent a `p7y.env`, it deploys a `docker-compose.yml`, and a minute later `https://shop-web.example.com` works.
+Think of it as **a self-hosted Vercel or Railway for the whole team**: you hand an agent a `p9m.env`, it deploys a `docker-compose.yml`, and a minute later `https://shop-web.example.com` works.
 
 ## How teams do this today, and what goes wrong
 
@@ -18,21 +18,21 @@ Think of it as **a self-hosted Vercel or Railway for the whole team**: you hand 
 | **Coolify or Dokploy** | Built for running a team's production apps: an admin sets up projects, everything keeps running all the time, teams on one server still share the daemon. |
 | **A VM for everyone** | Expensive while idle, and someone has to create, patch and clean up every one of them. |
 
-## What Purgatory does instead
+## What Purgatorium does instead
 
 - **Self-service, like a cloud PaaS.** Anyone signs in (Google or any OIDC) and creates a sandbox; a quota and CPU / memory limits keep one person from taking the whole server.
 - **Its own Docker for everyone.** Every sandbox has its own Docker daemon: what an agent produces (`docker-compose.yml` with app, database, cache) runs as it is, and nobody sees or breaks anyone else's containers.
 - **A URL for every app, automatically.** Whatever a sandbox publishes gets `https://<name>-<app>.<domain>`; databases and SSH get a TLS address on port 443. No DNS, no proxy rules per app.
 - **Idle costs nothing.** A sandbox without traffic falls asleep and wakes on the next request; after a longer sleep its containers are freed. Twenty experiments, three in use: the server carries three.
-- **Made for coding agents.** **Let your agent deploy…** (the Claude Code plugin with `/p7y:init`, or a zip for any agent) gives the agent a token for that one sandbox, Docker access from outside and a registry login; every pushed image is scanned for secrets before anyone can pull it anonymously.
+- **Made for coding agents.** **Let your agent deploy…** (the Claude Code plugin with `/p9m:init`, or a zip for any agent) gives the agent a token for that one sandbox, Docker access from outside and a registry login; every pushed image is scanned for secrets before anyone can pull it anonymously.
 - **Your server, your data, no bill per app.** One `docker compose up` on one Linux host, also inside a company network; no paid edition.
 - **Nothing is lost.** Delete archives the sandbox's configuration and data.
 
 ## Against a cloud PaaS (Vercel, Railway, Render, Fly.io)
 
-Purgatory gives a team what these give one developer, on hardware the team already has.
+Purgatorium gives a team what these give one developer, on hardware the team already has.
 
-| | Vercel / Railway / Render / Fly.io | Purgatory |
+| | Vercel / Railway / Render / Fly.io | Purgatorium |
 |---|---|---|
 | Where it runs, where the data is | Their cloud | Your server, also inside a company network |
 | What you pay for | Every project, service and its usage | The server |
@@ -41,13 +41,13 @@ Purgatory gives a team what these give one developer, on hardware the team alrea
 | Many people on one account | A team plan; everyone sees the team's projects | Everyone sees only their own sandboxes; tokens limited to one sandbox |
 | Production features | Global edge, autoscaling, managed databases, backups, zero operations | None of these: one host, you run it |
 
-**Pick a cloud PaaS** for an app in production that has to scale and be up at 3 a.m. without you. **Pick Purgatory** for the many apps before that point: experiments, demos, internal tools, vibe-coded apps, test environments, and for whatever must not leave the company network.
+**Pick a cloud PaaS** for an app in production that has to scale and be up at 3 a.m. without you. **Pick Purgatorium** for the many apps before that point: experiments, demos, internal tools, vibe-coded apps, test environments, and for whatever must not leave the company network.
 
 ## Against self-hosted tools (Coolify, Dokploy, Portainer)
 
 These also run on your own server, but they are built for **one team running its apps**, not for **many people each having their own space**.
 
-| | Purgatory | Coolify | Dokploy | Portainer CE |
+| | Purgatorium | Coolify | Dokploy | Portainer CE |
 |---|---|---|---|---|
 | Separation between teams on **one** server | each sandbox has its own Docker daemon and network | teams get their own servers; on a shared server the daemon is shared | a shared daemon; members get access per project | a shared daemon; roles (read-only, operator) only in the paid Business Edition |
 | What the dashboard hides, Docker also hides | yes | no | no | no |
@@ -57,16 +57,16 @@ These also run on your own server, but they are built for **one team running its
 
 On a shared Docker daemon, anyone who may deploy an arbitrary compose file can, for example, bind-mount host paths or attach to another project's network: the separation in the dashboard does not reach the daemon.
 
-**They work well together:** try and build in a Purgatory sandbox, push the image to its registry, run it in production with Coolify or Dokploy. A Purgatory sandbox can also have its own Portainer (the `portainer` template), for that sandbox's daemon alone.
+**They work well together:** try and build in a Purgatorium sandbox, push the image to its registry, run it in production with Coolify or Dokploy. A Purgatorium sandbox can also have its own Portainer (the `portainer` template), for that sandbox's daemon alone.
 
 ## Looks similar, does a different job
 
 These come up in the same searches ("sandbox", "dev environment", "AI agent"), but they solve another problem:
 
-- **Coder, GitHub Codespaces, Gitpod / Ona, DevPod:** a workspace for **writing code** (an IDE, a repo, a terminal), not a place where the finished app keeps running for others. They fit next to Purgatory: write in Coder or on the laptop, run in Purgatory.
+- **Coder, GitHub Codespaces, Gitpod / Ona, DevPod:** a workspace for **writing code** (an IDE, a repo, a terminal), not a place where the finished app keeps running for others. They fit next to Purgatorium: write in Coder or on the laptop, run in Purgatorium.
 - **E2B, Daytona, Docker Sandboxes, Modal, Northflank sandboxes, kubernetes-sigs/agent-sandbox, Alibaba OpenSandbox:** they let an agent **execute code** in an isolated box for minutes or hours, driven from an SDK, usually inside a microVM. None of them is meant to keep a team's app online at a URL for weeks.
 
-## Where Purgatory is weaker
+## Where Purgatorium is weaker
 
 1. **Isolation is not yet a boundary against hostile code.** The `dind` runtime runs the sandbox `privileged`: root inside a sandbox can escape to the host. That is fine for colleagues and their own agents, not for strangers. The `sysbox` runtime removes `privileged` and is used in production, but still shares the host's kernel; a **Kata Containers** runtime, a lightweight VM with its own kernel per sandbox, is on the [roadmap](roadmap.md).
 2. **One host for now.** No multi-host scheduling and no warm pool; a new sandbox takes about 10 seconds once its images are pulled (the first one on a new server a minute or two), a wake from deep sleep about 30. **Kubernetes support** is on the roadmap.
@@ -77,7 +77,7 @@ These come up in the same searches ("sandbox", "dev environment", "AI agent"), b
 ## When to choose something else
 
 - **Production that must scale and stay up without you** → a cloud PaaS, or Coolify / Dokploy on your own servers.
-- **Untrusted code from strangers** (public sign-up) → a microVM sandbox (E2B, Docker Sandboxes, Northflank), until Purgatory has a Kata runtime.
+- **Untrusted code from strangers** (public sign-up) → a microVM sandbox (E2B, Docker Sandboxes, Northflank), until Purgatorium has a Kata runtime.
 - **Writing code in a cloud IDE** → Coder or Codespaces.
 - **An agent running short scripts from an SDK** → E2B, Daytona or agent-sandbox.
 - **GPU or ML work** → Modal.

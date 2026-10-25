@@ -3,23 +3,23 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-sshkeys-'))
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-sshkeys-'))
 process.env.SSH_KEYS_FILE = path.join(dir, 'ssh-keys.json')
 const { parsePublicKey, listSshKeys, addSshKey, removeSshKey, sshKeysOf } = await import('../../services/sshKeys')
 
-const KEY = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILQbLq+klAOn7bvdZ+bf7t83dWYc3AfKM/YVFsjF6tLa test@p7y'
+const KEY = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILQbLq+klAOn7bvdZ+bf7t83dWYc3AfKM/YVFsjF6tLa test@p9m'
 const FP = 'SHA256:U+jnkCtA+IdjCA4MWWszk3VnBbSII8CpK7D8bzNUWXU'
 
 describe('parsePublicKey', () => {
   it('reads type, base64, comment and the ssh-keygen fingerprint', () => {
     expect(parsePublicKey(KEY)).toEqual({
-      type: 'ssh-ed25519', base64: KEY.split(' ')[1], comment: 'test@p7y', fingerprint: FP, line: KEY.split(' ').slice(0, 2).join(' '),
+      type: 'ssh-ed25519', base64: KEY.split(' ')[1], comment: 'test@p9m', fingerprint: FP, line: KEY.split(' ').slice(0, 2).join(' '),
     })
   })
 
   it('accepts Windows line endings and spaces around, and keeps a comment with spaces', () => {
     expect(parsePublicKey(`  ${KEY}\r\n`)).toMatchObject({ fingerprint: FP })
-    expect(parsePublicKey(KEY.replace('test@p7y', 'my laptop key'))).toMatchObject({ comment: 'my laptop key' })
+    expect(parsePublicKey(KEY.replace('test@p9m', 'my laptop key'))).toMatchObject({ comment: 'my laptop key' })
   })
 
   it('names what is wrong', () => {
@@ -54,7 +54,7 @@ describe('the per-user key store', () => {
   })
 
   it('names a key after its comment, refuses duplicates, long names, bad keys and a 21st key', () => {
-    expect(addSshKey('a', KEY)).toMatchObject({ info: { name: 'test@p7y' } })
+    expect(addSshKey('a', KEY)).toMatchObject({ info: { name: 'test@p9m' } })
     expect(addSshKey('a', KEY)).toEqual({ error: 'this key is already added', status: 409 })
     expect(addSshKey('b', KEY)).toHaveProperty('info') // another user may add the same key
     expect(addSshKey('c', KEY, 'x'.repeat(81))).toEqual({ error: 'name must be at most 80 characters', status: 400 })
@@ -69,7 +69,7 @@ describe('the per-user key store', () => {
   it('refuses a name with line breaks or control characters, and cleans them out of a comment used as the name', () => {
     expect(addSshKey('n', KEY, 'a\nssh-ed25519 AAAA hidden')).toEqual({ error: 'name must not contain line breaks or control characters', status: 400 })
     expect(addSshKey('n', KEY, 'tab\there')).toEqual({ error: 'name must not contain line breaks or control characters', status: 400 })
-    expect(addSshKey('n', KEY.replace('test@p7y', 'bell\u0007me'))).toMatchObject({ info: { name: 'bellme' } })
+    expect(addSshKey('n', KEY.replace('test@p9m', 'bell\u0007me'))).toMatchObject({ info: { name: 'bellme' } })
   })
 
   it('throws on a corrupt store instead of overwriting it', () => {

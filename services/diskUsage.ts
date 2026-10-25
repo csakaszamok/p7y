@@ -5,13 +5,14 @@ import { parseMemory } from './resources'
 import { writeFileAtomic } from './atomicWrite'
 import { composePathOf } from './sleepSettings'
 import { measureBinds } from './dataVolumes'
+import { parseComposeText } from './composeCache'
 
 /**
  * Disk use per sandbox, against a limit that only warns: everything a sandbox keeps (inner images, containers,
  * volumes) is in its one `docker_data` volume, measured from outside with `du`. Nothing is stopped or refused.
  */
 
-const LABEL = 'p7y.disk_limit'
+const LABEL = 'p9m.disk_limit'
 const FALLBACK = '20g'
 
 export interface DiskInfo { limit: number; used: number | null; measured_at: string | null; over: boolean }
@@ -54,7 +55,7 @@ type Doc = { services?: Record<string, { labels?: Record<string, string> | strin
 /** The sandbox's own disk limit (a label the admin set), else SANDBOX_DISK. */
 export function diskLimitOf(name: string, composePath = composePathOf(name)): number {
   try {
-    const labels = (yaml.load(fs.readFileSync(composePath, 'utf8')) as Doc | null)?.services?.sandbox?.labels
+    const labels = (parseComposeText(fs.readFileSync(composePath, 'utf8')) as Doc | null)?.services?.sandbox?.labels
     const v = labels && !Array.isArray(labels) ? parseMemory(String(labels[LABEL] ?? '')) : null
     if (v !== null) return v
   } catch { /* no compose file: the default */ }
@@ -129,7 +130,7 @@ export async function measureVolume(name: string): Promise<number> {
     Cmd: [],
     NetworkDisabled: true,
     HostConfig: { Binds: measureBinds(volumes), AutoRemove: false },
-    Labels: { 'p7y.helper': 'disk-usage' },
+    Labels: { 'p9m.helper': 'disk-usage' },
   })
   try {
     await container.start()

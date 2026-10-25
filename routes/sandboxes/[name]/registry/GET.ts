@@ -5,7 +5,7 @@ import { rawNameOf } from '../../../../services/naming'
 
 export const openapi = {
   mcp: { name: 'list_sandbox_images' },
-  summary: "The sandbox's images in the p7y registry, with secret-scan results",
+  summary: "The sandbox's images in the p9m registry, with secret-scan results",
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],
   responses: { 200: { description: '{ registry, public_pull, repos: [{ repo, versions }] }' }, 401: { description: 'Unauthorized' }, 404: { description: 'Sandbox not found' } },

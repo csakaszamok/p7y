@@ -2,7 +2,7 @@ import { decide } from '../../../services/appAccess/decide'
 
 export const openapi = {
   mcp: false,
-  summary: 'Traefik forwardAuth: may this request open this sandbox app (p7y.access)',
+  summary: 'Traefik forwardAuth: may this request open this sandbox app (p9m.access)',
   tags: ['auth'],
   responses: { 200: { description: 'yes' }, 302: { description: 'sign in, or the cookie' }, 404: { description: 'not a sandbox app host' } },
 }

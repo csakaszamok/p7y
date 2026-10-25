@@ -4,6 +4,7 @@ import { composeUpService } from './compose'
 import { nudgeTraefik } from './project'
 import { parseDuration } from './duration'
 import { sandboxParent } from './sandboxPaths'
+import { parseComposeText } from './composeCache'
 
 export interface SleepSettings {
   idle_timeout: string
@@ -72,9 +73,7 @@ export function cappedSleepDefault(kind: SleepKind, value: string, owner: string
 
 /** The Sablier sessionDuration label value for an idle_timeout. */
 export const sessionDurationOf = (idle: string) => idle === 'off' ? NEVER_SESSION : idle
-// Legacy (Leander-era) sandboxes carry leander.deep_sleep_after instead.
-const DEEP_SLEEP_LABELS = ['p7y.deep_sleep_after', 'leander.deep_sleep_after']
-const deepSleepKey = (labels?: Record<string, string>) => DEEP_SLEEP_LABELS.find(k => labels?.[k] !== undefined)
+const DEEP_SLEEP_LABEL = 'p9m.deep_sleep_after'
 const idleLabel = (name: string) => `traefik.http.middlewares.sablier-${name}.plugin.sablier.sessionDuration`
 
 export function composePathOf(name: string): string {
@@ -82,7 +81,7 @@ export function composePathOf(name: string): string {
 }
 
 function services(text: string): Services {
-  const doc = yaml.load(text) as { services?: Services } | null
+  const doc = parseComposeText(text) as { services?: Services } | null
   return doc?.services ?? {}
 }
 
@@ -92,7 +91,7 @@ export function readSleepSettings(text: string, name: string): Partial<SleepSett
   const session = s.socat?.labels?.[idleLabel(name)]
   return {
     idle_timeout: session === NEVER_SESSION ? 'off' : session,
-    deep_sleep_after: s.sandbox?.labels?.[deepSleepKey(s.sandbox?.labels) ?? DEEP_SLEEP_LABELS[0]]
+    deep_sleep_after: s.sandbox?.labels?.[DEEP_SLEEP_LABEL]
   }
 }
 
@@ -101,12 +100,11 @@ export function withSleepSettings(text: string, name: string, changes: Partial<S
   const doc = (yaml.load(text) ?? {}) as { services?: Services }
   const socat = doc.services?.socat?.labels
   const sandbox = doc.services?.sandbox?.labels
-  const deepKey = deepSleepKey(sandbox)
-  if (!socat?.[idleLabel(name)] || !sandbox || !deepKey) {
+  if (!socat?.[idleLabel(name)] || sandbox?.[DEEP_SLEEP_LABEL] === undefined) {
     throw new Error(`Sleep settings of ${name} cannot be changed: its compose file has no sleep labels`)
   }
   if (changes.idle_timeout !== undefined) socat[idleLabel(name)] = sessionDurationOf(changes.idle_timeout)
-  if (changes.deep_sleep_after !== undefined) sandbox[deepKey] = changes.deep_sleep_after
+  if (changes.deep_sleep_after !== undefined) sandbox[DEEP_SLEEP_LABEL] = changes.deep_sleep_after
   return yaml.dump(doc, { lineWidth: -1 })
 }
 

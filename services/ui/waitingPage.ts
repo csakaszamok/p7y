@@ -1,13 +1,13 @@
 import fs from 'fs'
 import path from 'path'
 
-// A waiting page is served on the sandbox's own host (Sablier's theme, or Purgatory's /wake
-// through the catch-all router), where Purgatory's /assets are not reachable: everything it
+// A waiting page is served on the sandbox's own host (Sablier's theme, or Purgatorium's /wake
+// through the catch-all router), where Purgatorium's /assets are not reachable: everything it
 // needs is inlined. The same files are inlined into sablier-themes/*.html (a test keeps them equal).
 const read = (f: string) => fs.readFileSync(path.join(process.cwd(), 'ui', f), 'utf8').trim()
 
 /** The flame shown once the sandbox is ready (the logo's flame, without its coal). */
-export const READY_FLAME = `<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="p7y-wf" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff5a00"/><stop offset=".6" stop-color="#ff9a2e"/><stop offset="1" stop-color="#ffe0a0"/></linearGradient></defs><path fill="url(#p7y-wf)" d="M32 4c5 13 18 19 18 36a18 18 0 0 1-36 0c0-11 7-15 9-24 4 5 6 10 5 16 6-7 8-15 4-28Z"/><path fill="#fff1c9" d="M32 30c3 5 7 7 7 13a7 7 0 0 1-14 0c0-4 3-6 4-9 1 2 2 4 2 6 2-3 2-6 1-10Z"/></svg>`
+export const READY_FLAME = `<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="p9m-wf" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff5a00"/><stop offset=".6" stop-color="#ff9a2e"/><stop offset="1" stop-color="#ffe0a0"/></linearGradient></defs><path fill="url(#p9m-wf)" d="M32 4c5 13 18 19 18 36a18 18 0 0 1-36 0c0-11 7-15 9-24 4 5 6 10 5 16 6-7 8-15 4-28Z"/><path fill="#fff1c9" d="M32 30c3 5 7 7 7 13a7 7 0 0 1-14 0c0-4 3-6 4-9 1 2 2 4 2 6 2-3 2-6 1-10Z"/></svg>`
 
 /** readyUrl (escaped): where the poller asks whether the address's app answers before it opens it (see waiting.js). */
 export function waitingPage(opts: { title: string; name: string; body: string; refreshSeconds: number; readyUrl?: string }): string {
@@ -26,7 +26,7 @@ ${read('waiting.css')}
 <body>
 <canvas data-embers aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
 <div class="heat"></div>
-<div class="wrap"><div class="card" data-p7y-waiting data-refresh="${refreshSeconds}"${readyUrl ? ` data-ready="${readyUrl}"` : ''}>
+<div class="wrap"><div class="card" data-p9m-waiting data-refresh="${refreshSeconds}"${readyUrl ? ` data-ready="${readyUrl}"` : ''}>
   <div class="coal" data-coal><div class="core"></div>${READY_FLAME}</div>
   <h1>${title}</h1>
   <div class="name">${name}</div>

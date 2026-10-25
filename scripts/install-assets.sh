@@ -1,5 +1,5 @@
 #!/bin/sh
-# p7y-init: puts this release's files where the other services read them (Sablier themes, registry config,
+# p9m-init: puts this release's files where the other services read them (Sablier themes, registry config,
 # Traefik's error-page middleware). Runs on every `docker compose up`, so they always
 # match the image; a file dropped from a release is removed.
 set -eu
@@ -9,10 +9,10 @@ DIRS="sablier-themes registry"
 
 # Everything there first: a failing run must leave what the services read as it is
 for d in $DIRS; do
-  [ -d "$SRC/$d" ] || { echo "[p7y-init] missing $SRC/$d" >&2; exit 1; }
+  [ -d "$SRC/$d" ] || { echo "[p9m-init] missing $SRC/$d" >&2; exit 1; }
 done
 for f in registry/config.yml traefik/errors.yml; do
-  [ -f "$SRC/$f" ] || { echo "[p7y-init] missing $SRC/$f" >&2; exit 1; }
+  [ -f "$SRC/$f" ] || { echo "[p9m-init] missing $SRC/$f" >&2; exit 1; }
 done
 
 # Each file under a temporary name, then renamed over the old one: Sablier and the registry never see a file
@@ -31,8 +31,8 @@ for d in $DIRS; do
   done
 done
 
-# Traefik watches dynamic/: same rename. Only errors.yml: tls.yml and the sandboxes' files there are Purgatory's.
+# Traefik watches dynamic/: same rename. Only errors.yml: tls.yml and the sandboxes' files there are Purgatorium's.
 mkdir -p "$OUT/dynamic"
 cp "$SRC/traefik/errors.yml" "$OUT/dynamic/.errors.yml.tmp"
 mv "$OUT/dynamic/.errors.yml.tmp" "$OUT/dynamic/errors.yml"
-echo "[p7y-init] assets installed"
+echo "[p9m-init] assets installed"

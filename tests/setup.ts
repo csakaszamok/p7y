@@ -3,7 +3,7 @@ import os from 'os'
 import path from 'path'
 
 // Tests never write to the real data directory (/app/data: not writable on CI's Linux, the live data on a dev box)
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-test-data-'))
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-test-data-'))
 const defaults: Record<string, string> = {
   REGISTRY_AUTH_DIR: dir,
   ACCESS_TOKENS_FILE: path.join(dir, 'access-tokens.json'),
@@ -15,7 +15,6 @@ const defaults: Record<string, string> = {
   USER_STATS_FILE: path.join(dir, 'user-stats.json'),
   // Sandbox directories: empty temp dirs unless a test points them elsewhere
   SANDBOXES_DIR: path.join(dir, 'sandboxes'),
-  LEGACY_USERS_DIR: path.join(dir, 'users'),
   ARCHIVE_DIR: path.join(dir, 'archive'),
   // Rendering a page never asks GitHub for the topbar's counts (tests/services/repoInfo.test.ts turns it on)
   GITHUB_STATS: 'off',

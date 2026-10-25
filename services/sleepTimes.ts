@@ -1,4 +1,4 @@
-import { getSandboxState } from './docker'
+import { getSandboxState, listedSandboxState, type SandboxState } from './docker'
 import { parseDuration } from './duration'
 import { asleepSince } from './deepSleep'
 
@@ -10,7 +10,7 @@ export interface SleepTimes {
   stops_at: string | null
   /** Seconds until stops_at by the server's clock: clients count down from this, so their own clock does not matter. */
   stops_in: number | null
-  /** When Purgatory takes the asleep sandbox down (asleep and deep_sleep_after is a duration). */
+  /** When Purgatorium takes the asleep sandbox down (asleep and deep_sleep_after is a duration). */
   deep_sleep_at: string | null
   /** Seconds until deep_sleep_at by the server's clock. */
   deep_sleep_in: number | null
@@ -58,13 +58,14 @@ async function sessionExpiries(): Promise<Map<string, number>> {
 }
 
 export function sleepTimes(name: string, now = new Date()): Promise<SleepTimes> {
-  return sleepTimesWith(name, now, onceExpiries())
+  return sleepTimesWith(name, now, onceExpiries(), getSandboxState)
 }
 
-/** Sleep times for many sandboxes; Sablier's /metrics is read at most once. */
+/** Sleep times for a list's sandboxes; Sablier's /metrics is read at most once, a container inspected only when its
+ * status changed since the last time (listedSandboxState). */
 export async function sleepTimesMany(names: string[], now = new Date()): Promise<Map<string, SleepTimes>> {
   const expiries = onceExpiries()
-  const entries = await Promise.all(names.map(async n => [n, await sleepTimesWith(n, now, expiries)] as const))
+  const entries = await Promise.all(names.map(async n => [n, await sleepTimesWith(n, now, expiries, listedSandboxState)] as const))
   return new Map(entries)
 }
 
@@ -74,8 +75,8 @@ function onceExpiries(): () => Promise<Map<string, number>> {
   return () => (pending ??= sessionExpiries())
 }
 
-async function sleepTimesWith(name: string, now: Date, expiries: () => Promise<Map<string, number>>): Promise<SleepTimes> {
-  const state = await getSandboxState(name)
+async function sleepTimesWith(name: string, now: Date, expiries: () => Promise<Map<string, number>>, stateOf: (name: string) => Promise<SandboxState | null>): Promise<SleepTimes> {
+  const state = await stateOf(name)
   const secondsUntil = (ms: number) => Math.max(0, Math.round((ms - now.getTime()) / 1000))
   if (!state) return { stops_at: null, stops_in: null, deep_sleep_at: null, deep_sleep_in: null, deep_sleep_after: null, going_to_sleep: false }
   const deepSleepAfter = state.deepSleepAfter ?? null

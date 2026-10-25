@@ -75,8 +75,8 @@ async function lookUp(h: string, d: HostDeps): Promise<HostAccess | null> {
   const label = h.split('.')[0]
   let access = d.accessMap(sandbox)?.[label]
   if (access === undefined) access = (await d.fresh(sandbox))?.[label]
-  // p7y's own Sablier session probe (wake.ts primeSablierSession): it must reach Sablier, else a sandbox with a
+  // p9m's own Sablier session probe (wake.ts primeSablierSession): it must reach Sablier, else a sandbox with a
   // non-public app never gets a session and never sleeps. Nothing answers there but frps's 404
-  if (access === undefined && label === `${rawNameOf(sandbox) ?? sandbox}-p7y-wake`) access = 'public'
+  if (access === undefined && label === `${rawNameOf(sandbox) ?? sandbox}-p9m-wake`) access = 'public'
   return { sandbox, owner: d.ownerOf(sandbox), access: access ?? 'owner' }
 }

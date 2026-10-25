@@ -12,17 +12,15 @@ export async function engineApiVersion(): Promise<string> {
   return (await docker.version()).ApiVersion
 }
 
-let _hostUsersDir: string | undefined
 let _hostSandboxesDir: string | undefined
 
-export function _resetHostUsersDirCache(): void {
-  _hostUsersDir = undefined
+export function _resetHostSandboxesDirCache(): void {
   _hostSandboxesDir = undefined
 }
 
 const normalize = (p: string) => p.replace(/\\/g, '/').replace(/\/$/, '')
 
-/** The host path of p7y's own mount on `destination`, or null when it cannot be told. */
+/** The host path of p9m's own mount on `destination`, or null when it cannot be told. */
 async function ownMountSource(destination: string): Promise<string | null> {
   try {
     const hostname = fs.readFileSync('/etc/hostname', 'utf8').trim()
@@ -34,23 +32,14 @@ async function ownMountSource(destination: string): Promise<string | null> {
   }
 }
 
-/** Host path of the legacy flat sandbox directory (opt/users): read by the startup move only. */
-export async function resolveHostUsersDir(): Promise<string> {
-  if (_hostUsersDir !== undefined) return _hostUsersDir
-  _hostUsersDir = process.env.HOST_USERS_DIR ? normalize(process.env.HOST_USERS_DIR) : (await ownMountSource('/opt/users')) ?? '/opt/users'
-  return _hostUsersDir
-}
-
 /**
  * Host path of opt/sandboxes, which the sandboxes' bind mounts point into: HOST_SANDBOXES_DIR, else the source of
- * p7y's mount on /opt/sandboxes, else the sibling `sandboxes` of a set HOST_USERS_DIR, else /opt/sandboxes
- * (= cannot tell: the migrations that rewrite host paths then do nothing).
+ * p9m's mount on /opt/sandboxes, else /opt/sandboxes (= cannot tell).
  */
 export async function resolveHostSandboxesDir(): Promise<string> {
   if (_hostSandboxesDir !== undefined) return _hostSandboxesDir
   const fromEnv = process.env.HOST_SANDBOXES_DIR ? normalize(process.env.HOST_SANDBOXES_DIR) : null
-  const sibling = process.env.HOST_USERS_DIR ? `${normalize(process.env.HOST_USERS_DIR).replace(/\/[^/]*$/, '')}/sandboxes` : null
-  _hostSandboxesDir = fromEnv ?? (await ownMountSource('/opt/sandboxes')) ?? sibling ?? '/opt/sandboxes'
+  _hostSandboxesDir = fromEnv ?? (await ownMountSource('/opt/sandboxes')) ?? '/opt/sandboxes'
   return _hostSandboxesDir
 }
 
@@ -67,11 +56,11 @@ export async function getContainerStatus(containerId: string): Promise<string> {
 export interface SandboxMeta {
   name: string
   template: string
-  /** p7y.runtime label; "" for sandboxes created before runtimes existed */
+  /** p9m.runtime label; "" for sandboxes created before runtimes existed */
   runtime: string
-  /** p7y.compose label: "edited" when created from a changed or pasted compose text */
+  /** p9m.compose label: "edited" when created from a changed or pasted compose text */
   compose: 'template' | 'edited'
-  /** p7y.ssh label: created with an sshd (root, key only) */
+  /** p9m.ssh label: created with an sshd (root, key only) */
   ssh: boolean
   owner: string
   status: string
@@ -91,11 +80,32 @@ async function startError(containerId: string): Promise<string | undefined> {
   }
 }
 
+// A stopped container's start error, by its id and Docker's status text: every list asked each asleep sandbox
+// again, though nothing changes while it sleeps. A new start (failed or not) changes the status text, so it is asked
+// then; the text also changes with its age ("… 3 minutes ago"), so it is asked again at most about once a minute.
+const startErrors = new Map<string, { status: string; error: Promise<string | undefined> }>()
+
+function cachedStartError(c: { Id: string; Status: string }): Promise<string | undefined> {
+  const hit = startErrors.get(c.Id)
+  if (hit?.status === c.Status) return hit.error
+  const error = startError(c.Id)
+  startErrors.set(c.Id, { status: c.Status, error })
+  return error
+}
+
 export async function listManagedContainers(): Promise<SandboxMeta[]> {
-  // One query per label namespace (p7y.* and legacy leander.*): Docker ANDs label filters.
   const lists = await Promise.all(managedLabelFilters().map(label => docker.listContainers({ all: true, filters: { label: [label] } })))
   const seen = new Set<string>()
-  return Promise.all(lists.flat().filter(c => !seen.has(c.Id) && seen.add(c.Id)).map(async c => {
+  const containers = lists.flat().filter(c => !seen.has(c.Id) && seen.add(c.Id))
+  const now = Date.now()
+  listedStatus.clear()
+  listedAt = now
+  for (const c of containers) listedStatus.set(readLabel(c.Labels, 'name') ?? c.Names[0].replace(/^\//, ''), c.Status)
+  for (const name of inspected.keys()) if (!listedStatus.has(name)) inspected.delete(name)
+  // Containers gone (deep sleep, archived) or running again are not kept
+  const stopped = new Set(containers.filter(c => c.State !== 'running').map(c => c.Id))
+  for (const id of startErrors.keys()) if (!stopped.has(id)) startErrors.delete(id)
+  return Promise.all(containers.map(async c => {
     const meta: SandboxMeta = {
       name: readLabel(c.Labels, 'name') ?? c.Names[0].replace(/^\//, ''),
       template: readLabel(c.Labels, 'template') ?? '',
@@ -109,7 +119,7 @@ export async function listManagedContainers(): Promise<SandboxMeta[]> {
     }
     // An asleep sandbox and one that cannot start look the same in the list: tell them apart
     if (c.State !== 'running') {
-      const error = await startError(c.Id)
+      const error = await cachedStartError(c)
       if (error) meta.start_error = error
     }
     return meta
@@ -144,24 +154,57 @@ function networkIds(fresh = false): Promise<Set<string>> {
 /** Current container state of a sandbox, or null if its container does not exist. */
 export async function getSandboxState(name: string): Promise<SandboxState | null> {
   try {
-    const info = await docker.getContainer(name).inspect()
-    const attached = Object.values(info.NetworkSettings?.Networks ?? {}).map(n => n.NetworkID).filter(Boolean)
-    let existing = attached.length ? await networkIds() : new Set<string>()
-    // Not in the shared list: maybe created since; only a fresh list may say it is gone (that takes the sandbox down)
-    if (attached.some(id => !existing.has(id))) existing = await networkIds(true)
-    return {
-      name,
-      status: info.State.Status,
-      finishedAt: info.State.FinishedAt,
-      // The compose file is the source of truth (PATCH changes it without recreating the container)
-      deepSleepAfter: composeDeepSleepAfter(name) ?? readLabel(info.Config.Labels, 'deep_sleep_after'),
-      staleNetwork: attached.some(id => !existing.has(id)),
-      error: info.State.Error ?? '',
-      startedAt: info.State.StartedAt,
-      createdAt: info.Created
-    }
+    return await stateOf(name, await docker.getContainer(name).inspect())
   } catch {
     return null
+  }
+}
+
+// Each container's status text as the last list showed it, and when: a list's rows read their state from it
+const listedStatus = new Map<string, string>()
+let listedAt = 0
+const inspected = new Map<string, { status: string; info: Promise<Dockerode.ContainerInspectInfo> }>()
+const LISTED_FRESH_MS = 5000
+
+/**
+ * As getSandboxState, for a list's rows: the container is inspected again only when its status text changed since
+ * (started, stopped, or older by a minute: "Up 5 minutes"), not on every poll of every user. The compose file's
+ * settings are read afresh. No list just now: asked as getSandboxState does.
+ */
+export async function listedSandboxState(name: string): Promise<SandboxState | null> {
+  const listed = listedStatus.get(name)
+  const fresh = Date.now() - listedAt <= LISTED_FRESH_MS
+  // Not in a list just made: no container (deep sleep), nothing to ask Docker
+  if (fresh && !listed) return null
+  if (!listed || !fresh) return getSandboxState(name)
+  let hit = inspected.get(name)
+  if (hit?.status !== listed) {
+    hit = { status: listed, info: docker.getContainer(name).inspect() }
+    inspected.set(name, hit)
+    hit.info.catch(() => inspected.delete(name))
+  }
+  try {
+    return await stateOf(name, await hit.info)
+  } catch {
+    return null
+  }
+}
+
+async function stateOf(name: string, info: Dockerode.ContainerInspectInfo): Promise<SandboxState> {
+  const attached = Object.values(info.NetworkSettings?.Networks ?? {}).map(n => n.NetworkID).filter(Boolean)
+  let existing = attached.length ? await networkIds() : new Set<string>()
+  // Not in the shared list: maybe created since; only a fresh list may say it is gone (that takes the sandbox down)
+  if (attached.some(id => !existing.has(id))) existing = await networkIds(true)
+  return {
+    name,
+    status: info.State.Status,
+    finishedAt: info.State.FinishedAt,
+    // The compose file is the source of truth (PATCH changes it without recreating the container)
+    deepSleepAfter: composeDeepSleepAfter(name) ?? readLabel(info.Config.Labels, 'deep_sleep_after'),
+    staleNetwork: attached.some(id => !existing.has(id)),
+    error: info.State.Error ?? '',
+    startedAt: info.State.StartedAt,
+    createdAt: info.Created
   }
 }
 
@@ -170,7 +213,7 @@ export async function openShell(name: string, cols: number, rows: number) {
   const container = docker.getContainer(name)
   // The shell notes its pid (exec keeps it): Docker does not end an exec's process when its connection
   // goes, so closing the terminal HUPs that process group with a second exec
-  const pidFile = `/tmp/.p7y-term-${crypto.randomUUID()}`
+  const pidFile = `/tmp/.p9m-term-${crypto.randomUUID()}`
   const exec = await container.exec({
     Cmd: ['sh', '-c', `echo $$ > ${pidFile}; command -v bash >/dev/null && exec bash -l || exec sh -l`],
     AttachStdin: true, AttachStdout: true, AttachStderr: true, Tty: true,

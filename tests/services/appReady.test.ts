@@ -6,7 +6,7 @@ const portainer = { url: 'shop-portainer.lvh.me', port: 9000, service: 'portaine
 
 function deps(over: Partial<AppReadyDeps> = {}): AppReadyDeps {
   return {
-    find: host => host.startsWith('shop-') ? 'p7y-shop' : null,
+    find: host => host.startsWith('shop-') ? 'p9m-shop' : null,
     running: async () => true,
     links: async () => [redmine, portainer],
     remembered: () => [redmine, portainer],
@@ -19,7 +19,7 @@ describe('appReady: whether the app behind an address answers yet (the waiting p
   it('its port answers: ready, probed on the sandbox container', async () => {
     const d = deps()
     expect(await appReady('shop-portainer.lvh.me', d)).toEqual({ ready: true, service: 'portainer' })
-    expect(d.probe).toHaveBeenCalledWith('p7y-shop', 9000)
+    expect(d.probe).toHaveBeenCalledWith('p9m-shop', 9000)
   })
   it('its tunnel is up but the app does not answer yet (frps would say 404): not ready', async () => {
     expect(await appReady('shop-redmine.lvh.me', deps())).toEqual({ ready: false, service: 'redmine' })

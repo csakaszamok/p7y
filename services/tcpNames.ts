@@ -10,7 +10,7 @@ export interface InnerContainer {
   Ports: Array<{ IP?: string; PrivatePort: number; PublicPort?: number; Type: string }>
 }
 /** `port`: published in the sandbox (what the gateway connects to); `privatePort`: the container's own port,
- * i.e. which service it is; `user`: the `p7y.connect.user` label, the login the Connect… recipes use. */
+ * i.e. which service it is; `user`: the `p9m.connect.user` label, the login the Connect… recipes use. */
 export interface TcpPort { host: string; port: number; privatePort: number; user?: string }
 
 const dash = (s: string) => s.toLowerCase().replace(/\//g, '-').replace(/_/g, '-')
@@ -28,7 +28,7 @@ export const ALL_INTERFACES = new Set(['', '0.0.0.0', '::'])
 
 /**
  * The -tcp names of the TCP ports published on all interfaces (127.0.0.1-published ports stay private).
- * A p7y.subdomain (or frpc.subdomain) container has one HTTP name for all its ports; when it publishes several, each
+ * A p9m.subdomain container has one HTTP name for all its ports; when it publishes several, each
  * gets `-port<N>` too, so a name never lands on another port than the one it says.
  */
 export function tcpPortsOf(instance: string, containers: InnerContainer[], domain: string): TcpPort[] {
@@ -37,7 +37,7 @@ export function tcpPortsOf(instance: string, containers: InnerContainer[], domai
   for (const ct of containers) {
     const published = ct.Ports.filter(p => p.Type === 'tcp' && p.PublicPort && ALL_INTERFACES.has(p.IP ?? ''))
     const ports = [...new Set(published.map(p => p.PublicPort!))].sort((a, b) => a - b)
-    const user = ct.Labels['p7y.connect.user']
+    const user = ct.Labels['p9m.connect.user']
     const subdomain = subdomainOf(ct.Labels)
     for (const port of ports) {
       const base = subdomain && ports.length > 1

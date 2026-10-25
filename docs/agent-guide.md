@@ -1,46 +1,46 @@
-# Purgatory for agents: deploy and update apps in a sandbox
+# Purgatorium for agents: deploy and update apps in a sandbox
 
-This guide is for a coding agent (for example Claude Code on the user's machine) that deploys or updates apps in the user's Purgatory sandbox. Every call below was run against a live Purgatory.
+This guide is for a coding agent (for example Claude Code on the user's machine) that deploys or updates apps in the user's Purgatorium sandbox. Every call below was run against a live Purgatorium.
 
 Every sandbox has its own Docker daemon. The agent works with:
 
-- the **Purgatory API**, with the user's personal access token, to find the sandbox, wake it and get its Docker client certificates;
+- the **Purgatorium API**, with the user's personal access token, to find the sandbox, wake it and get its Docker client certificates;
 - the sandbox's **Docker daemon**, with the plain `docker` command line, to deploy, build and update.
 
-An agent with MCP can make the Purgatory API calls as tools instead: see [MCP](mcp.md). A sandbox made from the `portainer` template also has a Portainer API: see [With Portainer](#with-portainer) at the end.
+An agent with MCP can make the Purgatorium API calls as tools instead: see [MCP](mcp.md). A sandbox made from the `portainer` template also has a Portainer API: see [With Portainer](#with-portainer) at the end.
 
 ## What the user gives the agent
 
 | Value | Example | Where it comes from |
 |---|---|---|
-| Purgatory URL | `https://p7y.example.com` | The address of the Purgatory UI |
-| Personal access token | `p7y_…` | UI → **Access tokens** → **+ New token** |
-| Sandbox name | `p7y-shop` | The name in the UI list with the `p7y-` prefix (sandboxes created before the rename to Purgatory use `leander-`) |
+| Purgatorium URL | `https://p9m.example.com` | The address of the Purgatorium UI |
+| Personal access token | `p9m_…` | UI → **Access tokens** → **+ New token** |
+| Sandbox name | `p9m-shop` | The name in the UI list with the `p9m-` prefix |
 
-The user may instead give these in a `p7y.env` file in the project (UI → the new token → **Download p7y.env**; it may also be renamed `.env` or copied into one): `P7Y_URL`, `P7Y_TOKEN`, `P7Y_SANDBOX` (only for a token limited to one sandbox; otherwise ask which sandbox, or list them with `GET /sandboxes`) and `P7Y_AGENT_GUIDE` (this guide). Read them from there; do not print the token or commit the file.
+The user may instead give these in a `p9m.env` file in the project (UI → the new token → **Download p9m.env**; it may also be renamed `.env` or copied into one): `P9M_URL`, `P9M_TOKEN`, `P9M_SANDBOX` (only for a token limited to one sandbox; otherwise ask which sandbox, or list them with `GET /sandboxes`) and `P9M_AGENT_GUIDE` (this guide). Read them from there; do not print the token or commit the file.
 
 The token may be limited to one sandbox. Then `GET /sandboxes` lists only that one, `GET /me` returns it as `sandbox`, and creating or deleting sandboxes answers 403. Everything in this guide works with such a token.
 
-Every Purgatory API call sends `Authorization: Bearer p7y_…`. The token acts as the user: it sees and changes only the user's own sandboxes.
+Every Purgatorium API call sends `Authorization: Bearer p9m_…`. The token acts as the user: it sees and changes only the user's own sandboxes.
 
 ## 1. Find the sandbox and wake it
 
 ```http
-GET /sandboxes/p7y-shop
+GET /sandboxes/p9m-shop
 ```
 
 The answer includes:
 
 - `status`: `running`, `exited` (asleep) or `deep_sleep`;
-- `docker_access`: `host`, the address of the sandbox's Docker daemon (for example `shop-docker.example.com`), and `state`: `ready`, or `needs-certs` for a sandbox created before Docker access existed (the user enables it once: **Access → Enable**, which restarts the sandbox); and, while the sandbox is not running, `hint`: a Docker connection does not wake it, so start it first (`docker` would only get EOF);
+- `docker_access`: `host`, the address of the sandbox's Docker daemon (for example `shop-docker.example.com`), and `state`: `ready`, or `needs-certs` when its certificates do not cover that address (the user enables it once: **Access → Enable**, which restarts the sandbox); and, while the sandbox is not running, `hint`: a Docker connection does not wake it, so start it first (`docker` would only get EOF);
 - with `?include_keys=true` only: `ca_cert`, `client_cert`, `client_key`, the Docker client certificates and private key (PEM). Write them to files with a program (below), never by copying them through a model: copied by hand a key gets garbled (and still looks like a key), and in an answer it goes into the model's context and transcript. A single-use link (below) puts them on disk without them passing through an answer;
 - `tunnel_urls`: the app addresses.
 
 If `status` is not `running`, wake the sandbox and poll until it is:
 
 ```http
-POST /sandboxes/p7y-shop/start
-GET  /sandboxes/p7y-shop        → repeat until "status": "running"
+POST /sandboxes/p9m-shop/start
+GET  /sandboxes/p9m-shop        → repeat until "status": "running"
 ```
 
 Waking from `exited` takes a few seconds; from `deep_sleep` about 30 seconds. Connecting to the Docker daemon does **not** wake it: while the sandbox sleeps, `docker` fails to connect (connection reset or EOF), so wake it first.
@@ -49,29 +49,29 @@ A request to an app address while the sandbox is not ready returns an HTML **wai
 
 ## 2. Connect the docker command line
 
-Ask for a single-use link to the project's `.p7y` folder (MCP: `project_dir_link`). Purgatory checks the keys first; the link works once, for 5 minutes:
+Ask for a single-use link to the project's `.p9m` folder (MCP: `project_dir_link`). Purgatorium checks the keys first; the link works once, for 5 minutes:
 
 ```http
-POST /sandboxes/p7y-shop/project-link
-→ { "url": "https://p7y.example.com/project-dir/…", "expires_in": 300,
-    "command": "curl -sf \"https://p7y.example.com/project-dir/…\" | tar -x -C <project folder>",
-    "context_commands": ["docker context rm -f p7y-shop", "docker context create p7y-shop --docker \"host=tcp://shop-docker.example.com:443,ca=<project folder>/.p7y/docker/ca.pem,…\""] }
+POST /sandboxes/p9m-shop/project-link
+→ { "url": "https://p9m.example.com/project-dir/…", "expires_in": 300,
+    "command": "curl -sf \"https://p9m.example.com/project-dir/…\" | tar -x -C <project folder>",
+    "context_commands": ["docker context rm -f p9m-shop", "docker context create p9m-shop --docker \"host=tcp://shop-docker.example.com:443,ca=<project folder>/.p9m/docker/ca.pem,…\""] }
 ```
 
-Run `command`, then `context_commands`, with the project's root folder for `<project folder>`. The download writes `.p7y/.gitignore` (`*`: git leaves the folder out), `.p7y/p7y.env` (`P7Y_URL`, `P7Y_SANDBOX`, `P7Y_DOCKER_HOST`) and `.p7y/docker/{ca,cert,key}.pem`. On Windows: `curl.exe --ssl-no-revoke`; `tar` comes with Windows 10 and later. A used or expired link answers **410**: ask for a new one.
+Run `command`, then `context_commands`, with the project's root folder for `<project folder>`. The download writes `.p9m/.gitignore` (`*`: git leaves the folder out), `.p9m/p9m.env` (`P9M_URL`, `P9M_SANDBOX`, `P9M_DOCKER_HOST`) and `.p9m/docker/{ca,cert,key}.pem`. On Windows: `curl.exe --ssl-no-revoke`; `tar` comes with Windows 10 and later. A used or expired link answers **410**: ask for a new one.
 
 ```sh
-docker --context p7y-shop compose ls
+docker --context p9m-shop compose ls
 ```
 
-A context keeps its own copies of the files: after new keys run both again, with a new link. Check it with a compose command, as above: `ps` can work with a key that compose cannot read (`tls: failed to parse private key`). On a TLS error get a new link; do not repair a key file. Add `.p7y` to `.dockerignore`, so that a build never copies the keys into an image.
+A context keeps its own copies of the files: after new keys run both again, with a new link. Check it with a compose command, as above: `ps` can work with a key that compose cannot read (`tls: failed to parse private key`). On a TLS error get a new link; do not repair a key file. Add `.p9m` to `.dockerignore`, so that a build never copies the keys into an image.
 
-Only TLS with these certificates gets in: Purgatory passes the connection through without opening it. Keep the key as secret as the token.
+Only TLS with these certificates gets in: Purgatorium passes the connection through without opening it. Keep the key as secret as the token.
 
-If the user gave you an export instead, it is a `.p7y` folder for the project's root folder (from the zip `p7y-<sandbox>.zip`; an older export is a `p7y-<sandbox>/` folder): `p7y.env`, `docker/` with the certificates, a README, and a `.gitignore` of `*` that keeps the folder out of git. `p7y.env` has `P7Y_DOCKER_HOST`. Unpack a zip into the project's root and delete the zip (it holds a token); add `.p7y` to `.dockerignore`, so that a build never copies the keys into an image:
+If the user gave you an export instead, it is a `.p9m` folder for the project's root folder (from the zip `p9m-<sandbox>.zip`; an older export is a `p9m-<sandbox>/` folder): `p9m.env`, `docker/` with the certificates, a README, and a `.gitignore` of `*` that keeps the folder out of git. `p9m.env` has `P9M_DOCKER_HOST`. Unpack a zip into the project's root and delete the zip (it holds a token); add `.p9m` to `.dockerignore`, so that a build never copies the keys into an image:
 
 ```sh
-docker context create p7y-shop --docker "host=$P7Y_DOCKER_HOST,ca=$PWD/.p7y/docker/ca.pem,cert=$PWD/.p7y/docker/cert.pem,key=$PWD/.p7y/docker/key.pem"
+docker context create p9m-shop --docker "host=$P9M_DOCKER_HOST,ca=$PWD/.p9m/docker/ca.pem,cert=$PWD/.p9m/docker/cert.pem,key=$PWD/.p9m/docker/key.pem"
 ```
 
 ## 3. Deploy an app
@@ -79,7 +79,7 @@ docker context create p7y-shop --docker "host=$P7Y_DOCKER_HOST,ca=$PWD/.p7y/dock
 A compose project in the sandbox, built and run there:
 
 ```sh
-docker --context p7y-shop compose -p shop up -d --build
+docker --context p9m-shop compose -p shop up -d --build
 ```
 
 ```yaml
@@ -89,36 +89,36 @@ services:
     ports: ["8080:8080"]
     restart: unless-stopped
     labels:
-      p7y.subdomain: shop
+      p9m.subdomain: shop
 ```
 
-- **Publish ports on all interfaces** (`8080:8080`): that is what gives the app its public address. A port published on `127.0.0.1` stays private to the sandbox: no address at all. The app itself must listen on `0.0.0.0` inside its container (not `127.0.0.1`), or its address answers with an error; `GET /sandboxes/:name` → `apps[].answers` says whether it answers. An app labelled `p7y.access: domain` or `owner` ([App access](app-access.md)) answers your own `curl` with a redirect to Purgatory's sign-in: check `apps[].answers` instead. Set the label the user asks for (*only for me* → `owner`, *for my colleagues* → `domain`) before the first deploy.
+- **Publish ports on all interfaces** (`8080:8080`): that is what gives the app its public address. A port published on `127.0.0.1` stays private to the sandbox: no address at all. The app itself must listen on `0.0.0.0` inside its container (not `127.0.0.1`), or its address answers with an error; `GET /sandboxes/:name` → `apps[].answers` says whether it answers. An app labelled `p9m.access: domain` or `owner` ([App access](app-access.md)) answers your own `curl` with a redirect to Purgatorium's sign-in: check `apps[].answers` instead. Set the label the user asks for (*only for me* → `owner`, *for my colleagues* → `domain`) before the first deploy.
 - **Set a restart policy** (`restart: unless-stopped`): when the sandbox wakes from sleep, only containers with one start again.
 - Pass secrets when the container runs (`environment:`, `env_file:` read on your machine by `docker compose`), **never in the image**.
 
 ### The app's public address
 
-Every published TCP port gets an HTTP address. With the sandbox `p7y-shop` on `example.com`:
+Every published TCP port gets an HTTP address. With the sandbox `p9m-shop` on `example.com`:
 
-- with a `p7y.subdomain: shop` label: `https://shop-shop.example.com`, that is `<sandbox>-<subdomain>.<domain>` (`frpc.subdomain`, the label's older name, still works; `p7y.subdomain` wins if both are set);
+- with a `p9m.subdomain: shop` label: `https://shop-shop.example.com`, that is `<sandbox>-<subdomain>.<domain>`;
 - without the label: `https://shop-<project>-<container>-port<host port>.example.com`. The container name is `<project>-<service>-1` unless `container_name` is set.
 
-The app is reachable a few seconds after the container starts. `GET /sandboxes/p7y-shop` lists the addresses in `tunnel_urls`.
+The app is reachable a few seconds after the container starts. `GET /sandboxes/p9m-shop` lists the addresses in `tunnel_urls`.
 
 A database or other TCP service published the same way also gets a TLS address on port 443: see [Isolation and TCP addresses](networking.md#tls-tcp-addresses).
 
 ## 4. Update the app
 
-Change the code or the image tag and run the same `docker --context p7y-shop compose -p shop up -d --build` again: compose recreates the changed containers and keeps the volumes. Use a fixed tag for every release (`:1.4.2`, `:1.4.3`, …) so you can roll back by deploying the previous one.
+Change the code or the image tag and run the same `docker --context p9m-shop compose -p shop up -d --build` again: compose recreates the changed containers and keeps the volumes. Use a fixed tag for every release (`:1.4.2`, `:1.4.3`, …) so you can roll back by deploying the previous one.
 
 ### Push to the registry
 
-Every sandbox can push to Purgatory's registry, so an image can be pulled elsewhere too:
+Every sandbox can push to Purgatorium's registry, so an image can be pulled elsewhere too:
 
 ```sh
 docker login registry.example.com -u shop             # password: the token
-docker --context p7y-shop tag shop-web registry.example.com/shop/web:3
-docker --context p7y-shop push registry.example.com/shop/web:3
+docker --context p9m-shop tag shop-web registry.example.com/shop/web:3
+docker --context p9m-shop push registry.example.com/shop/web:3
 ```
 
 - Every push is scanned for secrets, and an image with a `.env` file or a key in it stays private (`GET /sandboxes/<name>/registry` shows what was found).
@@ -140,7 +140,7 @@ A sandbox made from the `portainer` template (or one with Portainer in its own c
 
 ### Sign in to Portainer
 
-If `p7y.env` has `P7Y_PORTAINER_URL` and `P7Y_PORTAINER_TOKEN`, skip the sign-in: use `P7Y_PORTAINER_URL` as `<portainer_url>` and send `X-API-Key: <P7Y_PORTAINER_TOKEN>` instead of `Authorization: Bearer <jwt>` on every Portainer call below. (A line `# Portainer: not included (…)` says why there is none; then sign in as below, or use the Docker command line, [2](#2-connect-the-docker-command-line).)
+If `p9m.env` has `P9M_PORTAINER_URL` and `P9M_PORTAINER_TOKEN`, skip the sign-in: use `P9M_PORTAINER_URL` as `<portainer_url>` and send `X-API-Key: <P9M_PORTAINER_TOKEN>` instead of `Authorization: Bearer <jwt>` on every Portainer call below. (A line `# Portainer: not included (…)` says why there is none; then sign in as below, or use the Docker command line, [2](#2-connect-the-docker-command-line).)
 
 Otherwise sign in with `extras.portainer_password`:
 
@@ -159,7 +159,7 @@ Then find the environment (endpoint) ID. It is the sandbox's Docker daemon, usua
 GET <portainer_url>/api/endpoints      → [{"Id": 1, "Name": "primary", …}]
 ```
 
-In an older sandbox (created before its Portainer was started with `-H unix:///var/run/docker.sock`), the list can be empty until someone clicks **Get started** in the Portainer UI. Create the environment once:
+If the list is empty (nobody clicked **Get started** in the Portainer UI yet), create the environment once:
 
 ```http
 POST <portainer_url>/api/endpoints
@@ -179,7 +179,7 @@ Content-Type: application/json
 
 {
   "name": "shop",
-  "stackFileContent": "services:\n  web:\n    image: registry.example.com/shop:1.4.2\n    ports: [\"8080:8080\"]\n    labels:\n      p7y.subdomain: shop\n",
+  "stackFileContent": "services:\n  web:\n    image: registry.example.com/shop:1.4.2\n    ports: [\"8080:8080\"]\n    labels:\n      p9m.subdomain: shop\n",
   "env": [{"name": "LOG_LEVEL", "value": "info"}]
 }
 ```
@@ -224,10 +224,10 @@ The answer streams the build log as JSON lines; the last line is `{"stream":"Suc
 | `POST …/docker/images/create?fromImage=alpine&tag=3.20` | pull an image |
 | `DELETE …/docker/images/<image>` | remove an image |
 
-The stack Purgatory deployed when it created the sandbox (Portainer + `http-echo`) was deployed with `docker compose` outside Portainer: Portainer shows it but cannot edit it as a stack.
+The stack Purgatorium deployed when it created the sandbox (Portainer + `http-echo`) was deployed with `docker compose` outside Portainer: Portainer shows it but cannot edit it as a stack.
 
 ## Things to keep in mind
 
 - **Sleep:** the sandbox sleeps after its idle timeout without HTTP traffic, 30 minutes by default. The user can change this or turn it off in the UI (**Sleep settings…**) or with `PATCH /sandboxes/<name>` `{"idle_timeout": "2h"}`, where `0` or `off` means never. Docker traffic keeps a running sandbox awake (a build, `docker logs -f`, a pull), but a connection that is only open does not; plain HTTP traffic to its apps (or to Portainer) counts too.
 - **Archive** (`DELETE /sandboxes/<name>`, **Archive…** in the UI) archives the sandbox: its configuration and data are kept in the archive, and it is removed from the list.
-- **The Purgatory API reference** is at `<Purgatory URL>/swagger`.
+- **The Purgatorium API reference** is at `<Purgatorium URL>/swagger`.

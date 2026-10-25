@@ -5,7 +5,7 @@ import path from 'path'
 import forge from 'node-forge'
 import { tcpTlsCredentials } from '../../services/tcpCert'
 
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-tcpcert-'))
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-tcpcert-'))
 
 describe('tcpTlsCredentials', () => {
   it('uses the copied-in certificate when there is one', () => {

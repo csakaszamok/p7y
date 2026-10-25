@@ -70,7 +70,7 @@ describe('writeWebResponse, the client gone or slow', () => {
     server.close()
   })
 
-  // A noisy app watched over a slow link must not pile up in p7y's memory
+  // A noisy app watched over a slow link must not pile up in p9m's memory
   it('reads no further than the client takes (backpressure)', async () => {
     let pulls = 0
     const chunk = new Uint8Array(16 * 1024)

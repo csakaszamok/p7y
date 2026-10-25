@@ -42,7 +42,7 @@ const toInfo = ({ hash: _hash, sandbox, hint, ...rest }: TokenRecord): TokenInfo
 
 export function createToken(owner: string, name: string, expiresIn: TokenExpiry, now = new Date(), sandbox: string | null = null): { token: string; info: TokenInfo } {
   const list = load()
-  const token = `p7y_${crypto.randomBytes(32).toString('base64url')}`
+  const token = `p9m_${crypto.randomBytes(32).toString('base64url')}`
   const days = EXPIRY_DAYS[expiresIn]
   const record: TokenRecord = {
     id: crypto.randomBytes(8).toString('hex'),
@@ -73,8 +73,7 @@ export function revokeToken(id: string, owner?: string): boolean {
 }
 
 export function resolveToken(token: string, now = new Date()): ResolvedToken | null {
-  // ldr_… tokens were minted before the rename (Leander) and keep working.
-  if (!token.startsWith('p7y_') && !token.startsWith('ldr_')) return null
+  if (!token.startsWith('p9m_')) return null
   const list = load()
   const hash = sha256(token)
   const record = list.find(t => t.hash === hash)

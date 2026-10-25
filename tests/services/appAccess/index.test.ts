@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Counts every look at the disk or Docker a request could make
 const count = { dirs: 0, state: 0, access: 0, fresh: 0 }
-vi.mock('../../../services/wake', () => ({ findSandboxDirByHost: vi.fn(() => { count.dirs++; return 'p7y-new' }) }))
-vi.mock('../../../services/sandboxPaths', () => ({ listSandboxDirs: vi.fn(() => { count.dirs++; return [{ name: 'p7y-new', owner: 'new@example.com', dir: '/x', legacy: false }] }) }))
+vi.mock('../../../services/wake', () => ({ findSandboxDirByHost: vi.fn(() => { count.dirs++; return 'p9m-new' }) }))
+vi.mock('../../../services/sandboxPaths', () => ({ listSandboxDirs: vi.fn(() => { count.dirs++; return [{ name: 'p9m-new', owner: 'new@example.com', dir: '/x', legacy: false }] }) }))
 vi.mock('../../../services/docker', () => ({ getSandboxState: vi.fn(async () => { count.state++; return { status: 'running' } }) }))
 vi.mock('../../../services/appLinks', () => ({
   rememberedAccess: vi.fn(() => { count.access++; return { 'new-web': 'public' } }),
@@ -22,9 +22,9 @@ describe('the in-memory access index', () => {
   it('a request for an indexed address reads nothing: no sandbox directories, no Docker, no files', async () => {
     const { rebuildIndex } = await import('../../../services/appAccess/index')
     const { accessOfHost } = await import('../../../services/appAccess/hosts')
-    rebuildIndex({ sandboxes: [{ name: 'p7y-shop', owner: 'bob@example.com' }], accessOf: () => shop, env })
+    rebuildIndex({ sandboxes: [{ name: 'p9m-shop', owner: 'bob@example.com' }], accessOf: () => shop, env })
     zero()
-    for (let i = 0; i < 200; i++) expect(await accessOfHost('shop-own.example.com')).toEqual({ sandbox: 'p7y-shop', owner: 'bob@example.com', access: 'owner' })
+    for (let i = 0; i < 200; i++) expect(await accessOfHost('shop-own.example.com')).toEqual({ sandbox: 'p9m-shop', owner: 'bob@example.com', access: 'owner' })
     expect(await accessOfHost('SHOP-WEB.example.com:443')).toMatchObject({ access: 'public' })
     expect(count).toEqual({ dirs: 0, state: 0, access: 0, fresh: 0 })
   })

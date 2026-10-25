@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const count = { dirs: 0, state: 0, access: 0, fresh: 0 }
-vi.mock('../../../services/wake', () => ({ findSandboxDirByHost: vi.fn((h: string) => { count.dirs++; return h.startsWith('shop-') ? 'p7y-shop' : null }) }))
-vi.mock('../../../services/sandboxPaths', () => ({ listSandboxDirs: vi.fn(() => { count.dirs++; return [{ name: 'p7y-shop', owner: 'bob@example.com', dir: '/x', legacy: false }] }) }))
+vi.mock('../../../services/wake', () => ({ findSandboxDirByHost: vi.fn((h: string) => { count.dirs++; return h.startsWith('shop-') ? 'p9m-shop' : null }) }))
+vi.mock('../../../services/sandboxPaths', () => ({ listSandboxDirs: vi.fn(() => { count.dirs++; return [{ name: 'p9m-shop', owner: 'bob@example.com', dir: '/x', legacy: false }] }) }))
 vi.mock('../../../services/docker', () => ({ getSandboxState: vi.fn(async () => { count.state++; return { status: 'running' } }) }))
 vi.mock('../../../services/appLinks', () => ({
   rememberedAccess: vi.fn(() => { count.access++; return { 'shop-own': 'owner' } }),

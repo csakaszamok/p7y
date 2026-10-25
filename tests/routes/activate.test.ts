@@ -4,14 +4,14 @@ import os from 'node:os'
 import path from 'node:path'
 
 vi.stubEnv('SESSION_SECRET', 'test-secret')
-vi.stubEnv('PUBLIC_URL', 'https://p7y.example.com')
-vi.stubEnv('APP_ACCESS_KEY_FILE', path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-act-')), 'k'))
+vi.stubEnv('PUBLIC_URL', 'https://p9m.example.com')
+vi.stubEnv('APP_ACCESS_KEY_FILE', path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-act-')), 'k'))
 
 const sandboxes = [
-  { name: 'p7y-shop', owner: 'alice@example.com', status: 'running' },
-  { name: 'p7y-blog', owner: 'alice@example.com', status: 'running' },
-  { name: 'p7y-off', owner: 'alice@example.com', status: 'deep_sleep' },
-  { name: 'p7y-secret', owner: 'bob@example.com', status: 'running' },
+  { name: 'p9m-shop', owner: 'alice@example.com', status: 'running' },
+  { name: 'p9m-blog', owner: 'alice@example.com', status: 'running' },
+  { name: 'p9m-off', owner: 'alice@example.com', status: 'deep_sleep' },
+  { name: 'p9m-secret', owner: 'bob@example.com', status: 'running' },
 ]
 vi.mock('../../services/sandbox', () => ({
   sandboxService: {
@@ -24,7 +24,7 @@ vi.mock('../../services/sandbox', () => ({
   },
 }))
 vi.mock('../../services/dockerAccess', () => ({
-  dockerAccessState: vi.fn((n: string) => n === 'p7y-off' ? 'needs-certs' : 'ready'),
+  dockerAccessState: vi.fn((n: string) => n === 'p9m-off' ? 'needs-certs' : 'ready'),
   regenerateCerts: vi.fn(async () => {}),
 }))
 
@@ -35,11 +35,11 @@ const { regenerateCerts } = await import('../../services/dockerAccess')
 const { default: get } = await import('../../routes/activate/GET')
 const { default: post } = await import('../../routes/activate/POST')
 
-const cookie = (sub: string, role: 'user' | 'admin' = 'user') => `p7y_session=${createSession(sub, role)}`
+const cookie = (sub: string, role: 'user' | 'admin' = 'user') => `p9m_session=${createSession(sub, role)}`
 const page = (code: string | null, c?: string) =>
-  get(new Request(`https://p7y.example.com/activate${code === null ? '' : `?code=${encodeURIComponent(code)}`}`, { headers: c ? { cookie: c } : {} }))
-const send = (fields: Record<string, string>, c: string | undefined = cookie('alice@example.com'), origin = 'https://p7y.example.com') =>
-  post(new Request('https://p7y.example.com/activate', {
+  get(new Request(`https://p9m.example.com/activate${code === null ? '' : `?code=${encodeURIComponent(code)}`}`, { headers: c ? { cookie: c } : {} }))
+const send = (fields: Record<string, string>, c: string | undefined = cookie('alice@example.com'), origin = 'https://p9m.example.com') =>
+  post(new Request('https://p9m.example.com/activate', {
     method: 'POST', body: new URLSearchParams(fields),
     headers: { 'content-type': 'application/x-www-form-urlencoded', origin, ...(c ? { cookie: c } : {}) },
   }))
@@ -51,8 +51,8 @@ describe('/activate', () => {
     const res = await page('bcdf-ghjk')
     expect(res.status).toBe(303)
     expect(res.headers.get('location')).toBe('/login')
-    const value = res.headers.get('set-cookie')!.split(';')[0].slice('p7y_next='.length)
-    expect(nextAfterSignIn(new Request('https://p7y.example.com/', { headers: { cookie: `p7y_next=${value}` } }))).toBe('/activate?code=bcdf-ghjk')
+    const value = res.headers.get('set-cookie')!.split(';')[0].slice('p9m_next='.length)
+    expect(nextAfterSignIn(new Request('https://p9m.example.com/', { headers: { cookie: `p9m_next=${value}` } }))).toBe('/activate?code=bcdf-ghjk')
   })
 
   it('a pending code for my sandbox: the code and the sandbox, fixed', async () => {
@@ -64,7 +64,7 @@ describe('/activate', () => {
     expect(html).toContain('Connect Claude Code')
     expect(html).toContain(user_code)
     expect(html).toContain('<b>shop</b>')
-    expect(html).toContain('name="sandbox" value="p7y-shop"')
+    expect(html).toContain('name="sandbox" value="p9m-shop"')
     expect(html).not.toContain('<select')
     expect(html).toMatch(/>Approve</)
     expect(html).toContain('>Deny<')
@@ -73,7 +73,7 @@ describe('/activate', () => {
   it('the pending page warns to approve only a code you started yourself', async () => {
     const { user_code } = startDevice('shop')
     expect(await (await page(user_code, cookie('alice@example.com'))).text())
-      .toContain('Approve only if you just ran /p7y:init yourself and Claude Code shows this same code. Never approve a code someone sent you.')
+      .toContain('Approve only if you just ran /p9m:init yourself and Claude Code shows this same code. Never approve a code someone sent you.')
   })
 
   it('the picker notes a restart only for a sandbox that is awake', async () => {
@@ -83,11 +83,11 @@ describe('/activate', () => {
   })
 
   it("someone else's sandbox: a select of my own, without that name", async () => {
-    const { user_code } = startDevice('p7y-secret')
+    const { user_code } = startDevice('p9m-secret')
     const html = await (await page(user_code, cookie('alice@example.com'))).text()
     expect(html).toContain('<select')
-    expect(html).toContain('value="p7y-shop"')
-    expect(html).toContain('value="p7y-blog"')
+    expect(html).toContain('value="p9m-shop"')
+    expect(html).toContain('value="p9m-blog"')
     expect(html).not.toContain('secret')
   })
 
@@ -95,13 +95,13 @@ describe('/activate', () => {
     const { user_code } = startDevice(null)
     expect(await (await page(user_code, cookie('alice@example.com'))).text()).toContain('<select')
     const admin = await (await page(user_code, cookie('admin', 'admin'))).text()
-    expect(admin).not.toContain('p7y-shop')
+    expect(admin).not.toContain('p9m-shop')
     expect(admin).not.toContain('secret')
   })
 
   it('the admin may approve a named sandbox of a user', async () => {
     const { user_code } = startDevice('shop')
-    expect(await (await page(user_code, cookie('admin', 'admin'))).text()).toContain('name="sandbox" value="p7y-shop"')
+    expect(await (await page(user_code, cookie('admin', 'admin'))).text()).toContain('name="sandbox" value="p9m-shop"')
   })
 
   it('Docker access not ready: the button says it enables it', async () => {
@@ -109,11 +109,11 @@ describe('/activate', () => {
     expect(await (await page(user_code, cookie('alice@example.com'))).text()).toContain('Enable Docker access and approve')
   })
 
-  it('unknown or missing code: 404, run /p7y:init again', async () => {
+  it('unknown or missing code: 404, run /p9m:init again', async () => {
     for (const c of ['ZZZZ-ZZZZ', null]) {
       const res = await page(c, cookie('alice@example.com'))
       expect(res.status).toBe(404)
-      expect(await res.text()).toContain('This code has expired or is unknown: run /p7y:init again.')
+      expect(await res.text()).toContain('This code has expired or is unknown: run /p9m:init again.')
     }
   })
 
@@ -124,8 +124,8 @@ describe('/activate', () => {
   })
 
   it("POST approve with someone else's sandbox: 403, still pending", async () => {
-    const { device_code, user_code } = startDevice('p7y-secret')
-    const res = await send({ code: user_code, sandbox: 'p7y-secret', decision: 'approve' })
+    const { device_code, user_code } = startDevice('p9m-secret')
+    const res = await send({ code: user_code, sandbox: 'p9m-secret', decision: 'approve' })
     expect(res.status).toBe(403)
     expect(pollDevice(device_code)).toEqual({ status: 'pending' })
   })
@@ -135,51 +135,51 @@ describe('/activate', () => {
     const res = await send({ code: user_code, sandbox: 'shop', decision: 'approve' })
     expect(res.status).toBe(200)
     expect(await res.text()).toContain('Approved: go back to Claude Code.')
-    expect(pollDevice(device_code)).toEqual({ status: 'approved', sandbox: 'p7y-shop', owner: 'alice@example.com' })
+    expect(pollDevice(device_code)).toEqual({ status: 'approved', sandbox: 'p9m-shop', owner: 'alice@example.com' })
     expect(regenerateCerts).not.toHaveBeenCalled()
   })
 
   it("the admin approving a user's sandbox: the grant is the owner's", async () => {
     const { device_code, user_code } = startDevice('shop')
-    await send({ code: user_code, sandbox: 'p7y-shop', decision: 'approve' }, cookie('admin', 'admin'))
-    expect(pollDevice(device_code)).toEqual({ status: 'approved', sandbox: 'p7y-shop', owner: 'alice@example.com' })
+    await send({ code: user_code, sandbox: 'p9m-shop', decision: 'approve' }, cookie('admin', 'admin'))
+    expect(pollDevice(device_code)).toEqual({ status: 'approved', sandbox: 'p9m-shop', owner: 'alice@example.com' })
   })
 
   it('POST deny: denied', async () => {
     const { device_code, user_code } = startDevice('shop')
-    const res = await send({ code: user_code, sandbox: 'p7y-shop', decision: 'deny' })
+    const res = await send({ code: user_code, sandbox: 'p9m-shop', decision: 'deny' })
     expect(await res.text()).toContain('Denied.')
     expect(pollDevice(device_code)).toEqual({ status: 'denied' })
   })
 
   it('POST from another site or without a session: refused, still pending', async () => {
     const { device_code, user_code } = startDevice('shop')
-    expect((await send({ code: user_code, sandbox: 'p7y-shop', decision: 'approve' }, cookie('alice@example.com'), 'https://evil.example.com')).status).toBe(403)
-    const anon = await send({ code: user_code, sandbox: 'p7y-shop', decision: 'approve' }, '')
+    expect((await send({ code: user_code, sandbox: 'p9m-shop', decision: 'approve' }, cookie('alice@example.com'), 'https://evil.example.com')).status).toBe(403)
+    const anon = await send({ code: user_code, sandbox: 'p9m-shop', decision: 'approve' }, '')
     expect(anon.status).toBe(303)
     expect(anon.headers.get('location')).toBe('/login')
     expect(pollDevice(device_code)).toEqual({ status: 'pending' })
   })
 
   it('POST with an unknown code: 404', async () => {
-    const res = await send({ code: 'ZZZZ-ZZZZ', sandbox: 'p7y-shop', decision: 'approve' })
+    const res = await send({ code: 'ZZZZ-ZZZZ', sandbox: 'p9m-shop', decision: 'approve' })
     expect(res.status).toBe(404)
   })
 
   it('POST approve without Docker access: new certificates first (no restart in deep sleep), then approved', async () => {
     const { device_code, user_code } = startDevice('off')
     vi.mocked(regenerateCerts).mockImplementation(async () => { expect(pollDevice(device_code)).toEqual({ status: 'pending' }) })
-    await send({ code: user_code, sandbox: 'p7y-off', decision: 'approve' })
+    await send({ code: user_code, sandbox: 'p9m-off', decision: 'approve' })
     expect(regenerateCerts).toHaveBeenCalledTimes(1)
-    expect(vi.mocked(regenerateCerts).mock.calls[0][0]).toBe('p7y-off')
+    expect(vi.mocked(regenerateCerts).mock.calls[0][0]).toBe('p9m-off')
     expect(vi.mocked(regenerateCerts).mock.calls[0][1]).toHaveProperty('restart')
-    expect(pollDevice(device_code)).toMatchObject({ status: 'approved', sandbox: 'p7y-off' })
+    expect(pollDevice(device_code)).toMatchObject({ status: 'approved', sandbox: 'p9m-off' })
   })
 
   it('the certificates fail: 500 with the error, still pending', async () => {
     const { device_code, user_code } = startDevice('off')
     vi.mocked(regenerateCerts).mockRejectedValue(new Error('restart <failed>'))
-    const res = await send({ code: user_code, sandbox: 'p7y-off', decision: 'approve' })
+    const res = await send({ code: user_code, sandbox: 'p9m-off', decision: 'approve' })
     expect(res.status).toBe(500)
     expect(await res.text()).toContain('restart &lt;failed&gt;')
     expect(pollDevice(device_code)).toEqual({ status: 'pending' })

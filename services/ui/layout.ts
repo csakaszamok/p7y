@@ -41,7 +41,7 @@ export function repoBadge(info: RepoInfo): string {
     info.forks !== null ? `<span title="${info.forks} forks">${FORK_ICON}${shortCount(info.forks)}</span>` : '',
     info.version ? `<span>v${escapeHtml(info.version)}</span>` : '',
   ].join('')
-  return `<a class="repo-badge" href="${info.url}" target="_blank" rel="noopener" title="Purgatory on GitHub">${GITHUB_ICON}<span class="meta"><span class="name">${info.repo}</span>${stats ? `<span class="stats">${stats}</span>` : ''}</span></a>`
+  return `<a class="repo-badge" href="${info.url}" target="_blank" rel="noopener" title="Purgatorium on GitHub">${GITHUB_ICON}<span class="meta"><span class="name">${info.repo}</span>${stats ? `<span class="stats">${stats}</span>` : ''}</span></a>`
 }
 
 export function renderPage(opts: { title: string; view: 'overview' | 'mine' | 'all' | 'tokens' | 'ssh-keys'; session: Session; body: string }): string {
@@ -104,12 +104,12 @@ const TOKEN_DIALOG = `
 <dialog data-token-created>
   <h2>Copy this token now</h2>
   <p class="muted">It will not be shown again.<span data-created-scope></span></p>
-  <div class="copy"><code data-created-token></code><button data-copy>Copy</button><button data-download-env>Download p7y.env</button></div>
-  <p class="muted">For a coding agent: save p7y.env in your project folder (keep it out of git) and tell the agent: <em>Deploy this app to my Purgatory sandbox — settings in p7y.env.</em></p>
+  <div class="copy"><code data-created-token></code><button data-copy>Copy</button><button data-download-env>Download p9m.env</button></div>
+  <p class="muted">For a coding agent: save p9m.env in your project folder (keep it out of git) and tell the agent: <em>Deploy this app to my Purgatorium sandbox — settings in p9m.env.</em></p>
   <form method="dialog"><div class="actions"><button class="primary">Done</button></div></form>
 </dialog>`
 
-// Let your agent deploy, the same in both views: the Claude Code plugin (installed once, then /p7y:init approved in the browser),
+// Let your agent deploy, the same in both views: the Claude Code plugin (installed once, then /p9m:init approved in the browser),
 // or a zip for other agents (a new token for the sandbox, its Docker client keys and a README); Advanced adds Options
 const EXPORT_DIALOG = `
 <dialog data-export-dialog>
@@ -119,11 +119,11 @@ const EXPORT_DIALOG = `
       <h3>Claude Code <small class="muted">recommended</small></h3>
       <ol>
         <li>Once on this computer, in a terminal (in VS Code: Terminal → New Terminal):
-          <div class="copy-line"><code>claude plugin marketplace add p7y-dev/p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
-          <div class="copy-line"><code>claude plugin install p7y@p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+          <div class="copy-line"><code>claude plugin marketplace add csakaszamok/p9m</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+          <div class="copy-line"><code>claude plugin install p9m@p9m</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
           <details class="plugin-other"><summary>In Claude Code instead:</summary>
-            <div class="copy-line"><code>/plugin marketplace add p7y-dev/p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
-            <div class="copy-line"><code>/plugin install p7y@p7y</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+            <div class="copy-line"><code>/plugin marketplace add csakaszamok/p9m</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
+            <div class="copy-line"><code>/plugin install p9m@p9m</code><button type="button" class="link" data-copy-from="code">Copy</button></div>
           </details></li>
         <li>In Claude Code, in your project's folder, paste this, then approve in the browser page it opens:
           <div class="copy-line"><code data-init-cmd></code><button type="button" class="primary" data-copy-from="[data-init-cmd]">Copy</button></div></li>
@@ -131,14 +131,14 @@ const EXPORT_DIALOG = `
     </section>
     <section class="agent-way" data-way="other">
       <h3>Other agents <small class="muted">Codex, Cursor…</small></h3>
-      <p class="muted">Download the zip below, then tell your agent: <em>set up the p7y zip from my Downloads in this project and deploy</em>. It holds a token and keys: the agent puts them in a <code>.p7y</code> folder that git leaves out.</p>
+      <p class="muted">Download the zip below, then tell your agent: <em>set up the p9m zip from my Downloads in this project and deploy</em>. It holds a token and keys: the agent puts them in a <code>.p9m</code> folder that git leaves out.</p>
     </section>
     <details class="adv export-options"><summary>Options</summary>
-      <p class="muted">For the zip and Copy as .env. The zip holds a <code>.p7y</code> folder for your project's folder: a new token for this sandbox, its Docker client keys and a README with the commands; its own .gitignore keeps it out of git.</p>
+      <p class="muted">For the zip and Copy as .env. The zip holds a <code>.p9m</code> folder for your project's folder: a new token for this sandbox, its Docker client keys and a README with the commands; its own .gitignore keeps it out of git.</p>
       <label>Token name<input name="name" maxlength="80" placeholder="laptop agent"></label>
       <label>Expires<select name="expires_in" data-export-expiry><option value="30d">in 30 days</option><option value="90d" selected>in 90 days</option><option value="never">never</option></select></label>
-      <label class="check"><input type="checkbox" name="no_docker"> Without the Docker keys (the zip: p7y.env and the README only)</label>
-      <div class="actions"><button type="button" data-copy-env>Copy as .env</button><small class="muted">p7y.env with a new token, to the clipboard</small></div>
+      <label class="check"><input type="checkbox" name="no_docker"> Without the Docker keys (the zip: p9m.env and the README only)</label>
+      <div class="actions"><button type="button" data-copy-env>Copy as .env</button><small class="muted">p9m.env with a new token, to the clipboard</small></div>
     </details>
     <p class="muted" data-export-needs-certs hidden>This sandbox has no Docker access yet: enable it (the sandbox restarts, ~30 s) to include the Docker keys, or export without them.</p>
     <p class="muted" data-export-progress hidden></p>
@@ -152,8 +152,8 @@ const EXPORT_DIALOG = `
   </form>
 </dialog>
 <dialog data-env-dialog>
-  <h2>p7y.env</h2>
-  <p class="muted">Copy this into a <code>p7y.env</code> file in your project (keep it out of git): it holds a new token for this sandbox.</p>
+  <h2>p9m.env</h2>
+  <p class="muted">Copy this into a <code>p9m.env</code> file in your project (keep it out of git): it holds a new token for this sandbox.</p>
   <textarea data-env-text readonly rows="8" style="width:100%;font:12px ui-monospace,Consolas,monospace"></textarea>
   <form method="dialog"><div class="actions"><button class="primary">Done</button></div></form>
 </dialog>`
@@ -267,7 +267,7 @@ export const SANDBOX_VIEW_BODY = `
 </dialog>
 <dialog data-compose-dialog class="wide">
   <h2>Starter stack of <span data-compose-name></span></h2>
-  <p class="muted small">What Purgatory deployed into the sandbox when it was created. Stacks you deployed yourself are in Portainer.</p>
+  <p class="muted small">What Purgatorium deployed into the sandbox when it was created. Stacks you deployed yourself are in Portainer.</p>
   <pre class="code" data-compose-text>Loading…</pre>
   <p class="muted small">Secrets are masked (•••).</p>
   <div class="actions"><button data-compose-copy>Copy</button><form method="dialog"><button class="primary">Close</button></form></div>
@@ -290,6 +290,6 @@ export const SSH_KEYS_VIEW_BODY = `
 export const TOKENS_VIEW_BODY = `
 <section class="tokens">
   <div class="list-head"><h1>Access tokens</h1><button class="primary" data-new-token>+ New token</button></div>
-  <p class="muted">Give a token to your own agents: they act on the API as you (<code>Authorization: Bearer p7y_…</code>). A token can be limited to one sandbox.</p>
+  <p class="muted">Give a token to your own agents: they act on the API as you (<code>Authorization: Bearer p9m_…</code>). A token can be limited to one sandbox.</p>
   <table class="grid"><thead data-token-head></thead><tbody data-token-rows><tr><td class="muted">Loading…</td></tr></tbody></table>
 </section>${TOKEN_DIALOG}${EXPORT_DIALOG}${CONFIRM_DIALOG}`

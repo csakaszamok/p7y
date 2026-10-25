@@ -6,7 +6,7 @@ import { rawNameOf } from '../../../../../../services/naming'
 
 export const openapi = {
   mcp: { name: 'delete_sandbox_image_version' },
-  summary: "Delete a version of one of the sandbox's images from the p7y registry",
+  summary: "Delete a version of one of the sandbox's images from the p9m registry",
   description: 'The app name is URL-encoded when it has slashes (team%2Fapi for <sandbox>/team/api). An index takes its platform manifests with it; the space comes back at the weekly garbage collection.',
   tags: ['sandboxes'],
   security: [{ bearerAuth: [] }],
@@ -23,7 +23,7 @@ export default async (req: Request): Promise<Response> => {
   try { await getOwnedSandbox(p, name) } catch { return Response.json({ error: `Sandbox not found: ${name}` }, { status: 404 }) }
   const repo = `${rawNameOf(name) ?? name}/${app}`
   if (!versionsOf(repo).some(v => v.digest === digest)) return Response.json({ error: 'no such version' }, { status: 404 })
-  const auth = { Authorization: `Bearer ${issueToken('p7y', `registry.${process.env.HOST_DOMAIN ?? 'lvh.me'}`, [{ type: 'repository', name: repo, actions: ['pull', 'push', 'delete'] }])}` }
+  const auth = { Authorization: `Bearer ${issueToken('p9m', `registry.${process.env.HOST_DOMAIN ?? 'lvh.me'}`, [{ type: 'repository', name: repo, actions: ['pull', 'push', 'delete'] }])}` }
   const base = `${process.env.REGISTRY_INTERNAL_URL ?? 'http://registry:5000'}/v2/${repo}/manifests`
   // An index's platform manifests stay pullable by digest unless they go too
   let children: string[] = []
