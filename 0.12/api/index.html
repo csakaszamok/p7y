@@ -1873,6 +1873,11 @@
 <td>The web UI's view for this account: <code>{"view": "simple"}</code> or <code>"advanced"</code> (<code>GET /me</code> returns it as <code>view</code>, and whether the account may switch as <code>view_switch</code>); a user gets 403 unless <code>USER_VIEW_SWITCH=true</code></td>
 </tr>
 <tr>
+<td><code>PUT</code></td>
+<td><code>/me/theme</code></td>
+<td>The web UI's theme for this account: <code>{"theme": "light"}</code>, <code>"dark"</code>, or <code>"system"</code> to follow the device again (<code>GET /me</code> returns it as <code>theme</code>, <code>null</code> when the device decides); any account may set it</td>
+</tr>
+<tr>
 <td><code>GET</code></td>
 <td><code>/tokens</code></td>
 <td>List your personal access tokens (<code>hint</code>: the token's start and end, e.g. <code>p9m_aB3x…9fQz</code>; null for tokens made before hints)</td>

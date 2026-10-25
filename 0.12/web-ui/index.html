@@ -893,6 +893,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#light-and-dark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Light and dark
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#host-folders" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1635,6 +1646,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#light-and-dark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Light and dark
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#host-folders" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1676,6 +1698,8 @@
 <p>With such a token an agent can deploy and update apps in the user's sandbox: the Purgatorium API gives it the sandbox's Docker client certificates, and the <code>docker</code> command line reaches the sandbox's own Docker daemon (or, in a sandbox from the <code>portainer</code> template, the Portainer API). Step by step: <a href="../agent-guide/">agent guide</a>.</p>
 <h2 id="simple-and-advanced">Simple and Advanced<a class="headerlink" href="#simple-and-advanced" title="Permanent link">&para;</a></h2>
 <p>The top bar has a <strong>Simple | Advanced</strong> switch, remembered for each account (users start in Simple, the admin in Advanced). Users have it only with <code>USER_VIEW_SWITCH=true</code>; by default they stay in Simple, see <a href="../configuration/">Configuration</a>. Simple is for people who only want their app online: the menu shows <em>My sandboxes</em> only; the list shows the name, status, <em>Sleeps in</em> and age; a new sandbox asks for a name and a template; a sandbox panel has <strong>Wake</strong> or <strong>Sleep</strong>, an <strong>Apps</strong> tab (the web address of each app and <strong>Let your agent deploy…</strong>: the Claude Code plugin or a zip for other agents, the same window as in Advanced, which adds its <strong>Options</strong>) and a <strong>Details</strong> tab (when it last ran, the sleep times, warnings, archiving). Advanced shows everything: Overview, tokens, SSH keys, the Terminal and Logs, and the Access, Files, Resources and Registry tabs. Simple only hides: what an account may do is the same in both, and the API and MCP do not change. <code>PUT /me/view</code> with <code>{"view": "simple"}</code> or <code>{"view": "advanced"}</code> sets it (403 for a user without <code>USER_VIEW_SWITCH=true</code>); <code>GET /me</code> returns it as <code>view</code>, and whether the account may switch as <code>view_switch</code>.</p>
+<h2 id="light-and-dark">Light and dark<a class="headerlink" href="#light-and-dark" title="Permanent link">&para;</a></h2>
+<p>The pages follow the device's light or dark setting until the account chooses one with the sun / moon button in the top bar; the choice is remembered for the account, so it holds on any computer. The sign-in page, before anyone is signed in, always follows the device. The page shown while a sandbox wakes up, the error pages, the terminal and the log view stay dark. <code>PUT /me/theme</code> with <code>{"theme": "light"}</code>, <code>"dark"</code> or <code>"system"</code> sets it; <code>GET /me</code> returns it as <code>theme</code> (<code>null</code>: the device decides).</p>
 <h2 id="host-folders">Host folders<a class="headerlink" href="#host-folders" title="Permanent link">&para;</a></h2>
 <p>The admin can mount folders of the host into a sandbox, e.g. a shared data folder, when <code>HOST_MOUNT_ROOTS</code> lists where they may come from (e.g. <code>HOST_MOUNT_ROOTS=/srv/shared</code>; see <a href="../configuration/">Configuration</a>). On a sandbox panel's <strong>Resources</strong> tab, <strong>Host folders</strong> lists them, with <strong>Remove</strong> for each, and a form to add one: the host folder (at or under one of the roots), where it appears in the sandbox (empty: <code>/mnt/&lt;last part of the host path&gt;</code>) and <strong>read-only</strong>. The folder is bind-mounted into the sandbox container, so the apps in the sandbox's own Docker can bind it from there too (e.g. <code>/mnt/shared:/data</code>).</p>
 <p>Adding or removing one recreates the sandbox container, after a confirmation: a running sandbox restarts (its apps are unreachable for a few seconds), an asleep one stays asleep, one in deep sleep gets the change when it wakes. A host folder that does not exist is not created: Docker refuses it, the panel shows Docker's message and nothing changes. The target cannot be <code>/</code>, a system directory (<code>/etc</code>, <code>/usr</code>, <code>/proc</code>, <code>/dev</code>, <code>/run</code>…) or on, above or under one of the sandbox's own mounts (<code>/var/lib/docker</code>, <code>/opt</code>, <code>/root</code>, <code>/home</code>, <code>/srv</code>, …). The mounts are kept in the sandbox's compose file (and its <code>p9m.mounts</code> label), so they survive sleep, deep sleep and upgrades.</p>
