@@ -80,6 +80,25 @@ describe('sandbox files', () => {
     expect(file?.name).toBe('todo.md')
     expect((await collect(file!.body)).toString()).toBe('# todo')
   })
+  it('a folder that is not there yet is made first (a folder upload), then the file is written', async () => {
+    const { exec, putArchive, f } = fakes()
+    putArchive.mockRejectedValueOnce(Object.assign(new Error('no such dir'), { statusCode: 404 }))
+    await f.write('p9m-a', '/root/site/css/main.css', Buffer.from('body{}'))
+    expect(exec.mock.calls.map(c => c[1])).toEqual([['mkdir', '-p', '--', '/root/site/css']])
+    expect(putArchive.mock.calls.map(c => c[1])).toEqual(['/root/site/css', '/root/site/css'])
+  })
+  it('a folder in a volume that is not there is not made', async () => {
+    const { exec, putArchive, f } = fakes()
+    exec.mockResolvedValueOnce({ code: 3, stdout: '', stderr: '' })
+    putArchive.mockRejectedValueOnce(Object.assign(new Error('no such dir'), { statusCode: 404 }))
+    await expect(f.write('p9m-a', '/var/lib/docker/volumes/gone/_data/x/a.txt', Buffer.from('a'))).rejects.toThrow('No such volume: gone')
+  })
+  it('any other failure of the write is not retried', async () => {
+    const { exec, putArchive, f } = fakes()
+    putArchive.mockRejectedValueOnce(Object.assign(new Error('boom'), { statusCode: 500 }))
+    await expect(f.write('p9m-a', '/root/a.txt', Buffer.from('a'))).rejects.toThrow('boom')
+    expect(exec).not.toHaveBeenCalled()
+  })
   it('downloads a file as its bytes, a folder as a tar', async () => {
     const { f } = fakes()
     const file = await f.download('p9m-a', '/root/a.txt')

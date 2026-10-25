@@ -266,21 +266,53 @@ function filesStatus(text, error = false) {
   const el = $('[data-panel] [data-files-status]'); if (!el) return
   el.hidden = !text; el.textContent = text || ''; el.className = error ? 'error' : 'muted'
 }
-async function uploadFiles(fileList) {
-  const name = selected, dir = filesAt.get(name) || '/root', files = [...fileList]
-  if (!name || !files.length) return
+/** Files picked (a folder's with their webkitRelativePath) as { file, rel }: rel is the path under the folder open. */
+const picked = fileList => [...fileList].map(file => ({ file, rel: file.webkitRelativePath || file.name }))
+
+/**
+ * Files and folders dropped: a folder with everything in it, its empty folders too. The entries are taken before the
+ * first await: the browser empties the DataTransfer once the drop event is over.
+ */
+async function dropped(dt) {
+  const entries = [...(dt.items || [])].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean)
+  if (!entries.length) return { files: picked(dt.files), dirs: [] }
+  const files = [], dirs = []
+  // readEntries gives a folder's entries a batch at a time, until an empty one
+  const readAll = reader => new Promise((resolve, reject) => {
+    const out = [], next = () => reader.readEntries(b => { if (!b.length) return resolve(out); out.push(...b); next() }, reject)
+    next()
+  })
+  async function walk(e, rel) {
+    if (e.isFile) files.push({ file: await new Promise((resolve, reject) => e.file(resolve, reject)), rel })
+    else if (e.isDirectory) { dirs.push(rel); for (const c of await readAll(e.createReader())) await walk(c, `${rel}/${c.name}`) }
+  }
+  for (const e of entries) await walk(e, e.name)
+  return { files, dirs }
+}
+
+/** Uploads into the folder open, four at a time; the folders on their paths are made by the server, empty ones here. */
+async function uploadFiles({ files, dirs = [] }) {
+  const name = selected, dir = filesAt.get(name) || '/root'
+  if (!name || (!files.length && !dirs.length)) return
   if (dir === 'volumes') return filesStatus('Open a volume first, then drop the files in it.', true)
   const max = filesListing?.max_upload ?? Infinity, failed = []
-  for (const [i, f] of files.entries()) {
-    if (f.size > max) { failed.push(`${f.name}: larger than ${P9mPanel.fmtBytes(max)}`); continue }
-    filesStatus(`Uploading ${f.name} (${i + 1} of ${files.length})…`)
+  let done = 0, next = 0
+  async function one({ file, rel }) {
+    if (file.size > max) return failed.push(`${rel}: larger than ${P9mPanel.fmtBytes(max)}`)
     try {
-      const res = await fetch(`${filesBase(name)}/content?path=${encodeURIComponent(`${dir}/${f.name}`)}`, { method: 'PUT', body: f, headers: { 'Content-Type': 'application/octet-stream' }, credentials: 'same-origin' })
-      if (!res.ok) failed.push(`${f.name}: ${(await res.json().catch(() => ({}))).error || `HTTP ${res.status}`}`)
-    } catch { failed.push(`${f.name}: the upload broke off (too large?)`) }
+      const res = await fetch(`${filesBase(name)}/content?path=${encodeURIComponent(`${dir}/${rel}`)}`, { method: 'PUT', body: file, headers: { 'Content-Type': 'application/octet-stream' }, credentials: 'same-origin' })
+      if (!res.ok) failed.push(`${rel}: ${(await res.json().catch(() => ({}))).error || `HTTP ${res.status}`}`)
+    } catch { failed.push(`${rel}: the upload broke off (too large?)`) }
+    filesStatus(`Uploading… ${++done} of ${files.length}`)
+  }
+  filesStatus(`Uploading… 0 of ${files.length}`)
+  await Promise.all(Array.from({ length: Math.min(4, files.length) }, async () => { while (next < files.length) await one(files[next++]) }))
+  for (const d of dirs.filter(d => !files.some(f => f.rel.startsWith(`${d}/`)))) {
+    try { await api(`${filesBase(name)}/mkdir`, { method: 'POST', body: JSON.stringify({ path: `${dir}/${d}` }) }) } catch (e) { failed.push(`${d}/: ${e.message}`) }
   }
   await loadFiles(name, dir)
-  filesStatus(failed.length ? `Not uploaded: ${failed.join('; ')}` : `Uploaded ${files.length === 1 ? files[0].name : `${files.length} files`}.`, failed.length > 0)
+  const what = files.length === 1 && !dirs.length ? files[0].rel : `${files.length} file${files.length === 1 ? '' : 's'}`
+  filesStatus(failed.length ? `Not uploaded: ${failed.join('; ')}` : `Uploaded ${what}.`, failed.length > 0)
 }
 async function deleteFile(path) {
   const name = selected
@@ -884,10 +916,10 @@ function initSandboxes() {
     const last = e.target.value.trim().replace(/\/+$/, '').split('/').pop()
     e.target.form.querySelector('[name=target]').placeholder = `/mnt/${last || '<folder name>'}`
   })
-  $('[data-panel]').addEventListener('change', e => { if (e.target.matches('[data-files-input]')) { void uploadFiles(e.target.files); e.target.value = '' } })
+  $('[data-panel]').addEventListener('change', e => { if (e.target.matches('[data-files-input]')) { void uploadFiles({ files: picked(e.target.files) }); e.target.value = '' } })
   $('[data-panel]').addEventListener('dragover', e => { const z = e.target.closest('[data-files]'); if (z && e.dataTransfer?.types.includes('Files')) { e.preventDefault(); z.classList.add('drop') } })
   $('[data-panel]').addEventListener('dragleave', e => { const z = e.target.closest('[data-files]'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('drop') })
-  $('[data-panel]').addEventListener('drop', e => { const z = e.target.closest('[data-files]'); if (!z) return; e.preventDefault(); z.classList.remove('drop'); void uploadFiles(e.dataTransfer.files) })
+  $('[data-panel]').addEventListener('drop', e => { const z = e.target.closest('[data-files]'); if (!z) return; e.preventDefault(); z.classList.remove('drop'); void dropped(e.dataTransfer).then(uploadFiles, err => filesStatus(`Could not read what was dropped: ${err.message}`, true)) })
   $('[data-panel]').addEventListener('keydown', e => {
     const t = e.target.closest('[role="tab"]'); if (!t) return
     const ids = P9mPanel.TABS.map(([id]) => id), i = ids.indexOf(t.dataset.tab)

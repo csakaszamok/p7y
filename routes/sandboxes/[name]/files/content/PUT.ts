@@ -4,7 +4,7 @@ import { formatBytes } from '../../../../../services/resources'
 
 export const openapi = {
   mcp: { name: 'write_sandbox_file' },
-  summary: "Upload a file into the sandbox's files (replaces one of the same name); its folder must exist",
+  summary: "Upload a file into the sandbox's files (replaces one of the same name); missing folders on its path are made",
   tags: ['files'],
   security: [{ bearerAuth: [] }],
   parameters: [{ name: 'path', in: 'query', required: true, description: 'The file to write, e.g. /root/app/config.json', schema: { type: 'string' } }],
@@ -12,7 +12,7 @@ export const openapi = {
   responses: {
     201: { description: '{ path, size }' },
     400: { description: 'No path, or outside /root, /home, /srv and /opt' },
-    404: { description: 'Sandbox or folder not found' },
+    404: { description: 'Sandbox not found, or a volume that is not there' },
     409: { description: 'The sandbox is not running (reason: not_running)' },
     413: { description: 'Larger than FILES_MAX_UPLOAD' },
   },

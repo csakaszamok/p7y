@@ -6,6 +6,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Added
 
+- **Whole folders on the Files tab:** **Upload folder…**, or drop a folder on the list, uploads it with everything in it (four files at a time); folders that are not there yet are made, empty ones too when dropped. `PUT /sandboxes/:name/files/content` makes the missing folders on its path instead of answering 404.
 - **A suggested `SANDBOX_MAX_TOTAL` for the host:** twice as many sandboxes as can all use their full CPU and memory limits at once, at most as many as the disk holds at `SANDBOX_DISK` each. `setup.sh` puts it into a new `.env` instead of 200 (a number of your own stays), `check-host.sh` prints it and warns when `.env` has one well above it, and the admin's Overview shows it under Host resources. See [Configuration](docs/configuration.md).
 
 ## [0.12.5] - 2026-10-25

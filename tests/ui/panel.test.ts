@@ -466,7 +466,8 @@ describe('the Files tab', () => {
     expect(html).toContain('href="/sandboxes/p9m-shop/files/content?path=%2Froot%2Fapp"') // the folder as a tar
   })
   it('an empty folder says where files can go', () => {
-    expect(P.filesView({ ...listing, entries: [] }, { ...ctx, name: 'p9m-shop' })).toContain('Empty: drop files here')
+    expect(P.filesView({ ...listing, entries: [] }, { ...ctx, name: 'p9m-shop' })).toContain('Empty: drop files or folders here')
+    expect(P.filesView(listing, { ...ctx, name: 'p9m-shop' })).toContain('Upload folder…<input type="file" webkitdirectory data-files-input hidden>')
   })
   const vol = { name: 'shop_db', path: '/var/lib/docker/volumes/shop_db/_data', project: 'shop', containers: [{ name: 'shop-db-1', service: 'db', running: true, mount: '/var/lib/postgresql/data' }] }
   it('a Volumes chip next to the four folders', () => {
