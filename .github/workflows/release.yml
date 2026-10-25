@@ -96,15 +96,15 @@ jobs:
             echo "$assets" | grep -qx "$f" || { echo "missing release asset: $f"; exit 1; }
           done
 
-  # The newest version on the MCP Registry, as io.github.csakaszamok/p9m: GitHub's OIDC token proves the repository is
-  # csakaszamok's, so no one signs in. Only for the highest version (an older series' fix does not go back in time).
+  # The newest version on the MCP Registry, as io.github.p9m-team/p9m: the name belongs to the p9m-team GitHub user,
+  # which the repository's OIDC token cannot prove, so it signs in with that user's token (a classic PAT, no scopes),
+  # kept as the secret MCP_REGISTRY_TOKEN. Only for the highest version (an older series' fix does not go back in time).
   mcp-registry:
     needs: image
     if: needs.image.outputs.is_latest == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
     env:
       PUBLISHER_VERSION: v1.8.1
       PUBLISHER_SHA256: a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc
@@ -116,5 +116,13 @@ jobs:
           echo "$PUBLISHER_SHA256  mcp-publisher.tar.gz" | sha256sum -c -
           tar -xzf mcp-publisher.tar.gz mcp-publisher
       - run: bash scripts/check-release-version.sh "${{ github.ref_name }}"
-      - run: ./mcp-publisher login github-oidc
+      - name: Sign in as p9m-team
+        env:
+          MCP_REGISTRY_TOKEN: ${{ secrets.MCP_REGISTRY_TOKEN }}
+        run: |
+          if [ -z "$MCP_REGISTRY_TOKEN" ]; then
+            echo "::error::The secret MCP_REGISTRY_TOKEN (a token of the p9m-team user) is not set"
+            exit 1
+          fi
+          ./mcp-publisher login github --token "$MCP_REGISTRY_TOKEN"
       - run: ./mcp-publisher publish

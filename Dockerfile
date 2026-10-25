@@ -1,5 +1,5 @@
 # 0.3.x: mcp-core.ts (the API routes as MCP tools at /mcp)
-FROM ghcr.io/p7y-dev/rododentron:0.3.1
+FROM ghcr.io/csakaszamok/rododentron:0.4.0
 RUN apk add --no-cache python3 make g++ docker-cli docker-cli-compose
 WORKDIR /app
 # Node resolves names (and reads files) on this many threads, 4 by default: a few slow lookups held up the rest

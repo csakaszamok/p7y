@@ -25,7 +25,7 @@ import { repoInfo, p9mVersion } from "./services/repoInfo";
 import { isHubHost } from "./services/hub/config";
 import { handleHub } from "./services/hub/router";
 import { mcpCaller, mcpToolsFor } from "./services/mcp";
-// From the base image (ghcr.io/p7y-dev/rododentron): the API routes as MCP tools
+// From the base image (ghcr.io/csakaszamok/rododentron): the API routes as MCP tools
 import { createMcpHandler } from "./mcp-core";
 import { defaultRuntime, runtimeAllowed } from "./services/defaultRuntime";
 import { startRegistryGc } from "./services/registryGc";

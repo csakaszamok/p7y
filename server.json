@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.csakaszamok/p9m",
+  "name": "io.github.p9m-team/p9m",
   "title": "Purgatorium (p9m)",
   "description": "Self-hosted Docker sandboxes for agents: create one, deploy a compose stack, read its files and URLs",
   "version": "0.11.12",
