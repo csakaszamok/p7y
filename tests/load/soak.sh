@@ -7,7 +7,7 @@
 #
 # The other settings as environment variables (see soak.mjs): RATE, SLEEP_EVERY, CPUS, MEMORY, USER_DOMAIN,
 # MAX_ERRORS, KEEP, INSECURE, P9M_URL. soak.mjs is taken from next to this script, else downloaded (SOAK_REF:
-# the branch or tag, release/0.11).
+# the branch or tag, release/0.12).
 set -eu
 USERS=${1:-${USERS:-10}}
 SANDBOXES=${2:-${SANDBOXES:-2}}
@@ -28,7 +28,7 @@ script=$(dirname "$0")/soak.mjs
 if [ ! -f "$script" ]; then
   script=$(mktemp)
   trap 'rm -f "$script"' EXIT
-  curl -fsSL "https://raw.githubusercontent.com/csakaszamok/p9m/${SOAK_REF:-release/0.11}/tests/load/soak.mjs" -o "$script"
+  curl -fsSL "https://raw.githubusercontent.com/csakaszamok/p9m/${SOAK_REF:-release/0.12}/tests/load/soak.mjs" -o "$script"
 fi
 
 # Where the images came from: the sandboxes pull Docker Hub images through Purgatorium's registry-cache, so a second
