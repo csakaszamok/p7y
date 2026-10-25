@@ -169,6 +169,14 @@ describe('sandbox service', () => {
     await expect(sandboxService.createSandbox('alice')).rejects.toThrow('conflicts with an existing sandbox')
   }, 60000)
 
+  it("rejects a name whose router would answer for Purgatorium's own address (UI_HOST)", async () => {
+    vi.stubEnv('UI_HOST', 'console-admin.lvh.me')
+    try {
+      vi.mocked(listManagedContainers).mockResolvedValueOnce([])
+      await expect(sandboxService.createSandbox('console')).rejects.toThrow("would take Purgatorium's own address console-admin.lvh.me")
+    } finally { vi.stubEnv('UI_HOST', '') }
+  }, 60000)
+
   it('allows a name that merely starts with an existing name but is not prefix+dash', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
       sandboxMeta({ name: 'p9m-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })

@@ -26,6 +26,7 @@ import { composeUp, composeStop, composeStart, composeDown, composeUpInner, comp
 import { concurrency } from './concurrency'
 import { parseComposeText } from './composeCache'
 import { hashPassword } from './registryAuth'
+import { ownHostTaken } from './uiHost'
 import { listProjectVolumes, exportVolume, removeVolume, stopProjectContainers, removeProjectContainers } from './project'
 
 /** The sandbox's directory; for an unknown one a path that does not exist (reads then fail as before). */
@@ -218,6 +219,9 @@ export const sandboxService = {
     if (conflict) {
       throw new Error(`Sandbox name "${rawName}" conflicts with an existing sandbox: ${conflict}`)
     }
+    // Its router would also answer for one of Purgatorium's own addresses (a UI_HOST of console-admin.<domain>)
+    const own = ownHostTaken(rawName)
+    if (own) throw new Error(`Sandbox name "${rawName}" would take Purgatorium's own address ${own}`)
 
     // Both before anything is written: an unknown name must not leave a half-made sandbox dir behind
     const runtime = loadRuntime(resolvedRuntimeName)

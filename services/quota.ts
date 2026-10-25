@@ -1,4 +1,5 @@
 import { visibleSandboxStates } from './access'
+import { isAdminOwner } from './allowlist'
 import { sandboxService } from './sandbox'
 import type { Principal } from './principal'
 import type { SandboxMeta } from './docker'
@@ -79,7 +80,7 @@ export function reservedFor(owner: string, states: { owner?: string; status: str
   const held = new Map<string, number>()
   for (const s of states) {
     const o = s.owner ?? 'admin'
-    if (o === owner || o === 'admin') continue
+    if (o === owner || isAdminOwner(o)) continue
     held.set(o, (held.get(o) ?? 0) + (isRunning(s) ? 1 : 0))
   }
   return [...held.values()].reduce((sum, n) => sum + Math.max(0, guarantee - n), 0) + guarantee
@@ -100,7 +101,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : word.e
  * being created (they will run); `freeing`: the running one a swap puts to sleep first (not counted). Never refuses the admin.
  */
 export async function wakeRefusal(owner: string, from: string, pending: string[] = [], opts: { freeing?: string; creates?: number } = {}): Promise<WakeRefusal | null> {
-  if (owner === 'admin') return null
+  if (isAdminOwner(owner)) return null
   const all = await sandboxService.listSandboxStates()
   const mine = all.filter(s => s.owner === owner)
   // Running, it takes a place on the server (the admin's running ones take theirs too)
@@ -136,7 +137,7 @@ export type WakeReservation = { ok: true; release: () => void } | { ok: false; r
  * `freeing`: a swap's running sandbox that will be put to sleep first, so it does not count.
  */
 export async function reserveWake(owner: string, name: string, from: string, freeing?: string): Promise<WakeReservation> {
-  if (owner === 'admin') return { ok: true, release: () => {} }
+  if (isAdminOwner(owner)) return { ok: true, release: () => {} }
   const set = waking.get(owner) ?? new Set<string>()
   waking.set(owner, set)
   const pending = [...set].filter(n => n !== name) // taken before the await: concurrent wakes see each other

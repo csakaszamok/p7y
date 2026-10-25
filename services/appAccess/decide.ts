@@ -1,5 +1,6 @@
 import { accessOfHost, type HostAccess } from './hosts'
 import { mayOpen } from './level'
+import { uiHost } from '../uiHost'
 import { APP_COOKIE, redeemTicket, readAppCookie, appCookieValue, appCookieHeader } from './sign'
 
 /**
@@ -12,7 +13,7 @@ export interface DecideDeps { access: (host: string) => Promise<HostAccess | nul
 const defaults: DecideDeps = { access: h => accessOfHost(h), env: process.env }
 export const LANDING = '/__p9m/auth'
 
-const publicBase = (env: NodeJS.ProcessEnv) => (env.PUBLIC_URL ?? `https://p9m.${(env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()}`).replace(/\/$/, '')
+const publicBase = (env: NodeJS.ProcessEnv) => (env.PUBLIC_URL ?? `https://${uiHost(env)}`).replace(/\/$/, '')
 export const startUrl = (target: string, env: NodeJS.ProcessEnv = process.env) => `${publicBase(env)}/auth/app/start?rd=${encodeURIComponent(target)}`
 
 export function withoutAppCookie(cookie: string): string {

@@ -3,7 +3,7 @@ services:
     # The released image: it carries the templates, runtimes and the files p9m-init installs.
     # To work on the code, add docker-compose.dev.yml (COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml,
     # and COMPOSE_PATH_SEPARATOR=: on Windows, in .env).
-    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.4}
+    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.5}
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
       # to localhost (P9M_API_BIND=127.0.0.1) so everything goes through HTTPS.
@@ -59,7 +59,8 @@ services:
       # Max sandboxes per signed-in user (0 = unlimited); the admin is not limited
       SANDBOX_QUOTA: ${SANDBOX_QUOTA:-3}
       # UI sign-in. Admin: local account. Everyone else: OIDC (Google or any OpenID Connect provider).
-      PUBLIC_URL: ${PUBLIC_URL:-http://p9m.${HOST_DOMAIN:-lvh.me}}
+      PUBLIC_URL: ${PUBLIC_URL:-http://${UI_HOST:-p9m.${HOST_DOMAIN:-lvh.me}}}
+      UI_HOST: ${UI_HOST:-}
       SESSION_SECRET: ${SESSION_SECRET:-}
       ADMIN_USER: ${ADMIN_USER:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
@@ -70,6 +71,7 @@ services:
       # Who may sign in with OIDC (comma lists); without either, anyone with an account at the provider
       OIDC_ALLOWED_DOMAINS: ${OIDC_ALLOWED_DOMAINS:-}
       OIDC_ALLOWED_EMAILS: ${OIDC_ALLOWED_EMAILS:-}
+      OIDC_ADMIN_EMAILS: ${OIDC_ADMIN_EMAILS:-}
       # App access (docs: app-access.md): who opens an app without p9m.access; the key of its cookies and tickets
       APPS_ACCESS_DEFAULT: ${APPS_ACCESS_DEFAULT:-public}
       APP_ACCESS_SECRET: ${APP_ACCESS_SECRET:-}
@@ -90,7 +92,7 @@ services:
       - attempts:2
     labels:
       traefik.enable: "true"
-      traefik.http.routers.p9m.rule: "Host(`p9m.${HOST_DOMAIN:-lvh.me}`)"
+      traefik.http.routers.p9m.rule: "Host(`${UI_HOST:-p9m.${HOST_DOMAIN:-lvh.me}}`)"
       traefik.http.routers.p9m.entrypoints: web,websecure
       traefik.http.routers.p9m.service: p9m
       traefik.http.services.p9m.loadbalancer.server.port: "3000"
@@ -125,7 +127,7 @@ services:
   # One-shot, on every up: copies this release's Sablier themes, registry config and
   # dynamic/errors.yml from the image, so they always match it (no files from a checkout).
   p9m-init:
-    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.4}
+    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.5}
     entrypoint: ["sh", "/app/assets/install-assets.sh"]
     volumes:
       - sablier_themes:/out/sablier-themes
@@ -200,7 +202,7 @@ services:
         aliases:
           # Sandboxes reach the registry and its token endpoint through Traefik by name (not 127.0.0.1)
           - registry.${HOST_DOMAIN:-lvh.me}
-          - p9m.${HOST_DOMAIN:-lvh.me}
+          - ${UI_HOST:-p9m.${HOST_DOMAIN:-lvh.me}}
       sablier-net: {}
     restart: unless-stopped
     # Its error-page middleware is in dynamic/errors.yml, which p9m-init writes; restarted when a new release

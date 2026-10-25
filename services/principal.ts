@@ -4,7 +4,7 @@ import path from 'node:path'
 import bcrypt from 'bcryptjs'
 import { readSession, getCookie, SESSION_COOKIE, publicUrl } from './session'
 import { resolveToken } from './tokens'
-import { subAllowed } from './allowlist'
+import { subAllowed, sessionRole } from './allowlist'
 
 export interface Principal {
   sub: string
@@ -78,7 +78,9 @@ export function getPrincipal(req: Request): Principal | null {
       : { sub: resolved.owner, role: 'user', via: 'token' }
   }
   const session = readSession(getCookie(req, SESSION_COOKIE))
-  return session && subAllowed(session.sub, session.role) ? { sub: session.sub, role: session.role, via: 'session' } : null
+  if (!session) return null
+  const role = sessionRole(session.sub, session.role)
+  return subAllowed(session.sub, role) ? { sub: session.sub, role, via: 'session' } : null
 }
 
 /** Timing-safe admin token comparison using SHA256 hashes. */

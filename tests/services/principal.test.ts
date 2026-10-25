@@ -209,3 +209,17 @@ describe('scoped-token allowlist against the real routes', () => {
     expect(scopedTokenAllows('GET', '/sandboxes/p9m-shop', withArchive)).toBe(true)
   })
 })
+
+describe('getPrincipal with OIDC_ADMIN_EMAILS', () => {
+  it('the browser session is the admin; the same address with a token is a user', () => {
+    vi.stubEnv('OIDC_ADMIN_EMAILS', 'alice@example.com')
+    try {
+      expect(getPrincipal(req({ cookie: `p9m_session=${createSession('alice@example.com', 'admin')}` }))).toMatchObject({ sub: 'alice@example.com', role: 'admin' })
+      expect(getPrincipal(req({ authorization: 'Bearer ldr_good' }))).toMatchObject({ sub: 'alice@example.com', role: 'user' })
+    } finally { vi.stubEnv('OIDC_ADMIN_EMAILS', '') }
+  })
+  it('taken off the list: the admin session is a user one at once (still signed in if allowed)', () => {
+    vi.stubEnv('OIDC_ADMIN_EMAILS', '')
+    expect(getPrincipal(req({ cookie: `p9m_session=${createSession('alice@example.com', 'admin')}` }))).toMatchObject({ sub: 'alice@example.com', role: 'user' })
+  })
+})

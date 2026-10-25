@@ -11,7 +11,23 @@ function lists(env: NodeJS.ProcessEnv) {
   return { domains: list(env.OIDC_ALLOWED_DOMAINS, '@'), emails: list(env.OIDC_ALLOWED_EMAILS) }
 }
 
+/** OIDC_ADMIN_EMAILS: these addresses are the admin when they sign in with OIDC in the browser (their tokens stay a user's). */
+export function oidcAdmin(email: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  return list(env.OIDC_ADMIN_EMAILS).has(email.trim().toLowerCase())
+}
+
+/** A session's role now: one signed in as an OIDC admin is a user again once taken off OIDC_ADMIN_EMAILS. */
+export function sessionRole(sub: string, role: 'user' | 'admin', env: NodeJS.ProcessEnv = process.env): 'user' | 'admin' {
+  return role === 'admin' && sub !== 'admin' && !oidcAdmin(sub, env) ? 'user' : role
+}
+
+/** An owner whose sandboxes no limit applies to: the local admin, and the OIDC_ADMIN_EMAILS addresses. */
+export function isAdminOwner(owner: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  return owner === 'admin' || oidcAdmin(owner, env)
+}
+
 export function signInAllowed(email: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  if (oidcAdmin(email, env)) return true
   const { domains, emails } = lists(env)
   if (!domains.size && !emails.size) return true
   const e = email.trim().toLowerCase()
