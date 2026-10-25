@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **My area in the topbar:** *My sandboxes*, *Access tokens* and *SSH keys* are one menu item, **My area**, with the three as tabs in a row below it on those pages, so the topbar has room for the rest (e.g. the admin's newer-release notice). Simple shows no row: My area is the sandboxes there. The addresses (`/`, `/settings/tokens`, `/settings/ssh-keys`) stay.
+
 ## [0.12.7] - 2026-10-25
 
 Upgrading from 0.12.6: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (only the version changes). A `docker-compose.yml` you keep from before stays on 0.12.6.
