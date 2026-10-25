@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- **A half-deleted sandbox** (its directory gone, its container still there) can be deleted: its panel failed with `ENOENT … certs/server/ca.pem` and **Delete** answered *not found*. Now the panel opens, and **Delete** saves its volumes in the archive (without a config) and removes its containers and volumes.
+
 ## [0.12.6] - 2026-10-25
 
 Upgrading from 0.12.5: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (only the version changes). A `docker-compose.yml` you keep from before stays on 0.12.5. To see the suggested `SANDBOX_MAX_TOTAL` for an existing server, run the new `check-host.sh` (or look at the Overview).
