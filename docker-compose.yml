@@ -7,8 +7,7 @@ services:
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
       # to localhost (P7Y_API_BIND=127.0.0.1) so everything goes through HTTPS.
-      # LEANDER_API_BIND is the pre-rename name of the same setting.
-      - "${P7Y_API_BIND:-${LEANDER_API_BIND:-0.0.0.0}}:8081:3000"
+      - "${P7Y_API_BIND:-0.0.0.0}:8081:3000"
     volumes:
       - ./data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
@@ -111,14 +110,6 @@ services:
       traefik.tcp.routers.p7y-tcp.service: p7y-tcp
       traefik.tcp.services.p7y-tcp.loadbalancer.server.port: "4443"
       traefik.docker.network: traefik-net
-      # The UI's pre-rename address (Leander) redirects to the new one.
-      traefik.http.routers.p7y-legacy-host.rule: "Host(`leander.${HOST_DOMAIN:-lvh.me}`)"
-      traefik.http.routers.p7y-legacy-host.entrypoints: web,websecure
-      traefik.http.routers.p7y-legacy-host.middlewares: "legacy-host-redirect@docker"
-      traefik.http.routers.p7y-legacy-host.service: p7y
-      traefik.http.middlewares.legacy-host-redirect.redirectregex.regex: "^(https?)://leander[.](.*)$$"
-      traefik.http.middlewares.legacy-host-redirect.redirectregex.replacement: "$${1}://p7y.$${2}"
-      traefik.http.middlewares.legacy-host-redirect.redirectregex.permanent: "true"
       # Catch-all (lowest priority): hosts without a sandbox router — deep-sleeping
       # or unknown sandboxes — go to /wake, which rebuilds or 404s.
       traefik.http.routers.p7y-wake.rule: "HostRegexp(`.+`)"

@@ -1,4 +1,4 @@
-// Writes sablier-themes/p7y.html and leander.html (old leander-* sandboxes use that name)
+// Writes sablier-themes/p7y.html
 // from ui/waiting.css, ui/embers.js and ui/waiting.js. Sablier serves the page on the
 // sandbox's own host, where Purgatory's /assets are not reachable, so everything is inlined.
 // Run after changing any of those files:  node scripts/build-sablier-themes.mjs
@@ -61,5 +61,5 @@ ${read('waiting.js')}
 </html>
 `
 
-for (const name of ['p7y.html', 'leander.html']) fs.writeFileSync(path.join(root, 'sablier-themes', name), theme)
-console.log('wrote sablier-themes/p7y.html and leander.html')
+fs.writeFileSync(path.join(root, 'sablier-themes', 'p7y.html'), theme)
+console.log('wrote sablier-themes/p7y.html')

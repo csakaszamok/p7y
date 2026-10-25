@@ -143,8 +143,8 @@ function deepSleepingSandboxes(live: SandboxMeta[]): SandboxMeta[] {
 
 /**
  * Raw (unprefixed) names of every sandbox that currently exists, live or
- * deep-sleeping, current p7y- and legacy leander- alike (URLs are built from
- * the raw name), so createSandbox can check a new raw name against them.
+ * deep-sleeping (URLs are built from the raw name), so createSandbox can check
+ * a new raw name against them.
  */
 function existingRawNames(containers: SandboxMeta[]): Set<string> {
   const names = new Set<string>()
@@ -211,7 +211,7 @@ export const sandboxService = {
     const dir = newSandboxDir(owner, name)
     const existing = await listManagedContainers()
     const rawNames = existingRawNames(existing)
-    // Same raw name under another prefix (e.g. a legacy leander-<raw>) would share every URL.
+    // Same raw name under another prefix (SANDBOX_PREFIX changed) would share every URL.
     if (rawNames.has(rawName)) throw new Error(`Sandbox already exists: ${rawName}`)
 
     const conflict = conflictingRawName(rawName, rawNames)

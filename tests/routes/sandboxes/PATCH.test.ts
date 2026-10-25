@@ -4,8 +4,8 @@ vi.stubEnv('SESSION_SECRET', 'test-secret')
 vi.stubEnv('ADMIN_TOKEN', 'admin-secret')
 
 const sandboxes = [
-  { name: 'leander-a1', owner: 'alice@example.com', status: 'exited' },
-  { name: 'leander-b1', owner: 'bob@example.com', status: 'running' }
+  { name: 'p7y-a1', owner: 'alice@example.com', status: 'exited' },
+  { name: 'p7y-b1', owner: 'bob@example.com', status: 'running' }
 ]
 
 vi.mock('../../../services/sandbox', () => ({
@@ -41,54 +41,54 @@ describe('PATCH /sandboxes/<name>', () => {
   beforeEach(() => { vi.clearAllMocks() })
 
   it('changes the owner’s sandbox, passing its current status', async () => {
-    const res = await patch(r('leander-a1', { idle_timeout: '45m' }))
+    const res = await patch(r('p7y-a1', { idle_timeout: '45m' }))
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ name: 'leander-a1', idle_timeout: '45m', deep_sleep_after: '7d', limits: null })
-    expect(updateSleepSettings).toHaveBeenCalledWith('leander-a1', 'exited', { idle_timeout: '45m' })
+    expect(await res.json()).toEqual({ name: 'p7y-a1', idle_timeout: '45m', deep_sleep_after: '7d', limits: null })
+    expect(updateSleepSettings).toHaveBeenCalledWith('p7y-a1', 'exited', { idle_timeout: '45m' })
   })
 
   it('404s someone else’s sandbox without changing it; the admin may change any', async () => {
-    expect((await patch(r('leander-b1', { idle_timeout: '45m' }))).status).toBe(404)
+    expect((await patch(r('p7y-b1', { idle_timeout: '45m' }))).status).toBe(404)
     expect(updateSleepSettings).not.toHaveBeenCalled()
-    const admin = await patch(r('leander-b1', { deep_sleep_after: 'off' }, { authorization: 'Bearer admin-secret', 'content-type': 'application/json' }))
+    const admin = await patch(r('p7y-b1', { deep_sleep_after: 'off' }, { authorization: 'Bearer admin-secret', 'content-type': 'application/json' }))
     expect(admin.status).toBe(200)
-    expect(updateSleepSettings).toHaveBeenCalledWith('leander-b1', 'running', { deep_sleep_after: 'off' })
+    expect(updateSleepSettings).toHaveBeenCalledWith('p7y-b1', 'running', { deep_sleep_after: 'off' })
   })
 
   it('400s invalid values and bad JSON', async () => {
-    expect((await patch(r('leander-a1', { idle_timeout: '0m' }))).status).toBe(400)
-    expect((await patch(r('leander-a1', {}))).status).toBe(400)
-    expect((await patch(r('leander-a1', 'not json'))).status).toBe(400)
+    expect((await patch(r('p7y-a1', { idle_timeout: '0m' }))).status).toBe(400)
+    expect((await patch(r('p7y-a1', {}))).status).toBe(400)
+    expect((await patch(r('p7y-a1', 'not json'))).status).toBe(400)
     expect(updateSleepSettings).not.toHaveBeenCalled()
   })
 
   it('401s anonymous callers', async () => {
-    expect((await patch(r('leander-a1', { idle_timeout: '45m' }, {}))).status).toBe(401)
+    expect((await patch(r('p7y-a1', { idle_timeout: '45m' }, {}))).status).toBe(401)
   })
 
   it('the disk limit (a warning threshold): only the admin sets it', async () => {
-    const user = await patch(r('leander-a1', { disk: '50g' }))
+    const user = await patch(r('p7y-a1', { disk: '50g' }))
     expect(user.status).toBe(403)
     expect((await user.json()).error).toMatch(/administrator/)
     expect(setDiskLimit).not.toHaveBeenCalled()
-    const admin = await patch(r('leander-b1', { disk: '50g' }, { authorization: 'Bearer admin-secret', 'content-type': 'application/json' }))
+    const admin = await patch(r('p7y-b1', { disk: '50g' }, { authorization: 'Bearer admin-secret', 'content-type': 'application/json' }))
     expect(admin.status).toBe(200)
-    expect(setDiskLimit).toHaveBeenCalledWith('leander-b1', 50 * 1024 ** 3)
+    expect(setDiskLimit).toHaveBeenCalledWith('p7y-b1', 50 * 1024 ** 3)
     expect((await admin.json()).disk).toEqual({ limit: 50 * 1024 ** 3, used: null, measured_at: null, over: false })
-    expect((await patch(r('leander-b1', { disk: 'huge' }, { authorization: 'Bearer admin-secret', 'content-type': 'application/json' }))).status).toBe(400)
+    expect((await patch(r('p7y-b1', { disk: 'huge' }, { authorization: 'Bearer admin-secret', 'content-type': 'application/json' }))).status).toBe(400)
   })
 
   it('sleep limits: a user not above SANDBOX_MAX_IDLE_TIMEOUT / _DEEP_SLEEP_AFTER, nor never; the admin is not limited', async () => {
     vi.stubEnv('SANDBOX_MAX_IDLE_TIMEOUT', '2h')
     vi.stubEnv('SANDBOX_MAX_DEEP_SLEEP_AFTER', '1d')
     try {
-      const over = await patch(r('leander-a1', { idle_timeout: '3h' }))
+      const over = await patch(r('p7y-a1', { idle_timeout: '3h' }))
       expect(over.status).toBe(400)
       expect((await over.json()).error).toMatch(/at most 2h on this server/)
-      expect((await patch(r('leander-a1', { deep_sleep_after: 'off' }))).status).toBe(400)
+      expect((await patch(r('p7y-a1', { deep_sleep_after: 'off' }))).status).toBe(400)
       expect(updateSleepSettings).not.toHaveBeenCalled()
-      expect((await patch(r('leander-a1', { idle_timeout: '1h', deep_sleep_after: '1d' }))).status).toBe(200)
-      expect((await patch(r('leander-b1', { idle_timeout: 'off' }, { authorization: 'Bearer admin-secret', 'content-type': 'application/json' }))).status).toBe(200)
+      expect((await patch(r('p7y-a1', { idle_timeout: '1h', deep_sleep_after: '1d' }))).status).toBe(200)
+      expect((await patch(r('p7y-b1', { idle_timeout: 'off' }, { authorization: 'Bearer admin-secret', 'content-type': 'application/json' }))).status).toBe(200)
     } finally { vi.unstubAllEnvs(); vi.stubEnv('ADMIN_TOKEN', 'admin-secret') }
   })
 })

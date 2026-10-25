@@ -25,7 +25,7 @@ describe('Sablier waiting-page themes', () => {
     expect(theme).toContain('"container exited with code"')
   })
 
-  it('serve old leander-* sandboxes the same page', () => {
-    expect(read('sablier-themes', 'leander.html')).toBe(theme)
+  it('are a single theme', () => {
+    expect(fs.readdirSync(path.join(process.cwd(), 'sablier-themes'))).toEqual(['p7y.html'])
   })
 })

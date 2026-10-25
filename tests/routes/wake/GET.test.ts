@@ -5,10 +5,10 @@ vi.mock('../../../services/wake', () => ({
     host.startsWith('lim-') ? { result: 'limit', name: 'p7y-lim', refusal: { reason: 'running', title: 'Running limit reached', message: 'x', limit: 1, running: ['p7y-shop'] } }
       : host.startsWith('room-') ? { result: 'limit', name: 'p7y-room', refusal: { reason: 'room', title: 'No room above your guarantee', message: 'x', limit: 3, running: ['p7y-shop'] } }
       : host.startsWith('as-') ? { result: 'started', name: 'p7y-as', from: 'asleep' }
-      : host.startsWith('ds-') ? { result: 'started', name: 'leander-ds', from: 'deep_sleep' }
+      : host.startsWith('ds-') ? { result: 'started', name: 'p7y-ds', from: 'deep_sleep' }
       : host.startsWith('ip-') ? { result: 'in_progress', name: 'p7y-ip' }
-      : host.startsWith('old-') ? { result: 'outdated', name: 'leander-old' }
-      : host.startsWith('nr-') ? { result: 'no_route', name: 'leander-nr' }
+      : host.startsWith('old-') ? { result: 'outdated', name: 'p7y-old' }
+      : host.startsWith('nr-') ? { result: 'no_route', name: 'p7y-nr' }
       : { result: 'not_found' })
 }))
 
@@ -40,7 +40,7 @@ describe('GET /wake', () => {
     const html = await res.text()
     expect(html).toContain('Sandbox is waking up')
     expect(html).toContain('<meta http-equiv="refresh" content="3">')
-    expect(html).toContain('leander-ds')
+    expect(html).toContain('p7y-ds')
   })
 
   it('the waiting page carries the embers and the poller inline (it is served on the sandbox host, not Purgatory’s)', async () => {
@@ -67,7 +67,7 @@ describe('GET /wake', () => {
   it('logs which address and client woke a deep-sleeping sandbox', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {})
     await handler(new Request('http://localhost/wake', { headers: { host: 'ds-portainer.lvh.me', 'user-agent': 'Mozilla/5.0 Test' } }))
-    expect(log).toHaveBeenCalledWith('[wake] leander-ds: a request for ds-portainer.lvh.me (Mozilla/5.0 Test) wakes it from deep sleep')
+    expect(log).toHaveBeenCalledWith('[wake] p7y-ds: a request for ds-portainer.lvh.me (Mozilla/5.0 Test) wakes it from deep sleep')
     log.mockRestore()
   })
 
@@ -84,7 +84,7 @@ describe('GET /wake', () => {
     expect(res.status).toBe(502)
     const html = await res.text()
     expect(html).toContain('does not reach the sandbox')
-    expect(html).toContain('leander-nr')
+    expect(html).toContain('p7y-nr')
     expect(html).not.toContain('http-equiv="refresh"')
   })
 

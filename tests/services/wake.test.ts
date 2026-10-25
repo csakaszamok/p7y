@@ -59,12 +59,12 @@ import { composeUp, composeStart } from '../../services/compose'
 import { listManagedContainers } from '../../services/docker'
 
 describe('findSandboxDirByHost', () => {
-  beforeEach(() => { dirs = ['leander-a', 'leander-ab'] })
+  beforeEach(() => { dirs = ['p7y-a', 'p7y-ab'] })
 
   it('matches the longest raw-name prefix, ignoring port and case', () => {
-    expect(findSandboxDirByHost('ab-inner-web-port80.lvh.me')).toBe('leander-ab')
-    expect(findSandboxDirByHost('a-portainer.lvh.me')).toBe('leander-a')
-    expect(findSandboxDirByHost('AB-Inner-Web-Port80.LVH.ME:80')).toBe('leander-ab')
+    expect(findSandboxDirByHost('ab-inner-web-port80.lvh.me')).toBe('p7y-ab')
+    expect(findSandboxDirByHost('a-portainer.lvh.me')).toBe('p7y-a')
+    expect(findSandboxDirByHost('AB-Inner-Web-Port80.LVH.ME:80')).toBe('p7y-ab')
   })
 
   it('only accepts hosts the sandbox router would match (<raw>-<x>.<HOST_DOMAIN>)', () => {
@@ -74,10 +74,10 @@ describe('findSandboxDirByHost', () => {
     expect(findSandboxDirByHost('ab-.lvh.me')).toBeNull()             // empty suffix after raw-
   })
 
-  it('finds new p7y- sandboxes next to legacy leander- ones', () => {
-    dirs = ['leander-a', 'p7y-shop']
+  it('finds new p7y- sandboxes next to legacy p7y- ones', () => {
+    dirs = ['p7y-a', 'p7y-shop']
     expect(findSandboxDirByHost('shop-portainer.lvh.me')).toBe('p7y-shop')
-    expect(findSandboxDirByHost('a-portainer.lvh.me')).toBe('leander-a')
+    expect(findSandboxDirByHost('a-portainer.lvh.me')).toBe('p7y-a')
   })
 
   it('returns null for unknown hosts and dirs without a compose file', () => {
@@ -100,17 +100,17 @@ describe('wakeByHost', () => {
   })
 
   it('starts compose up once while a wake is in progress', async () => {
-    dirs = ['leander-w1']
+    dirs = ['p7y-w1']
     vi.mocked(composeUp).mockReturnValue(new Promise(() => {}))
-    expect(await wakeByHost('w1-web.lvh.me')).toEqual({ result: 'started', name: 'leander-w1', from: 'deep_sleep' })
+    expect(await wakeByHost('w1-web.lvh.me')).toEqual({ result: 'started', name: 'p7y-w1', from: 'deep_sleep' })
     // The waiting page reloads every 3 s: it keeps saying where the sandbox wakes from
-    expect(await wakeByHost('w1-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w1', from: 'deep_sleep' })
+    expect(await wakeByHost('w1-web.lvh.me')).toEqual({ result: 'in_progress', name: 'p7y-w1', from: 'deep_sleep' })
     expect(composeUp).toHaveBeenCalledTimes(1)
-    expect(composeUp).toHaveBeenCalledWith('/opt/users/leander-w1/docker-compose.yml')
+    expect(composeUp).toHaveBeenCalledWith('/opt/users/p7y-w1/docker-compose.yml')
   })
 
   it('lets the next request retry after compose up failed', async () => {
-    dirs = ['leander-w2']
+    dirs = ['p7y-w2']
     vi.mocked(composeUp).mockRejectedValueOnce(new Error('pull failed')).mockReturnValue(new Promise(() => {}))
     expect((await wakeByHost('w2-web.lvh.me')).result).toBe('started')
     await vi.waitFor(async () => expect((await wakeByHost('w2-web.lvh.me')).result).toBe('started'))
@@ -120,7 +120,7 @@ describe('wakeByHost', () => {
   it('opens a Sablier session through the sandbox router once compose up is done', { timeout: 10000 }, async () => {
     // Without a request through the Sablier middleware the woken sandbox has no
     // session and would never go back to sleep.
-    dirs = ['leander-w4']
+    dirs = ['p7y-w4']
     httpCalls.length = 0
     httpAnswers = [
       { status: 200, body: '<div data-p7y-waiting><p>rebuilding after a long sleep</p></div>' }, // Traefik has not picked up the router yet
@@ -137,7 +137,7 @@ describe('wakeByHost', () => {
   })
 
   it('with HTTPS on, primes the session over HTTPS (plain HTTP is redirected before Sablier sees it)', { timeout: 10000 }, async () => {
-    dirs = ['leander-w5']
+    dirs = ['p7y-w5']
     certs = true
     httpCalls.length = 0; httpsCalls.length = 0
     vi.mocked(composeUp).mockResolvedValue(undefined)
@@ -152,7 +152,7 @@ describe('wakeByHost', () => {
   })
 
   it('treats a redirect as "not through the sandbox router yet" and retries', { timeout: 10000 }, async () => {
-    dirs = ['leander-w6']
+    dirs = ['p7y-w6']
     httpCalls.length = 0
     httpAnswers = [{ status: 301, body: '' }, { status: 404, body: 'frps: no such proxy' }]
     vi.mocked(composeUp).mockResolvedValue(undefined)
@@ -161,12 +161,12 @@ describe('wakeByHost', () => {
   })
 
   it('with HTTPS on, reports a sandbox whose router predates HTTPS instead of waking it forever', async () => {
-    dirs = ['leander-w7']
+    dirs = ['p7y-w7']
     certs = true
-    composeText = 'traefik.http.routers.frps-leander-w7.entrypoints: web'
+    composeText = 'traefik.http.routers.frps-p7y-w7.entrypoints: web'
     vi.mocked(composeUp).mockClear()
     try {
-      expect(await wakeByHost('w7-web.lvh.me')).toEqual({ result: 'outdated', name: 'leander-w7' })
+      expect(await wakeByHost('w7-web.lvh.me')).toEqual({ result: 'outdated', name: 'p7y-w7' })
       expect(composeUp).not.toHaveBeenCalled()
     } finally {
       certs = false
@@ -175,21 +175,21 @@ describe('wakeByHost', () => {
   })
 
   it('does not start containers that already exist; right after its own wake it waits for the router', async () => {
-    dirs = ['leander-w3']
+    dirs = ['p7y-w3']
     vi.mocked(composeUp).mockResolvedValue(undefined)
     expect((await wakeByHost('w3-web.lvh.me')).result).toBe('started')
     await vi.waitFor(() => expect(composeUp).toHaveBeenCalled())
-    vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'leander-w3', template: 't', status: 'running', container_id: 'x', created_at: '' })])
+    vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'p7y-w3', template: 't', status: 'running', container_id: 'x', created_at: '' })])
     // While the start is still under way it says where from; once it is done, the router grace answers
-    await vi.waitFor(async () => expect(await wakeByHost('w3-web.lvh.me')).toEqual({ result: 'in_progress', name: 'leander-w3' }), { timeout: 5000 })
+    await vi.waitFor(async () => expect(await wakeByHost('w3-web.lvh.me')).toEqual({ result: 'in_progress', name: 'p7y-w3' }), { timeout: 5000 })
     expect(composeUp).toHaveBeenCalledTimes(1)
   })
 
   it('reports no_route for existing containers it did not just wake: the request should have hit the sandbox router', async () => {
     // e.g. an https:// request to a sandbox whose router only listens on `web` — waking it would loop forever
-    dirs = ['leander-w8']
-    vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'leander-w8', template: 't', status: 'running', container_id: 'x', created_at: '' })])
-    expect(await wakeByHost('w8-web.lvh.me')).toEqual({ result: 'no_route', name: 'leander-w8' })
+    dirs = ['p7y-w8']
+    vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'p7y-w8', template: 't', status: 'running', container_id: 'x', created_at: '' })])
+    expect(await wakeByHost('w8-web.lvh.me')).toEqual({ result: 'no_route', name: 'p7y-w8' })
     expect(composeUp).not.toHaveBeenCalled()
   })
 })

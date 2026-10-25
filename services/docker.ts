@@ -105,7 +105,6 @@ function cachedStartError(c: { Id: string; Status: string }): Promise<string | u
 }
 
 export async function listManagedContainers(): Promise<SandboxMeta[]> {
-  // One query per label namespace (p7y.* and legacy leander.*): Docker ANDs label filters.
   const lists = await Promise.all(managedLabelFilters().map(label => docker.listContainers({ all: true, filters: { label: [label] } })))
   const seen = new Set<string>()
   const containers = lists.flat().filter(c => !seen.has(c.Id) && seen.add(c.Id))

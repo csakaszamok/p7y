@@ -20,7 +20,7 @@ fail() { echo -e "${RED}FAIL${RESET}: $*"; exit 1; }
 info() { echo -e "${YELLOW}----${RESET} $*"; }
 
 if docker network inspect traefik-net sablier-net >/dev/null 2>&1 \
-  || [ -n "$(docker ps -aq --filter label=p7y.managed=true)$(docker ps -aq --filter label=leander.managed=true)" ]; then
+  || [ -n "$(docker ps -aq --filter label=p7y.managed=true)" ]; then
   fail "this Docker already runs Purgatory (or its sandboxes): run the test in docker:dind, see the top of this file"
 fi
 

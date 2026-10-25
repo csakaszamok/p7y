@@ -22,11 +22,11 @@ describe('token store', () => {
     expect(resolveToken('not-a-token', now)).toBeNull()
   })
 
-  it('still resolves tokens minted as ldr_… before the rename', async () => {
+  it('does not resolve ldr_… tokens (the Leander-era prefix)', async () => {
     const crypto = await import('crypto')
-    const legacy = 'ldr_legacyTokenFromLeanderDays'
+    const legacy = 'ldr_' + 'a'.repeat(43)
     fs.writeFileSync(FILE, JSON.stringify([{ id: 'x', owner: 'bob@example.com', name: 'old', hash: crypto.createHash('sha256').update(legacy).digest('hex'), created_at: '2026-09-01T00:00:00Z', expires_at: null, last_used_at: null }]))
-    expect(resolveToken(legacy, new Date('2026-09-27T10:00:00Z'))).toEqual({ owner: 'bob@example.com', sandbox: null })
+    expect(resolveToken(legacy, new Date('2026-09-27T10:00:00Z'))).toBeNull()
   })
 
   it('stops resolving expired and revoked tokens', () => {

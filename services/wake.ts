@@ -138,7 +138,7 @@ export async function wakeByHost(host: string): Promise<{ result: 'not_found' | 
   // Asleep (its router exists only while it runs) or in deep sleep (no containers): p7y wakes it, within the limits
   const from = live ? 'asleep' as const : 'deep_sleep' as const
   const composePath = `${sandboxParent(name)}/${name}/docker-compose.yml`
-  const owner = live?.owner ?? /^\s*(?:p7y|leander)\.owner:\s*["']?([^"'\s]+)["']?\s*$/m.exec(fs.readFileSync(composePath, 'utf8'))?.[1] ?? 'admin'
+  const owner = live?.owner ?? /^\s*p7y\.owner:\s*["']?([^"'\s]+)["']?\s*$/m.exec(fs.readFileSync(composePath, 'utf8'))?.[1] ?? 'admin'
   const { reserveWake } = await import('./quota')
   const slot = await reserveWake(owner, name, live ? live.status : 'deep_sleep')
   if (!slot.ok) return { result: 'limit', name, refusal: slot.refusal }

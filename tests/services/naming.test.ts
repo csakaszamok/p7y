@@ -11,24 +11,24 @@ describe('naming', () => {
     expect(sandboxName('shop')).toBe('acme-shop')
   })
 
-  it('knows the raw name of current and legacy (leander-) sandboxes', () => {
+  it('knows the raw name of its own sandboxes only', () => {
     expect(rawNameOf('p7y-shop')).toBe('shop')
-    expect(rawNameOf('leander-shop')).toBe('shop')
     expect(rawNameOf('p7y-leander-x')).toBe('leander-x')
+    expect(rawNameOf('leander-shop')).toBeNull()
     expect(rawNameOf('other-shop')).toBeNull()
     vi.stubEnv('SANDBOX_PREFIX', 'acme')
     expect(rawNameOf('acme-shop')).toBe('shop')
-    expect(rawNameOf('leander-shop')).toBe('shop')
+    expect(rawNameOf('leander-shop')).toBeNull()
   })
 
-  it('reads p7y.* labels, falling back to legacy leander.* labels', () => {
+  it('reads p7y.* labels only', () => {
     expect(labelKey('owner')).toBe('p7y.owner')
     expect(readLabel({ 'p7y.owner': 'a', 'leander.owner': 'b' }, 'owner')).toBe('a')
-    expect(readLabel({ 'leander.owner': 'b' }, 'owner')).toBe('b')
+    expect(readLabel({ 'leander.owner': 'b' }, 'owner')).toBeUndefined()
     expect(readLabel(undefined, 'owner')).toBeUndefined()
   })
 
-  it('lists managed containers under both label namespaces', () => {
-    expect(managedLabelFilters()).toEqual(['p7y.managed=true', 'leander.managed=true'])
+  it('lists managed containers under one label', () => {
+    expect(managedLabelFilters()).toEqual(['p7y.managed=true'])
   })
 })

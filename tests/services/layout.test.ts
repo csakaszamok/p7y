@@ -5,7 +5,7 @@ import path from 'node:path'
 import { renderPage, SANDBOX_VIEW_BODY } from '../../services/ui/layout'
 import { setView } from '../../services/userPrefs'
 
-const user = { sub: 'leander', role: 'user' as const, exp: 0 }
+const user = { sub: 'anna', role: 'user' as const, exp: 0 }
 const admin = { sub: 'root', role: 'admin' as const, exp: 0 }
 const page = (session: typeof user | typeof admin) => renderPage({ title: 'x', view: 'mine', session, body: '' })
 
@@ -22,7 +22,7 @@ describe('renderPage: Simple / Advanced', () => {
   })
   it('follows the choice saved for the account', () => {
     vi.stubEnv('USER_VIEW_SWITCH', 'true')
-    setView('leander', 'advanced')
+    setView('anna', 'advanced')
     expect(page(user)).toContain('data-mode="advanced"')
   })
   it('has the switch in the topbar, the current one pressed', () => {
@@ -32,7 +32,7 @@ describe('renderPage: Simple / Advanced', () => {
     expect(html).toMatch(/<button[^>]*data-mode-set="advanced"[^>]*aria-pressed="false"/)
   })
   it('without USER_VIEW_SWITCH=true: a user is in Simple with no switch, whatever they chose; the admin keeps it', () => {
-    setView('leander', 'advanced')
+    setView('anna', 'advanced')
     const html = page(user)
     expect(html).toContain('data-mode="simple"')
     expect(html).not.toContain('data-mode-set')

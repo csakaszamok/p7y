@@ -96,7 +96,7 @@ describe('sandbox service', () => {
     // answer every poll the same way a healthy frps would.
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ proxies: [{ conf: { customDomains: ['leander-u1-inner-http-echo-port5678.my.local'] } }] })
+      json: async () => ({ proxies: [{ conf: { customDomains: ['p7y-u1-inner-http-echo-port5678.my.local'] } }] })
     })
   })
 
@@ -109,7 +109,7 @@ describe('sandbox service', () => {
     expect(result.client_key).toMatch(/BEGIN.*PRIVATE KEY/)
     // The starter has no Portainer
     expect(result.extras).toEqual({})
-    expect(result.tunnel_urls).toEqual(['leander-u1-inner-http-echo-port5678.my.local'])
+    expect(result.tunnel_urls).toEqual(['p7y-u1-inner-http-echo-port5678.my.local'])
   }, 60000)
 
   it('the portainer template returns its address and password', async () => {
@@ -122,7 +122,7 @@ describe('sandbox service', () => {
     mockFetch.mockReset()
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ proxies: [{ conf: { customDomains: ['leander-u3-inner-http-echo-port5678.my.local'] } }] })
+      json: async () => ({ proxies: [{ conf: { customDomains: ['p7y-u3-inner-http-echo-port5678.my.local'] } }] })
     })
     mockFetch.mockResolvedValue({ ok: false, json: async () => ({}) })
     // Every later poll fails, so the loop runs all 10 × 3s waits: fast-forward them.
@@ -132,7 +132,7 @@ describe('sandbox service', () => {
       const pending = sandboxService.createSandbox('u3').finally(() => { done = true })
       while (!done) await vi.advanceTimersByTimeAsync(3000)
       const result = await pending
-      expect(result.tunnel_urls).toEqual(['leander-u3-inner-http-echo-port5678.my.local'])
+      expect(result.tunnel_urls).toEqual(['p7y-u3-inner-http-echo-port5678.my.local'])
     } finally {
       vi.useRealTimers()
     }
@@ -151,28 +151,28 @@ describe('sandbox service', () => {
 
   it('throws if name already exists', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      sandboxMeta({ name: 'leander-dup', template: 't', status: 'running', container_id: 'abc', created_at: '' })
+      sandboxMeta({ name: 'p7y-dup', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     await expect(sandboxService.createSandbox('dup')).rejects.toThrow('already exists')
   }, 60000)
 
   it('rejects a new name that is an existing name plus "-something" (would steal its Traefik routes)', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      sandboxMeta({ name: 'leander-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })
+      sandboxMeta({ name: 'p7y-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     await expect(sandboxService.createSandbox('alice-inner')).rejects.toThrow('conflicts with an existing sandbox')
   }, 60000)
 
   it('rejects a new name that an existing longer name would shadow (reverse direction)', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      sandboxMeta({ name: 'leander-alice-inner', template: 't', status: 'running', container_id: 'abc', created_at: '' })
+      sandboxMeta({ name: 'p7y-alice-inner', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     await expect(sandboxService.createSandbox('alice')).rejects.toThrow('conflicts with an existing sandbox')
   }, 60000)
 
   it('allows a name that merely starts with an existing name but is not prefix+dash', async () => {
     vi.mocked(listManagedContainers).mockResolvedValueOnce([
-      sandboxMeta({ name: 'leander-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })
+      sandboxMeta({ name: 'p7y-alice', template: 't', status: 'running', container_id: 'abc', created_at: '' })
     ])
     const result = await sandboxService.createSandbox('alicex', false)
     expect(result.name).toBe('p7y-alicex')
@@ -181,7 +181,7 @@ describe('sandbox service', () => {
   it('rejects a name-prefix conflict against a deep-sleeping sandbox dir, not just live containers', async () => {
     const realExists = vi.mocked(fs.existsSync).getMockImplementation()!
     vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/users' || realExists(p))
-    vi.spyOn(fs, 'readdirSync').mockReturnValue(['leander-bob'] as unknown as ReturnType<typeof fs.readdirSync>)
+    vi.spyOn(fs, 'readdirSync').mockReturnValue(['p7y-bob'] as unknown as ReturnType<typeof fs.readdirSync>)
     try {
       await expect(sandboxService.createSandbox('bob-inner')).rejects.toThrow('conflicts with an existing sandbox')
     } finally {
@@ -470,7 +470,7 @@ describe('sandbox service', () => {
 })
 
 describe('archiveSandbox', () => {
-  const name = 'leander-arc1'
+  const name = 'p7y-arc1'
   const dir = `/opt/users/${name}`
   const vol = `${name}_docker_data`
   let steps: string[]
@@ -547,7 +547,7 @@ describe('archiveSandbox', () => {
   })
 
   it('reports not found when there is no sandbox directory', async () => {
-    await expect(sandboxService.archiveSandbox('leander-nobody')).rejects.toThrow('not found')
+    await expect(sandboxService.archiveSandbox('p7y-nobody')).rejects.toThrow('not found')
   })
 })
 
@@ -610,7 +610,7 @@ describe('sysbox runtime', () => {
 })
 
 describe('deep-sleeping sandboxes in the API', () => {
-  const name = 'leander-ds9'
+  const name = 'p7y-ds9'
   const dir = `/opt/users/${name}`
   let realExists: (p: fs.PathLike) => boolean
   let realRead: typeof fs.readFileSync
@@ -620,10 +620,10 @@ describe('deep-sleeping sandboxes in the API', () => {
     realRead = vi.mocked(fs.readFileSync).getMockImplementation()! as typeof fs.readFileSync
     vi.mocked(listManagedContainers).mockResolvedValue([])
     vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/users' || String(p).startsWith(dir) || realExists(p))
-    vi.spyOn(fs, 'readdirSync').mockReturnValue([name, 'Bad..Name', 'leander-nocompose'] as unknown as ReturnType<typeof fs.readdirSync>)
+    vi.spyOn(fs, 'readdirSync').mockReturnValue([name, 'Bad..Name', 'p7y-nocompose'] as unknown as ReturnType<typeof fs.readdirSync>)
     vi.mocked(fs.readFileSync).mockImplementation(((p: unknown, o?: unknown) =>
       p === `${dir}/docker-compose.yml`
-        ? 'services:\n  sandbox:\n    labels:\n      leander.template: dind-standard\n      leander.created_at: "2026-09-01T00:00:00Z"\n      leander.owner: alice@example.com\n'
+        ? 'services:\n  sandbox:\n    labels:\n      p7y.template: dind-standard\n      p7y.created_at: "2026-09-01T00:00:00Z"\n      p7y.owner: alice@example.com\n'
         : p === `${dir}/extras.json` ? '{}'
         : realRead(p as string, o as BufferEncoding)) as typeof fs.readFileSync)
   })
@@ -678,7 +678,7 @@ describe('deep-sleeping sandboxes in the API', () => {
 describe('tunnel URLs only for running sandboxes', () => {
   // A stopped sandbox's frps/socat hosts do not resolve; asking them stalls the
   // request for seconds (DNS timeout) and can only ever return nothing.
-  const name = 'leander-asleep1'
+  const name = 'p7y-asleep1'
   let realExists: (p: fs.PathLike) => boolean
 
   beforeEach(() => {

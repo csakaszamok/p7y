@@ -27,7 +27,7 @@ import { rememberLastRunning } from '../../services/lastRunning'
 
 const NOW = new Date('2026-10-10T12:00:00Z')
 const state = (over: Partial<SandboxStateLike> = {}): SandboxStateLike => ({
-  name: 'leander-a', status: 'exited', finishedAt: '2026-10-03T12:00:00Z', deepSleepAfter: '7d', staleNetwork: false, error: '', ...over
+  name: 'p7y-a', status: 'exited', finishedAt: '2026-10-03T12:00:00Z', deepSleepAfter: '7d', staleNetwork: false, error: '', ...over
 })
 const meta = (name: string) => sandboxMeta({ name, status: 'exited' })
 
@@ -47,7 +47,7 @@ describe('isDeepSleepDue', () => {
 })
 
 describe('isDeepSleepDue: stale network', () => {
-  // The Leander stack's `docker compose down` removes traefik-net; an asleep sandbox
+  // The Purgatory stack's `docker compose down` removes traefik-net; an asleep sandbox
   // still points at the old network and can never start again (exit 128).
   it('is due at once for an asleep sandbox whose network is gone, whatever deep_sleep_after says', () => {
     expect(isDeepSleepDue(state({ staleNetwork: true, finishedAt: '2026-10-10T11:59:00Z' }), NOW)).toBe(true)
@@ -66,17 +66,17 @@ describe('runDeepSleepOnce', () => {
   })
 
   it('takes down due sandboxes', async () => {
-    vi.mocked(listManagedContainers).mockResolvedValue([meta('leander-a')])
+    vi.mocked(listManagedContainers).mockResolvedValue([meta('p7y-a')])
     vi.mocked(getSandboxState).mockResolvedValue(state())
     await runDeepSleepOnce(NOW)
-    expect(composeDown).toHaveBeenCalledWith('/opt/users/leander-a/docker-compose.yml')
+    expect(composeDown).toHaveBeenCalledWith('/opt/users/p7y-a/docker-compose.yml')
   })
 
   it('nudges Traefik after taking a sandbox down so its stale router is dropped', async () => {
     // Traefik ignores the destroy event of an already-stopped container and would keep
-    // routing to the sandbox (404) instead of falling through to Leander /wake.
+    // routing to the sandbox (404) instead of falling through to Purgatory's /wake.
     vi.mocked(nudgeTraefik).mockClear()
-    vi.mocked(listManagedContainers).mockResolvedValue([meta('leander-a')])
+    vi.mocked(listManagedContainers).mockResolvedValue([meta('p7y-a')])
     vi.mocked(getSandboxState).mockResolvedValue(state())
     await runDeepSleepOnce(NOW)
     expect(nudgeTraefik).toHaveBeenCalledTimes(1)
@@ -84,7 +84,7 @@ describe('runDeepSleepOnce', () => {
   })
 
   it('re-checks right before down and skips a sandbox that woke up meanwhile', async () => {
-    vi.mocked(listManagedContainers).mockResolvedValue([meta('leander-a')])
+    vi.mocked(listManagedContainers).mockResolvedValue([meta('p7y-a')])
     vi.mocked(getSandboxState)
       .mockResolvedValueOnce(state())                       // candidate scan
       .mockResolvedValueOnce(state({ status: 'running' }))  // re-check
@@ -93,7 +93,7 @@ describe('runDeepSleepOnce', () => {
   })
 
   it('keeps going when one sandbox fails', async () => {
-    vi.mocked(listManagedContainers).mockResolvedValue([meta('leander-a'), meta('leander-b')])
+    vi.mocked(listManagedContainers).mockResolvedValue([meta('p7y-a'), meta('p7y-b')])
     vi.mocked(getSandboxState).mockImplementation(async name => state({ name }))
     vi.mocked(composeDown).mockRejectedValueOnce(new Error('boom'))
     await runDeepSleepOnce(NOW)
@@ -132,20 +132,20 @@ describe('deepSleepNow', () => {
 describe('deep sleep remembers when the sandbox last ran', () => {
   beforeEach(() => { vi.clearAllMocks() })
   it('the scheduler: its stop time, before taking it down', async () => {
-    vi.mocked(listManagedContainers).mockResolvedValue([meta('leander-a')])
+    vi.mocked(listManagedContainers).mockResolvedValue([meta('p7y-a')])
     vi.mocked(getSandboxState).mockResolvedValue(state())
     await runDeepSleepOnce(NOW)
-    expect(rememberLastRunning).toHaveBeenCalledWith(expect.stringMatching(/leander-a$/), '2026-10-03T12:00:00Z')
+    expect(rememberLastRunning).toHaveBeenCalledWith(expect.stringMatching(/p7y-a$/), '2026-10-03T12:00:00Z')
     expect(vi.mocked(rememberLastRunning).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(composeDown).mock.invocationCallOrder[0])
   })
   it('on request: now if it was running, else its stop time', async () => {
     vi.mocked(getSandboxState).mockResolvedValue(state({ status: 'running' }))
     const before = Date.now()
-    await deepSleepNow('leander-a')
+    await deepSleepNow('p7y-a')
     const at = Date.parse(vi.mocked(rememberLastRunning).mock.calls[0][1])
     expect(at).toBeGreaterThanOrEqual(before - 1000)
     vi.mocked(getSandboxState).mockResolvedValue(state())
-    await deepSleepNow('leander-a')
+    await deepSleepNow('p7y-a')
     expect(vi.mocked(rememberLastRunning).mock.calls[1][1]).toBe('2026-10-03T12:00:00Z')
   })
 })
@@ -167,10 +167,10 @@ describe('deep sleep log', () => {
   beforeEach(() => { vi.clearAllMocks() })
   it('says since when it has not run (the creation time for one never started), not Docker’s empty time', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {})
-    vi.mocked(listManagedContainers).mockResolvedValue([meta('leander-a')])
+    vi.mocked(listManagedContainers).mockResolvedValue([meta('p7y-a')])
     vi.mocked(getSandboxState).mockResolvedValue(state({ status: 'created', finishedAt: '0001-01-01T00:00:00Z', createdAt: '2026-10-01T09:00:00Z' }))
     await runDeepSleepOnce(NOW)
-    expect(log).toHaveBeenCalledWith('[deep-sleep] leander-a asleep since 2026-10-01T09:00:00.000Z, down')
+    expect(log).toHaveBeenCalledWith('[deep-sleep] p7y-a asleep since 2026-10-01T09:00:00.000Z, down')
     log.mockRestore()
   })
 })

@@ -25,9 +25,10 @@ describe('ownerDirName', () => {
 })
 
 describe('ownerOfCompose', () => {
-  it('reads the owner label (p7y or leander), admin without one', () => {
+  it('reads the p7y.owner label only, admin without one', () => {
     expect(ownerOfCompose('      p7y.owner: "a@b.c"\n')).toBe('a@b.c')
-    expect(ownerOfCompose('      leander.owner: bob\n')).toBe('bob')
+    expect(ownerOfCompose('      p7y.owner: bob\n')).toBe('bob')
+    expect(ownerOfCompose('      leander.owner: bob\n')).toBe('admin')
     expect(ownerOfCompose('services: {}')).toBe('admin')
   })
 })

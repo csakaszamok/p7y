@@ -12,13 +12,13 @@ vi.mock('../../services/sleepTimes', () => ({ sleepTimes: vi.fn().mockResolvedVa
 const { updateSleepSettings } = await import('../../services/sleepSettings')
 const { primeSablierSession } = await import('../../services/wake')
 
-const NAME = 'leander-a1'
+const NAME = 'p7y-a1'
 const IDLE = `traefik.http.middlewares.sablier-${NAME}.plugin.sablier.sessionDuration`
 function tempCompose(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-renew-'))
   const file = path.join(dir, 'docker-compose.yml')
   fs.writeFileSync(file, yaml.dump({ services: {
-    sandbox: { image: 'dind', labels: { 'leander.name': NAME, 'leander.deep_sleep_after': '7d' } },
+    sandbox: { image: 'dind', labels: { 'p7y.name': NAME, 'p7y.deep_sleep_after': '7d' } },
     socat: { image: 'socat', labels: { [IDLE]: '30m', 'traefik.enable': 'true' } },
   } }, { lineWidth: -1 }))
   return file

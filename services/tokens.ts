@@ -73,8 +73,7 @@ export function revokeToken(id: string, owner?: string): boolean {
 }
 
 export function resolveToken(token: string, now = new Date()): ResolvedToken | null {
-  // ldr_… tokens were minted before the rename (Leander) and keep working.
-  if (!token.startsWith('p7y_') && !token.startsWith('ldr_')) return null
+  if (!token.startsWith('p7y_')) return null
   const list = load()
   const hash = sha256(token)
   const record = list.find(t => t.hash === hash)

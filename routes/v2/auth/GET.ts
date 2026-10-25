@@ -20,7 +20,7 @@ async function whoIs(authHeader: string): Promise<Who | null> {
   const user = decoded.slice(0, i), password = decoded.slice(i + 1)
   const admin = process.env.ADMIN_TOKEN
   if (admin && isAdminToken(password, admin)) return { kind: 'admin' }
-  if (password.startsWith('p7y_') || password.startsWith('ldr_')) {
+  if (password.startsWith('p7y_')) {
     const t = resolveToken(password)
     if (!t) return null
     return t.sandbox ? { kind: 'sandbox', raw: rawNameOf(t.sandbox) ?? t.sandbox } : { kind: 'owner', owner: t.owner }

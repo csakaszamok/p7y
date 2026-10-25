@@ -21,9 +21,9 @@ async function api(path, options = {}) {
   return body
 }
 
-// New sandboxes are <prefix>-<name> (p7y by default); legacy ones leander-<name>.
+// Sandboxes are <prefix>-<name> (p7y by default).
 const prefix = document.body.dataset.prefix || 'p7y'
-const shortName = n => n.startsWith(`${prefix}-`) ? n.slice(prefix.length + 1) : n.replace(/^leander-/, '')
+const shortName = n => n.startsWith(`${prefix}-`) ? n.slice(prefix.length + 1) : n
 const age = iso => {
   const t = Date.parse(iso); if (isNaN(t)) return ''
   // The browser's clock can be a little behind the server's: never show a negative age
@@ -906,7 +906,7 @@ function initSandboxes() {
   initExportDialog()
   initComposeDialog()
   $('[data-new-form] input[name=name]').addEventListener('input', e => {
-    $('[data-name-hint]').textContent = `lowercase letters, digits, - and _ · URLs look like ${e.target.value || 'name'}-….${location.hostname.replace(/^(p7y|leander)\./, '')}`
+    $('[data-name-hint]').textContent = `lowercase letters, digits, - and _ · URLs look like ${e.target.value || 'name'}-….${location.hostname.replace(/^p7y\./, '')}`
   })
   initSwapDialog()
   loadList().then(() => { if (view === 'mine') wakeFromLink() })

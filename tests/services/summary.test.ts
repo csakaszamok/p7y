@@ -59,7 +59,7 @@ describe('summaryFor, server limit', () => {
 })
 
 describe('archivedOwners', () => {
-  it("reads each archive's owner from its compose file; legacy labels too, admin without one; skips non-archives", async () => {
+  it("reads each archive's owner from its compose file; bare labels too, admin without one; skips non-archives", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-arch-'))
     const arch = (n: string, compose: string | null) => {
       fs.mkdirSync(`${dir}/${n}/config`, { recursive: true })
@@ -67,7 +67,7 @@ describe('archivedOwners', () => {
       if (compose !== null) fs.writeFileSync(`${dir}/${n}/config/docker-compose.yml`, compose)
     }
     arch('p7y-a-2026', 'services:\n  sandbox:\n    labels:\n      p7y.owner: "alice@x"\n')
-    arch('leander-b-2026', 'services:\n  sandbox:\n    labels:\n      leander.owner: bob@x\n')
+    arch('p7y-b-2026', 'services:\n  sandbox:\n    labels:\n      p7y.owner: bob@x\n')
     arch('p7y-c-2026', null)
     // A bulk save of orphan volumes: a manifest, but no sandbox config
     fs.mkdirSync(`${dir}/_orphan-volumes-2026`)

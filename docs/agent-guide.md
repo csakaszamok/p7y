@@ -15,7 +15,7 @@ An agent with MCP can make the Purgatory API calls as tools instead: see [MCP](m
 |---|---|---|
 | Purgatory URL | `https://p7y.example.com` | The address of the Purgatory UI |
 | Personal access token | `p7y_…` | UI → **Access tokens** → **+ New token** |
-| Sandbox name | `p7y-shop` | The name in the UI list with the `p7y-` prefix (sandboxes created before the rename to Purgatory use `leander-`) |
+| Sandbox name | `p7y-shop` | The name in the UI list with the `p7y-` prefix |
 
 The user may instead give these in a `p7y.env` file in the project (UI → the new token → **Download p7y.env**; it may also be renamed `.env` or copied into one): `P7Y_URL`, `P7Y_TOKEN`, `P7Y_SANDBOX` (only for a token limited to one sandbox; otherwise ask which sandbox, or list them with `GET /sandboxes`) and `P7Y_AGENT_GUIDE` (this guide). Read them from there; do not print the token or commit the file.
 

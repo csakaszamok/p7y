@@ -21,11 +21,11 @@ export function ownerDirName(owner: string): string {
 }
 
 /**
- * The owner label of a sandbox compose file (p7y. or the pre-rename leander.), admin without one. Created ones are
+ * The owner label of a sandbox compose file (p7y.owner), admin without one. Created ones are
  * JSON-quoted (an e-mail may hold ' or "); older ones may be bare or single-quoted.
  */
 export function ownerOfCompose(text: string): string {
-  const v = /^\s*(?:p7y|leander)\.owner:\s*(.+?)\s*$/m.exec(text)?.[1]
+  const v = /^\s*p7y\.owner:\s*(.+?)\s*$/m.exec(text)?.[1]
   if (!v) return 'admin'
   if (v.startsWith('"')) {
     try { const o: unknown = JSON.parse(v); if (typeof o === 'string' && o) return o } catch { /* below */ }

@@ -74,12 +74,12 @@ describe('appHostsOffline', () => {
 
   it('reads the inner compose file, the instance name and the template’s inner project name', () => {
     const dir = setup({ 'inner/docker-compose.yml': inner, 'instance-name': 'shop\n' })
-    expect(appHostsOffline('leander-shop', dir, 'lvh.me', () => 'stack')).toEqual(['shop-stack-http-echo-port5678.lvh.me'])
+    expect(appHostsOffline('p7y-shop', dir, 'lvh.me', () => 'stack')).toEqual(['shop-stack-http-echo-port5678.lvh.me'])
   })
 
-  it('falls back to the name without leander- and the project "inner"', () => {
+  it('falls back to the name without p7y- and the project "inner"', () => {
     const dir = setup({ 'inner/docker-compose.yml': inner })
-    expect(appHostsOffline('leander-shop', dir, 'lvh.me', () => undefined)).toEqual(['shop-inner-http-echo-port5678.lvh.me'])
+    expect(appHostsOffline('p7y-shop', dir, 'lvh.me', () => undefined)).toEqual(['shop-inner-http-echo-port5678.lvh.me'])
   })
 
   it('names an app after p7y.subdomain (or the older frpc.subdomain) while the sandbox is not running', () => {
@@ -89,11 +89,11 @@ describe('appHostsOffline', () => {
       legacy: { ports: ['8082:8082'], labels: ['frpc.subdomain=legacy'] },
     } })
     const dir = setup({ 'inner/docker-compose.yml': text, 'instance-name': 'shop\n' })
-    expect(appHostsOffline('leander-shop', dir, 'lvh.me', () => undefined)).toEqual(['shop-web.lvh.me', 'shop-new.lvh.me', 'shop-legacy.lvh.me'])
+    expect(appHostsOffline('p7y-shop', dir, 'lvh.me', () => undefined)).toEqual(['shop-web.lvh.me', 'shop-new.lvh.me', 'shop-legacy.lvh.me'])
   })
 
   it('returns nothing without an inner compose file', () => {
-    expect(appHostsOffline('leander-shop', setup({}), 'lvh.me', () => undefined)).toEqual([])
+    expect(appHostsOffline('p7y-shop', setup({}), 'lvh.me', () => undefined)).toEqual([])
   })
 })
 

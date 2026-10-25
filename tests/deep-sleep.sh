@@ -14,8 +14,8 @@
 set -euo pipefail
 export MSYS_NO_PATHCONV=1
 
-P7Y_API="${P7Y_API:-${LEANDER_API:-http://localhost:8081}}"
-P7Y_TOKEN="${P7Y_TOKEN:-${LEANDER_TOKEN:-abc123}}"
+P7Y_API="${P7Y_API:-http://localhost:8081}"
+P7Y_TOKEN="${P7Y_TOKEN:-abc123}"
 HOST_DOMAIN="${HOST_DOMAIN:-lvh.me}"
 TRAEFIK_URL="${TRAEFIK_URL:-http://localhost}"
 
