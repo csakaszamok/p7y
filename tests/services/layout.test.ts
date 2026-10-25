@@ -3,11 +3,29 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { renderPage, SANDBOX_VIEW_BODY } from '../../services/ui/layout'
-import { setView } from '../../services/userPrefs'
+import { setView, setTheme } from '../../services/userPrefs'
 
 const user = { sub: 'anna', role: 'user' as const, exp: 0 }
 const admin = { sub: 'root', role: 'admin' as const, exp: 0 }
 const page = (session: typeof user | typeof admin) => renderPage({ title: 'x', view: 'mine', session, body: '' })
+
+describe('renderPage: light / dark theme', () => {
+  beforeEach(() => {
+    vi.stubEnv('USER_PREFS_FILE', path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'prefs-')), 'user-prefs.json'))
+    vi.stubEnv('GITHUB_STATS', 'off')
+  })
+  afterEach(() => { vi.unstubAllEnvs() })
+
+  it("until one is chosen the browser decides (no data-theme); then the account's choice", () => {
+    expect(page(user)).toMatch(/<html lang="en">/)
+    setTheme('anna', 'light')
+    expect(page(user)).toContain('<html lang="en" data-theme="light">')
+    expect(page(admin)).toMatch(/<html lang="en">/)
+  })
+  it('has the switch in the topbar, for users and the admin', () => {
+    for (const s of [user, admin]) expect(page(s)).toMatch(/<button type="button" class="theme-switch" data-theme-toggle[^>]*aria-label="[^"]+"/)
+  })
+})
 
 describe('renderPage: Simple / Advanced', () => {
   beforeEach(() => {

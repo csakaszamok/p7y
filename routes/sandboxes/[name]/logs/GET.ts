@@ -1,4 +1,4 @@
-import { pageSession, redirect, html, escapeHtml } from '../../../../services/ui/layout'
+import { pageSession, redirect, html, escapeHtml, htmlTag } from '../../../../services/ui/layout'
 import { getOwnedSandbox } from '../../../../services/access'
 import { rawNameOf } from '../../../../services/naming'
 import { faviconTag, logoImg, titleSuffix } from '../../../../services/ui/brand'
@@ -12,7 +12,7 @@ export default async (req: Request): Promise<Response> => {
   try { await getOwnedSandbox({ sub: session.sub, role: session.role, via: 'session' }, name) } catch { return html('<p>Sandbox not found.</p>', 404) }
   const short = escapeHtml(rawNameOf(name) ?? name)
   return html(`<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+${htmlTag(session.sub)}<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${short} — logs${titleSuffix()}</title>
 ${faviconTag()}
 <link rel="stylesheet" href="/assets/style.css">
