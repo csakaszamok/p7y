@@ -73,7 +73,7 @@ export function cappedSleepDefault(kind: SleepKind, value: string, owner: string
 
 /** The Sablier sessionDuration label value for an idle_timeout. */
 export const sessionDurationOf = (idle: string) => idle === 'off' ? NEVER_SESSION : idle
-const DEEP_SLEEP_LABEL = 'p7y.deep_sleep_after'
+const DEEP_SLEEP_LABEL = 'p9m.deep_sleep_after'
 const idleLabel = (name: string) => `traefik.http.middlewares.sablier-${name}.plugin.sablier.sessionDuration`
 
 export function composePathOf(name: string): string {

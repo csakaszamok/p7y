@@ -6,7 +6,7 @@ import path from 'path'
 // CI runs on Linux, where /app/data is not writable: the key pair must go where REGISTRY_AUTH_DIR says
 describe('registry auth key pair location', () => {
   it('is written to REGISTRY_AUTH_DIR', async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-regauth-'))
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-regauth-'))
     vi.stubEnv('REGISTRY_AUTH_DIR', dir)
     vi.resetModules()
     const { ensureKeyPair } = await import('../../services/registryAuth')

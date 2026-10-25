@@ -168,7 +168,7 @@ export async function quotaExceeded(p: Principal): Promise<number | null> {
 
 // Creates in flight per user. A sandbox's containers appear only after its
 // compose up (20–60 s), so without this, parallel creates would all pass the
-// count check. Purgatory is a single process, so in-memory is enough.
+// count check. Purgatorium is a single process, so in-memory is enough.
 const inFlight = new Map<string, number>()
 
 export type SlotReservation = { ok: true; release: () => void } | { ok: false; limit: number; scope: 'server' | 'running' | 'room'; message?: string }

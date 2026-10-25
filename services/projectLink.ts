@@ -1,5 +1,5 @@
-// A single-use link to a project's .p7y folder (its Docker keys among them), as a tar. The agent unpacks it with
-// curl | tar: the keys go from Purgatory to the disk and never pass through the model (copied by hand they get
+// A single-use link to a project's .p9m folder (its Docker keys among them), as a tar. The agent unpacks it with
+// curl | tar: the keys go from Purgatorium to the disk and never pass through the model (copied by hand they get
 // garbled, and in an answer they end up in its context and transcript).
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -42,24 +42,24 @@ export function checkDockerKeys(ca: string, cert: string, key: string): string {
 
 export interface ProjectDirSandbox { name: string; ca_cert?: string; client_cert?: string; client_key?: string; docker_host: string }
 
-/** The .p7y folder's files; the keys are checked first */
+/** The .p9m folder's files; the keys are checked first */
 export function projectDirFiles(s: ProjectDirSandbox, url: string): Array<{ name: string; data: string; mode?: number }> {
   if (!s.ca_cert || !s.client_cert || !s.client_key) throw new Error(`no Docker keys for ${s.name}`)
   checkDockerKeys(s.ca_cert, s.client_cert, s.client_key)
   return [
-    { name: '.p7y/.gitignore', data: '*\n' },
-    { name: '.p7y/p7y.env', data: `P7Y_URL=${url}\nP7Y_SANDBOX=${s.name}\nP7Y_DOCKER_HOST=tcp://${s.docker_host}:443\n` },
-    { name: '.p7y/docker/ca.pem', data: s.ca_cert },
-    { name: '.p7y/docker/cert.pem', data: s.client_cert },
-    { name: '.p7y/docker/key.pem', data: s.client_key, mode: 0o600 },
+    { name: '.p9m/.gitignore', data: '*\n' },
+    { name: '.p9m/p9m.env', data: `P9M_URL=${url}\nP9M_SANDBOX=${s.name}\nP9M_DOCKER_HOST=tcp://${s.docker_host}:443\n` },
+    { name: '.p9m/docker/ca.pem', data: s.ca_cert },
+    { name: '.p9m/docker/cert.pem', data: s.client_cert },
+    { name: '.p9m/docker/key.pem', data: s.client_key, mode: 0o600 },
   ]
 }
 
 /** What project_dir_link and /device/poll answer for a link: its url, the unpack command and the docker context commands */
 export function projectLinkAnswer(sandbox: string, linkToken: string): { url: string; expires_in: number; command: string; context_commands: string[] } {
   const url = `${publicUrl()}/project-dir/${linkToken}`
-  const ctx = `p7y-${rawNameOf(sandbox) ?? sandbox}`
-  const dir = '<project folder>/.p7y/docker'
+  const ctx = `p9m-${rawNameOf(sandbox) ?? sandbox}`
+  const dir = '<project folder>/.p9m/docker'
   return {
     url,
     expires_in: PROJECT_LINK_TTL_MS / 1000,

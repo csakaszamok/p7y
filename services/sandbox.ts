@@ -112,7 +112,7 @@ function openSleepSession(name: string): void {
   primeSablierSession(name, 150).catch(() => {})
 }
 
-/** The sandbox's dockerd settings: the Docker Hub cache, and the p7y registry as an insecure registry (reached
+/** The sandbox's dockerd settings: the Docker Hub cache, and the p9m registry as an insecure registry (reached
  * through Traefik on the internal network, whose public certificate the sandbox cannot verify). */
 export function daemonJson(hostDomain: string, runtimeDaemonJson: Record<string, unknown> = {}): string {
   const cacheHost = process.env.REGISTRY_CACHE_HOST ?? 'registry-cache:5000'
@@ -268,7 +268,7 @@ export const sandboxService = {
       sandbox_dir: `${hostSandboxesDir}/${ownerDirName(owner)}/${name}`,
       host_domain: hostDomain,
       frp_token: frpToken,
-      frps_api_auth: `p7y:${frpsApiPassword}`,
+      frps_api_auth: `p9m:${frpsApiPassword}`,
       // A template's default, cut to the server's limit for a user's sandbox
       idle_timeout: sessionDurationOf(idleTimeout ?? cappedSleepDefault('idle_timeout', template.idle_timeout ?? '30m', owner)),
       deep_sleep_after: deepSleepAfter ?? cappedSleepDefault('deep_sleep_after', template.deep_sleep_after ?? '7d', owner),
@@ -313,7 +313,7 @@ export const sandboxService = {
     if (sshKeys?.length) fs.writeFileSync(`${dir}/ssh-extra-keys`, sshKeys.map(k => `${k}\n`).join(''))
     writeAuthorizedKeys(name, owner)
     const runtimeLabels = ((runtime.docker_compose.services as Record<string, { labels?: Record<string, string> }> | undefined)?.sandbox?.labels) ?? {}
-    const sshPrivateKey = String(runtimeLabels['p7y.ssh']) === 'true' ? createGeneratedKey(name, owner) : undefined
+    const sshPrivateKey = String(runtimeLabels['p9m.ssh']) === 'true' ? createGeneratedKey(name, owner) : undefined
 
     timer.lap('prepare')
     await composeUp(`${dir}/docker-compose.yml`)
@@ -425,7 +425,7 @@ export const sandboxService = {
     if (!slot.ok) throw Object.assign(new Error(slot.refusal.message), { code: 'LIMIT', refusal: slot.refusal })
     try {
       if (opts.sleep) await this.stopSandbox(opts.sleep)
-      // Its address reaches p7y until the router is back: a waiting page, not "does not reach the sandbox"
+      // Its address reaches p9m until the router is back: a waiting page, not "does not reach the sandbox"
       markWoken(name)
       // Deep sleep removed the containers: recreate them instead of starting
       if (sandbox.status === 'deep_sleep') await composeUp(composePath)
@@ -439,7 +439,7 @@ export const sandboxService = {
     const sandbox = await this.getSandbox(name)
     // Restarting a stopped sandbox wakes it: within the owner's limits, like any wake
     if (sandbox.status !== 'running') return this.startSandbox(name)
-    markWoken(name) // while it restarts, its address reaches p7y: a waiting page
+    markWoken(name) // while it restarts, its address reaches p9m: a waiting page
     await composeStop(`${dirOf(name)}/docker-compose.yml`)
     await composeStart(`${dirOf(name)}/docker-compose.yml`)
     markWoken(name)
@@ -458,7 +458,7 @@ export const sandboxService = {
   }
 }
 
-// Archiving copies every volume through Purgatory: many at once (a class deleting its sandboxes) kept everything else
+// Archiving copies every volume through Purgatorium: many at once (a class deleting its sandboxes) kept everything else
 // waiting. At most 4 at a time; the others wait their turn
 const archiving = concurrency(4)
 

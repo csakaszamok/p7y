@@ -1,7 +1,7 @@
 import { getPrincipal, scopedTokenAllows, type Principal } from './principal'
 
 /**
- * Purgatory as an MCP server, at /mcp (Streamable HTTP), from the base image's mcp-core: every API route is a tool.
+ * Purgatorium as an MCP server, at /mcp (Streamable HTTP), from the base image's mcp-core: every API route is a tool.
  * Each tool call runs the route itself with the caller's Authorization header, so a tool can do exactly what
  * the same token can do on the REST API (a token limited to one sandbox stays limited to it).
  */
@@ -18,7 +18,7 @@ export function mcpInclude(r: McpRoute): boolean {
 export function mcpCaller(req: Request): Principal | Response {
   const p = getPrincipal(req)
   if (p && p.via !== 'session') return p
-  return Response.json({ error: 'Unauthorized: send an access token (Authorization: Bearer p7y_…)' }, { status: 401, headers: { 'WWW-Authenticate': 'Bearer' } })
+  return Response.json({ error: 'Unauthorized: send an access token (Authorization: Bearer p9m_…)' }, { status: 401, headers: { 'WWW-Authenticate': 'Bearer' } })
 }
 
 /** The tools this caller sees: a token limited to one sandbox only those it may call (the REST API's own list,

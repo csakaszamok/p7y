@@ -9,16 +9,16 @@
 # Usage: bash tests/isolation.sh   (stack running)
 #
 # Env vars (all optional):
-#   P7Y_API    - default http://localhost:8081
-#   P7Y_TOKEN  - default abc123
+#   P9M_API    - default http://localhost:8081
+#   P9M_TOKEN  - default abc123
 #   HOST_DOMAIN    - default lvh.me
 #   TRAEFIK_URL    - default http://localhost (https://localhost with HTTPS on; its certificate is not checked)
 
 set -euo pipefail
 export MSYS_NO_PATHCONV=1
 
-P7Y_API="${P7Y_API:-http://localhost:8081}"
-P7Y_TOKEN="${P7Y_TOKEN:-abc123}"
+P9M_API="${P9M_API:-http://localhost:8081}"
+P9M_TOKEN="${P9M_TOKEN:-abc123}"
 HOST_DOMAIN="${HOST_DOMAIN:-lvh.me}"
 TRAEFIK_URL="${TRAEFIK_URL:-http://localhost}"
 
@@ -29,13 +29,13 @@ info() { echo -e "${YELLOW}----${RESET} $*"; }
 
 A="isa$(printf '%x' $((RANDOM * RANDOM)) | tail -c 6)"
 B="isb$(printf '%x' $((RANDOM * RANDOM)) | tail -c 6)"
-FA="p7y-$A"; FB="p7y-$B"
+FA="p9m-$A"; FB="p9m-$B"
 
 cleanup() {
   echo ""
   info "Cleanup: archiving $FA and $FB"
   for n in "$FA" "$FB"; do
-    curl -sf -m 600 -X DELETE -H "Authorization: Bearer $P7Y_TOKEN" "$P7Y_API/sandboxes/$n" >/dev/null 2>&1 || true
+    curl -sf -m 600 -X DELETE -H "Authorization: Bearer $P9M_TOKEN" "$P9M_API/sandboxes/$n" >/dev/null 2>&1 || true
   done
 }
 trap cleanup EXIT
@@ -43,10 +43,10 @@ trap cleanup EXIT
 echo ""
 echo "=== Sandbox isolation integration test ==="
 info "[1/3] Creating $FA (no inner stack) and $FB (with inner stack)..."
-curl -sf -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $P7Y_TOKEN" -d "{\"name\":\"$A\",\"create_inner_stack\":false}" \
-  "$P7Y_API/sandboxes" >/dev/null || fail "create $FA failed"
-curl -sf -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $P7Y_TOKEN" -d "{\"name\":\"$B\"}" \
-  "$P7Y_API/sandboxes" >/dev/null || fail "create $FB failed"
+curl -sf -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $P9M_TOKEN" -d "{\"name\":\"$A\",\"create_inner_stack\":false}" \
+  "$P9M_API/sandboxes" >/dev/null || fail "create $FA failed"
+curl -sf -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $P9M_TOKEN" -d "{\"name\":\"$B\"}" \
+  "$P9M_API/sandboxes" >/dev/null || fail "create $FB failed"
 ECHO_HOST="$B-inner-http-echo-port5678.$HOST_DOMAIN"
 for i in $(seq 1 40); do
   [ "$(curl -sk -m 5 -H "Host: $ECHO_HOST" "$TRAEFIK_URL/" | head -c 5)" = "hello" ] && break; sleep 3

@@ -46,11 +46,11 @@ export default async (req: Request): Promise<Response> => {
   const { token } = createToken(sandbox.owner, tokenName, expires, new Date(), name)
   const raw = rawNameOf(name) ?? name
   // A Portainer API token instead of its admin password (wakes the sandbox); without one the export goes on
-  const portainer = await portainerAccess(sandbox, `p7y: ${tokenName}`)
+  const portainer = await portainerAccess(sandbox, `p9m: ${tokenName}`)
   const files = build(token, portainer)
-  const note: Record<string, string> = 'skipped' in portainer ? { 'X-P7y-Portainer': portainer.skipped } : {}
-  if (asEnv) return new Response(files.find(f => f.path.endsWith('/p7y.env'))!.data, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', ...note } })
+  const note: Record<string, string> = 'skipped' in portainer ? { 'X-P9m-Portainer': portainer.skipped } : {}
+  if (asEnv) return new Response(files.find(f => f.path.endsWith('/p9m.env'))!.data, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', ...note } })
   return new Response(new Uint8Array(zip(files)), {
-    headers: { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="p7y-${raw}.zip"`, 'Cache-Control': 'no-store', ...note },
+    headers: { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="p9m-${raw}.zip"`, 'Cache-Control': 'no-store', ...note },
   })
 }

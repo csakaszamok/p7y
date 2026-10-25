@@ -7,14 +7,14 @@ const source = fs.readFileSync(path.join(process.cwd(), 'ui', 'waiting.js'), 'ut
 
 /**
  * ui/waiting.js on a fake page: `pages` are what fetching the address answers (true: still the waiting page),
- * `ready` what Purgatory's /wake/ready says each time it is asked.
+ * `ready` what Purgatorium's /wake/ready says each time it is asked.
  */
 function run(opts: { readyUrl?: string; pages: boolean[]; ready?: Array<{ ready: boolean | null; service?: string } | Error>; now?: () => number }) {
   const timers: Array<() => unknown> = []
   const reload = vi.fn()
   const status = { innerHTML: 'waking up' }
   const root = { getAttribute: (a: string) => a === 'data-refresh' ? '1' : a === 'data-ready' ? opts.readyUrl ?? null : null }
-  const page = (waiting: boolean) => ({ querySelector: (s: string) => s === '[data-p7y-waiting]' ? (waiting ? root : null) : s === '[data-status]' ? { innerHTML: 'waking up' } : null, querySelectorAll: () => [] })
+  const page = (waiting: boolean) => ({ querySelector: (s: string) => s === '[data-p9m-waiting]' ? (waiting ? root : null) : s === '[data-status]' ? { innerHTML: 'waking up' } : null, querySelectorAll: () => [] })
   const pages = [...opts.pages], ready = [...(opts.ready ?? [])]
   const asked: string[] = []
   const fetch = vi.fn(async (url: string) => {
@@ -26,7 +26,7 @@ function run(opts: { readyUrl?: string; pages: boolean[]; ready?: Array<{ ready:
     }
     return { text: async () => String(pages.shift() ?? false) }
   })
-  const document = { querySelector: (s: string) => s === '[data-p7y-waiting]' ? root : s === '[data-status]' ? status : null, querySelectorAll: () => [] }
+  const document = { querySelector: (s: string) => s === '[data-p9m-waiting]' ? root : s === '[data-status]' ? status : null, querySelectorAll: () => [] }
   const ctx = {
     document, fetch, location: { href: 'https://shop-redmine.lvh.me/', reload },
     DOMParser: class { parseFromString(text: string) { return page(text === 'true') } },
@@ -40,31 +40,31 @@ function run(opts: { readyUrl?: string; pages: boolean[]; ready?: Array<{ ready:
 
 describe('the waiting page (ui/waiting.js)', () => {
   it('opens the address once it is no longer the waiting page and its app answers', async () => {
-    const p = run({ readyUrl: 'https://p7y.lvh.me/wake/ready?host=x', pages: [true, false], ready: [{ ready: true }] })
+    const p = run({ readyUrl: 'https://p9m.lvh.me/wake/ready?host=x', pages: [true, false], ready: [{ ready: true }] })
     await p.tick(); expect(p.reload).not.toHaveBeenCalled()
     await p.tick(); await p.tick()
     expect(p.asked.length).toBe(1)
     expect(p.reload).toHaveBeenCalled()
   })
   it('the tunnel is up but the app does not answer yet (frps would show 404): keeps waiting and says so', async () => {
-    const p = run({ readyUrl: 'https://p7y.lvh.me/wake/ready?host=x', pages: [false, false], ready: [{ ready: false, service: 'redmine' }, { ready: true }] })
+    const p = run({ readyUrl: 'https://p9m.lvh.me/wake/ready?host=x', pages: [false, false], ready: [{ ready: false, service: 'redmine' }, { ready: true }] })
     await p.tick()
     expect(p.reload).not.toHaveBeenCalled()
     expect(p.status.innerHTML).toContain('starting redmine')
     await p.tick(); await p.tick()
     expect(p.reload).toHaveBeenCalled()
   })
-  it('Purgatory cannot be asked, or does not know the address: opens it as before', async () => {
-    const a = run({ readyUrl: 'https://p7y.lvh.me/wake/ready?host=x', pages: [false], ready: [new Error('offline')] })
+  it('Purgatorium cannot be asked, or does not know the address: opens it as before', async () => {
+    const a = run({ readyUrl: 'https://p9m.lvh.me/wake/ready?host=x', pages: [false], ready: [new Error('offline')] })
     await a.tick(); await a.tick()
     expect(a.reload).toHaveBeenCalled()
-    const b = run({ readyUrl: 'https://p7y.lvh.me/wake/ready?host=x', pages: [false], ready: [{ ready: null }] })
+    const b = run({ readyUrl: 'https://p9m.lvh.me/wake/ready?host=x', pages: [false], ready: [{ ready: null }] })
     await b.tick(); await b.tick()
     expect(b.reload).toHaveBeenCalled()
   })
   it('gives up waiting for the app after 5 minutes', async () => {
     let t = 0
-    const p = run({ readyUrl: 'https://p7y.lvh.me/wake/ready?host=x', pages: [false, false], ready: [{ ready: false }, { ready: false }], now: () => t })
+    const p = run({ readyUrl: 'https://p9m.lvh.me/wake/ready?host=x', pages: [false, false], ready: [{ ready: false }, { ready: false }], now: () => t })
     await p.tick(); expect(p.reload).not.toHaveBeenCalled()
     t = 5 * 60_000 + 1
     await p.tick(); await p.tick()

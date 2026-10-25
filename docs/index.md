@@ -3,7 +3,7 @@ hide:
   - navigation
 ---
 
-# Purgatory (p7y)
+# Purgatorium (p9m)
 
 !!! note "Early, before 1.0"
     It works and is tested (CI on every change, releases with a changelog), but expect rough edges, and breaking changes between minor versions.
@@ -20,12 +20,12 @@ The same from a script or an agent, all real runs:
 |---|---|---|
 | <video controls preload="none" playsinline poster="media/api-curl-poster.webp" src="media/api-curl.mp4" aria-label="Creating a sandbox with curl and calling its app, in real time: about 7 seconds" style="width:100%;max-width:960px;border-radius:8px"></video> | <video controls preload="none" playsinline poster="media/mcp-agent-poster.webp" src="media/mcp-agent.mp4" aria-label="Claude Code creates a sandbox through the MCP server and checks its app, in real time" style="width:100%;max-width:960px;border-radius:8px"></video> | <video controls preload="none" playsinline poster="media/mcp-rpc-poster.webp" src="media/mcp-rpc.mp4" aria-label="The MCP server called with curl: tools/list, then create_sandbox, in real time" style="width:100%;max-width:960px;border-radius:8px"></video> |
 
-*Where your team's code waits before it goes to heaven (production). Nothing is lost here: idle sandboxes sleep, deleted ones are archived.* `p7y` is the short name, as in k8s: **p**urgator**y**, 7 letters in between. It names the sandboxes (`p7y-<name>`), labels, tokens and the UI address.
+*Where your team's code waits before it goes to heaven (production). Nothing is lost here: idle sandboxes sleep, deleted ones are archived.* `p9m` is the short name, as in k8s: **p**urgator**y**, 7 letters in between. It names the sandboxes (`p9m-<name>`), labels, tokens and the UI address.
 
-**Purgatory gives each user their own Docker daemon on demand** — not a shared platform where you deploy apps, but a full Docker engine they own, with a public URL for every app (and a Portainer UI if they want one), provisioned in seconds from the web UI or a REST API.
+**Purgatorium gives each user their own Docker daemon on demand** — not a shared platform where you deploy apps, but a full Docker engine they own, with a public URL for every app (and a Portainer UI if they want one), provisioned in seconds from the web UI or a REST API.
 
 !!! tip "Just want your app online?"
-    [Tutorials](tutorials/index.md): with Claude Code, install the p7y plugin once and say *deploy this app*; you get a link that works for anyone.
+    [Tutorials](tutorials/index.md): with Claude Code, install the p9m plugin once and say *deploy this app*; you get a link that works for anyone.
 
 ## Who is this for
 
@@ -41,11 +41,11 @@ Teams where people need to spin up arbitrary Docker workloads without touching s
 - **Nothing is ever destroyed automatically** — an explicit delete archives the sandbox (config + data) instead of discarding it
 - **Template-based** — define what goes into a sandbox via YAML
 
-## Why Purgatory
+## Why Purgatorium
 
 A self-hosted Vercel or Railway for the whole team: everyone gets their own Docker, every app a URL, and idle apps cost nothing.
 
-| | Purgatory | Cloud PaaS (Vercel, Railway, Render, Fly.io) | Shared VPS / Coolify / Dokploy |
+| | Purgatorium | Cloud PaaS (Vercel, Railway, Render, Fly.io) | Shared VPS / Coolify / Dokploy |
 |---|---|---|---|
 | Runs on | your own server, one `docker compose` | their cloud | your own server |
 | You pay for | the server | every project and its usage | the server |
@@ -54,6 +54,6 @@ A self-hosted Vercel or Railway for the whole team: everyone gets their own Dock
 | Idle | sleeps, wakes on the next request | runs and is billed, or scales to zero on some | keeps running |
 | On delete | archives | deletes | deletes |
 
-In short: pick Purgatory for the many apps a team builds before production (experiments, demos, internal tools, vibe-coded apps), on your own hardware. For production that must scale, pick a cloud PaaS or Coolify / Dokploy; for untrusted code, a microVM. Coder or Codespaces are for writing code, E2B or Daytona for an agent's short runs: different jobs. The full comparison: [docs/comparison.md](comparison.md).
+In short: pick Purgatorium for the many apps a team builds before production (experiments, demos, internal tools, vibe-coded apps), on your own hardware. For production that must scale, pick a cloud PaaS or Coolify / Dokploy; for untrusted code, a microVM. Coder or Codespaces are for writing code, E2B or Daytona for an agent's short runs: different jobs. The full comparison: [docs/comparison.md](comparison.md).
 
 Next: [install it](install.md), then [create your first sandbox](first-sandbox.md).

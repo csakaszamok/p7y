@@ -18,7 +18,7 @@ function errMsg(err: unknown): string {
 /**
  * Exited, labeled, and stopped for at least deep_sleep_after — or exited with a
  * network that no longer exists: it could never start again, and taking it down
- * lets the next request rebuild it (Purgatory /wake) on the current networks.
+ * lets the next request rebuild it (Purgatorium /wake) on the current networks.
  */
 export function isDeepSleepDue(state: SandboxState, now: Date): boolean {
   if (state.status !== 'exited' && state.status !== 'created') return false

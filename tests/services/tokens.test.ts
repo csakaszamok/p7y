@@ -14,17 +14,17 @@ describe('token store', () => {
   it('stores only a hash and resolves the token to its owner', () => {
     const now = new Date('2026-09-27T10:00:00Z')
     const { token, info } = createToken('alice@example.com', 'laptop agent', '90d', now)
-    expect(token).toMatch(/^p7y_[A-Za-z0-9_-]{43}$/)
+    expect(token).toMatch(/^p9m_[A-Za-z0-9_-]{43}$/)
     expect(info).toMatchObject({ owner: 'alice@example.com', name: 'laptop agent', expires_at: '2026-12-26T10:00:00.000Z', last_used_at: null, sandbox: null })
     expect(fs.readFileSync(FILE, 'utf8')).not.toContain(token)
     expect(resolveToken(token, now)).toEqual({ owner: 'alice@example.com', sandbox: null })
-    expect(resolveToken('p7y_nope', now)).toBeNull()
+    expect(resolveToken('p9m_nope', now)).toBeNull()
     expect(resolveToken('not-a-token', now)).toBeNull()
   })
 
-  it('does not resolve ldr_… tokens (the Leander-era prefix)', async () => {
+  it.each(['ldr_', 'p7y_'])('does not resolve %s… tokens (older prefixes), even stored ones', async prefix => {
     const crypto = await import('crypto')
-    const legacy = 'ldr_' + 'a'.repeat(43)
+    const legacy = prefix + 'a'.repeat(43)
     fs.writeFileSync(FILE, JSON.stringify([{ id: 'x', owner: 'bob@example.com', name: 'old', hash: crypto.createHash('sha256').update(legacy).digest('hex'), created_at: '2026-09-01T00:00:00Z', expires_at: null, last_used_at: null }]))
     expect(resolveToken(legacy, new Date('2026-09-27T10:00:00Z'))).toBeNull()
   })
@@ -56,15 +56,15 @@ describe('token store', () => {
 
   it('binds a token to one sandbox and resolves the binding', () => {
     const now = new Date('2026-09-28T10:00:00Z')
-    const { token, info } = createToken('alice@example.com', 'shop agent', '90d', now, 'p7y-shop')
-    expect(info.sandbox).toBe('p7y-shop')
-    expect(resolveToken(token, now)).toEqual({ owner: 'alice@example.com', sandbox: 'p7y-shop' })
-    expect(listTokens('alice@example.com')[0].sandbox).toBe('p7y-shop')
+    const { token, info } = createToken('alice@example.com', 'shop agent', '90d', now, 'p9m-shop')
+    expect(info.sandbox).toBe('p9m-shop')
+    expect(resolveToken(token, now)).toEqual({ owner: 'alice@example.com', sandbox: 'p9m-shop' })
+    expect(listTokens('alice@example.com')[0].sandbox).toBe('p9m-shop')
   })
 
   it('treats a record without a sandbox field as valid for all sandboxes', async () => {
     const crypto = await import('crypto')
-    const t = 'p7y_recordFromBeforeScopedTokens'
+    const t = 'p9m_recordFromBeforeScopedTokens'
     fs.writeFileSync(FILE, JSON.stringify([{ id: 'y', owner: 'bob@example.com', name: 'old', hash: crypto.createHash('sha256').update(t).digest('hex'), created_at: '2026-09-01T00:00:00Z', expires_at: null, last_used_at: null }]))
     expect(resolveToken(t)).toEqual({ owner: 'bob@example.com', sandbox: null })
     expect(listTokens()[0].sandbox).toBeNull()

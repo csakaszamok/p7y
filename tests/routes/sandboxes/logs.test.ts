@@ -5,15 +5,15 @@ vi.stubEnv('ADMIN_TOKEN', 'admin-secret')
 vi.mock('../../../services/sandbox', () => ({
   sandboxService: {
     getSandbox: vi.fn(async (n: string) => {
-      if (n === 'p7y-a') return { name: n, owner: 'u@example.com', status: 'running' }
-      if (n === 'p7y-zz') return { name: n, owner: 'u@example.com', status: 'deep_sleep' }
-      if (n === 'p7y-b') return { name: n, owner: 'other@example.com', status: 'running' }
+      if (n === 'p9m-a') return { name: n, owner: 'u@example.com', status: 'running' }
+      if (n === 'p9m-zz') return { name: n, owner: 'u@example.com', status: 'deep_sleep' }
+      if (n === 'p9m-b') return { name: n, owner: 'other@example.com', status: 'running' }
       throw new Error(`Sandbox not found: ${n}`)
     }),
   },
 }))
 vi.mock('../../../services/tokens', () => ({
-  resolveToken: vi.fn((t: string) => t === 'p7y_u' ? { owner: 'u@example.com', sandbox: null } : t === 'p7y_scoped' ? { owner: 'u@example.com', sandbox: 'p7y-a' } : null),
+  resolveToken: vi.fn((t: string) => t === 'p9m_u' ? { owner: 'u@example.com', sandbox: null } : t === 'p9m_scoped' ? { owner: 'u@example.com', sandbox: 'p9m-a' } : null),
 }))
 vi.mock('../../../services/sandboxLogs', async orig => {
   const frame = (s: string) => { const b = Buffer.from(s); const h = Buffer.alloc(8); h[0] = 1; h.writeUInt32BE(b.length, 4); return Buffer.concat([h, b]) }
@@ -40,8 +40,8 @@ async function readUntil(res: Response, until: string): Promise<string> {
 
 describe('GET /sandboxes/:name/logs/stream', () => {
   it('streams the app lines as SSE, also with a token scoped to that sandbox', async () => {
-    for (const t of ['p7y_u', 'p7y_scoped', 'admin-secret']) {
-      const res = await get(req('p7y-a', t))
+    for (const t of ['p9m_u', 'p9m_scoped', 'admin-secret']) {
+      const res = await get(req('p9m-a', t))
       expect(res.status, t).toBe(200)
       expect(res.headers.get('content-type')).toBe('text/event-stream')
       const text = await readUntil(res, 'hello')
@@ -52,26 +52,26 @@ describe('GET /sandboxes/:name/logs/stream', () => {
 
   it('says asleep and ends for a sandbox that is not running, without touching it', async () => {
     vi.mocked(innerLogSource).mockClear()
-    const res = await get(req('p7y-zz', 'p7y_u'))
+    const res = await get(req('p9m-zz', 'p9m_u'))
     const text = await readUntil(res, '\u0000never')
     expect(text).toBe('event: status\ndata: {"status":"asleep","text":"asleep — start it to see its logs"}\n\n')
     expect(innerLogSource).not.toHaveBeenCalled()
   })
 
   it('401 without sign-in, 404 for someone else\'s or a missing sandbox', async () => {
-    expect((await get(req('p7y-a'))).status).toBe(401)
-    expect((await get(req('p7y-b', 'p7y_u'))).status).toBe(404)
-    expect((await get(req('p7y-nope', 'p7y_u'))).status).toBe(404)
-    expect((await get(req('p7y-b', 'p7y_scoped'))).status).toBe(404)
+    expect((await get(req('p9m-a'))).status).toBe(401)
+    expect((await get(req('p9m-b', 'p9m_u'))).status).toBe(404)
+    expect((await get(req('p9m-nope', 'p9m_u'))).status).toBe(404)
+    expect((await get(req('p9m-b', 'p9m_scoped'))).status).toBe(404)
   })
 
   it('a 6th viewer gets 429; a closed one frees its slot', async () => {
-    const open = await Promise.all(Array.from({ length: 5 }, () => get(req('p7y-a', 'p7y_u'))))
-    const sixth = await get(req('p7y-a', 'p7y_u'))
+    const open = await Promise.all(Array.from({ length: 5 }, () => get(req('p9m-a', 'p9m_u'))))
+    const sixth = await get(req('p9m-a', 'p9m_u'))
     expect(sixth.status).toBe(429)
     expect((await sixth.json()).error).toBe('too many log viewers for this sandbox')
     await open[0].body!.cancel()
-    const again = await get(req('p7y-a', 'p7y_u'))
+    const again = await get(req('p9m-a', 'p9m_u'))
     expect(again.status).toBe(200)
     await Promise.all([again, ...open.slice(1)].map(r => r.body!.cancel()))
   })

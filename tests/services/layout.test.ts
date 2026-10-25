@@ -64,7 +64,7 @@ describe('renderPage: Simple / Advanced', () => {
       expect(options).toMatch(/<button type="button"[^>]*data-copy-env[^>]*>Copy as \.env<\/button>/)
     })
     it('Claude Code: install the plugin once, then the init line to copy', () => {
-      expect(claude).toContain('claude plugin install p7y@p7y')
+      expect(claude).toContain('claude plugin install p9m@p9m')
       expect(claude).not.toContain('--config')
       expect(claude).not.toContain('data-plugin-token')
       expect(claude).toMatch(/data-init-cmd/)
@@ -73,14 +73,14 @@ describe('renderPage: Simple / Advanced', () => {
     })
     it('Claude Code, in Claude Code instead: the /plugin commands', () => {
       const other = /<details[^>]*>[\s\S]*?<\/details>/.exec(claude)?.[0] ?? ''
-      expect(other).toContain('<code>/plugin marketplace add csakaszamok/p7y</code>')
-      expect(other).toContain('<code>/plugin install p7y@p7y</code>')
+      expect(other).toContain('<code>/plugin marketplace add csakaszamok/p9m</code>')
+      expect(other).toContain('<code>/plugin install p9m@p9m</code>')
     })
     it('the zip keeps its Download button', () => {
       expect(dlg).toMatch(/<button class="primary" value="download" data-export-download>Download<\/button>/)
     })
     it('other agents: the zip, unpacked by the agent', () => {
-      expect(other).toContain('set up the p7y zip from my Downloads in this project and deploy')
+      expect(other).toContain('set up the p9m zip from my Downloads in this project and deploy')
     })
   })
 })

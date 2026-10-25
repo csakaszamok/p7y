@@ -19,22 +19,22 @@ function frontmatter(md: string): Record<string, string> {
 
 describe('the Claude Code plugin', () => {
   const market = json('.claude-plugin/marketplace.json')
-  const entry = market.plugins.find((p: { name: string }) => p.name === 'p7y')
+  const entry = market.plugins.find((p: { name: string }) => p.name === 'p9m')
   const pluginDir = path.join(root, entry?.source ?? '')
   const manifest = json(path.join(entry?.source ?? '', '.claude-plugin/plugin.json'))
 
-  it('the marketplace lists the p7y plugin from this repository', () => {
-    expect(market.name).toBe('p7y')
+  it('the marketplace lists the p9m plugin from this repository', () => {
+    expect(market.name).toBe('p9m')
     expect(market.owner?.name).toBeTruthy()
-    expect(entry?.source).toBe('./plugins/p7y')
-    expect(manifest.name).toBe('p7y')
+    expect(entry?.source).toBe('./plugins/p9m')
+    expect(manifest.name).toBe('p9m')
   })
 
   it('has the version of the release it comes with (an installed plugin updates when it changes)', () => {
     expect(manifest.version).toBe(json('package.json').version)
   })
 
-  // Each project's .p7y/p7y.env says which Purgatory, sandbox and token: the plugin keeps none
+  // Each project's .p9m/p9m.env says which Purgatorium, sandbox and token: the plugin keeps none
   it('has no MCP server and asks nothing', () => {
     expect(manifest.mcpServers).toBeUndefined()
     expect(manifest.userConfig).toBeUndefined()
@@ -67,7 +67,7 @@ describe('the Claude Code plugin', () => {
     const md = fs.readFileSync(path.join(pluginDir, 'skills/init/SKILL.md'), 'utf8')
     expect(md).toContain('`POST /device/code`')
     expect(md).toContain('`POST /device/poll`')
-    expect(frontmatter(md)['argument-hint']).toBe('<purgatory address> <sandbox>')
+    expect(frontmatter(md)['argument-hint']).toBe('<purgatorium address> <sandbox>')
   })
 
   // A Bash tool command is cut off at 2 minutes: an approved answer (told once) must not be lost to that
@@ -101,7 +101,7 @@ describe('the Claude Code plugin', () => {
   it('no secrets or internal hosts in the plugin', () => {
     for (const f of files(pluginDir)) {
       const text = fs.readFileSync(f, 'utf8')
-      expect(text, f).not.toMatch(/p7y_[A-Za-z0-9]{20,}/)
+      expect(text, f).not.toMatch(/p9m_[A-Za-z0-9]{20,}/)
       // No address other than the two the deploy rules name
       const ips = [...text.matchAll(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g)].map(m => m[0])
       expect(ips.filter(ip => ip !== '127.0.0.1' && ip !== '0.0.0.0'), f).toEqual([])

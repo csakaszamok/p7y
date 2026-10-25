@@ -8,9 +8,9 @@ vi.stubEnv('SESSION_SECRET', 'test-secret')
 vi.mock('../../services/sandbox', () => ({
   sandboxService: {
     listSandboxStates: vi.fn(async () => [
-      { name: 'p7y-shop', owner: 'anna@example.com', status: 'running' },
-      { name: 'p7y-blog', owner: 'anna@example.com', status: 'exited' },
-      { name: 'p7y-old', owner: 'carl@example.com', status: 'deep_sleep' },
+      { name: 'p9m-shop', owner: 'anna@example.com', status: 'running' },
+      { name: 'p9m-blog', owner: 'anna@example.com', status: 'exited' },
+      { name: 'p9m-old', owner: 'carl@example.com', status: 'deep_sleep' },
     ]),
   },
 }))
@@ -21,7 +21,7 @@ const list = (await import('../../routes/users/GET')).default
 const del = (await import('../../routes/users/[sub]/DELETE')).default
 
 const admin = { Authorization: 'Bearer admin-secret' }
-const asUser = { cookie: `p7y_session=${createSession('anna@example.com', 'user')}` }
+const asUser = { cookie: `p9m_session=${createSession('anna@example.com', 'user')}` }
 const get = (headers: Record<string, string>) => list(new Request('http://localhost/users', { headers }))
 const remove = (sub: string, headers: Record<string, string>) =>
   del(new Request(`http://localhost/users/${encodeURIComponent(sub)}`, { method: 'DELETE', headers: { origin: 'http://localhost', host: 'localhost', ...headers } }))

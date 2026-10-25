@@ -1,15 +1,15 @@
 #!/usr/bin/env node
-// Purgatory's MCP server over stdio, for clients (and checkers) that only start a local process.
-// Reads JSON-RPC messages from stdin, one per line, POSTs each to a Purgatory /mcp (Streamable HTTP)
+// Purgatorium's MCP server over stdio, for clients (and checkers) that only start a local process.
+// Reads JSON-RPC messages from stdin, one per line, POSTs each to a Purgatorium /mcp (Streamable HTTP)
 // and writes the answers to stdout, one per line. Notifications get no answer. No dependencies.
 //
-//   P7Y_URL=http://127.0.0.1:3000 P7Y_TOKEN=p7y_… node scripts/mcp-stdio.mjs
+//   P9M_URL=http://127.0.0.1:3000 P9M_TOKEN=p9m_… node scripts/mcp-stdio.mjs
 //
 // stdout is the protocol channel: anything else goes to stderr.
 import { createInterface } from 'node:readline'
 
-const base = (process.env.P7Y_URL ?? 'http://127.0.0.1:3000').replace(/\/+$/, '')
-const token = process.env.P7Y_TOKEN ?? process.env.ADMIN_TOKEN ?? ''
+const base = (process.env.P9M_URL ?? 'http://127.0.0.1:3000').replace(/\/+$/, '')
+const token = process.env.P9M_TOKEN ?? process.env.ADMIN_TOKEN ?? ''
 const out = line => process.stdout.write(line + '\n')
 
 /** The JSON-RPC answers in a response body: plain JSON, or the `data:` lines of an event stream. */
@@ -44,7 +44,7 @@ async function forward(line) {
     for (const a of answers(res.headers.get('content-type') ?? '', body)) out(a)
   } catch (err) {
     console.error(`[mcp-stdio] ${err.message}`)
-    if (id !== null) out(JSON.stringify({ jsonrpc: '2.0', id, error: { code: -32603, message: `Purgatory at ${base} did not answer` } }))
+    if (id !== null) out(JSON.stringify({ jsonrpc: '2.0', id, error: { code: -32603, message: `Purgatorium at ${base} did not answer` } }))
   }
 }
 

@@ -44,9 +44,9 @@ describe('lastRunningOf', () => {
     let asked = 0
     const d = dir()
     const state = async () => { asked++; return { status: 'exited', finishedAt: '2026-10-01T10:00:00Z' } }
-    expect(await lastRunningOf('p7y-x', 'running', { state, dir: () => d })).toEqual({ at: null, estimated: false })
+    expect(await lastRunningOf('p9m-x', 'running', { state, dir: () => d })).toEqual({ at: null, estimated: false })
     expect(asked).toBe(0)
-    expect(await lastRunningOf('p7y-x', 'exited', { state, dir: () => d })).toEqual({ at: '2026-10-01T10:00:00.000Z', estimated: false })
-    expect(await lastRunningOf('p7y-x', 'deep_sleep', { state: async () => null, dir: () => d })).toEqual({ at: null, estimated: false })
+    expect(await lastRunningOf('p9m-x', 'exited', { state, dir: () => d })).toEqual({ at: '2026-10-01T10:00:00.000Z', estimated: false })
+    expect(await lastRunningOf('p9m-x', 'deep_sleep', { state: async () => null, dir: () => d })).toEqual({ at: null, estimated: false })
   })
 })

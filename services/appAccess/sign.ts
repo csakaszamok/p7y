@@ -5,11 +5,11 @@ import { writeFileAtomic } from '../atomicWrite'
 import type { Viewer } from './level'
 
 /**
- * The app access ticket (Purgatory's host → the app's host, once) and cookie (on the app's host only). Signed with
+ * The app access ticket (Purgatorium's host → the app's host, once) and cookie (on the app's host only). Signed with
  * their own secret, never the session's: an app could see its cookie, and must not learn anything that works in
- * Purgatory.
+ * Purgatorium.
  */
-export const APP_COOKIE = '__p7y_app'
+export const APP_COOKIE = '__p9m_app'
 const TICKET_MS = 60_000
 const COOKIE_S = 8 * 3600
 
@@ -73,7 +73,7 @@ export function appCookieHeader(value: string, secure: boolean): string {
   return `${APP_COOKIE}=${value}; Path=/; Max-Age=${COOKIE_S}; HttpOnly; SameSite=Lax${secure ? '; Secure' : ''}`
 }
 
-/** Where to go back to after signing in (p7y_next), signed: a sandbox app on a sibling address can set a cookie
+/** Where to go back to after signing in (p9m_next), signed: a sandbox app on a sibling address can set a cookie
  * for the whole domain, but not sign one. 10 minutes. */
 export function signNext(path: string, now = Date.now()): string { return sign({ k: 'n', p: path, e: now + 600_000 }) }
 export function readNext(value: string | undefined, now = Date.now()): string | null {

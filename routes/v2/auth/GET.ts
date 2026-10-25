@@ -9,10 +9,10 @@ import { isAdminToken } from '../../../services/principal'
 
 const unauthorized = () => Response.json(
   { errors: [{ code: 'UNAUTHORIZED', message: 'invalid credentials' }] },
-  { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="p7y"' } },
+  { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="p9m"' } },
 )
 
-/** Who the Basic credentials are: the admin token, a p7y token (any user name), or a sandbox's registry password. */
+/** Who the Basic credentials are: the admin token, a p9m token (any user name), or a sandbox's registry password. */
 async function whoIs(authHeader: string): Promise<Who | null> {
   const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf8')
   const i = decoded.indexOf(':')
@@ -20,7 +20,7 @@ async function whoIs(authHeader: string): Promise<Who | null> {
   const user = decoded.slice(0, i), password = decoded.slice(i + 1)
   const admin = process.env.ADMIN_TOKEN
   if (admin && isAdminToken(password, admin)) return { kind: 'admin' }
-  if (password.startsWith('p7y_')) {
+  if (password.startsWith('p9m_')) {
     const t = resolveToken(password)
     if (!t) return null
     return t.sandbox ? { kind: 'sandbox', raw: rawNameOf(t.sandbox) ?? t.sandbox } : { kind: 'owner', owner: t.owner }
@@ -46,7 +46,7 @@ export default async (req: Request): Promise<Response> => {
   }
   const sandboxes = who.kind === 'owner' ? await sandboxService.listSandboxStates() : []
   const publicPull = (process.env.REGISTRY_PUBLIC_PULL ?? 'true') !== 'false'
-  // Anonymous pull per repo: every version scanned and clean, and nothing in the registry p7y has not scanned
+  // Anonymous pull per repo: every version scanned and clean, and nothing in the registry p9m has not scanned
   const repos = [...new Set(scope.split(' ').filter(s => s.startsWith('repository:')).map(s => s.split(':')[1]))]
   const clean = new Map(publicPull ? await Promise.all(repos.map(async r => [r, await publicPullAllowed(r)] as const)) : [])
   const access = grantFor(who, scope, {

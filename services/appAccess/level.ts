@@ -1,6 +1,6 @@
 import { subAllowed } from '../allowlist'
 
-/** Who opens an app's web address: anyone, anyone who can sign in to this Purgatory, or its sandbox's owner. */
+/** Who opens an app's web address: anyone, anyone who can sign in to this Purgatorium, or its sandbox's owner. */
 export type Access = 'public' | 'domain' | 'owner'
 const LEVELS: Access[] = ['public', 'domain', 'owner']
 const parse = (v: string | undefined): Access | null => {
@@ -14,7 +14,7 @@ export function accessDefault(env: NodeJS.ProcessEnv = process.env): Access {
   return parse(env.APPS_ACCESS_DEFAULT) ?? 'owner'
 }
 
-/** An app's p7y.access label; none or empty: the default; anything else: owner, and invalid (a Details warning). */
+/** An app's p9m.access label; none or empty: the default; anything else: owner, and invalid (a Details warning). */
 export function accessOfLabel(label: string | undefined, env: NodeJS.ProcessEnv = process.env): { access: Access; invalid: boolean } {
   if (!label?.trim()) return { access: accessDefault(env), invalid: false }
   const a = parse(label)

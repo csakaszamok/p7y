@@ -34,7 +34,7 @@ describe('loadTemplate', () => {
 describe('a template directory without or with an empty template.yaml', () => {
   let dir: string
   beforeAll(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-templates-'))
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-templates-'))
     fs.mkdirSync(path.join(dir, 'plain'))
     fs.writeFileSync(path.join(dir, 'plain', 'compose.yaml'), 'services:\n  web:\n    image: nginx\n')
     fs.mkdirSync(path.join(dir, 'empty-meta'))
@@ -125,7 +125,7 @@ describe('tcp-demo', () => {
     expect(services.redis.ports).toEqual(['6379:6379'])
     expect(services.ssh.ports).toEqual(['2222:2222'])
     expect(services.pgweb.ports).toEqual(['8081:8081'])
-    expect(Object.fromEntries(Object.entries(services).map(([k, s]) => [k, s.labels?.['p7y.subdomain']])))
+    expect(Object.fromEntries(Object.entries(services).map(([k, s]) => [k, s.labels?.['p9m.subdomain']])))
       .toEqual({ db: 'db', redis: 'redis', ssh: 'ssh', pgweb: 'pgweb' })
   })
 
@@ -139,8 +139,8 @@ describe('tcp-demo', () => {
   })
 
   it('names the login of Postgres and SSH for the Connect… recipes', () => {
-    expect(services.db.labels?.['p7y.connect.user']).toBe('postgres')
-    expect(services.ssh.labels?.['p7y.connect.user']).toBe('demo')
+    expect(services.db.labels?.['p9m.connect.user']).toBe('postgres')
+    expect(services.ssh.labels?.['p9m.connect.user']).toBe('demo')
   })
 
   it('makes a demo password in before_script', () => {

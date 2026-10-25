@@ -1,10 +1,10 @@
 /**
- * Purgatory's technical short name is p7y: sandboxes are `p7y-<raw>` with `p7y.*` labels.
+ * Purgatorium's technical short name is p9m: sandboxes are `p9m-<raw>` with `p9m.*` labels.
  */
-const LABEL_NS = 'p7y'
+const LABEL_NS = 'p9m'
 
 export function sandboxPrefix(): string {
-  return process.env.SANDBOX_PREFIX ?? 'p7y'
+  return process.env.SANDBOX_PREFIX ?? 'p9m'
 }
 
 export function sandboxName(raw: string): string {

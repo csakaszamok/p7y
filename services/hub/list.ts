@@ -22,7 +22,7 @@ export interface HubEntry extends HubApp {
 export interface Remembered {
   apps: Array<HubApp & { updated_at: string }>
   unlinked: string[]
-  /** Published services whose p7y.image is not a path inside the app */
+  /** Published services whose p9m.image is not a path inside the app */
   bad_image?: string[]
   owner_only?: string[]
   /** Every app ever seen here, kept when it is missing: one that comes back keeps its date (not "new" again) */

@@ -4,7 +4,7 @@ vi.stubEnv('SESSION_SECRET', 'test-secret')
 vi.mock('../../services/sandbox', () => ({
   sandboxService: {
     getSandbox: vi.fn(async (n: string) => {
-      if (n !== 'p7y-mine') throw new Error(`Sandbox not found: ${n}`)
+      if (n !== 'p9m-mine') throw new Error(`Sandbox not found: ${n}`)
       return { name: n, owner: 'alice@example.com' }
     }),
   },
@@ -24,8 +24,8 @@ const asset = (await import('../../routes/assets/[file]/GET')).default
 const terminalPage = (await import('../../routes/sandboxes/[name]/terminal/GET')).default
 const logsPage = (await import('../../routes/sandboxes/[name]/logs/GET')).default
 
-const as = (sub: string, role: 'user' | 'admin') => ({ cookie: `p7y_session=${createSession(sub, role)}` })
-const r = (p: string, headers: Record<string, string> = {}) => new Request(`http://p7y.lvh.me${p}`, { headers })
+const as = (sub: string, role: 'user' | 'admin') => ({ cookie: `p9m_session=${createSession(sub, role)}` })
+const r = (p: string, headers: Record<string, string> = {}) => new Request(`http://p9m.lvh.me${p}`, { headers })
 
 describe('pages', () => {
   it('redirects to /login without a session', async () => {
@@ -64,20 +64,20 @@ describe('pages', () => {
   })
 
   it('renders the terminal page for the owner only, loading xterm from our own assets', async () => {
-    const page = await terminalPage(r('/sandboxes/p7y-mine/terminal', as('alice@example.com', 'user')))
+    const page = await terminalPage(r('/sandboxes/p9m-mine/terminal', as('alice@example.com', 'user')))
     expect(page.status).toBe(200)
     const html = await page.text()
     expect(html).toContain('/assets/xterm.js')
     expect(html).toContain('/assets/terminal.js')
-    expect(html).toContain('data-sandbox="p7y-mine"')
-    expect((await terminalPage(r('/sandboxes/p7y-other/terminal', as('alice@example.com', 'user')))).status).toBe(404)
-    expect((await terminalPage(r('/sandboxes/p7y-mine/terminal'))).status).toBe(302)
+    expect(html).toContain('data-sandbox="p9m-mine"')
+    expect((await terminalPage(r('/sandboxes/p9m-other/terminal', as('alice@example.com', 'user')))).status).toBe(404)
+    expect((await terminalPage(r('/sandboxes/p9m-mine/terminal'))).status).toBe(302)
   })
 
   // A sandbox's app on another *.<domain> is same-site: it could frame our pages (the terminal above all)
   it('forbids framing of every page', async () => {
     for (const res of [
-      await terminalPage(r('/sandboxes/p7y-mine/terminal', as('alice@example.com', 'user'))),
+      await terminalPage(r('/sandboxes/p9m-mine/terminal', as('alice@example.com', 'user'))),
       await index(r('/', as('alice@example.com', 'user'))),
       await login(r('/login')),
     ]) {
@@ -87,14 +87,14 @@ describe('pages', () => {
   })
 
   it('renders the logs page for the owner only', async () => {
-    const page = await logsPage(r('/sandboxes/p7y-mine/logs', as('alice@example.com', 'user')))
+    const page = await logsPage(r('/sandboxes/p9m-mine/logs', as('alice@example.com', 'user')))
     expect(page.status).toBe(200)
     const html = await page.text()
     expect(html).toContain('/assets/logs.js')
-    expect(html).toContain('data-sandbox="p7y-mine"')
+    expect(html).toContain('data-sandbox="p9m-mine"')
     expect(page.headers.get('x-frame-options')).toBe('DENY')
-    expect((await logsPage(r('/sandboxes/p7y-other/logs', as('alice@example.com', 'user')))).status).toBe(404)
-    expect((await logsPage(r('/sandboxes/p7y-mine/logs'))).status).toBe(302)
+    expect((await logsPage(r('/sandboxes/p9m-other/logs', as('alice@example.com', 'user')))).status).toBe(404)
+    expect((await logsPage(r('/sandboxes/p9m-mine/logs'))).status).toBe(302)
   })
 
   it('loads the panel script before app.js and serves it', async () => {
@@ -129,7 +129,7 @@ describe('pages', () => {
   it('offers a token limited to one sandbox, on the tokens page and next to a sandbox', async () => {
     const tokensPage = await (await tokens(r('/settings/tokens', as('alice@example.com', 'user')))).text()
     expect(tokensPage).toContain('name="sandbox"')
-    expect(tokensPage).toContain('Bearer p7y_')
+    expect(tokensPage).toContain('Bearer p9m_')
     const home = await (await index(r('/', as('alice@example.com', 'user')))).text()
     expect(home).toContain('data-token-dialog')
   })
@@ -235,7 +235,7 @@ describe('pages', () => {
 describe('Overview: the Hub feed link', () => {
   it('has the Hub feed block (shown for the admin by app.js)', async () => {
     const overview = (await import('../../routes/overview/GET')).default
-    const res = await overview(new Request('http://localhost/overview', { headers: { cookie: `p7y_session=${createSession('admin', 'admin')}` } }))
+    const res = await overview(new Request('http://localhost/overview', { headers: { cookie: `p9m_session=${createSession('admin', 'admin')}` } }))
     const body = await res.text()
     expect(body).toContain('id="hub-feed" hidden')
     expect(body).toContain('id="hub-feed-new"')

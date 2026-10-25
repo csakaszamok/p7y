@@ -19,11 +19,11 @@ export function ownerDirName(owner: string): string {
 }
 
 /**
- * The owner label of a sandbox compose file (p7y.owner), admin without one. Created ones are
+ * The owner label of a sandbox compose file (p9m.owner), admin without one. Created ones are
  * JSON-quoted (an e-mail may hold ' or "); older ones may be bare or single-quoted.
  */
 export function ownerOfCompose(text: string): string {
-  const v = /^\s*p7y\.owner:\s*(.+?)\s*$/m.exec(text)?.[1]
+  const v = /^\s*p9m\.owner:\s*(.+?)\s*$/m.exec(text)?.[1]
   if (!v) return 'admin'
   if (v.startsWith('"')) {
     try { const o: unknown = JSON.parse(v); if (typeof o === 'string' && o) return o } catch { /* below */ }
@@ -33,7 +33,7 @@ export function ownerOfCompose(text: string): string {
 }
 
 /**
- * Whether opt/sandboxes is a mount of its own (a bind from the host), not p7y's container layer, where files would be
+ * Whether opt/sandboxes is a mount of its own (a bind from the host), not p9m's container layer, where files would be
  * lost with the container and the host paths in compose files would not exist. An explicit SANDBOXES_DIR is taken as is.
  */
 export function sandboxesMounted(): boolean {

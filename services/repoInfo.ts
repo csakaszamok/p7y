@@ -1,12 +1,12 @@
 import fs from 'fs'
 
 /**
- * What the topbar shows about Purgatory itself: its GitHub repo, version, stars and forks.
+ * What the topbar shows about Purgatorium itself: its GitHub repo, version, stars and forks.
  * The counts are fetched by the server (never the users' browsers), at most once an hour, and kept in memory;
  * GITHUB_STATS=off never asks GitHub (the link and the version stay).
  */
 
-export const REPO = 'csakaszamok/p7y'
+export const REPO = 'csakaszamok/p9m'
 const TTL = 60 * 60_000
 const RETRY = 10 * 60_000
 
@@ -18,8 +18,8 @@ let fetchedAt = 0
 let pending: Promise<void> | null = null
 
 function readVersion(): string | null {
-  // The image's /app/package.json is its base's: Purgatory's own is copied next to it
-  try { return (JSON.parse(fs.readFileSync(process.env.P7Y_PACKAGE_JSON ?? '/app/p7y/package.json', 'utf8')) as { version?: string }).version ?? null } catch { return null }
+  // The image's /app/package.json is its base's: Purgatorium's own is copied next to it
+  try { return (JSON.parse(fs.readFileSync(process.env.P9M_PACKAGE_JSON ?? '/app/p9m/package.json', 'utf8')) as { version?: string }).version ?? null } catch { return null }
 }
 
 export function statsEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
@@ -28,7 +28,7 @@ export function statsEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
 
 async function refresh(): Promise<void> {
   try {
-    const res = await fetch(`https://api.github.com/repos/${REPO}`, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'p7y' }, signal: AbortSignal.timeout(5_000) })
+    const res = await fetch(`https://api.github.com/repos/${REPO}`, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'p9m' }, signal: AbortSignal.timeout(5_000) })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const d = await res.json() as { stargazers_count?: unknown; forks_count?: unknown }
     if (typeof d.stargazers_count !== 'number' || typeof d.forks_count !== 'number') throw new Error('unexpected answer')
@@ -42,8 +42,8 @@ async function refresh(): Promise<void> {
 }
 
 /** The counts as last fetched (null before the first answer); starts a refresh in the background when stale. */
-/** Purgatory's own version (its package.json), null if unknown: the topbar and the OpenAPI document. */
-export function p7yVersion(): string | null {
+/** Purgatorium's own version (its package.json), null if unknown: the topbar and the OpenAPI document. */
+export function p9mVersion(): string | null {
   if (version === undefined) version = readVersion()
   return version
 }

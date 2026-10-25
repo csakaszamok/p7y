@@ -7,15 +7,15 @@
 # Usage: bash tests/archive.sh   (from the repo root, stack running)
 #
 # Env vars (all optional):
-#   P7Y_API    - default http://localhost:8081
-#   P7Y_TOKEN  - default abc123
+#   P9M_API    - default http://localhost:8081
+#   P9M_TOKEN  - default abc123
 #   HOST_DOMAIN    - default lvh.me
 #   TRAEFIK_URL    - default http://localhost
 
 set -euo pipefail
 
-P7Y_API="${P7Y_API:-http://localhost:8081}"
-P7Y_TOKEN="${P7Y_TOKEN:-abc123}"
+P9M_API="${P9M_API:-http://localhost:8081}"
+P9M_TOKEN="${P9M_TOKEN:-abc123}"
 HOST_DOMAIN="${HOST_DOMAIN:-lvh.me}"
 TRAEFIK_URL="${TRAEFIK_URL:-http://localhost}"
 
@@ -34,8 +34,8 @@ info "Sandbox name : $NAME"
 
 # ── 1. Create and wait until it serves ────────────────────────────────────────
 info "[1/4] Creating sandbox..."
-RESPONSE=$(curl -sf -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $P7Y_TOKEN" \
-  -d "{\"name\":\"$NAME\"}" "$P7Y_API/sandboxes") || fail "POST /sandboxes failed"
+RESPONSE=$(curl -sf -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $P9M_TOKEN" \
+  -d "{\"name\":\"$NAME\"}" "$P9M_API/sandboxes") || fail "POST /sandboxes failed"
 FULL_NAME=$(echo "$RESPONSE" | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
 [ -n "$FULL_NAME" ] || fail "Could not parse sandbox name"
 for i in $(seq 1 40); do
@@ -45,12 +45,12 @@ pass "Created and serving: $FULL_NAME"
 
 # ── 2. Put a marker into the sandbox's Docker data volume ─────────────────────
 info "[2/4] Writing marker into /var/lib/docker (docker_data volume)..."
-docker exec "$FULL_NAME" sh -c "echo $MARKER > /var/lib/docker/p7y-marker"
+docker exec "$FULL_NAME" sh -c "echo $MARKER > /var/lib/docker/p9m-marker"
 pass "Marker written: $MARKER"
 
 # ── 3. Delete → archive ───────────────────────────────────────────────────────
 info "[3/4] DELETE /sandboxes/$FULL_NAME..."
-DEL=$(curl -sf -X DELETE -H "Authorization: Bearer $P7Y_TOKEN" "$P7Y_API/sandboxes/$FULL_NAME") \
+DEL=$(curl -sf -X DELETE -H "Authorization: Bearer $P9M_TOKEN" "$P9M_API/sandboxes/$FULL_NAME") \
   || fail "DELETE failed"
 ARCHIVE=$(echo "$DEL" | grep -o '"archive":"[^"]*"' | cut -d'"' -f4)
 [ -n "$ARCHIVE" ] || fail "No archive path in response: $DEL"
@@ -65,13 +65,13 @@ grep -q "\"name\": \"$FULL_NAME\"" "$LOCAL/manifest.json" || fail "manifest does
 [ -d "$LOCAL/config/certs" ] || fail "config/certs missing"
 TAR="$LOCAL/volumes/${FULL_NAME}_docker_data.tar.gz"
 [ -f "$TAR" ] || fail "volume archive missing: $TAR"
-[ "$(tar xzOf "$TAR" ./p7y-marker)" = "$MARKER" ] || fail "marker not found in volume archive"
+[ "$(tar xzOf "$TAR" ./p9m-marker)" = "$MARKER" ] || fail "marker not found in volume archive"
 pass "Archive has manifest, config, certs and the volume with the marker ($(du -h "$TAR" | cut -f1))"
 
 docker volume inspect "${FULL_NAME}_docker_data" >/dev/null 2>&1 && fail "volume still exists"
 ls -d opt/sandboxes/*/"$FULL_NAME" >/dev/null 2>&1 && fail "opt/sandboxes/*/$FULL_NAME still exists"
 [ -n "$(docker ps -aq --filter "label=com.docker.compose.project=$FULL_NAME")" ] && fail "containers still exist"
-CODE=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $P7Y_TOKEN" "$P7Y_API/sandboxes/$FULL_NAME")
+CODE=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $P9M_TOKEN" "$P9M_API/sandboxes/$FULL_NAME")
 [ "$CODE" = "404" ] || fail "GET after archive returned $CODE, expected 404"
 CODE=$(curl -s -m 5 -o /dev/null -w '%{http_code}' -H "Host: $ECHO_HOST" "$TRAEFIK_URL/")
 [ "$CODE" = "404" ] || fail "sandbox URL returned $CODE, expected 404"

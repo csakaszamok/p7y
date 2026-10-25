@@ -7,8 +7,8 @@
 # Usage: bash tests/sablier-wake.sh
 #
 # Env vars (all optional):
-#   P7Y_API    - default http://localhost:8081
-#   P7Y_TOKEN  - default abc123
+#   P9M_API    - default http://localhost:8081
+#   P9M_TOKEN  - default abc123
 #   HOST_DOMAIN    - default lvh.me
 #   TRAEFIK_URL    - default http://localhost  (requests are sent here with a Host header)
 #   IDLE_TIMEOUT   - default 1m
@@ -17,8 +17,8 @@
 
 set -euo pipefail
 
-P7Y_API="${P7Y_API:-http://localhost:8081}"
-P7Y_TOKEN="${P7Y_TOKEN:-abc123}"
+P9M_API="${P9M_API:-http://localhost:8081}"
+P9M_TOKEN="${P9M_TOKEN:-abc123}"
 HOST_DOMAIN="${HOST_DOMAIN:-lvh.me}"
 TRAEFIK_URL="${TRAEFIK_URL:-http://localhost}"
 IDLE_TIMEOUT="${IDLE_TIMEOUT:-1m}"
@@ -41,7 +41,7 @@ fetch() {
 }
 
 status() {
-  curl -sf -H "Authorization: Bearer $P7Y_TOKEN" "$P7Y_API/sandboxes/$FULL_NAME" 2>/dev/null \
+  curl -sf -H "Authorization: Bearer $P9M_TOKEN" "$P9M_API/sandboxes/$FULL_NAME" 2>/dev/null \
     | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4
 }
 
@@ -54,9 +54,9 @@ echo ""
 # ── 1. Create sandbox ──────────────────────────────────────────────────────────
 info "[1/4] Creating sandbox..."
 RESPONSE=$(curl -sf -X POST \
-  -H "Content-Type: application/json" -H "Authorization: Bearer $P7Y_TOKEN" \
+  -H "Content-Type: application/json" -H "Authorization: Bearer $P9M_TOKEN" \
   -d "{\"name\":\"$NAME\",\"idle_timeout\":\"$IDLE_TIMEOUT\"}" \
-  "$P7Y_API/sandboxes") || fail "POST /sandboxes failed"
+  "$P9M_API/sandboxes") || fail "POST /sandboxes failed"
 FULL_NAME=$(echo "$RESPONSE" | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
 [ -n "$FULL_NAME" ] || fail "Could not parse sandbox name from response"
 pass "Created: $FULL_NAME"
@@ -64,8 +64,8 @@ pass "Created: $FULL_NAME"
 cleanup() {
   echo ""
   info "Cleanup: deleting $FULL_NAME"
-  curl -sf -X DELETE -H "Authorization: Bearer $P7Y_TOKEN" \
-    "$P7Y_API/sandboxes/$FULL_NAME" >/dev/null 2>&1 || true
+  curl -sf -X DELETE -H "Authorization: Bearer $P9M_TOKEN" \
+    "$P9M_API/sandboxes/$FULL_NAME" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -90,7 +90,7 @@ info "[4/4] First request while asleep..."
 T=$(date +%s)
 R=$(fetch)
 echo "  $R" | head -c 120; echo
-echo "$R" | grep -qi "waking up" || fail "Expected the p7y waiting page, got: $(echo "$R" | head -c 200)"
+echo "$R" | grep -qi "waking up" || fail "Expected the p9m waiting page, got: $(echo "$R" | head -c 200)"
 pass "Waiting page served"
 
 while :; do

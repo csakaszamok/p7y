@@ -3,19 +3,19 @@ import { parseHostMountRoots } from './hostMounts'
 /**
  * Local-dev defaults that must not survive into a publicly reachable
  * deployment. The dev stack (docker-compose.yml) and the e2e scripts rely on
- * these defaults, so they stay as defaults — but Purgatory logs a clear
+ * these defaults, so they stay as defaults — but Purgatorium logs a clear
  * warning at startup whenever one is still in effect.
  */
 export function insecureConfigWarnings(env: NodeJS.ProcessEnv = process.env): string[] {
   const warnings: string[] = []
   if (env.ADMIN_TOKEN === 'abc123' || env.ADMIN_TOKEN === 'change-me-to-a-strong-secret') {
-    warnings.push('WARNING: ADMIN_TOKEN is set to a default/example value. Set a strong ADMIN_TOKEN before exposing Purgatory publicly.')
+    warnings.push('WARNING: ADMIN_TOKEN is set to a default/example value. Set a strong ADMIN_TOKEN before exposing Purgatorium publicly.')
   }
   if (env.SESSION_SECRET === 'change-me-to-a-long-random-string') {
-    warnings.push('WARNING: SESSION_SECRET is set to the default placeholder. Set a long random SESSION_SECRET before exposing Purgatory publicly.')
+    warnings.push('WARNING: SESSION_SECRET is set to the default placeholder. Set a long random SESSION_SECRET before exposing Purgatorium publicly.')
   }
   if (env.ADMIN_PASSWORD === 'change-me') {
-    warnings.push('WARNING: ADMIN_PASSWORD is set to the default "change-me". Set a strong ADMIN_PASSWORD before exposing Purgatory publicly.')
+    warnings.push('WARNING: ADMIN_PASSWORD is set to the default "change-me". Set a strong ADMIN_PASSWORD before exposing Purgatorium publicly.')
   }
   return warnings
 }
@@ -29,7 +29,7 @@ export function hostMountWarnings(env: NodeJS.ProcessEnv = process.env): string[
   return warnings
 }
 
-/** With an https PUBLIC_URL Purgatory is public: default or example secrets are fatal, not warnings. */
+/** With an https PUBLIC_URL Purgatorium is public: default or example secrets are fatal, not warnings. */
 export function insecureConfigErrors(env: NodeJS.ProcessEnv = process.env): string[] {
   if (!(env.PUBLIC_URL ?? '').startsWith('https://')) return []
   const errors: string[] = []

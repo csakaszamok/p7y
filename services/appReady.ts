@@ -11,7 +11,7 @@ export interface AppReadyDeps {
   probe: (name: string, port: number) => Promise<boolean>
 }
 
-/** ready: its port answers; false: not yet; null: not an app address known to Purgatory (open it as it is). */
+/** ready: its port answers; false: not yet; null: not an app address known to Purgatorium (open it as it is). */
 export async function appReady(host: string, deps: AppReadyDeps = defaults()): Promise<{ ready: boolean | null; service?: string }> {
   const h = host.toLowerCase().replace(/:\d+$/, '')
   const name = await deps.find(h)

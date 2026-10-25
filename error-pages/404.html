@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>404 – Not found</title>
-<!-- Self-contained: no request leaves this page. Purgatory serves it with the portal's address (PUBLIC_URL) in place
-     of {{P7Y_URL}}; without it the script below guesses p7y.<domain>. -->
+<!-- Self-contained: no request leaves this page. Purgatorium serves it with the portal's address (PUBLIC_URL) in place
+     of {{P9M_URL}}; without it the script below guesses p9m.<domain>. -->
 <style>
   :root { color-scheme: dark }
   * { box-sizing: border-box }
@@ -43,7 +43,7 @@
   <div class="actions">
     <button type="button" id="back" hidden>Go back</button>
     <a href="/" id="home" hidden>Start page of this site</a>
-    <a href="{{P7Y_URL}}" id="portal" class="primary">Open the sandbox portal</a>
+    <a href="{{P9M_URL}}" id="portal" class="primary">Open the sandbox portal</a>
   </div>
 </main>
 <script>
@@ -57,11 +57,11 @@
     }
     if (location.pathname !== '/') document.getElementById('home').hidden = false
     var portal = document.getElementById('portal')
-    // Not filled in by p7y-init: p7y.<the domain this host is under>
+    // Not filled in by p9m-init: p9m.<the domain this host is under>
     if (portal.getAttribute('href').indexOf('{{') === 0) {
       var parts = host.split('.')
       var domain = parts.length > 2 ? parts.slice(1).join('.') : host
-      portal.href = location.protocol + '//p7y.' + domain
+      portal.href = location.protocol + '//p9m.' + domain
     }
   })()
 </script>

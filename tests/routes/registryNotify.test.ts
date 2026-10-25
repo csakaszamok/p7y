@@ -3,7 +3,7 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-notify-'))
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-notify-'))
 vi.stubEnv('REGISTRY_NOTIFY_SECRET_FILE', path.join(dir, 'registry-notify.secret'))
 vi.mock('../../services/registryScans', () => ({ markPushed: vi.fn(() => true), enqueueScan: vi.fn(async () => {}) }))
 const S = await import('../../services/registryScans')
@@ -14,7 +14,7 @@ const body = { events: [
   { action: 'push', target: { repository: 'shop/todo', digest: 'sha256:bydigest' } }, // untagged: still pullable by digest
   { action: 'pull', target: { repository: 'shop/todo', digest: 'sha256:idx' } },
 ] }
-const req = (secret?: string) => new Request('http://p7y:3000/registry/notify', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(secret ? { Authorization: `Bearer ${secret}` } : {}) }, body: JSON.stringify(body) })
+const req = (secret?: string) => new Request('http://p9m:3000/registry/notify', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(secret ? { Authorization: `Bearer ${secret}` } : {}) }, body: JSON.stringify(body) })
 
 describe('POST /registry/notify', () => {
   it('a generated secret (no default): every push is recorded and queued, tagged or not; pulls ignored', async () => {

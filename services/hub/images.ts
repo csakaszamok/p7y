@@ -6,7 +6,7 @@ import { writeFileAtomic } from '../atomicWrite'
 import type { HubEntry } from './list'
 
 /**
- * The Hub cards' images: the app's p7y.image (a path inside it), else its page's og:image (on its own host only).
+ * The Hub cards' images: the app's p9m.image (a path inside it), else its page's og:image (on its own host only).
  * Fetched in the background, straight from the sandbox container on the internal network (as appProbe does: it
  * neither wakes the sandbox nor keeps it awake), only from running apps; nothing outside the app is ever fetched.
  */
@@ -35,7 +35,7 @@ export function httpGet(sandbox: string, port: number, p: string, host: string):
     const chunks: Buffer[] = []
     let size = 0
     const done = (f: Fetched) => { clearTimeout(timer); resolve(f); req.destroy() }
-    const req = http.request({ host: sandbox, port, path: p, method: 'GET', headers: { Host: host, 'User-Agent': 'p7y-hub', Accept: 'text/html,image/*' } }, res => {
+    const req = http.request({ host: sandbox, port, path: p, method: 'GET', headers: { Host: host, 'User-Agent': 'p9m-hub', Accept: 'text/html,image/*' } }, res => {
       res.on('data', (c: Buffer) => {
         size += c.length
         chunks.push(c)

@@ -9,7 +9,7 @@ export function hubHost(env: NodeJS.ProcessEnv = process.env): string {
   return (env.HUB_HOST?.trim() || `hub.${domain(env)}`).toLowerCase()
 }
 
-/** https when Purgatory's PUBLIC_URL is (the wildcard certificate covers both). */
+/** https when Purgatorium's PUBLIC_URL is (the wildcard certificate covers both). */
 export function hubUrl(env: NodeJS.ProcessEnv = process.env): string {
   const https = (env.PUBLIC_URL ?? '').startsWith('https://')
   return `${https ? 'https' : 'http'}://${hubHost(env)}`

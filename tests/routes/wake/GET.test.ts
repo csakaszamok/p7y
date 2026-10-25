@@ -2,24 +2,24 @@ import { describe, it, expect, vi } from 'vitest'
 
 vi.mock('../../../services/wake', () => ({
   wakeByHost: vi.fn(async (host: string) =>
-    host.startsWith('lim-') ? { result: 'limit', name: 'p7y-lim', refusal: { reason: 'running', title: 'Running limit reached', message: 'x', limit: 1, running: ['p7y-shop'] } }
-      : host.startsWith('room-') ? { result: 'limit', name: 'p7y-room', refusal: { reason: 'room', title: 'No room above your guarantee', message: 'x', limit: 3, running: ['p7y-shop'] } }
-      : host.startsWith('as-') ? { result: 'started', name: 'p7y-as', from: 'asleep' }
-      : host.startsWith('ds-') ? { result: 'started', name: 'p7y-ds', from: 'deep_sleep' }
-      : host.startsWith('ip-') ? { result: 'in_progress', name: 'p7y-ip' }
-      : host.startsWith('old-') ? { result: 'outdated', name: 'p7y-old' }
-      : host.startsWith('nr-') ? { result: 'no_route', name: 'p7y-nr' }
+    host.startsWith('lim-') ? { result: 'limit', name: 'p9m-lim', refusal: { reason: 'running', title: 'Running limit reached', message: 'x', limit: 1, running: ['p9m-shop'] } }
+      : host.startsWith('room-') ? { result: 'limit', name: 'p9m-room', refusal: { reason: 'room', title: 'No room above your guarantee', message: 'x', limit: 3, running: ['p9m-shop'] } }
+      : host.startsWith('as-') ? { result: 'started', name: 'p9m-as', from: 'asleep' }
+      : host.startsWith('ds-') ? { result: 'started', name: 'p9m-ds', from: 'deep_sleep' }
+      : host.startsWith('ip-') ? { result: 'in_progress', name: 'p9m-ip' }
+      : host.startsWith('old-') ? { result: 'outdated', name: 'p9m-old' }
+      : host.startsWith('nr-') ? { result: 'no_route', name: 'p9m-nr' }
       : { result: 'not_found' })
 }))
 
 // App access: own-* is an owner-only app this visitor may not open (yet); pub-* answers 200; others are not known
 vi.mock('../../../services/appAccess/decide', () => ({
   decide: vi.fn(async ({ host }: { host: string }) =>
-    host.startsWith('own-') ? { status: 302, headers: { Location: 'https://p7y.lvh.me/auth/app/start?rd=x', 'Set-Cookie': '__p7y_app=v; Path=/' } }
-      : host.startsWith('pub-') ? { status: 200, headers: { Cookie: '', 'X-P7y-User': '' } }
+    host.startsWith('own-') ? { status: 302, headers: { Location: 'https://p9m.lvh.me/auth/app/start?rd=x', 'Set-Cookie': '__p9m_app=v; Path=/' } }
+      : host.startsWith('pub-') ? { status: 200, headers: { Cookie: '', 'X-P9m-User': '' } }
       : { status: 404, headers: {} })
 }))
-vi.stubEnv('PUBLIC_URL', 'https://p7y.lvh.me')
+vi.stubEnv('PUBLIC_URL', 'https://p9m.lvh.me')
 const { default: handler } = await import('../../../routes/wake/GET')
 const req = (host: string) => new Request('http://localhost/wake', { headers: { host } })
 
@@ -28,9 +28,9 @@ describe('GET /wake', () => {
     expect((await handler(req('nope.lvh.me'))).status).toBe(404)
   })
 
-  it("the waiting page asks Purgatory whether the address's app answers before opening it", async () => {
+  it("the waiting page asks Purgatorium whether the address's app answers before opening it", async () => {
     const html = await (await handler(req('ds-web.lvh.me'))).text()
-    expect(html).toContain('data-ready="https://p7y.lvh.me/wake/ready?host=ds-web.lvh.me"')
+    expect(html).toContain('data-ready="https://p9m.lvh.me/wake/ready?host=ds-web.lvh.me"')
   })
 
   it('serves an auto-refreshing waiting page for a deep-sleeping sandbox', async () => {
@@ -40,14 +40,14 @@ describe('GET /wake', () => {
     const html = await res.text()
     expect(html).toContain('Sandbox is waking up')
     expect(html).toContain('<meta http-equiv="refresh" content="3">')
-    expect(html).toContain('p7y-ds')
+    expect(html).toContain('p9m-ds')
   })
 
-  it('the waiting page carries the embers and the poller inline (it is served on the sandbox host, not Purgatory’s)', async () => {
+  it('the waiting page carries the embers and the poller inline (it is served on the sandbox host, not Purgatorium’s)', async () => {
     const fs = await import('fs')
     const path = await import('path')
     const html = await (await handler(req('ds-web.lvh.me'))).text()
-    expect(html).toContain('data-p7y-waiting')
+    expect(html).toContain('data-p9m-waiting')
     expect(html).toContain('<noscript><meta http-equiv="refresh" content="3"></noscript>')
     for (const f of ['embers.js', 'waiting.js']) {
       expect(html, f).toContain(fs.readFileSync(path.join(process.cwd(), 'ui', f), 'utf8').trim())
@@ -67,7 +67,7 @@ describe('GET /wake', () => {
   it('logs which address and client woke a deep-sleeping sandbox', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {})
     await handler(new Request('http://localhost/wake', { headers: { host: 'ds-portainer.lvh.me', 'user-agent': 'Mozilla/5.0 Test' } }))
-    expect(log).toHaveBeenCalledWith('[wake] p7y-ds: a request for ds-portainer.lvh.me (Mozilla/5.0 Test) wakes it from deep sleep')
+    expect(log).toHaveBeenCalledWith('[wake] p9m-ds: a request for ds-portainer.lvh.me (Mozilla/5.0 Test) wakes it from deep sleep')
     log.mockRestore()
   })
 
@@ -84,7 +84,7 @@ describe('GET /wake', () => {
     expect(res.status).toBe(502)
     const html = await res.text()
     expect(html).toContain('does not reach the sandbox')
-    expect(html).toContain('p7y-nr')
+    expect(html).toContain('p9m-nr')
     expect(html).not.toContain('http-equiv="refresh"')
   })
 
@@ -92,18 +92,18 @@ describe('GET /wake', () => {
     const res = await handler(req('lim-web.lvh.me'))
     expect(res.status).toBe(409)
     const html = await res.text()
-    expect(html).toContain('<title>Running limit reached — p7y-lim</title>')
+    expect(html).toContain('<title>Running limit reached — p9m-lim</title>')
     expect(html).toContain('This sandbox is asleep and cannot wake up: its owner reached their limit of 1 running sandbox.')
     // a public page: the owner's other sandboxes (their addresses) are not named here, only in the signed-in panel
     expect(html).not.toContain('shop')
-    expect(html).toContain('href="https://p7y.lvh.me/?wake=p7y-lim"')
+    expect(html).toContain('href="https://p9m.lvh.me/?wake=p9m-lim"')
     expect(html).toContain('<meta http-equiv="refresh" content="30">')
   })
-  it('above the guarantee with no room to spare: says so, links the owner to Purgatory, retries every 30 s', async () => {
+  it('above the guarantee with no room to spare: says so, links the owner to Purgatorium, retries every 30 s', async () => {
     const res = await handler(req('room-web.lvh.me'))
     expect(res.status).toBe(409)
     const html = await res.text()
-    expect(html).toContain('<title>No room above your guarantee — p7y-room</title>')
+    expect(html).toContain('<title>No room above your guarantee — p9m-room</title>')
     expect(html).toContain("This sandbox cannot wake up now: its owner has more than the 3 running sandboxes guaranteed to them, and the server has no room to spare for others' guarantees.")
     expect(html).not.toContain('shop')
     expect(html).toContain('<meta http-equiv="refresh" content="30">')
@@ -120,10 +120,10 @@ describe('GET /wake', () => {
     expect(await (await handler(req('as-web.lvh.me'))).text()).toContain('<meta http-equiv="refresh" content="1">')
     expect(await (await handler(req('ds-web.lvh.me'))).text()).toContain('<meta http-equiv="refresh" content="3">')
   })
-  it('waking from asleep: the waiting page says waking up, and carries the marker p7y waits on', async () => {
+  it('waking from asleep: the waiting page says waking up, and carries the marker p9m waits on', async () => {
     const html = await (await handler(req('as-web.lvh.me'))).text()
     expect(html).toContain('waking up')
-    expect(html).toContain('data-p7y-waiting')
+    expect(html).toContain('data-p9m-waiting')
   })
 })
 
@@ -134,8 +134,8 @@ describe('GET /wake: app access', () => {
     vi.mocked(wakeByHost).mockClear()
     const res = await handler(new Request('http://localhost/wake', { headers: { host: 'own-web.lvh.me', 'x-replaced-path': '/a', 'x-forwarded-proto': 'https', cookie: 'k=1' } }))
     expect(res.status).toBe(302)
-    expect(res.headers.get('location')).toBe('https://p7y.lvh.me/auth/app/start?rd=x')
-    expect(res.headers.get('set-cookie')).toBe('__p7y_app=v; Path=/')
+    expect(res.headers.get('location')).toBe('https://p9m.lvh.me/auth/app/start?rd=x')
+    expect(res.headers.get('set-cookie')).toBe('__p9m_app=v; Path=/')
     expect(wakeByHost).not.toHaveBeenCalled()
     expect(decide).toHaveBeenCalledWith({ host: 'own-web.lvh.me', proto: 'https', uri: '/a', cookie: 'k=1' })
   })
@@ -150,8 +150,8 @@ describe('GET /wake: app access', () => {
     const { decide } = await import('../../../services/appAccess/decide')
     vi.mocked(decide).mockClear()
     // replacepath: X-Replaced-Path is the path alone, the query stays on the request
-    await handler(new Request('http://localhost/wake?ticket=t1&rd=%2Fx', { headers: { host: 'own-web.lvh.me', 'x-replaced-path': '/__p7y/auth' } }))
-    expect(vi.mocked(decide).mock.calls[0][0].uri).toBe('/__p7y/auth?ticket=t1&rd=%2Fx')
+    await handler(new Request('http://localhost/wake?ticket=t1&rd=%2Fx', { headers: { host: 'own-web.lvh.me', 'x-replaced-path': '/__p9m/auth' } }))
+    expect(vi.mocked(decide).mock.calls[0][0].uri).toBe('/__p9m/auth?ticket=t1&rd=%2Fx')
   })
 })
 

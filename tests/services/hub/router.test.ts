@@ -10,16 +10,16 @@ import type { HubEntry } from '../../../services/hub/list'
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hubrouter-'))
 beforeEach(() => {
   Object.assign(process.env, {
-    HUB_ENABLED: 'true', HOST_DOMAIN: 'example.com', PUBLIC_URL: 'https://p7y.example.com', SESSION_SECRET: 's',
+    HUB_ENABLED: 'true', HOST_DOMAIN: 'example.com', PUBLIC_URL: 'https://p9m.example.com', SESSION_SECRET: 's',
     OIDC_ALLOWED_EMAILS: 'anna@example.com', HUB_ALLOWED_DOMAINS: 'example.com',
     HUB_VOTES_FILE: path.join(dir, 'votes.json'), HUB_FEED_KEY_FILE: path.join(dir, 'key'), HUB_NAMES_FILE: path.join(dir, 'names.json'),
   })
   fs.rmSync(path.join(dir, 'votes.json'), { force: true })
 })
 
-const app: HubEntry = { id: 'shop-web.example.com', url: 'https://shop-web.example.com', title: 'Shop', description: '', service: 'web', port: 80, image: null, access: 'public', owner: 'anna@example.com', owner_name: 'Anna', sandbox: 'p7y-shop', status: 'running', updated_at: '2026-10-20T10:00:00.000Z', last_ran_at: null, last_ran_estimated: false }
+const app: HubEntry = { id: 'shop-web.example.com', url: 'https://shop-web.example.com', title: 'Shop', description: '', service: 'web', port: 80, image: null, access: 'public', owner: 'anna@example.com', owner_name: 'Anna', sandbox: 'p9m-shop', status: 'running', updated_at: '2026-10-20T10:00:00.000Z', last_ran_at: null, last_ran_estimated: false }
 const deps = { entries: async () => [app] }
-const as = (sub: string) => ({ cookie: `p7y_hub=${createHubSession(sub, null)}` })
+const as = (sub: string) => ({ cookie: `p9m_hub=${createHubSession(sub, null)}` })
 const get = (p: string, headers: Record<string, string> = {}) => handleHub(new Request(`https://hub.example.com${p}`, { headers }), deps)
 const send = (method: string, p: string, headers: Record<string, string>) =>
   handleHub(new Request(`https://hub.example.com${p}`, { method, headers: { origin: 'https://hub.example.com', host: 'hub.example.com', ...headers } }), deps)
@@ -58,7 +58,7 @@ describe('handleHub', () => {
     expect((await get('/feed.xml?key=wrong')).status).toBe(404)
     expect((await get('/feed.xml')).status).toBe(404)
   })
-  it('does not expose Purgatory on the Hub host', async () => {
+  it('does not expose Purgatorium on the Hub host', async () => {
     for (const p of ['/sandboxes', '/mcp', '/swagger', '/swagger.json', '/me', '/overview']) {
       expect((await get(p, as('anna@example.com'))).status).toBe(404)
     }
@@ -67,7 +67,7 @@ describe('handleHub', () => {
     process.env.ADMIN_USER = 'admin'; process.env.ADMIN_PASSWORD = 'pw'
     const r = await handleHub(new Request('https://hub.example.com/login', { method: 'POST', headers: { origin: 'https://hub.example.com', host: 'hub.example.com', 'content-type': 'application/x-www-form-urlencoded' }, body: 'username=admin&password=pw' }), deps)
     expect(r.status).toBe(303)
-    expect(r.headers.get('set-cookie')).toContain('p7y_hub=')
+    expect(r.headers.get('set-cookie')).toContain('p9m_hub=')
   })
 })
 
@@ -75,7 +75,7 @@ describe('handleHub: app access', () => {
   const dom: HubEntry = { ...app, id: 'shop-dom.example.com', url: 'https://shop-dom.example.com', title: 'Board', access: 'domain' }
   const d = { entries: async () => [app, dom] }
   const list = async (sub: string) => (await (await handleHub(new Request('https://hub.example.com/api/hub', { headers: as(sub) }), d)).json()).apps.map((a: { id: string }) => a.id)
-  it('a domain app shows to viewers who can sign in to Purgatory; Hub-only viewers see public apps only', async () => {
+  it('a domain app shows to viewers who can sign in to Purgatorium; Hub-only viewers see public apps only', async () => {
     expect(await list('anna@example.com')).toEqual(['shop-web.example.com', 'shop-dom.example.com'])
     expect(await list('peter@example.com')).toEqual(['shop-web.example.com'])
   })
@@ -117,7 +117,7 @@ describe('handleHub: About', () => {
   it('serves the license notices without sign-in, and the Hub pages link to them', async () => {
     const res = await get('/about')
     expect(res.status).toBe(200)
-    expect(await res.text()).toContain('Based on Purgatory (p7y)')
+    expect(await res.text()).toContain('Based on Purgatorium (p9m)')
     expect(await (await get('/login')).text()).toContain('href="/about"')
     expect(await (await get('/', as('anna@example.com'))).text()).toContain('href="/about"')
   })

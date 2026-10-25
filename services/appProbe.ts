@@ -4,7 +4,7 @@ import type { AppLink } from './appLinks'
 /** Whether something answers HTTP on host:port (any status, a 404 too); refused, silent or not HTTP: false. */
 export function probeHttp(host: string, port: number, timeoutMs = 2000): Promise<boolean> {
   return new Promise(resolve => {
-    const req = http.request({ host, port, path: '/', method: 'GET', headers: { 'User-Agent': 'p7y-probe' } }, res => {
+    const req = http.request({ host, port, path: '/', method: 'GET', headers: { 'User-Agent': 'p9m-probe' } }, res => {
       clearTimeout(timer)
       res.resume()
       resolve(true)

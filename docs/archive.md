@@ -12,13 +12,13 @@ Afterwards the name is free again and the sandbox URL returns 404. Archives are 
 Restoring by hand:
 
 ```bash
-A=opt/archive/alice@example.com/p7y-alice-2026-09-26T21-47-01-401Z
+A=opt/archive/alice@example.com/p9m-alice-2026-09-26T21-47-01-401Z
 mkdir -p opt/sandboxes/alice@example.com
-cp -r $A/config opt/sandboxes/alice@example.com/p7y-alice
+cp -r $A/config opt/sandboxes/alice@example.com/p9m-alice
 for f in $A/volumes/*.tar.gz; do
   v=$(basename $f .tar.gz)
-  docker volume create --label com.docker.compose.project=p7y-alice $v
+  docker volume create --label com.docker.compose.project=p9m-alice $v
   docker run --rm -v $v:/data -v "$PWD/$A/volumes":/archive alpine tar xzf /archive/$v.tar.gz -C /data
 done
-docker compose -f opt/sandboxes/alice@example.com/p7y-alice/docker-compose.yml up -d
+docker compose -f opt/sandboxes/alice@example.com/p9m-alice/docker-compose.yml up -d
 ```

@@ -6,10 +6,10 @@ import handler from '../../routes/hub/feed-key/POST'
 import { feedKeyValid } from '../../services/hub/feedKey'
 
 beforeEach(() => { Object.assign(process.env, {
-  ADMIN_TOKEN: 'admintoken', HOST_DOMAIN: 'example.com', PUBLIC_URL: 'https://p7y.example.com',
+  ADMIN_TOKEN: 'admintoken', HOST_DOMAIN: 'example.com', PUBLIC_URL: 'https://p9m.example.com',
   HUB_FEED_KEY_FILE: path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'fk-')), 'key'),
 }) })
-const post = (auth?: string) => handler(new Request('https://p7y.example.com/hub/feed-key', { method: 'POST', headers: auth ? { authorization: `Bearer ${auth}` } : {} }))
+const post = (auth?: string) => handler(new Request('https://p9m.example.com/hub/feed-key', { method: 'POST', headers: auth ? { authorization: `Bearer ${auth}` } : {} }))
 
 describe('POST /hub/feed-key', () => {
   it('is 404 while the Hub is off', async () => {

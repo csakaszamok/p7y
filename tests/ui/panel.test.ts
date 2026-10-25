@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { createRequire } from 'module'
 const P = createRequire(import.meta.url)('../../ui/panel.js')
 
-const ctx = { isAdmin: true, me: 'admin', shortName: (n: string) => n.replace(/^p7y-/, ''), tab: 'apps', protocol: 'https:', now: Date.parse('2026-10-04T15:00:00Z') }
+const ctx = { isAdmin: true, me: 'admin', shortName: (n: string) => n.replace(/^p9m-/, ''), tab: 'apps', protocol: 'https:', now: Date.parse('2026-10-04T15:00:00Z') }
 const running = {
-  name: 'p7y-shop', owner: 'admin', status: 'running', runtime: 'dind', template: 'starter', created_at: '2026-10-04 13:02:34.871 +0000 UTC',
+  name: 'p9m-shop', owner: 'admin', status: 'running', runtime: 'dind', template: 'starter', created_at: '2026-10-04 13:02:34.871 +0000 UTC',
   idle_timeout: '30m', deep_sleep_after: '7d', stops_at: '2026-10-04T15:29:56Z',
   tunnel_urls: ['shop-inner-web-port8080.lvh.me', 'shop-inner-web-port80.lvh.me', 'shop-portainer.lvh.me'],
   apps: [
@@ -148,7 +148,7 @@ describe('renderPanel', () => {
   })
 
   it('escapes names, services and addresses everywhere', () => {
-    const evil = { ...running, name: 'p7y-<b>', apps: [{ url: 'x.lvh.me', port: 1, service: '<script>', answers: false }], tunnel_urls: ['x.lvh.me'], tcp_addresses: [{ address: '"onmouseover=1', port: 1 }] }
+    const evil = { ...running, name: 'p9m-<b>', apps: [{ url: 'x.lvh.me', port: 1, service: '<script>', answers: false }], tunnel_urls: ['x.lvh.me'], tcp_addresses: [{ address: '"onmouseover=1', port: 1 }] }
     const html = P.renderPanel(evil, ctx)
     expect(html).not.toContain('<script>')
     expect(html).not.toContain('<b>')
@@ -208,7 +208,7 @@ describe('agent access in the panel', () => {
   })
 
   it('Access says a sleeping sandbox must be woken before docker connects', () => {
-    const hint = 'Asleep: a Docker connection does not wake it. Start it first (POST /sandboxes/p7y-shop/start).'
+    const hint = 'Asleep: a Docker connection does not wake it. Start it first (POST /sandboxes/p9m-shop/start).'
     expect(panelOf(P.renderPanel({ ...running, status: 'exited', docker_access: { host: 'x', state: 'ready', hint } }, ctx), 'access')).toContain('a Docker connection does not wake it')
     expect(panelOf(P.renderPanel({ ...running, docker_access: { host: 'x', state: 'ready' } }, ctx), 'access')).not.toContain('does not wake it')
   })
@@ -278,9 +278,9 @@ describe('resourcesTable: disk', () => {
 describe('overview', () => {
   const G = 1024 ** 3
   const list = [
-    { name: 'p7y-a', owner: 'u@x', status: 'running', disk: { used: 5 * G, limit: 20 * G, over: false } },
-    { name: 'p7y-b', owner: 'u@x', status: 'exited', disk: { used: 25 * G, limit: 20 * G, over: true } },
-    { name: 'p7y-c', owner: 'admin', status: 'deep_sleep', disk: { used: G, limit: 20 * G, over: false } },
+    { name: 'p9m-a', owner: 'u@x', status: 'running', disk: { used: 5 * G, limit: 20 * G, over: false } },
+    { name: 'p9m-b', owner: 'u@x', status: 'exited', disk: { used: 25 * G, limit: 20 * G, over: true } },
+    { name: 'p9m-c', owner: 'admin', status: 'deep_sleep', disk: { used: G, limit: 20 * G, over: false } },
   ]
   it("a user: their sandboxes of how many allowed, the states, their own list", () => {
     const html = P.overviewHtml({ quota: 3, archived: 4, server_full: false }, list.filter(s => s.owner === 'u@x'), { isAdmin: false })
@@ -319,7 +319,7 @@ describe('overview', () => {
 
 describe('overview: only running sandboxes count', () => {
   it("a user at the limit: Running 1 / 1, and asleep or deep-sleeping ones are not counted", () => {
-    const list = [{ name: 'p7y-a', owner: 'u@x', status: 'running' }, { name: 'p7y-b', owner: 'u@x', status: 'deep_sleep' }, { name: 'p7y-c', owner: 'u@x', status: 'exited' }]
+    const list = [{ name: 'p9m-a', owner: 'u@x', status: 'running' }, { name: 'p9m-b', owner: 'u@x', status: 'deep_sleep' }, { name: 'p9m-c', owner: 'u@x', status: 'exited' }]
     const html = P.overviewHtml({ quota: 1, archived: 0, server_full: false }, list, { isAdmin: false })
     expect(html).toMatch(/Running[\s\S]*?class="ov-num">1<small> \/ 1<\/small>/)
     expect(html).toContain('limit reached: Wake lets you choose one to put to sleep')
@@ -327,7 +327,7 @@ describe('overview: only running sandboxes count', () => {
     expect(html).not.toContain('slots used')
   })
   it("the admin's running sandbox takes a place too: 1 / 200", () => {
-    const list = [{ name: 'p7y-r', owner: 'admin', status: 'running' }]
+    const list = [{ name: 'p9m-r', owner: 'admin', status: 'running' }]
     const html = P.overviewHtml({ archived: 0, server_limit: 200, server_used: 1, by_owner: [], resources: null }, list, { isAdmin: true })
     expect(html).toContain('1<small> / 200</small>')
     expect(html).toContain('199 free')
@@ -335,7 +335,7 @@ describe('overview: only running sandboxes count', () => {
   })
   // The bar under the cards read as "half the places taken" with 1 running and 1 asleep of 200
   it('the admin: the bar is the running sandboxes against the server limit, with the free places in the legend', () => {
-    const list = [{ name: 'p7y-r', owner: 'admin', status: 'running' }, { name: 'p7y-s', owner: 'u@x', status: 'exited' }, { name: 'p7y-d', owner: 'u@x', status: 'deep_sleep' }]
+    const list = [{ name: 'p9m-r', owner: 'admin', status: 'running' }, { name: 'p9m-s', owner: 'u@x', status: 'exited' }, { name: 'p9m-d', owner: 'u@x', status: 'deep_sleep' }]
     const html = P.overviewHtml({ archived: 0, server_limit: 200, server_used: 1, by_owner: [], resources: null }, list, { isAdmin: true })
     const stack = /<div class="ov-stack">[\s\S]*?<\/div>/.exec(html)?.[0] ?? ''
     expect(stack).toContain('class="r" style="width:0.5%"')
@@ -345,25 +345,25 @@ describe('overview: only running sandboxes count', () => {
     expect(html).toContain('1 asleep')
   })
   it('the admin: asleep sandboxes take no place (letting them sleep frees it): 1 running of 19 is 1 / 200', () => {
-    const list = [{ name: 'p7y-r', owner: 'admin', status: 'running' }, ...Array.from({ length: 18 }, (_, i) => ({ name: `p7y-s${i}`, owner: 'u@x', status: 'exited' }))]
+    const list = [{ name: 'p9m-r', owner: 'admin', status: 'running' }, ...Array.from({ length: 18 }, (_, i) => ({ name: `p9m-s${i}`, owner: 'u@x', status: 'exited' }))]
     const html = P.overviewHtml({ archived: 0, server_limit: 200, server_used: 1, by_owner: [], resources: null }, list, { isAdmin: true })
     expect(html).toMatch(/Sandbox places used[\s\S]*?1<small> \/ 200<\/small>/)
     expect(html).toContain('199 free')
   })
   it("the admin: users' sandboxes in deep sleep are not counted against the server limit", () => {
-    const list = [{ name: 'p7y-a', owner: 'u@x', status: 'running' }, { name: 'p7y-b', owner: 'u@x', status: 'deep_sleep' }]
+    const list = [{ name: 'p9m-a', owner: 'u@x', status: 'running' }, { name: 'p9m-b', owner: 'u@x', status: 'deep_sleep' }]
     expect(P.overviewHtml({ archived: 0, server_limit: 5, server_used: 1, by_owner: [], resources: null }, list, { isAdmin: true })).toContain('1<small> / 5</small>')
   })
 })
 
 describe('overview: the running limit', () => {
   it('the admin: an owner row shows running / quota', () => {
-    const list = [{ name: 'p7y-a', owner: 'u@x', status: 'running' }]
+    const list = [{ name: 'p9m-a', owner: 'u@x', status: 'running' }]
     const html = P.overviewHtml({ archived: 0, server_limit: null, server_used: 1, by_owner: [{ owner: 'u@x', quota: 3, total: 1, archived: 0 }], resources: null }, list, { isAdmin: true })
     expect(html).toContain('1 / 3</td>')
   })
   it('a user: Running 1 / 3, Asleep a plain count, no slot count', () => {
-    const list = [{ name: 'p7y-c03', owner: 'u@x', status: 'running' }, { name: 'p7y-c02', owner: 'u@x', status: 'exited' }, { name: 'p7y-c01', owner: 'u@x', status: 'deep_sleep' }]
+    const list = [{ name: 'p9m-c03', owner: 'u@x', status: 'running' }, { name: 'p9m-c02', owner: 'u@x', status: 'exited' }, { name: 'p9m-c01', owner: 'u@x', status: 'deep_sleep' }]
     const html = P.overviewHtml({ quota: 3, archived: 0, server_full: false }, list, { isAdmin: false })
     expect(html).toMatch(/Running[\s\S]*?class="ov-num">1<small> \/ 3<\/small>/)
     expect(html).toMatch(/Asleep[\s\S]*?class="ov-num">1</)
@@ -386,7 +386,7 @@ describe('placesBadge: the server places in the topbar', () => {
 
 // SANDBOX_QUOTA is guaranteed, SANDBOX_QUOTA_MAX (max_running) the most while the server has room
 describe('the guarantee and the maximum', () => {
-  const mine = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `p7y-${i}`, owner: 'u@x', status: 'running' }))
+  const mine = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `p9m-${i}`, owner: 'u@x', status: 'running' }))
   it('a user under the guarantee: how many more are guaranteed, and how far they may go', () => {
     const html = P.overviewHtml({ quota: 3, max_running: 10, archived: 0, server_full: false }, mine(1), { isAdmin: false })
     expect(html).toMatch(/Running[\s\S]*?class="ov-num">1<small> \/ 3<\/small>/)
@@ -414,12 +414,12 @@ describe('the guarantee and the maximum', () => {
 // Two running of two read as full, with one more allowed
 describe("overview: a user's bar", () => {
   it('is scaled to their running limit, not to the sandboxes they have', () => {
-    const list = [{ name: 'p7y-a', owner: 'u@x', status: 'running' }, { name: 'p7y-b', owner: 'u@x', status: 'running' }]
+    const list = [{ name: 'p9m-a', owner: 'u@x', status: 'running' }, { name: 'p9m-b', owner: 'u@x', status: 'running' }]
     const html = P.overviewHtml({ quota: 3, max_running: 4, archived: 0, server_full: false }, list, { isAdmin: false })
     expect(/<div class="ov-stack">[\s\S]*?<\/div>/.exec(html)?.[0] ?? '').toContain('class="r" style="width:50.0%"')
   })
   it('with more sandboxes than the limit, or no limit, it is the split of the list', () => {
-    const list = [{ name: 'p7y-a', owner: 'u@x', status: 'running' }, { name: 'p7y-b', owner: 'u@x', status: 'exited' }, { name: 'p7y-c', owner: 'u@x', status: 'exited' }]
+    const list = [{ name: 'p9m-a', owner: 'u@x', status: 'running' }, { name: 'p9m-b', owner: 'u@x', status: 'exited' }, { name: 'p9m-c', owner: 'u@x', status: 'exited' }]
     expect(P.overviewHtml({ quota: 2, max_running: 2, archived: 0, server_full: false }, list, { isAdmin: false })).toContain('class="r" style="width:33.3%"')
     expect(P.overviewHtml({ quota: null, max_running: null, archived: 0, server_full: false }, list, { isAdmin: false })).toContain('class="r" style="width:33.3%"')
   })
@@ -439,48 +439,48 @@ describe('the Files tab', () => {
     expect(asleep).toContain('data-act="start"')
   })
   it('the four folders, the path to click back along, folders to open, files to download', () => {
-    const html = P.filesView(listing, { ...ctx, name: 'p7y-shop' })
+    const html = P.filesView(listing, { ...ctx, name: 'p9m-shop' })
     expect(html).toContain('data-files-path="/srv"')
     expect(html).toContain('data-files-path="/root"') // the crumb back to /root
     expect(html).toContain('data-files-path="/root/app/src"')
-    expect(html).toContain('href="/sandboxes/p7y-shop/files/content?path=%2Froot%2Fapp%2Fnotes%20%3Cb%3E.md"')
+    expect(html).toContain('href="/sandboxes/p9m-shop/files/content?path=%2Froot%2Fapp%2Fnotes%20%3Cb%3E.md"')
     expect(html).toContain('notes &lt;b&gt;.md')
     expect(html).not.toContain('notes <b>')
     expect(html).toContain('2 KB')
     expect(html).toContain('data-files-delete="/root/app/notes &lt;b&gt;.md"')
     expect(html).toContain('data-files-input')
     expect(html).toContain('up to 100 MB a file')
-    expect(html).toContain('href="/sandboxes/p7y-shop/files/content?path=%2Froot%2Fapp"') // the folder as a tar
+    expect(html).toContain('href="/sandboxes/p9m-shop/files/content?path=%2Froot%2Fapp"') // the folder as a tar
   })
   it('an empty folder says where files can go', () => {
-    expect(P.filesView({ ...listing, entries: [] }, { ...ctx, name: 'p7y-shop' })).toContain('Empty: drop files here')
+    expect(P.filesView({ ...listing, entries: [] }, { ...ctx, name: 'p9m-shop' })).toContain('Empty: drop files here')
   })
   const vol = { name: 'shop_db', path: '/var/lib/docker/volumes/shop_db/_data', project: 'shop', containers: [{ name: 'shop-db-1', service: 'db', running: true, mount: '/var/lib/postgresql/data' }] }
   it('a Volumes chip next to the four folders', () => {
-    const html = P.filesView(listing, { ...ctx, name: 'p7y-shop' })
+    const html = P.filesView(listing, { ...ctx, name: 'p9m-shop' })
     expect(html).toContain('data-files-volumes')
     expect(html).not.toMatch(/files-root on[^>]*data-files-volumes/)
   })
   it('in a volume: the crumbs start at the volume, a running app using it is a warning', () => {
-    const html = P.filesView({ ...listing, path: `${vol.path}/base` }, { ...ctx, name: 'p7y-shop', volume: vol })
+    const html = P.filesView({ ...listing, path: `${vol.path}/base` }, { ...ctx, name: 'p9m-shop', volume: vol })
     expect(html).toMatch(/files-root on[^>]*data-files-volumes/)
     expect(html).toContain(`data-files-path="${vol.path}">shop_db</button> / <button class="link" data-files-path="${vol.path}/base">base</button>`)
     expect(html).toContain('db (shop-db-1) is running')
     expect(html).not.toContain('Only /root, /home, /srv and /opt are shown')
-    const stopped = P.filesView({ ...listing, path: vol.path }, { ...ctx, name: 'p7y-shop', volume: { ...vol, containers: [{ ...vol.containers[0], running: false }] } })
+    const stopped = P.filesView({ ...listing, path: vol.path }, { ...ctx, name: 'p9m-shop', volume: { ...vol, containers: [{ ...vol.containers[0], running: false }] } })
     expect(stopped).not.toContain('is running')
   })
   it('a container named as its service is named once', () => {
     const solo = { ...vol, containers: [{ name: 'portainer', service: 'portainer', running: true, mount: '/data' }] }
-    expect(P.filesView({ ...listing, path: vol.path }, { ...ctx, name: 'p7y-shop', volume: solo })).toContain('>portainer is running')
+    expect(P.filesView({ ...listing, path: vol.path }, { ...ctx, name: 'p9m-shop', volume: solo })).toContain('>portainer is running')
   })
   it("volumesView: the sandbox's volumes to open, who uses them; none says so", () => {
-    const html = P.volumesView({ volumes: [vol, { name: '3f9a <x>', path: '/var/lib/docker/volumes/3f9a/_data', project: null, containers: [] }] }, { ...ctx, name: 'p7y-shop' })
+    const html = P.volumesView({ volumes: [vol, { name: '3f9a <x>', path: '/var/lib/docker/volumes/3f9a/_data', project: null, containers: [] }] }, { ...ctx, name: 'p9m-shop' })
     expect(html).toContain(`data-files-path="${vol.path}"`)
     expect(html).toContain('/var/lib/postgresql/data')
     expect(html).toContain('3f9a &lt;x&gt;')
     expect(html).toMatch(/files-root on[^>]*data-files-volumes/)
-    expect(P.volumesView({ volumes: [] }, { ...ctx, name: 'p7y-shop' })).toContain('No volumes')
+    expect(P.volumesView({ volumes: [] }, { ...ctx, name: 'p9m-shop' })).toContain('No volumes')
   })
 })
 
@@ -499,12 +499,12 @@ describe('Apps: the Hub', () => {
   })
 })
 
-describe('Apps: an unusable p7y.image', () => {
+describe('Apps: an unusable p9m.image', () => {
   it('says why the image is ignored', () => {
     const s = { ...running, hub: { enabled: true, url: 'https://hub.lvh.me', published: [], unlinked: [], bad_image: ['web'] } }
     const details = panelOf(P.renderPanel(s, ctx), 'settings')
     expect(details).toContain('<h3>Warnings</h3>')
-    expect(details).toContain('web: p7y.image is ignored: use a path inside the app, e.g. /shot.png')
+    expect(details).toContain('web: p9m.image is ignored: use a path inside the app, e.g. /shot.png')
     expect(panelOf(P.renderPanel(running, ctx), 'settings')).not.toContain('Warnings')
   })
 })
@@ -587,17 +587,17 @@ describe('Simple view', () => {
 })
 
 describe('initCommand', () => {
-  it('the /p7y:init line with the address and the sandbox', () => {
-    expect(P.initCommand('https://p7y.example.com', 'shop')).toBe('/p7y:init https://p7y.example.com shop')
+  it('the /p9m:init line with the address and the sandbox', () => {
+    expect(P.initCommand('https://p9m.example.com', 'shop')).toBe('/p9m:init https://p9m.example.com shop')
   })
   it('drops a trailing slash of the address', () => {
-    expect(P.initCommand('https://p7y.example.com/', 'shop')).toBe('/p7y:init https://p7y.example.com shop')
+    expect(P.initCommand('https://p9m.example.com/', 'shop')).toBe('/p9m:init https://p9m.example.com shop')
   })
   it('refuses what could break out of the line', () => {
-    expect(() => P.initCommand('https://p7y.example.com; rm -rf ~', 'shop')).toThrow()
-    expect(() => P.initCommand('https://p7y.example.com', 'shop $(id)')).toThrow()
-    expect(() => P.initCommand('https://p7y.example.com', 'Shop')).toThrow()
-    expect(() => P.initCommand('https://p7y.example.com', '')).toThrow()
+    expect(() => P.initCommand('https://p9m.example.com; rm -rf ~', 'shop')).toThrow()
+    expect(() => P.initCommand('https://p9m.example.com', 'shop $(id)')).toThrow()
+    expect(() => P.initCommand('https://p9m.example.com', 'Shop')).toThrow()
+    expect(() => P.initCommand('https://p9m.example.com', '')).toThrow()
   })
 })
 
@@ -609,32 +609,32 @@ describe('Apps: access', () => {
   ] }
   it('a tag for owner-only and domain apps, none for public', () => {
     const apps = panelOf(P.renderPanel(withAccess, { ...ctx, simple: true }), 'apps')
-    expect(apps).toContain('<span class="tag" title="p7y.access: owner">Owner only</span>')
-    expect(apps).toContain('<span class="tag" title="p7y.access: domain">Your domain</span>')
+    expect(apps).toContain('<span class="tag" title="p9m.access: owner">Owner only</span>')
+    expect(apps).toContain('<span class="tag" title="p9m.access: domain">Your domain</span>')
     expect((apps.match(/class="tag"/g) ?? []).length).toBe(2)
   })
-  it('Details warns about an invalid p7y.access and an owner-only app that is published', () => {
+  it('Details warns about an invalid p9m.access and an owner-only app that is published', () => {
     const d = panelOf(P.renderPanel({ ...withAccess, apps: [{ ...withAccess.apps[0], access_invalid: true }], hub: { published: [], unlinked: [], owner_only: ['adm'] } }, ctx), 'settings')
-    expect(d).toContain('web: p7y.access is not public, domain or owner; only the owner can open it')
-    expect(d).toContain('adm: published, but only its owner can open it: set p7y.access: domain')
+    expect(d).toContain('web: p9m.access is not public, domain or owner; only the owner can open it')
+    expect(d).toContain('adm: published, but only its owner can open it: set p9m.access: domain')
   })
 })
 
 describe('loadingPanel', () => {
   it("right after a click: the new sandbox's name and status at once, its details loading (no tabs yet)", () => {
-    const html = P.loadingPanel({ name: 'p7y-shop', status: 'exited' }, ctx)
+    const html = P.loadingPanel({ name: 'p9m-shop', status: 'exited' }, ctx)
     expect(html).toContain('<h2>shop</h2>')
     expect(html).toContain('asleep')
     expect(html).toContain('Loading')
     expect(html).not.toContain('role="tab"')
   })
   it('escapes the name', () => {
-    expect(P.loadingPanel({ name: 'p7y-<x>', status: 'running' }, ctx)).not.toContain('<x>')
+    expect(P.loadingPanel({ name: 'p9m-<x>', status: 'running' }, ctx)).not.toContain('<x>')
   })
 })
 
 describe('matchesFilter (the sandbox list filter)', () => {
-  const shop = { name: 'p7y-shop', owner: 'anna@example.com', status: 'exited', template: 'starter', runtime: 'sysbox', apps: [{ service: 'web', url: 'shop-web.lvh.me' }] }
+  const shop = { name: 'p9m-shop', owner: 'anna@example.com', status: 'exited', template: 'starter', runtime: 'sysbox', apps: [{ service: 'web', url: 'shop-web.lvh.me' }] }
   it('matches everything without text', () => {
     expect(P.matchesFilter(shop, '')).toBe(true)
     expect(P.matchesFilter(shop, '   ')).toBe(true)

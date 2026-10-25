@@ -11,7 +11,7 @@ export default async (req: Request): Promise<Response> => {
   const ok = await checkAdminLogin(form.get('username') ?? '', form.get('password') ?? '')
   if (!ok) return back('Invalid username or password')
   recordSignIn('admin')
-  // Signed in for a sandbox app (p7y.access): back to it
+  // Signed in for a sandbox app (p9m.access): back to it
   const next = nextAfterSignIn(req)
   const headers = new Headers({ location: next ?? '/' })
   headers.append('set-cookie', cookieHeader(SESSION_COOKIE, createSession('admin', 'admin'), SESSION_MAX_AGE))

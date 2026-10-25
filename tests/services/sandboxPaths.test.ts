@@ -4,10 +4,10 @@ import os from 'os'
 import path from 'path'
 import { ownerDirName, ownerOfCompose, listSandboxDirs, entriesIn, sandboxDir, sandboxParent, newSandboxDir, archiveRoot, forgetSandboxDir } from '../../services/sandboxPaths'
 
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-sp-')).replace(/\\/g, '/')
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-sp-')).replace(/\\/g, '/')
 const put = (dir: string, owner?: string) => {
   fs.mkdirSync(dir, { recursive: true })
-  fs.writeFileSync(`${dir}/docker-compose.yml`, owner ? `services:\n  sandbox:\n    labels:\n      p7y.owner: ${owner}\n` : 'services: {}\n')
+  fs.writeFileSync(`${dir}/docker-compose.yml`, owner ? `services:\n  sandbox:\n    labels:\n      p9m.owner: ${owner}\n` : 'services: {}\n')
 }
 
 // Where sandboxes sat before opt/sandboxes/<owner>/<name> (opt/users): not looked at any more
@@ -28,9 +28,9 @@ describe('ownerDirName', () => {
 })
 
 describe('ownerOfCompose', () => {
-  it('reads the p7y.owner label only, admin without one', () => {
-    expect(ownerOfCompose('      p7y.owner: "a@b.c"\n')).toBe('a@b.c')
-    expect(ownerOfCompose('      p7y.owner: bob\n')).toBe('bob')
+  it('reads the p9m.owner label only, admin without one', () => {
+    expect(ownerOfCompose('      p9m.owner: "a@b.c"\n')).toBe('a@b.c')
+    expect(ownerOfCompose('      p9m.owner: bob\n')).toBe('bob')
     expect(ownerOfCompose('      leander.owner: bob\n')).toBe('admin')
     expect(ownerOfCompose('services: {}')).toBe('admin')
   })
@@ -38,39 +38,39 @@ describe('ownerOfCompose', () => {
 
 describe('listSandboxDirs / sandboxDir', () => {
   it('lists the per-owner layout only', () => {
-    put(`${process.env.SANDBOXES_DIR}/a@b.c/p7y-new`, 'a@b.c')
-    put(`${OLD_USERS}/p7y-old`, 'admin')
-    expect(listSandboxDirs()).toEqual([{ name: 'p7y-new', owner: 'a@b.c', dir: `${process.env.SANDBOXES_DIR}/a@b.c/p7y-new` }])
-    expect(sandboxDir('p7y-new')).toBe(`${process.env.SANDBOXES_DIR}/a@b.c/p7y-new`)
-    expect(sandboxDir('p7y-old')).toBeNull()
-    expect(sandboxDir('p7y-none')).toBeNull()
+    put(`${process.env.SANDBOXES_DIR}/a@b.c/p9m-new`, 'a@b.c')
+    put(`${OLD_USERS}/p9m-old`, 'admin')
+    expect(listSandboxDirs()).toEqual([{ name: 'p9m-new', owner: 'a@b.c', dir: `${process.env.SANDBOXES_DIR}/a@b.c/p9m-new` }])
+    expect(sandboxDir('p9m-new')).toBe(`${process.env.SANDBOXES_DIR}/a@b.c/p9m-new`)
+    expect(sandboxDir('p9m-old')).toBeNull()
+    expect(sandboxDir('p9m-none')).toBeNull()
     expect(sandboxDir('../etc')).toBeNull()
   })
   it('sandboxParent, newSandboxDir, archiveRoot', () => {
-    put(`${process.env.SANDBOXES_DIR}/admin/p7y-y`, 'admin')
-    expect(sandboxParent('p7y-y')).toBe(`${process.env.SANDBOXES_DIR}/admin`)
-    expect(sandboxParent('p7y-none')).toBe(process.env.SANDBOXES_DIR)
-    expect(newSandboxDir('Bob', 'p7y-z')).toBe(`${process.env.SANDBOXES_DIR}/bob/p7y-z`)
+    put(`${process.env.SANDBOXES_DIR}/admin/p9m-y`, 'admin')
+    expect(sandboxParent('p9m-y')).toBe(`${process.env.SANDBOXES_DIR}/admin`)
+    expect(sandboxParent('p9m-none')).toBe(process.env.SANDBOXES_DIR)
+    expect(newSandboxDir('Bob', 'p9m-z')).toBe(`${process.env.SANDBOXES_DIR}/bob/p9m-z`)
     expect(archiveRoot('a@b.c')).toBe(`${process.env.ARCHIVE_DIR}/a@b.c`)
   })
 })
 
 describe('entriesIn', () => {
   it('without a directory: every sandbox; with one: the sandboxes in that directory (tests)', () => {
-    put(`${process.env.SANDBOXES_DIR}/admin/p7y-a`, 'admin')
+    put(`${process.env.SANDBOXES_DIR}/admin/p9m-a`, 'admin')
     const flat = tmp()
-    put(`${flat}/p7y-f`, 'bob')
+    put(`${flat}/p9m-f`, 'bob')
     fs.writeFileSync(`${flat}/stray-file`, '')
-    expect(entriesIn().map(e => e.name)).toEqual(['p7y-a'])
-    expect(entriesIn(flat)).toEqual([{ name: 'p7y-f', owner: 'bob', dir: `${flat}/p7y-f` }])
+    expect(entriesIn().map(e => e.name)).toEqual(['p9m-a'])
+    expect(entriesIn(flat)).toEqual([{ name: 'p9m-f', owner: 'bob', dir: `${flat}/p9m-f` }])
     expect(entriesIn('/nonexistent')).toEqual([])
   })
 })
 
 describe('review fixes', () => {
   it("reads an owner label with an apostrophe or quotes (JSON-quoted as written at create)", () => {
-    expect(ownerOfCompose(`      p7y.owner: ${JSON.stringify("o'brien@x.com")}\n`)).toBe("o'brien@x.com")
-    expect(ownerOfCompose(`      p7y.owner: ${JSON.stringify('a"b@x')}\n`)).toBe('a"b@x')
-    expect(ownerOfCompose("      p7y.owner: 'it''s@x'\n")).toBe("it's@x")
+    expect(ownerOfCompose(`      p9m.owner: ${JSON.stringify("o'brien@x.com")}\n`)).toBe("o'brien@x.com")
+    expect(ownerOfCompose(`      p9m.owner: ${JSON.stringify('a"b@x')}\n`)).toBe('a"b@x')
+    expect(ownerOfCompose("      p9m.owner: 'it''s@x'\n")).toBe("it's@x")
   })
 })

@@ -3,7 +3,7 @@ import { portainerAccess, type PortainerCall } from '../../services/portainerTok
 
 const URL_ = 'https://shop-portainer.lvh.me'
 const sandbox = (over: Record<string, unknown> = {}) => ({
-  name: 'p7y-shop', status: 'running', tunnel_urls: ['shop-portainer.lvh.me', 'shop-web.lvh.me'],
+  name: 'p9m-shop', status: 'running', tunnel_urls: ['shop-portainer.lvh.me', 'shop-web.lvh.me'],
   extras: { portainer_url: URL_, portainer_password: 'pw' }, ...over,
 })
 
@@ -34,14 +34,14 @@ describe('portainerAccess', () => {
   it('makes an API token as the sandbox admin: no password goes to the agent', async () => {
     const p = fakePortainer()
     const wake = vi.fn(async () => {})
-    const got = await portainerAccess(sandbox(), 'p7y: laptop agent', { call: p.call, wake, ...fast })
+    const got = await portainerAccess(sandbox(), 'p9m: laptop agent', { call: p.call, wake, ...fast })
     expect(got).toEqual({ url: URL_, token: 'ptr_abc' })
     expect(wake).not.toHaveBeenCalled()
     expect(p.calls.every(c => c.host === 'shop-portainer.lvh.me')).toBe(true)
     expect(p.calls.find(c => c.path === '/api/auth')!.body).toEqual({ username: 'admin', password: 'pw' })
     const tok = p.calls.find(c => c.path === '/api/users/7/tokens')!
     expect(tok.method).toBe('POST')
-    expect(tok.body).toEqual({ description: 'p7y: laptop agent', password: 'pw' })
+    expect(tok.body).toEqual({ description: 'p9m: laptop agent', password: 'pw' })
     expect(tok.headers).toEqual({ Authorization: 'Bearer J' })
   })
 
@@ -49,7 +49,7 @@ describe('portainerAccess', () => {
     const p = fakePortainer({ waitingFor: 3 })
     const wake = vi.fn(async () => {})
     const got = await portainerAccess(sandbox({ status: 'exited' }), 'x', { call: p.call, wake, ...fast })
-    expect(wake).toHaveBeenCalledWith('p7y-shop')
+    expect(wake).toHaveBeenCalledWith('p9m-shop')
     expect(got).toEqual({ url: URL_, token: 'ptr_abc' })
   })
 

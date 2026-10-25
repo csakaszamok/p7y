@@ -21,7 +21,7 @@ import { filesMaxUpload } from "./services/sandboxFiles";
 import { attachTerminals } from "./services/terminalServer";
 import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
-import { repoInfo, p7yVersion } from "./services/repoInfo";
+import { repoInfo, p9mVersion } from "./services/repoInfo";
 import { isHubHost } from "./services/hub/config";
 import { handleHub } from "./services/hub/router";
 import { mcpCaller, mcpToolsFor } from "./services/mcp";
@@ -138,7 +138,7 @@ async function buildSpec(): Promise<object> {
   const apiTitle = process.env.API_TITLE ?? "Rododentron API";
   return {
     openapi: "3.0.0",
-    info: { title: apiTitle, version: p7yVersion() ?? "0.0.0" },
+    info: { title: apiTitle, version: p9mVersion() ?? "0.0.0" },
     components: { securitySchemes: { bearerAuth: { type: "http", scheme: "bearer" } } },
     ...(hasAuth ? { security: [{ bearerAuth: [] }] } : {}),
     paths,
@@ -220,7 +220,7 @@ async function handle(req: IncomingMessage, res: ServerResponse, internal: boole
     return;
   }
 
-  // The Hub host: only the Hub's own routes; Purgatory's API, /mcp and /swagger never answer here
+  // The Hub host: only the Hub's own routes; Purgatorium's API, /mcp and /swagger never answer here
   if (isHubHost(req.headers.host)) {
     try {
       await writeWebResponse(await handleHub(await toWebRequest(req)), res);
@@ -242,7 +242,7 @@ async function handle(req: IncomingMessage, res: ServerResponse, internal: boole
       const caller = mcpCaller(webReq);
       const out = caller instanceof Response ? caller
         // Per request: the tools listed depend on the caller's token
-        : await createMcpHandler({ name: "p7y", version: repoInfo().version ?? undefined, include: mcpToolsFor(caller) })(webReq);
+        : await createMcpHandler({ name: "p9m", version: repoInfo().version ?? undefined, include: mcpToolsFor(caller) })(webReq);
       await writeWebResponse(out, res);
     } catch (err) {
       if (tooLarge(err, res)) return;
@@ -313,9 +313,9 @@ startTcpGateway({
   .then(() => console.log(`[tcp] gateway on :${tcpPort} (certificate: ${tcpCreds.source})`))
   .catch(err => console.error("[tcp] gateway failed to start:", err));
 startDeepSleepScheduler();
-// p7y.access of the running sandboxes' apps, read every 10 s (Traefik reads the middlewares every 2 s)
+// p9m.access of the running sandboxes' apps, read every 10 s (Traefik reads the middlewares every 2 s)
 startAccessRefresher();
-// A running sandbox without a Sablier session (started outside p7y) would never sleep: open its session
+// A running sandbox without a Sablier session (started outside p9m) would never sleep: open its session
 startSessionWatch();
 startUsageSampler(10_000);
 startDiskSampler();

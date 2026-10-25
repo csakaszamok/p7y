@@ -14,7 +14,7 @@ vi.mock('../../../services/sandbox', () => ({
     })
   }
 }))
-vi.mock('../../../services/tokens', () => ({ resolveToken: vi.fn((t: string) => t === 'p7y_user' ? { owner: 'u@example.com', sandbox: null } : null) }))
+vi.mock('../../../services/tokens', () => ({ resolveToken: vi.fn((t: string) => t === 'p9m_user' ? { owner: 'u@example.com', sandbox: null } : null) }))
 // A Docker Desktop-like host by default: no sysbox, so DEFAULT_RUNTIME=auto gives dind
 let hostRuntimes = ['runc']
 vi.mock('../../../services/docker', () => ({ hostResources: vi.fn(async () => ({ cpus: 20, memory: 32 * 1024 ** 3 })), dockerRuntimes: vi.fn(async () => hostRuntimes) }))
@@ -66,7 +66,7 @@ describe('POST /sandboxes', () => {
   it('sleep limits: a user may not create above them (the admin may)', async () => {
     vi.stubEnv('SANDBOX_MAX_IDLE_TIMEOUT', '2h')
     try {
-      const over = await handler(jsonReq({ name: 'lim1', idle_timeout: 'off' }, 'Bearer p7y_user'))
+      const over = await handler(jsonReq({ name: 'lim1', idle_timeout: 'off' }, 'Bearer p9m_user'))
       expect(over.status).toBe(400)
       expect((await over.json()).error).toMatch(/never is not allowed on this server: at most 2h/)
       expect((await handler(jsonReq({ name: 'lim2', idle_timeout: 'off' }))).status).toBe(201)
@@ -238,7 +238,7 @@ describe('POST /sandboxes', () => {
   it('takes cpus and memory within the ceiling, and refuses a user over it', async () => {
     await handler(jsonReq({ name: 'r1', cpus: 3, memory: '6g' }))
     expect(vi.mocked(sandboxService.createSandbox).mock.lastCall![9]).toEqual({ cpus: 3, memory: 6 * 1024 ** 3 })
-    const over = await handler(jsonReq({ name: 'r2', cpus: 6 }, 'Bearer p7y_user'))
+    const over = await handler(jsonReq({ name: 'r2', cpus: 6 }, 'Bearer p9m_user'))
     expect(over.status).toBe(403)
     expect((await over.json()).error).toBe('at most 4 CPUs for a sandbox: ask the administrator for more')
   })

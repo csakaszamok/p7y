@@ -6,25 +6,25 @@
 // Needs the server's SESSION_SECRET to sign the users' sessions: run it where that secret is at hand (the server,
 // or your machine with it in the environment), never put it in a file in the repository. Node 18+, no packages.
 //
-//   P7Y_URL=https://p7y.demo.example.com SESSION_SECRET=… USERS=20 node tests/load/workshop.mjs
+//   P9M_URL=https://p9m.demo.example.com SESSION_SECRET=… USERS=20 node tests/load/workshop.mjs
 //
 // USERS (20), REQUESTS per app (50), USER_DOMAIN for the users' e-mails (example.com: must pass
 // OIDC_ALLOWED_DOMAINS / _EMAILS if set), KEEP=1 keeps the sandboxes, INSECURE=1 accepts a self-signed certificate
 // (a local lvh.me stack). Watch the server meanwhile: `docker stats --no-stream`, `free -g`, `df -h`.
 import crypto from 'node:crypto'
 
-const P7Y_URL = (process.env.P7Y_URL ?? '').replace(/\/$/, '')
+const P9M_URL = (process.env.P9M_URL ?? '').replace(/\/$/, '')
 const SECRET = process.env.SESSION_SECRET
 const USERS = Number(process.env.USERS ?? 20)
 const REQUESTS = Number(process.env.REQUESTS ?? 50)
 const USER_DOMAIN = process.env.USER_DOMAIN ?? 'example.com'
 const KEEP = process.env.KEEP === '1'
-if (!P7Y_URL || !SECRET) { console.error('set P7Y_URL and SESSION_SECRET'); process.exit(2) }
+if (!P9M_URL || !SECRET) { console.error('set P9M_URL and SESSION_SECRET'); process.exit(2) }
 if (process.env.INSECURE === '1') process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
-const DOMAIN = new URL(P7Y_URL).host.replace(/^p7y\./, '')
+const DOMAIN = new URL(P9M_URL).host.replace(/^p9m\./, '')
 const RUN = crypto.randomBytes(2).toString('hex')
 
-// A session as Purgatory signs it (services/session.ts): base64url(JSON) "." HMAC-SHA256 in base64url
+// A session as Purgatorium signs it (services/session.ts): base64url(JSON) "." HMAC-SHA256 in base64url
 const session = sub => {
   const data = Buffer.from(JSON.stringify({ sub, role: 'user', exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')
   return `${data}.${crypto.createHmac('sha256', SECRET).update(data).digest('base64url')}`
@@ -43,8 +43,8 @@ async function user(i) {
   const n = String(i + 1).padStart(2, '0')
   const sub = `load${n}@${USER_DOMAIN}`
   const name = `ld${RUN}${n}`
-  const cookie = `p7y_session=${session(sub)}`
-  const api = (path, init = {}) => fetch(`${P7Y_URL}${path}`, { ...init, redirect: 'manual', headers: { cookie, origin: P7Y_URL, 'content-type': 'application/json', ...(init.headers ?? {}) } })
+  const cookie = `p9m_session=${session(sub)}`
+  const api = (path, init = {}) => fetch(`${P9M_URL}${path}`, { ...init, redirect: 'manual', headers: { cookie, origin: P9M_URL, 'content-type': 'application/json', ...(init.headers ?? {}) } })
   const pub = `https://${name}-web.${DOMAIN}`, own = `https://${name}-own.${DOMAIN}`
   const state = { name, own, created: false }
   try {
@@ -55,12 +55,12 @@ async function user(i) {
   web:
     image: traefik/whoami:latest
     ports: ["8080:80"]
-    labels: { p7y.subdomain: web }
+    labels: { p9m.subdomain: web }
     restart: unless-stopped
   own:
     image: traefik/whoami:latest
     ports: ["8081:80"]
-    labels: { p7y.subdomain: own, p7y.access: owner }
+    labels: { p9m.subdomain: own, p9m.access: owner }
     restart: unless-stopped
 `
     const created = await time('create sandbox', () => api('/sandboxes', { method: 'POST', body: JSON.stringify({ name, template: 'empty', compose, idle_timeout: '2h' }) }))
@@ -83,25 +83,25 @@ async function user(i) {
       await r.arrayBuffer()
     }
 
-    // The sign-in hop: app → Purgatory (signed in) → the app's landing with a ticket → the app cookie
+    // The sign-in hop: app → Purgatorium (signed in) → the app's landing with a ticket → the app cookie
     const appCookie = await time('owner app sign-in hop', async () => {
       const toStart = await fetch(`${own}/x`, { redirect: 'manual' })
       const start = toStart.headers.get('location') ?? ''
-      if (!start.startsWith(`${P7Y_URL}/auth/app/start?`)) fail(sub, 'hop', `not sent to sign-in (${toStart.status} ${start}) ${(await toStart.text()).slice(0, 120).replace(/s+/g, ' ')}`)
+      if (!start.startsWith(`${P9M_URL}/auth/app/start?`)) fail(sub, 'hop', `not sent to sign-in (${toStart.status} ${start}) ${(await toStart.text()).slice(0, 120).replace(/s+/g, ' ')}`)
       const toLanding = await fetch(start, { redirect: 'manual', headers: { cookie } })
       const landing = toLanding.headers.get('location') ?? ''
-      if (!landing.startsWith(`${own}/__p7y/auth?`)) fail(sub, 'hop', `no ticket (${toLanding.status} ${landing})`)
+      if (!landing.startsWith(`${own}/__p9m/auth?`)) fail(sub, 'hop', `no ticket (${toLanding.status} ${landing})`)
       const back = await fetch(landing, { redirect: 'manual' })
       const set = back.headers.get('set-cookie') ?? ''
-      if (!set.startsWith('__p7y_app=')) fail(sub, 'hop', `no app cookie (${back.status})`)
+      if (!set.startsWith('__p9m_app=')) fail(sub, 'hop', `no app cookie (${back.status})`)
       return set.split(';')[0]
     })
     for (let k = 0; k < REQUESTS; k++) {
       const r = await time('owner app request (forwardAuth)', () => fetch(`${own}/`, { redirect: 'manual', headers: { cookie: appCookie } }))
       const body = await r.text()
       if (r.status !== 200) fail(sub, 'owner app', `status ${r.status}`)
-      if (k === 0 && !new RegExp(`^X-P7y-User: ${sub.replace(/[.]/g, '\\.')}`, 'mi').test(body)) fail(sub, 'owner app', 'the app does not see who is viewing')
-      if (k === 0 && /__p7y_app/.test(body)) fail(sub, 'owner app', 'the app sees the app cookie')
+      if (k === 0 && !new RegExp(`^X-P9m-User: ${sub.replace(/[.]/g, '\\.')}`, 'mi').test(body)) fail(sub, 'owner app', 'the app does not see who is viewing')
+      if (k === 0 && /__p9m_app/.test(body)) fail(sub, 'owner app', 'the app sees the app cookie')
     }
     return { ...state, full, api, cookie, sub }
   } catch (err) {
@@ -112,7 +112,7 @@ async function user(i) {
 
 async function crossCheck(me, other) {
   if (me.failed || other.failed) return
-  const r = await time("someone else's owner app (refused)", () => fetch(`${P7Y_URL}/auth/app/start?rd=${encodeURIComponent(`${other.own}/`)}`, { redirect: 'manual', headers: { cookie: me.cookie } }))
+  const r = await time("someone else's owner app (refused)", () => fetch(`${P9M_URL}/auth/app/start?rd=${encodeURIComponent(`${other.own}/`)}`, { redirect: 'manual', headers: { cookie: me.cookie } }))
   if (r.status !== 403) failures.push(`${me.sub} · cross-user: ${other.own} gave ${r.status}, not 403`)
 }
 
@@ -125,7 +125,7 @@ async function sleepAndWake(u) {
       for (let k = 0; k < 60; k++) {
         const r = await fetch(`https://${u.name}-web.${DOMAIN}/`, { redirect: 'manual' })
         const body = await r.text()
-        if (r.status === 200 && !body.includes('data-p7y-waiting')) return
+        if (r.status === 200 && !body.includes('data-p9m-waiting')) return
         await sleep(1000)
       }
       fail(u.sub, 'wake', 'not awake within 60 s')
@@ -138,12 +138,12 @@ const stat = xs => {
   return { n: s.length, p50: q(0.5), p95: q(0.95), max: s[s.length - 1] }
 }
 
-console.log(`${USERS} users at once against ${P7Y_URL} (sandboxes ld${RUN}NN), ${REQUESTS} requests per app`)
+console.log(`${USERS} users at once against ${P9M_URL} (sandboxes ld${RUN}NN), ${REQUESTS} requests per app`)
 const t0 = performance.now()
 const users = await Promise.all(Array.from({ length: USERS }, (_, i) => user(i)))
 await Promise.all(users.map((u, i) => crossCheck(u, users[(i + 1) % users.length])))
 await Promise.all(users.map(sleepAndWake))
-if (!KEEP) await Promise.all(users.filter(u => u.created).map(u => time('archive', () => u.api(`/sandboxes/${u.full ?? `p7y-${u.name}`}`, { method: 'DELETE' })).catch(() => {})))
+if (!KEEP) await Promise.all(users.filter(u => u.created).map(u => time('archive', () => u.api(`/sandboxes/${u.full ?? `p9m-${u.name}`}`, { method: 'DELETE' })).catch(() => {})))
 
 console.log(`\n${'step'.padEnd(46)}${'n'.padStart(6)}${'p50'.padStart(9)}${'p95'.padStart(9)}${'max'.padStart(9)}  (ms)`)
 for (const [step, xs] of times) {

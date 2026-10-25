@@ -7,7 +7,7 @@ Thanks for helping. Bug reports, fixes and documentation improvements are all we
 You need Docker with the compose plugin, and Node.js 22 for the unit tests.
 
 ```bash
-git clone https://github.com/csakaszamok/p7y.git && cd p7y
+git clone https://github.com/csakaszamok/p9m.git && cd p9m
 ./setup.sh
 echo 'COMPOSE_PATH_SEPARATOR=:' >> .env
 echo 'COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml' >> .env
@@ -15,7 +15,7 @@ docker compose up -d --build
 npm ci
 ```
 
-`docker-compose.dev.yml` builds the image from the checkout and mounts `server.ts`, `routes/`, `services/`, `ui/`, `templates/` and `runtimes/` into the container, so a code, template or runtime change applies on the next request, without a rebuild. It also gives `p7y-init` the checkout's Sablier themes, error pages, registry config and `traefik/errors.yml`: a change to the error pages or `traefik/errors.yml` applies on the next `docker compose up -d`, one to the Sablier themes or the registry config after that and `docker compose restart sablier registry` (they read them at start). Changes to the `Dockerfile` or the dependencies need `docker compose up -d --build`.
+`docker-compose.dev.yml` builds the image from the checkout and mounts `server.ts`, `routes/`, `services/`, `ui/`, `templates/` and `runtimes/` into the container, so a code, template or runtime change applies on the next request, without a rebuild. It also gives `p9m-init` the checkout's Sablier themes, error pages, registry config and `traefik/errors.yml`: a change to the error pages or `traefik/errors.yml` applies on the next `docker compose up -d`, one to the Sablier themes or the registry config after that and `docker compose restart sablier registry` (they read them at start). Changes to the `Dockerfile` or the dependencies need `docker compose up -d --build`.
 
 ## Code layout
 
@@ -28,7 +28,7 @@ npm ci
 
 - **Unit tests:** `npm test` (vitest). **Types:** `npm run typecheck` (tsc, the app code and the tests; tsx runs the code without checking types). Both run in CI on every push and pull request.
 - **End-to-end tests:** the scripts in `tests/*.sh` run against a live stack. Run the ones your change touches: `bash tests/sablier-wake.sh`, `bash tests/archive.sh`, `bash tests/isolation.sh`, `bash tests/deep-sleep.sh` (needs `DEEP_SLEEP_CHECK_INTERVAL=15s`), `bash tests/self-service.sh` (needs the mock OIDC env), `bash tests/https.sh` (self-signed `*.lvh.me`, restores HTTP afterwards), `bash tests/quota.sh` (mock OIDC env + `SANDBOX_QUOTA=1`), `bash tests/sleep-settings.sh`.
-- **Install scripts:** `bash tests/install-assets.sh` and `bash tests/setup.sh` run anywhere (also in CI). `bash tests/install.sh` installs from the release files and upgrades an old checkout; it refuses to run next to a Purgatory, so on a development machine run it in `docker:dind` (the command is at the top of the file); CI runs it on every push.
+- **Install scripts:** `bash tests/install-assets.sh` and `bash tests/setup.sh` run anywhere (also in CI). `bash tests/install.sh` installs from the release files and upgrades an old checkout; it refuses to run next to a Purgatorium, so on a development machine run it in `docker:dind` (the command is at the top of the file); CI runs it on every push.
 - **Documentation:** the site in `docs/` (MkDocs Material). Preview it with `pip install -r docs/requirements.txt` and `mkdocs serve`; `mkdocs build --strict` must pass.
 
 A pull request should add or update tests for what it changes.
@@ -43,7 +43,7 @@ Each release series has its own branch, `release/<major>.<minor>` (`release/0.3`
 - **`main`** is the newest release: it is updated when a release of the newest series is made. Pull requests do not go to `main`.
 - **A new series** starts as a `release/x.y` branch from the newest one; the branch named above, in `.github/pull_request_template.md` and as `target-branch` in `.github/dependabot.yml` then moves to it.
 
-A server can follow one series with `P7Y_VERSION=0.3` in `.env` (the newest `0.3.x` image) and a checkout of `release/0.3` (its templates and runtimes).
+A server can follow one series with `P9M_VERSION=0.3` in `.env` (the newest `0.3.x` image) and a checkout of `release/0.3` (its templates and runtimes).
 
 ## Pull requests
 
@@ -57,6 +57,6 @@ Please do not report vulnerabilities in public issues; see [SECURITY.md](SECURIT
 
 ## License
 
-Purgatory is licensed under the [AGPL-3.0](LICENSE), with the additional terms in [NOTICE](NOTICE).
+Purgatorium is licensed under the [AGPL-3.0](LICENSE), with the additional terms in [NOTICE](NOTICE).
 
-By contributing you agree that your contribution is licensed under the AGPL-3.0, and you grant the Purgatory (p7y) authors a perpetual, worldwide, royalty-free right to use, change and release it under other licenses as well (for example a commercial license, or a later license for the whole project). You confirm that you wrote it, or have the right to contribute it on these terms.
+By contributing you agree that your contribution is licensed under the AGPL-3.0, and you grant the Purgatorium (p9m) authors a perpetual, worldwide, royalty-free right to use, change and release it under other licenses as well (for example a commercial license, or a later license for the whole project). You confirm that you wrote it, or have the right to contribute it on these terms.

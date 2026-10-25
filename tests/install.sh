@@ -2,14 +2,14 @@
 # Integration test: a fresh install from the release files only (no checkout), then an old checkout
 # upgraded in place. Builds the image and needs ports 80, 443 and 8081.
 #
-# Only on a machine without Purgatory (CI, or a throw-away Docker): its networks have fixed names, so a test
+# Only on a machine without Purgatorium (CI, or a throw-away Docker): its networks have fixed names, so a test
 # stack next to a real one would join the real sandboxes' networks. On a development machine run it in a
 # docker:dind container:
 #
 #   docker run --rm --privileged -e DOCKER_TLS_CERTDIR= -e DOCKER_HOST=unix:///var/run/docker.sock \
 #     -v "$PWD:/src:ro" docker:dind sh -c \
 #     'dockerd-entrypoint.sh >/dev/null 2>&1 & until docker info >/dev/null 2>&1; do sleep 1; done; \
-#      apk add -q bash curl git && cp -r /src /p7y && bash /p7y/tests/install.sh'
+#      apk add -q bash curl git && cp -r /src /p9m && bash /p9m/tests/install.sh'
 #
 # Usage: bash tests/install.sh
 set -euo pipefail
@@ -20,27 +20,27 @@ fail() { echo -e "${RED}FAIL${RESET}: $*"; exit 1; }
 info() { echo -e "${YELLOW}----${RESET} $*"; }
 
 if docker network inspect traefik-net sablier-net >/dev/null 2>&1 \
-  || [ -n "$(docker ps -aq --filter label=p7y.managed=true)" ]; then
-  fail "this Docker already runs Purgatory (or its sandboxes): run the test in docker:dind, see the top of this file"
+  || [ -n "$(docker ps -aq --filter label=p9m.managed=true)" ]; then
+  fail "this Docker already runs Purgatorium (or its sandboxes): run the test in docker:dind, see the top of this file"
 fi
 
 repo=$PWD
-TAG=p7y-install-test
+TAG=p9m-install-test
 # The release an old checkout runs before the upgrade (needs the repository's tags)
 OLD_REF=${OLD_REF:-v0.4.2}
 git rev-parse -q --verify "$OLD_REF^{commit}" >/dev/null || fail "no $OLD_REF in this repository (fetch the tags)"
 info "building the image"
-docker build -q -t "ghcr.io/csakaszamok/p7y:$TAG" . >/dev/null
+docker build -q -t "ghcr.io/csakaszamok/p9m:$TAG" . >/dev/null
 
 # Its own compose project, so `down -v` removes only the test's volumes
-export COMPOSE_PROJECT_NAME=p7y-install-test
-base=$(mktemp -d); dir=$base/p7y; mkdir "$dir"
+export COMPOSE_PROJECT_NAME=p9m-install-test
+base=$(mktemp -d); dir=$base/p9m; mkdir "$dir"
 # Keeps the test's exit code (under set -e a failing command here would replace it); the containers leave
 # root-owned files behind, which a non-root runner removes through a container
 cleanup() {
   local rc=$?
   (cd "$dir" && docker compose down -v --remove-orphans >/dev/null 2>&1) || true
-  docker run --rm -v "$base:/b" --entrypoint sh "ghcr.io/csakaszamok/p7y:$TAG" -c 'rm -rf /b/*' >/dev/null 2>&1 || true
+  docker run --rm -v "$base:/b" --entrypoint sh "ghcr.io/csakaszamok/p9m:$TAG" -c 'rm -rf /b/*' >/dev/null 2>&1 || true
   rm -rf "$base" 2>/dev/null || true
   exit $rc
 }
@@ -49,7 +49,7 @@ trap cleanup EXIT
 api() { curl -fsS -m 10 -H "Authorization: Bearer $(sed -n 's/^ADMIN_TOKEN=//p' "$dir/.env")" "http://localhost:8081$1"; }
 wait_api() {
   for _ in $(seq 1 90); do api /templates >/dev/null 2>&1 && return 0; sleep 2; done
-  docker compose ps -a; docker compose logs --tail 40 p7y; api /templates || true
+  docker compose ps -a; docker compose logs --tail 40 p9m; api /templates || true
   fail "API not up"
 }
 # The old starter ran Portainer; the description of today's starter names the portainer template, so look at the image
@@ -57,24 +57,24 @@ has_portainer() { api /templates/starter | grep -q 'portainer/portainer'; }
 
 info "fresh install: release files only"
 cp "$repo/docker-compose.yml" "$repo/setup.sh" "$dir/"
-cp "$repo/.env.example" "$dir/.env.example"   # what setup.sh copies when P7Y_RELEASE is empty
+cp "$repo/.env.example" "$dir/.env.example"   # what setup.sh copies when P9M_RELEASE is empty
 cd "$dir"
 bash setup.sh >/dev/null && rm .env.example
-printf 'P7Y_VERSION=%s\n' "$TAG" >> .env
-docker compose up -d --quiet-pull >/dev/null 2>&1 || { docker compose ps -a; docker compose logs p7y-init; fail "up failed"; }
-[ "$(docker compose ps -a --format '{{.ExitCode}}' p7y-init)" = 0 ] && pass "p7y-init exited 0" || fail "p7y-init"
+printf 'P9M_VERSION=%s\n' "$TAG" >> .env
+docker compose up -d --quiet-pull >/dev/null 2>&1 || { docker compose ps -a; docker compose logs p9m-init; fail "up failed"; }
+[ "$(docker compose ps -a --format '{{.ExitCode}}' p9m-init)" = 0 ] && pass "p9m-init exited 0" || fail "p9m-init"
 wait_api
 has_portainer && fail "starter has Portainer" || pass "starter from the image (no Portainer)"
 [ -f dynamic/errors.yml ] && pass "dynamic/errors.yml written" || fail "no dynamic/errors.yml"
 for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && break; sleep 2; done
 curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && pass "our 404 page" || fail "404 page"
-docker run --rm --entrypoint ls -v "${COMPOSE_PROJECT_NAME}_sablier_themes:/t" "ghcr.io/csakaszamok/p7y:$TAG" /t | grep -qx p7y.html && pass "Sablier has the p7y theme" || fail "theme"
+docker run --rm --entrypoint ls -v "${COMPOSE_PROJECT_NAME}_sablier_themes:/t" "ghcr.io/csakaszamok/p9m:$TAG" /t | grep -qx p9m.html && pass "Sablier has the p9m theme" || fail "theme"
 
 info "old checkout ($OLD_REF) upgraded with git while it runs"
 # A real one: the old release's files in a git repository, running; then the checkout moves to this tree,
 # as `git pull` would (it deletes files that left the repository, and directories that became empty)
 docker compose down -v >/dev/null 2>&1
-old=$base/old/p7y; mkdir -p "$old"; dir=$old; cd "$old"
+old=$base/old/p9m; mkdir -p "$old"; dir=$old; cd "$old"
 git init -q && git config user.email test@example.com && git config user.name test
 git -C "$repo" archive "$OLD_REF" | tar -x && git add -A && git commit -qm old
 git rm -rq . && git -C "$repo" archive HEAD | tar -x   # the committed tree under test
@@ -86,13 +86,13 @@ docker compose up -d --quiet-pull >/dev/null 2>&1 || { docker compose ps -a; fai
 wait_api
 cp .env "$base/env.before"; find data opt -type f 2>/dev/null | sort > "$base/files.before"
 git checkout -q "$new"   # the pull
-printf 'P7Y_VERSION=%s
+printf 'P9M_VERSION=%s
 ' "$TAG" >> .env   # the new compose file's default would name the new release
-docker compose up -d --remove-orphans --quiet-pull >/dev/null 2>&1 || { docker compose ps -a; docker compose logs p7y-init; fail "up after the pull"; }
+docker compose up -d --remove-orphans --quiet-pull >/dev/null 2>&1 || { docker compose ps -a; docker compose logs p9m-init; fail "up after the pull"; }
 wait_api
 for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && break; sleep 2; done
 curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && pass "after the pull: our 404 page through Traefik" || fail "after the pull: Traefik lost its error pages (dynamic/)"
-code=$(curl -s -m 5 -o /dev/null -w '%{http_code}' -H 'Host: p7y.lvh.me' http://localhost/)
+code=$(curl -s -m 5 -o /dev/null -w '%{http_code}' -H 'Host: p9m.lvh.me' http://localhost/)
 case $code in 200|302) pass "after the pull: the UI through Traefik ($code)";; *) fail "after the pull: the UI through Traefik answers $code";; esac
 # Traefik must read the dynamic/ that is there now: one bound to a directory the pull deleted keeps its last
 # configuration in memory and never sees a new errors.yml or tls.yml

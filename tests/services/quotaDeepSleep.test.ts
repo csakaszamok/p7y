@@ -4,12 +4,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 let all: Array<{ name: string; owner: string; status: string }> = []
 const reset = () => {
   all = [
-    { name: 'p7y-d1', owner: 'dora@x', status: 'running' },
-    { name: 'p7y-d2', owner: 'dora@x', status: 'exited' },
-    { name: 'p7y-d3', owner: 'dora@x', status: 'deep_sleep' },
-    { name: 'p7y-d4', owner: 'dora@x', status: 'deep_sleep' },
-    { name: 'p7y-e1', owner: 'erin@x', status: 'running' },
-    ...Array.from({ length: 5 }, (_, i) => ({ name: `p7y-a${i}`, owner: 'admin', status: 'running' })),
+    { name: 'p9m-d1', owner: 'dora@x', status: 'running' },
+    { name: 'p9m-d2', owner: 'dora@x', status: 'exited' },
+    { name: 'p9m-d3', owner: 'dora@x', status: 'deep_sleep' },
+    { name: 'p9m-d4', owner: 'dora@x', status: 'deep_sleep' },
+    { name: 'p9m-e1', owner: 'erin@x', status: 'running' },
+    ...Array.from({ length: 5 }, (_, i) => ({ name: `p9m-a${i}`, owner: 'admin', status: 'running' })),
   ]
 }
 vi.mock('../../services/sandbox', () => ({ sandboxService: { listSandboxStates: vi.fn(async () => all) } }))
@@ -50,6 +50,6 @@ describe('only running sandboxes count against the quota', () => {
   })
   it('a swap frees the place of the one it puts to sleep', async () => {
     vi.stubEnv('SANDBOX_MAX_TOTAL', '7')
-    expect(await wakeRefusal('dora@x', 'exited', [], { freeing: 'p7y-d1' })).toBeNull()
+    expect(await wakeRefusal('dora@x', 'exited', [], { freeing: 'p9m-d1' })).toBeNull()
   })
 })

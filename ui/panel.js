@@ -1,4 +1,4 @@
-// The sandbox details panel as HTML, built by pure functions (no DOM): P7yPanel in the browser,
+// The sandbox details panel as HTML, built by pure functions (no DOM): P9mPanel in the browser,
 // module.exports in Node for the tests. ui/app.js renders it and handles the clicks.
 ;(function (root) {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
@@ -154,9 +154,9 @@
     const hub = s.hub || { published: [], unlinked: [] }
     const onHub = r => r.url && hub.published.includes(r.url)
       ? ` ${hub.url ? `<a class="tag" href="${esc(hub.url)}" target="_blank" rel="noopener">On the Hub</a>` : '<span class="tag">On the Hub</span>'}` : ''
-    // Who may open it (p7y.access): no tag for public
+    // Who may open it (p9m.access): no tag for public
     const ACCESS_TAG = { owner: 'Owner only', domain: 'Your domain' }
-    const accessTag = r => ACCESS_TAG[r.access] ? ` <span class="tag" title="p7y.access: ${esc(r.access)}">${ACCESS_TAG[r.access]}</span>` : ''
+    const accessTag = r => ACCESS_TAG[r.access] ? ` <span class="tag" title="p9m.access: ${esc(r.access)}">${ACCESS_TAG[r.access]}</span>` : ''
     const body = rows.map(r => `<tr>
       <td>${esc(r.service)}</td>
       <td>${r.url ? `<a href="${esc(ctx.protocol)}//${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.url)}">open ↗</a>${mark(r.answers)}${accessTag(r)}${onHub(r)}` : '<span class="muted">—</span>'}</td>
@@ -255,9 +255,9 @@
     const hub = s.hub || {}
     const lines = [
       ...(hub.unlinked || []).map(n => `${esc(n)}: published, but has no web address (publish a port on all interfaces)`),
-      ...(hub.bad_image || []).map(n => `${esc(n)}: p7y.image is ignored: use a path inside the app, e.g. /shot.png`),
-      ...(s.apps || []).filter(a => a.access_invalid).map(a => `${esc(a.service)}: p7y.access is not public, domain or owner; only the owner can open it`),
-      ...(hub.owner_only || []).map(n => `${esc(n)}: published, but only its owner can open it: set p7y.access: domain`),
+      ...(hub.bad_image || []).map(n => `${esc(n)}: p9m.image is ignored: use a path inside the app, e.g. /shot.png`),
+      ...(s.apps || []).filter(a => a.access_invalid).map(a => `${esc(a.service)}: p9m.access is not public, domain or owner; only the owner can open it`),
+      ...(hub.owner_only || []).map(n => `${esc(n)}: published, but only its owner can open it: set p9m.access: domain`),
     ]
     return lines.length ? `<div class="warnings"><h3>Warnings</h3><ul>${lines.map(l => `<li>⚠ ${l}</li>`).join('')}</ul></div>` : ''
   }
@@ -499,10 +499,10 @@
     const u = String(url).replace(/\/+$/, '')
     if (!/^https?:\/\/[A-Za-z0-9.:-]+$/.test(u)) throw new Error(`not an address: ${u}`)
     if (!/^[a-z0-9][a-z0-9_-]{0,62}$/.test(sandboxShort)) throw new Error('not a sandbox name')
-    return `/p7y:init ${u} ${sandboxShort}`
+    return `/p9m:init ${u} ${sandboxShort}`
   }
 
   const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, mountsSection, registryTable, renderPanel, STALE_APPS }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
-  else root.P7yPanel = api
+  else root.P9mPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

@@ -3,21 +3,21 @@
 # is none, replaces the example secrets with random ones and creates the data directories. Safe to run
 # again: values you already set are kept.
 #
-#   curl -fsSL https://github.com/csakaszamok/p7y/releases/latest/download/setup.sh | bash -s -- dev.example.com
+#   curl -fsSL https://github.com/csakaszamok/p9m/releases/latest/download/setup.sh | bash -s -- dev.example.com
 #
-# The domain (optional) becomes HOST_DOMAIN: every address is under it (the UI is p7y.<domain>).
+# The domain (optional) becomes HOST_DOMAIN: every address is under it (the UI is p9m.<domain>).
 set -euo pipefail
 
 # Set in the release asset (e.g. v0.5.0); empty in a checkout, which uses its own .env.example
-P7Y_RELEASE=
-P7Y_RELEASE_BASE=${P7Y_RELEASE_BASE:-https://github.com/csakaszamok/p7y/releases/download}
+P9M_RELEASE=
+P9M_RELEASE_BASE=${P9M_RELEASE_BASE:-https://github.com/csakaszamok/p9m/releases/download}
 
 command -v docker >/dev/null || { echo "docker is not installed" >&2; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "the docker compose plugin is not installed" >&2; exit 1; }
 
 if [ ! -f .env ]; then
-  if [ -n "$P7Y_RELEASE" ]; then
-    curl -fsSL "$P7Y_RELEASE_BASE/$P7Y_RELEASE/env.example" -o .env.tmp       || { rm -f .env.tmp; echo "could not download env.example of $P7Y_RELEASE" >&2; exit 1; }
+  if [ -n "$P9M_RELEASE" ]; then
+    curl -fsSL "$P9M_RELEASE_BASE/$P9M_RELEASE/env.example" -o .env.tmp       || { rm -f .env.tmp; echo "could not download env.example of $P9M_RELEASE" >&2; exit 1; }
     mv .env.tmp .env
   else
     cp "$(dirname "$0")/.env.example" .env
@@ -78,9 +78,9 @@ if [ -n "$domain" ]; then
   set_value HOST_DOMAIN "$domain"
   # PUBLIC_URL follows while it is the example's or the one made from the previous domain; one of your own stays
   case "$(get PUBLIC_URL)" in
-    ""|http://p7y.lvh.me|https://p7y.lvh.me|"http://p7y.$previous"|"https://p7y.$previous")
+    ""|http://p9m.lvh.me|https://p9m.lvh.me|"http://p9m.$previous"|"https://p9m.$previous")
       if [ -f certs/tls.crt ] && [ -f certs/tls.key ]; then scheme=https; else scheme=http; fi
-      set_value PUBLIC_URL "$scheme://p7y.$domain" ;;
+      set_value PUBLIC_URL "$scheme://p9m.$domain" ;;
   esac
 fi
 
@@ -90,7 +90,7 @@ cat <<EOF
 Next:
   docker compose up -d
 
-Then sign in at ${public_url:-http://p7y.lvh.me}
+Then sign in at ${public_url:-http://p9m.lvh.me}
   user:     $(get ADMIN_USER)
   password: $(get ADMIN_PASSWORD)
 API token (Authorization: Bearer ...): $(get ADMIN_TOKEN)
@@ -100,7 +100,7 @@ case "$(get HOST_DOMAIN)" in
   ""|lvh.me) cat <<'EOF'
 
 Note: HOST_DOMAIN is lvh.me, which points to this machine (127.0.0.1): fine for
-trying Purgatory here, not for a server. Run setup.sh again with your domain
+trying Purgatorium here, not for a server. Run setup.sh again with your domain
 (e.g. `bash setup.sh dev.example.com`); it needs a wildcard DNS record *.<domain>.
 EOF
   ;;
@@ -111,6 +111,6 @@ if ! grep -qs default-address-pools /etc/docker/daemon.json; then
 
 Note: /etc/docker/daemon.json has no default-address-pools. Docker's default
 pools allow about 30 networks, and every sandbox needs one. See "Give the Docker
-daemon a larger address pool" in https://csakaszamok.github.io/p7y/latest/install/
+daemon a larger address pool" in https://csakaszamok.github.io/p9m/latest/install/
 EOF
 fi

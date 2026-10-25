@@ -3,7 +3,7 @@ import crypto from 'node:crypto'
 export type Role = 'user' | 'admin'
 export interface Session { sub: string; role: Role; exp: number }
 
-export const SESSION_COOKIE = 'p7y_session'
+export const SESSION_COOKIE = 'p9m_session'
 export const SESSION_MAX_AGE = 7 * 24 * 3600
 
 let generatedSecret: string | undefined
@@ -60,7 +60,7 @@ export function getCookie(req: Request, name: string): string | undefined {
 }
 
 export function publicUrl(): string {
-  return (process.env.PUBLIC_URL ?? `http://p7y.${process.env.HOST_DOMAIN ?? 'lvh.me'}`).replace(/\/+$/, '')
+  return (process.env.PUBLIC_URL ?? `http://p9m.${process.env.HOST_DOMAIN ?? 'lvh.me'}`).replace(/\/+$/, '')
 }
 
 export function cookieHeader(name: string, value: string, maxAgeSec: number): string {

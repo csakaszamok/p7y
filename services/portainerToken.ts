@@ -45,7 +45,7 @@ export async function portainerAccess(
     }
     const auth = await call(host, 'POST', '/api/auth', { body: { username: 'admin', password } })
     const jwt = json(auth.text)?.jwt
-    if (auth.status !== 200 || typeof jwt !== 'string') return { skipped: 'Portainer refused the admin password Purgatory knows (changed in Portainer?)' }
+    if (auth.status !== 200 || typeof jwt !== 'string') return { skipped: 'Portainer refused the admin password Purgatorium knows (changed in Portainer?)' }
     const headers = { Authorization: `Bearer ${jwt}` }
     const me = await call(host, 'GET', '/api/users/me', { headers })
     const id = json(me.text)?.Id ?? 1

@@ -12,7 +12,7 @@ export const openapi = {
     content: { 'application/json': { schema: { type: 'object', required: ['name'], properties: {
       name: { type: 'string', maxLength: 80, example: 'laptop agent' },
       expires_in: { type: 'string', enum: ['30d', '90d', 'never'], default: '90d' },
-      sandbox: { type: 'string', example: 'p7y-shop', description: 'Limit the token to this one of your sandboxes (full name)' }
+      sandbox: { type: 'string', example: 'p9m-shop', description: 'Limit the token to this one of your sandboxes (full name)' }
     } } } }
   }
 }

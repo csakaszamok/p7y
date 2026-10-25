@@ -20,10 +20,10 @@ function unzip(z: Buffer): Array<{ name: string; data: Buffer; crc: number }> {
 
 describe('zip', () => {
   it('writes a valid archive: names, contents and CRC-32s read back', () => {
-    const z = zip([{ path: 'p7y-shop/p7y.env', data: 'P7Y_URL=https://p7y.lvh.me\n' }, { path: 'p7y-shop/docker/key.pem', data: Buffer.from('KEY') }])
+    const z = zip([{ path: 'p9m-shop/p9m.env', data: 'P9M_URL=https://p9m.lvh.me\n' }, { path: 'p9m-shop/docker/key.pem', data: Buffer.from('KEY') }])
     expect(z.subarray(0, 4).toString('hex')).toBe('504b0304')
     const files = unzip(z)
-    expect(files.map(f => [f.name, f.data.toString()])).toEqual([['p7y-shop/p7y.env', 'P7Y_URL=https://p7y.lvh.me\n'], ['p7y-shop/docker/key.pem', 'KEY']])
+    expect(files.map(f => [f.name, f.data.toString()])).toEqual([['p9m-shop/p9m.env', 'P9M_URL=https://p9m.lvh.me\n'], ['p9m-shop/docker/key.pem', 'KEY']])
     for (const f of files) expect(f.crc).toBe(zlib.crc32(f.data))
   })
 })

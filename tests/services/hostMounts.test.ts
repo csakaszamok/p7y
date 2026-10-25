@@ -10,8 +10,8 @@ import {
 
 // The sandbox's compose file as created from runtimes/dind.yaml (its mounts are what the targets must keep clear of)
 const RUNTIME = yaml.load(fs.readFileSync(path.join(__dirname, '..', '..', 'runtimes', 'dind.yaml'), 'utf8')) as { docker_compose: unknown }
-const HOST = '/data/p7y/opt/sandboxes/admin'
-const compose = () => yaml.dump(RUNTIME.docker_compose, { lineWidth: -1 }).split('${sandbox_dir}').join(`${HOST}/p7y-shop`).split('${name}').join('p7y-shop')
+const HOST = '/data/p9m/opt/sandboxes/admin'
+const compose = () => yaml.dump(RUNTIME.docker_compose, { lineWidth: -1 }).split('${sandbox_dir}').join(`${HOST}/p9m-shop`).split('${name}').join('p9m-shop')
 const ctx = (existing: HostMount[] = [], text = compose()) => ({ roots: ['/srv/shared', '/data/projects'], existing, own: ownTargets(text) })
 
 describe('HOST_MOUNT_ROOTS', () => {
@@ -97,7 +97,7 @@ describe('withMounts / readMounts', () => {
   type Svc = { volumes: unknown[]; labels: Record<string, string> }
   const sandbox = (text: string) => (yaml.load(text) as { services: { sandbox: Svc } }).services.sandbox
 
-  it('bind mounts on the sandbox (long syntax, a missing host folder is an error, not an empty new one) and the p7y.mounts label', () => {
+  it('bind mounts on the sandbox (long syntax, a missing host folder is an error, not an empty new one) and the p9m.mounts label', () => {
     const text = withMounts(compose(), [m1, m2])
     const sb = sandbox(text)
     expect(sb.volumes).toContainEqual({ type: 'bind', source: '/srv/shared', target: '/mnt/shared', read_only: true, bind: { create_host_path: false } })
@@ -106,7 +106,7 @@ describe('withMounts / readMounts', () => {
     expect(readMounts(text)).toEqual([m1, m2])
     // Everything else stays: its own mounts and labels
     expect(sb.volumes).toContain('docker_data:/var/lib/docker')
-    expect(sb.labels['p7y.name']).toBe('p7y-shop')
+    expect(sb.labels['p9m.name']).toBe('p9m-shop')
   })
   it('replaces the earlier ones; none left: no label, no binds', () => {
     const one = withMounts(withMounts(compose(), [m1, m2]), [m2])
@@ -126,7 +126,7 @@ describe('withMounts / readMounts', () => {
 
 describe('setMounts', () => {
   const file = () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p7y-mounts-'))
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p9m-mounts-'))
     fs.writeFileSync(`${dir}/docker-compose.yml`, compose())
     return `${dir}/docker-compose.yml`
   }
@@ -136,17 +136,17 @@ describe('setMounts', () => {
     for (const [status, start] of [['running', true], ['exited', false], ['created', false]] as const) {
       const f = file()
       const recreate = vi.fn(async () => {})
-      expect(await setMounts('p7y-shop', status, [m1], { composePath: () => f, recreate })).toEqual([m1])
+      expect(await setMounts('p9m-shop', status, [m1], { composePath: () => f, recreate })).toEqual([m1])
       expect(recreate).toHaveBeenCalledWith(f, start)
-      expect(mountsOf('p7y-shop', f)).toEqual([m1])
+      expect(mountsOf('p9m-shop', f)).toEqual([m1])
     }
   })
   it('deep sleep: only the file (it applies when the sandbox wakes)', async () => {
     const f = file()
     const recreate = vi.fn(async () => {})
-    await setMounts('p7y-shop', 'deep_sleep', [m1], { composePath: () => f, recreate })
+    await setMounts('p9m-shop', 'deep_sleep', [m1], { composePath: () => f, recreate })
     expect(recreate).not.toHaveBeenCalled()
-    expect(mountsOf('p7y-shop', f)).toEqual([m1])
+    expect(mountsOf('p9m-shop', f)).toEqual([m1])
   })
   it("Docker refuses (e.g. the host folder does not exist): the file as it was, the container brought back, Docker's words in the error", async () => {
     const f = file()
@@ -154,12 +154,12 @@ describe('setMounts', () => {
     const recreate = vi.fn()
       .mockRejectedValueOnce(Object.assign(new Error('Command failed: docker compose up'), { stderr: 'Error response from daemon: invalid mount config for type "bind": bind source path does not exist: /srv/shared\n' }))
       .mockResolvedValueOnce(undefined)
-    await expect(setMounts('p7y-shop', 'running', [m1], { composePath: () => f, recreate })).rejects.toThrow(/bind source path does not exist: \/srv\/shared/)
+    await expect(setMounts('p9m-shop', 'running', [m1], { composePath: () => f, recreate })).rejects.toThrow(/bind source path does not exist: \/srv\/shared/)
     expect(fs.readFileSync(f, 'utf8')).toBe(before)
     expect(recreate).toHaveBeenCalledTimes(2)
     expect(recreate).toHaveBeenLastCalledWith(f, true)
   })
   it('mountsOf: none for a sandbox without a readable compose file', () => {
-    expect(mountsOf('p7y-none', '/nonexistent/docker-compose.yml')).toEqual([])
+    expect(mountsOf('p9m-none', '/nonexistent/docker-compose.yml')).toEqual([])
   })
 })

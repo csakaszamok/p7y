@@ -2,10 +2,10 @@ import crypto from 'crypto'
 
 /**
  * A sandbox's frps API (:7500, the proxies frpc registered) is reachable from other sandboxes over traefik-net, through
- * socat. It needs a password: Purgatory reads it from frps.toml to list the apps, socat's health check gets it in
+ * socat. It needs a password: Purgatorium reads it from frps.toml to list the apps, socat's health check gets it in
  * FRPS_API_AUTH.
  */
-const USER = 'p7y'
+const USER = 'p9m'
 
 export const newFrpsApiPassword = () => crypto.randomBytes(16).toString('hex')
 

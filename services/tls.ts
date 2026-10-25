@@ -36,7 +36,7 @@ export function generateCertBundle(hostAddress: string, containerName?: string, 
   }
 
   const caKeys = forge.pki.rsa.generateKeyPair(keySize)
-  const caAttrs = [{ name: 'commonName', value: 'Purgatory CA' }]
+  const caAttrs = [{ name: 'commonName', value: 'Purgatorium CA' }]
   const caCert = buildCert(caKeys, caAttrs, caAttrs, caKeys.privateKey, '01', [
     { name: 'basicConstraints', cA: true },
     { name: 'keyUsage', keyCertSign: true, cRLSign: true }
@@ -67,7 +67,7 @@ export function generateCertBundle(hostAddress: string, containerName?: string, 
   const clientKeys = forge.pki.rsa.generateKeyPair(keySize)
   const clientCert = buildCert(
     clientKeys,
-    [{ name: 'commonName', value: 'p7y-client' }],
+    [{ name: 'commonName', value: 'p9m-client' }],
     caAttrs,
     caKeys.privateKey,
     '03',

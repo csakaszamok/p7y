@@ -9,11 +9,11 @@ const ctx = { instance: 'shop', project: 'inner', domain: 'lvh.me' }
 const hosts = (services: Record<string, unknown>, c = ctx) => appHostsFromCompose(yaml.dump({ services }), c)
 
 // The rules mirror the foxglove image's docker-gen template (/etc/frpc/frpc.tmpl):
-// one HTTP proxy per published TCP port, named after p7y.subdomain (or the older frpc.subdomain) when set.
+// one HTTP proxy per published TCP port, named after p9m.subdomain when set.
 describe('appHostsFromCompose', () => {
   it('matches what frps reports for the starter stack', () => {
     expect(hosts({
-      portainer: { container_name: 'portainer', ports: ['9000:9000'], labels: { 'frpc.subdomain': 'portainer' } },
+      portainer: { container_name: 'portainer', ports: ['9000:9000'], labels: { 'p9m.subdomain': 'portainer' } },
       'http-echo': { container_name: 'http-echo', ports: ['5678:5678'] }
     })).toEqual(['shop-portainer.lvh.me', 'shop-inner-http-echo-port5678.lvh.me'])
   })
@@ -31,11 +31,11 @@ describe('appHostsFromCompose', () => {
   // 127.0.0.1:port:port is private to the sandbox: no link (spec 2026-10-02-private-ports)
   it('gives no link to a port bound to a loopback or other specific address', () => {
     expect(hosts({ web: { container_name: 'web', ports: ['127.0.0.1:8081:80', '127.0.0.2:8085:80', '[::1]:8086:80', '10.0.0.5:8087:80', { target: 80, published: 8088, host_ip: '127.0.0.1' }] } })).toEqual([])
-    expect(hosts({ app: { ports: ['127.0.0.1:80:80'], labels: { 'frpc.subdomain': 'app' } } })).toEqual([])
+    expect(hosts({ app: { ports: ['127.0.0.1:80:80'], labels: { 'p9m.subdomain': 'app' } } })).toEqual([])
     // the unbracketed IPv6 spelling compose also accepts
     expect(hosts({ web: { container_name: 'web', ports: ['::1:6000:6000'] } })).toEqual([])
     expect(hosts({ web: { container_name: 'web', ports: [':::8090:80'] } })).toEqual(['shop-inner-web-port8090.lvh.me'])
-    expect(hosts({ app: { ports: ['127.0.0.1:80:80', '443:443'], labels: { 'frpc.subdomain': 'app' } } })).toEqual(['shop-app.lvh.me'])
+    expect(hosts({ app: { ports: ['127.0.0.1:80:80', '443:443'], labels: { 'p9m.subdomain': 'app' } } })).toEqual(['shop-app.lvh.me'])
   })
 
   it('skips ports that are not published on a fixed TCP host port', () => {
@@ -44,15 +44,15 @@ describe('appHostsFromCompose', () => {
   })
 
   it('lists a subdomain once however many ports it publishes; accepts list-form labels', () => {
-    expect(hosts({ app: { ports: ['80:80', '443:443'], labels: ['frpc.subdomain=app'] } })).toEqual(['shop-app.lvh.me'])
-    expect(hosts({ app: { ports: ['80:80', '443:443'], labels: ['p7y.subdomain=app'] } })).toEqual(['shop-app.lvh.me'])
+    expect(hosts({ app: { ports: ['80:80', '443:443'], labels: ['p9m.subdomain=app'] } })).toEqual(['shop-app.lvh.me'])
+    expect(hosts({ app: { ports: ['80:80', '443:443'], labels: ['p9m.subdomain=app'] } })).toEqual(['shop-app.lvh.me'])
   })
 
-  it('names the proxy after p7y.subdomain, which wins over the older frpc.subdomain', () => {
-    expect(hosts({ app: { ports: ['80:80'], labels: { 'p7y.subdomain': 'app' } } })).toEqual(['shop-app.lvh.me'])
-    expect(hosts({ app: { ports: ['80:80'], labels: { 'frpc.subdomain': 'old', 'p7y.subdomain': 'app' } } })).toEqual(['shop-app.lvh.me'])
-    expect(hosts({ app: { ports: ['80:80'], labels: ['frpc.subdomain=old', 'p7y.subdomain=app'] } })).toEqual(['shop-app.lvh.me'])
-    expect(hosts({ app: { ports: ['127.0.0.1:80:80'], labels: { 'p7y.subdomain': 'app' } } })).toEqual([])
+  it('names the proxy after p9m.subdomain', () => {
+    expect(hosts({ app: { ports: ['80:80'], labels: { 'p9m.subdomain': 'app' } } })).toEqual(['shop-app.lvh.me'])
+    expect(hosts({ app: { ports: ['80:80'], labels: { 'p9m.subdomain': 'app' } } })).toEqual(['shop-app.lvh.me'])
+    expect(hosts({ app: { ports: ['80:80'], labels: ['p9m.subdomain=app'] } })).toEqual(['shop-app.lvh.me'])
+    expect(hosts({ app: { ports: ['127.0.0.1:80:80'], labels: { 'p9m.subdomain': 'app' } } })).toEqual([])
   })
 
   it('returns nothing for an unreadable file', () => {
@@ -74,26 +74,26 @@ describe('appHostsOffline', () => {
 
   it('reads the inner compose file, the instance name and the template’s inner project name', () => {
     const dir = setup({ 'inner/docker-compose.yml': inner, 'instance-name': 'shop\n' })
-    expect(appHostsOffline('p7y-shop', dir, 'lvh.me', () => 'stack')).toEqual(['shop-stack-http-echo-port5678.lvh.me'])
+    expect(appHostsOffline('p9m-shop', dir, 'lvh.me', () => 'stack')).toEqual(['shop-stack-http-echo-port5678.lvh.me'])
   })
 
-  it('falls back to the name without p7y- and the project "inner"', () => {
+  it('falls back to the name without p9m- and the project "inner"', () => {
     const dir = setup({ 'inner/docker-compose.yml': inner })
-    expect(appHostsOffline('p7y-shop', dir, 'lvh.me', () => undefined)).toEqual(['shop-inner-http-echo-port5678.lvh.me'])
+    expect(appHostsOffline('p9m-shop', dir, 'lvh.me', () => undefined)).toEqual(['shop-inner-http-echo-port5678.lvh.me'])
   })
 
-  it('names an app after p7y.subdomain (or the older frpc.subdomain) while the sandbox is not running', () => {
+  it('names an app after p9m.subdomain while the sandbox is not running', () => {
     const text = yaml.dump({ services: {
-      web: { ports: ['8080:8080'], labels: { 'p7y.subdomain': 'web' } },
-      both: { ports: ['8081:8081'], labels: { 'frpc.subdomain': 'old', 'p7y.subdomain': 'new' } },
-      legacy: { ports: ['8082:8082'], labels: ['frpc.subdomain=legacy'] },
+      web: { ports: ['8080:8080'], labels: { 'p9m.subdomain': 'web' } },
+      both: { ports: ['8081:8081'], labels: { 'p9m.subdomain': 'new' } },
+      legacy: { ports: ['8082:8082'], labels: ['p9m.subdomain=legacy'] },
     } })
     const dir = setup({ 'inner/docker-compose.yml': text, 'instance-name': 'shop\n' })
-    expect(appHostsOffline('p7y-shop', dir, 'lvh.me', () => undefined)).toEqual(['shop-web.lvh.me', 'shop-new.lvh.me', 'shop-legacy.lvh.me'])
+    expect(appHostsOffline('p9m-shop', dir, 'lvh.me', () => undefined)).toEqual(['shop-web.lvh.me', 'shop-new.lvh.me', 'shop-legacy.lvh.me'])
   })
 
   it('returns nothing without an inner compose file', () => {
-    expect(appHostsOffline('p7y-shop', setup({}), 'lvh.me', () => undefined)).toEqual([])
+    expect(appHostsOffline('p9m-shop', setup({}), 'lvh.me', () => undefined)).toEqual([])
   })
 })
 
@@ -108,7 +108,7 @@ describe('appHostsFromCompose with the built-in templates', () => {
 describe('appEntriesFromCompose', () => {
   it('gives each host its compose service', () => {
     expect(appEntriesFromCompose(yaml.dump({ services: {
-      portainer: { container_name: 'portainer', ports: ['9000:9000'], labels: { 'frpc.subdomain': 'portainer' } },
+      portainer: { container_name: 'portainer', ports: ['9000:9000'], labels: { 'p9m.subdomain': 'portainer' } },
       'http-echo': { container_name: 'http-echo', ports: ['5678:5678'] },
     } }), ctx)).toEqual([
       { host: 'shop-portainer.lvh.me', service: 'portainer' },

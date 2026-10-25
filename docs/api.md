@@ -14,10 +14,10 @@
 | `POST` | `/sandboxes/:name/stop` | Put a sandbox to sleep now (**Sleep** in the UI) |
 | `POST` | `/sandboxes/:name/deep-sleep` | Put a sandbox into deep sleep now, also a running one (**Deep sleep now** on the panel's **Details** tab) |
 | `POST` | `/sandboxes/:name/keep-awake` | Start a running sandbox's sleep countdown over (**Reset** next to *Sleeps in*); 409 if it is not running |
-| `POST` | `/sandboxes/:name/export` | A zip for coding agents: a new token for the sandbox, its Docker client keys, a README (owner/admin; not with a token limited to one sandbox); `docker: false` without the keys, `format: "env"` the p7y.env text |
-| `POST` | `/sandboxes/:name/project-link` | A single-use link (5 minutes) to the project's `.p7y` folder with the Docker client keys, checked first; answers `url`, `command` (`curl … \| tar -x`) and `context_commands`, never the keys |
-| `GET` | `/project-dir/:token` | The `.p7y` folder as a tar, once (no token: the link is the authorization); `410` when used or expired |
-| `POST` | `/device/code` | Start a device approval for `/p7y:init` (no token; `sandbox` optional): answers `device_code` (the agent's secret), `user_code`, `verification_uri_complete`, `expires_in` (600) and `interval` (3); both codes live 10 minutes |
+| `POST` | `/sandboxes/:name/export` | A zip for coding agents: a new token for the sandbox, its Docker client keys, a README (owner/admin; not with a token limited to one sandbox); `docker: false` without the keys, `format: "env"` the p9m.env text |
+| `POST` | `/sandboxes/:name/project-link` | A single-use link (5 minutes) to the project's `.p9m` folder with the Docker client keys, checked first; answers `url`, `command` (`curl … \| tar -x`) and `context_commands`, never the keys |
+| `GET` | `/project-dir/:token` | The `.p9m` folder as a tar, once (no token: the link is the authorization); `410` when used or expired |
+| `POST` | `/device/code` | Start a device approval for `/p9m:init` (no token; `sandbox` optional): answers `device_code` (the agent's secret), `user_code`, `verification_uri_complete`, `expires_in` (600) and `interval` (3); both codes live 10 minutes |
 | `POST` | `/device/poll` | Ask whether it was approved (no token; `device_code` in the body): `{"status": "pending"}` or `"denied"`, `410` `"expired"` (also for a used code), or `approved` with the same answer as `project-link`, once |
 | `GET` | `/activate` | The page where a signed-in owner approves or denies a code (`?code=`); `POST` sends the decision |
 | `POST` | `/sandboxes/:name/docker-keys` | New Docker access certificates (**Enable** / **Rotate Docker keys…**); restarts the sandbox |
@@ -46,9 +46,9 @@
 | `GET` | `/sandboxes/:name/logs/stream` | The sandbox's app logs as Server-Sent Events: the last 100 lines of every container, then live (token too) |
 | `DELETE` | `/ssh-keys/:id` | Delete one of your keys (it stops working at once) |
 | `GET` | `/templates/:name` | A template's `compose.yaml` as written (`compose`), to show or edit before a create |
-| `GET` | `/me` | Who you are signed in as, Purgatory's own address (`url`), your running sandboxes and limit, and `server_places`: the sandbox places on the server, `used` and `limit` (`null` without a server limit) |
+| `GET` | `/me` | Who you are signed in as, Purgatorium's own address (`url`), your running sandboxes and limit, and `server_places`: the sandbox places on the server, `used` and `limit` (`null` without a server limit) |
 | `PUT` | `/me/view` | The web UI's view for this account: `{"view": "simple"}` or `"advanced"` (`GET /me` returns it as `view`, and whether the account may switch as `view_switch`); a user gets 403 unless `USER_VIEW_SWITCH=true` |
-| `GET` | `/tokens` | List your personal access tokens (`hint`: the token's start and end, e.g. `p7y_aB3x…9fQz`; null for tokens made before hints) |
+| `GET` | `/tokens` | List your personal access tokens (`hint`: the token's start and end, e.g. `p9m_aB3x…9fQz`; null for tokens made before hints) |
 | `POST` | `/tokens` | Mint a personal access token (`name`, optional `expires_in` like `30d`/`90d`/`never`) |
 | `DELETE` | `/tokens/:id` | Revoke a personal access token |
 | `GET` | `/users` | Accounts (admin): first and last seen, last sign-in, sign-ins, sandboxes now and created, last API use |
@@ -61,10 +61,10 @@ All endpoints require `Authorization: Bearer <ADMIN_TOKEN | personal token>` or 
 The whole API is described as OpenAPI 3.0 at `/swagger.json` (no token needed to read it), and you can try it in Swagger UI at `/swagger`. There is no official SDK yet; generate a client in your language from that document instead, for example typed TypeScript:
 
 ```bash
-curl -s https://p7y.example.com/swagger.json -o p7y.json
-npx openapi-typescript p7y.json -o p7y.d.ts   # use it with openapi-fetch
+curl -s https://p9m.example.com/swagger.json -o p9m.json
+npx openapi-typescript p9m.json -o p9m.d.ts   # use it with openapi-fetch
 ```
 
-or any language [openapi-generator](https://openapi-generator.tech/) supports (`openapi-generator-cli generate -i p7y.json -g python -o p7y-client`). The document's version is Purgatory's own, so regenerate after an upgrade.
+or any language [openapi-generator](https://openapi-generator.tech/) supports (`openapi-generator-cli generate -i p9m.json -g python -o p9m-client`). The document's version is Purgatorium's own, so regenerate after an upgrade.
 
 More reading: [architecture diagrams](architecture.html), [how agents deploy](agent-guide.md), [comparison with other sandbox platforms](comparison.md), [roadmap](roadmap.md).

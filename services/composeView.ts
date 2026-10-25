@@ -18,7 +18,7 @@ export function maskSecrets(text: string): string {
     .replace(LIST_ENV, (_m, lead, key, _v, quote) => `${lead}${key}=${MASK}${quote}`)
 }
 
-/** The starter stack Purgatory deployed into the sandbox, secrets masked; null if it has none. */
+/** The starter stack Purgatorium deployed into the sandbox, secrets masked; null if it has none. */
 export function starterStack(name: string, usersDir = sandboxParent(name)): string | null {
   if (!fs.existsSync(`${usersDir}/${name}/docker-compose.yml`)) throw new Error(`Sandbox not found: ${name}`)
   const inner = `${usersDir}/${name}/inner/docker-compose.yml`

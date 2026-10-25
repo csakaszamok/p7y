@@ -11,19 +11,19 @@ COPY routes ./routes
 COPY services ./services
 COPY templates ./templates
 COPY runtimes ./runtimes
-# The 404 page Traefik's error-page middleware asks Purgatory for
+# The 404 page Traefik's error-page middleware asks Purgatorium for
 COPY error-pages ./error-pages
-# Files other services read: p7y-init (assets/install-assets.sh) copies them into their volumes on every up
+# Files other services read: p9m-init (assets/install-assets.sh) copies them into their volumes on every up
 COPY sablier-themes ./assets/sablier-themes
 COPY registry ./assets/registry
 COPY traefik ./assets/traefik
 COPY scripts/install-assets.sh ./assets/install-assets.sh
 COPY ui ./ui
-# Purgatory's own package.json (its version for the topbar); /app/package.json is the base image's
-COPY package.json ./p7y/package.json
+# Purgatorium's own package.json (its version for the topbar); /app/package.json is the base image's
+COPY package.json ./p9m/package.json
 # The licence and the notice travel with the image (AGPL-3.0, sections 4 and 5)
-COPY LICENSE NOTICE ./p7y/
+COPY LICENSE NOTICE ./p9m/
 
-LABEL org.opencontainers.image.source="https://github.com/csakaszamok/p7y" \
-      org.opencontainers.image.description="Purgatory: self-hosted sandboxes, each with its own Docker daemon" \
+LABEL org.opencontainers.image.source="https://github.com/csakaszamok/p9m" \
+      org.opencontainers.image.description="Purgatorium: self-hosted sandboxes, each with its own Docker daemon" \
       org.opencontainers.image.licenses="AGPL-3.0-only"
