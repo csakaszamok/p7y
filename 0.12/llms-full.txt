@@ -360,14 +360,14 @@ Purgatorium has a small web UI (`http://p9m.<HOST_DOMAIN>`, or `UI_HOST`) for cr
 
 Two ways to sign in:
 
-- **Admin**: a local account, set via `ADMIN_USER` / `ADMIN_PASSWORD`. Signs in with the "Administrator sign-in" form and sees every sandbox (My sandboxes + All sandboxes).
+- **Admin**: a local account, set via `ADMIN_USER` / `ADMIN_PASSWORD`. Signs in with the "Administrator sign-in" form and sees every sandbox (My area + All sandboxes).
 - **Everyone else**: OIDC (Google or any OpenID Connect provider). Configure `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and register the redirect URI `$PUBLIC_URL/auth/callback` with the provider — character for character (scheme, no trailing slash), under Google's *Authorized redirect URIs*, otherwise sign-in fails with `redirect_uri_mismatch`. Google accepts `http://` redirect URIs only for `localhost`, so with Google use an `https://` `PUBLIC_URL` (locally: a self-signed `*.lvh.me` certificate in `certs/` and `PUBLIC_URL=https://p9m.lvh.me`, see [HTTPS](https://csakaszamok.github.io/p9m/0.12/https/index.md)). `OIDC_PROVIDER_NAME` labels the sign-in button (default `Google`). Signed-in users only see their own sandboxes.
 
 `SESSION_SECRET` signs the session cookie — set it to a long random string; sessions issued under an old value stop working if it changes.
 
 Anyone with an account at the OIDC provider can sign in and create sandboxes, unless `OIDC_ALLOWED_DOMAINS` or `OIDC_ALLOWED_EMAILS` limits it (e.g. to `example.com`): with Google, set one of them, or any Google account gets in. An account not on the list is told so on the sign-in page; one taken off the list is signed out, and its tokens stop working, once Purgatorium restarts with the new list. Each user may have `SANDBOX_QUOTA` sandboxes running at once (default 3, `0` = unlimited), guaranteed, and with `SANDBOX_QUOTA_MAX` more while the server has room to spare for the others' guarantees (*Running 4 / 3 · up to 10* beside **New sandbox**); asleep, deep-sleeping and archived ones are not counted, so letting a sandbox sleep frees its place, and the admin is not limited. At the limit a user can neither create a sandbox nor wake one, from sleep or deep sleep: its address shows *Running limit reached*, its address shows *Running limit reached* with the running sandboxes, and **Wake** in the panel lets the owner put one to sleep instead (`POST /sandboxes/:name/start` with `{"sleep": "<name>"}`). Purgatorium never puts a sandbox to sleep on its own. Running sandboxes' web addresses do not go through Purgatorium: they keep working while it is down; waking needs it, and so do the TLS TCP addresses and Docker access (they go through Purgatorium's TCP gateway). `SANDBOX_MAX_TOTAL` (default 200) caps the running sandboxes on the whole server, the admin's included (asleep ones take no place): when it is reached nobody but the admin can create one or wake one (*The server is full*). The sign-in page shows the sandbox places above the sign-in buttons (taken and free; `LOGIN_CAPACITY=off` hides them), and once signed in the top bar does, on every page (e.g. *142 / 200 places*, the free ones on hover; orange from 90%, red when full). The **Overview** page shows the counts as cards: running of how many allowed, asleep, deep sleep and archived; for the admin the sandbox places used against the server limit (the admin's own sandboxes take places too), the host's CPU and memory (used now and reserved by running sandboxes), the disk use, a table per owner and a **Users** table. Users lists every account that has signed in (by e-mail; `admin` for the local admin): when it was last seen (a page load, at most every 10 minutes), its last sign-in and how many, its sandboxes now and created, and its last API use (its tokens); *no sandbox yet* marks someone who signed in but never created one. The rows are kept in `data/user-stats.json` until the admin deletes one (**Delete**: only the row; the account and its sandboxes stay). Only the admin sees them (`GET /users`, `DELETE /users/:account`).
 
-From **Access tokens** (`/settings/tokens`), a signed-in user can mint a personal access token (`p9m_…`) for their own agents to use as `Authorization: Bearer p9m_…`; the token acts as that user for the API. The full token is shown once, at creation. Tokens can be set to expire in 30 days, 90 days, or never, and can be revoked at any time.
+From **My area → Access tokens** (`/settings/tokens`), a signed-in user can mint a personal access token (`p9m_…`) for their own agents to use as `Authorization: Bearer p9m_…`; the token acts as that user for the API. The full token is shown once, at creation. Tokens can be set to expire in 30 days, 90 days, or never, and can be revoked at any time.
 
 A token can also be limited to one sandbox (**Access** in the dialog, or **Token for this sandbox…** on a sandbox panel's **Access** tab). Such a token lists and opens only that sandbox, and can start, stop and restart it and change its sleep times; it cannot create or delete sandboxes or manage tokens (403), and any other sandbox answers 404. Deleting the sandbox leaves the token in place: if you restore the sandbox, it works again.
 
@@ -375,7 +375,7 @@ With such a token an agent can deploy and update apps in the user's sandbox: the
 
 ## Simple and Advanced
 
-The top bar has a **Simple | Advanced** switch, remembered for each account (users start in Simple, the admin in Advanced). Users have it only with `USER_VIEW_SWITCH=true`; by default they stay in Simple, see [Configuration](https://csakaszamok.github.io/p9m/0.12/configuration/index.md). Simple is for people who only want their app online: the menu shows *My sandboxes* only; the list shows the name, status, *Sleeps in* and age; a new sandbox asks for a name and a template; a sandbox panel has **Wake** or **Sleep**, an **Apps** tab (the web address of each app and **Let your agent deploy…**: the Claude Code plugin or a zip for other agents, the same window as in Advanced, which adds its **Options**) and a **Details** tab (when it last ran, the sleep times, warnings, archiving). Advanced shows everything: Overview, tokens, SSH keys, the Terminal and Logs, and the Access, Files, Resources and Registry tabs. Simple only hides: what an account may do is the same in both, and the API and MCP do not change. `PUT /me/view` with `{"view": "simple"}` or `{"view": "advanced"}` sets it (403 for a user without `USER_VIEW_SWITCH=true`); `GET /me` returns it as `view`, and whether the account may switch as `view_switch`.
+The top bar has a **Simple | Advanced** switch, remembered for each account (users start in Simple, the admin in Advanced). Users have it only with `USER_VIEW_SWITCH=true`; by default they stay in Simple, see [Configuration](https://csakaszamok.github.io/p9m/0.12/configuration/index.md). Simple is for people who only want their app online: the menu shows *My area* only (your sandboxes, without its tabs); the list shows the name, status, *Sleeps in* and age; a new sandbox asks for a name and a template; a sandbox panel has **Wake** or **Sleep**, an **Apps** tab (the web address of each app and **Let your agent deploy…**: the Claude Code plugin or a zip for other agents, the same window as in Advanced, which adds its **Options**) and a **Details** tab (when it last ran, the sleep times, warnings, archiving). Advanced shows everything: Overview, tokens, SSH keys, the Terminal and Logs, and the Access, Files, Resources and Registry tabs. Simple only hides: what an account may do is the same in both, and the API and MCP do not change. `PUT /me/view` with `{"view": "simple"}` or `{"view": "advanced"}` sets it (403 for a user without `USER_VIEW_SWITCH=true`); `GET /me` returns it as `view`, and whether the account may switch as `view_switch`.
 
 ## Light and dark
 
@@ -551,7 +551,7 @@ The three TCP containers also get an HTTP link in **Apps** (frpc tunnels every p
 
 ## SSH into a sandbox
 
-Every sandbox runs an sshd: root, keys only, at `<name>-shell-tcp.<domain>:443` (the same TLS gateway as the TCP addresses). Add your public keys under **SSH keys** (`/settings/ssh-keys`, API `GET/POST/DELETE /ssh-keys`): they let you into all your sandboxes, and a change takes effect at once. A create request can add keys for that sandbox only (`ssh_keys`, or **Advanced → Extra SSH public keys**). Inside, `docker` talks to the sandbox's own Docker.
+Every sandbox runs an sshd: root, keys only, at `<name>-shell-tcp.<domain>:443` (the same TLS gateway as the TCP addresses). Add your public keys under **My area → SSH keys** (`/settings/ssh-keys`, API `GET/POST/DELETE /ssh-keys`): they let you into all your sandboxes, and a change takes effect at once. A create request can add keys for that sandbox only (`ssh_keys`, or **Advanced → Extra SSH public keys**). Inside, `docker` talks to the sandbox's own Docker.
 
 ```
 ssh -o ProxyCommand="openssl s_client -quiet -connect %h:443 -servername %h" root@<name>-shell-tcp.<domain>
@@ -843,7 +843,7 @@ In Claude Code, in the project's root folder, run the line that **Let your agent
 
 Claude Code prints a link. Open it in your browser (sign in first if Purgatorium asks). The page shows a code and the sandbox; check that the code is the one Claude Code printed and click **Approve** (or **Deny**). Only the sandbox's owner (or the admin) can approve. The code works once and expires in 10 minutes.
 
-Then Claude Code unpacks the project's `.p9m` folder straight to disk: a new token for that sandbox only (in `.p9m/p9m.env`, 90 days) and the sandbox's Docker keys. The token never shows on the screen or in the chat. The folder keeps itself out of git, and the token is listed in Purgatorium under **Access tokens** as `Claude Code init <date>`, where you can revoke it.
+Then Claude Code unpacks the project's `.p9m` folder straight to disk: a new token for that sandbox only (in `.p9m/p9m.env`, 90 days) and the sandbox's Docker keys. The token never shows on the screen or in the chat. The folder keeps itself out of git, and the token is listed in Purgatorium under **My area → Access tokens** as `Claude Code init <date>`, where you can revoke it.
 
 Run `/p9m:init` again whenever the token has expired or was revoked. A project can be tied to one sandbox at a time; another project in another folder can be tied to another sandbox, or to another Purgatorium.
 
@@ -879,11 +879,11 @@ An agent with MCP can make the Purgatorium API calls as tools instead: see [MCP]
 
 ## What the user gives the agent
 
-| Value                 | Example                   | Where it comes from                            |
-| --------------------- | ------------------------- | ---------------------------------------------- |
-| Purgatorium URL       | `https://p9m.example.com` | The address of the Purgatorium UI              |
-| Personal access token | `p9m_…`                   | UI → **Access tokens** → **+ New token**       |
-| Sandbox name          | `p9m-shop`                | The name in the UI list with the `p9m-` prefix |
+| Value                 | Example                   | Where it comes from                                    |
+| --------------------- | ------------------------- | ------------------------------------------------------ |
+| Purgatorium URL       | `https://p9m.example.com` | The address of the Purgatorium UI                      |
+| Personal access token | `p9m_…`                   | UI → **My area** → **Access tokens** → **+ New token** |
+| Sandbox name          | `p9m-shop`                | The name in the UI list with the `p9m-` prefix         |
 
 The user may instead give these in a `p9m.env` file in the project (UI → the new token → **Download p9m.env**; it may also be renamed `.env` or copied into one): `P9M_URL`, `P9M_TOKEN`, `P9M_SANDBOX` (only for a token limited to one sandbox; otherwise ask which sandbox, or list them with `GET /sandboxes`) and `P9M_AGENT_GUIDE` (this guide). Read them from there; do not print the token or commit the file.
 
