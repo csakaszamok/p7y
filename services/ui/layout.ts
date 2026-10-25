@@ -70,10 +70,12 @@ export function renderPage(opts: { title: string; view: 'overview' | 'mine' | 'a
   recordSeen(session.sub)
   // Simple only hides (class adv), it does not restrict: the API and MCP stay the same
   const mode = viewOf(session.sub, session.role)
-  const link = (href: string, label: string, v: string, adv = false) => {
-    const cls = [adv ? 'adv' : '', v === view ? 'active' : ''].filter(Boolean).join(' ')
+  const link = (href: string, label: string, v: string | string[], adv = false) => {
+    const cls = [adv ? 'adv' : '', [v].flat().includes(view) ? 'active' : ''].filter(Boolean).join(' ')
     return `<a${cls ? ` class="${cls}"` : ''} href="${href}">${label}</a>`
   }
+  // My area: one link in the nav; on its pages, its tabs in a row below (Simple hides the row: only Sandboxes would be left)
+  const MY_AREA = ['mine', 'tokens', 'ssh-keys']
   const name = brandTitle()
   const brand = name || logoImg(20) ? `<span class="brand">${logoImg(20)}${name ? escapeHtml(name) : ''}</span>` : ''
   const modeButton = (m: 'simple' | 'advanced', label: string) =>
@@ -92,10 +94,8 @@ ${faviconTag()}
   ${brand}
   <nav>
     ${link('/overview', 'Overview', 'overview', true)}
-    ${link('/', 'My sandboxes', 'mine')}
+    ${link('/', 'My area', MY_AREA)}
     ${session.role === 'admin' ? link('/admin', 'All sandboxes', 'all') : ''}
-    ${link('/settings/tokens', 'Access tokens', 'tokens', true)}
-    ${link('/settings/ssh-keys', 'SSH keys', 'ssh-keys', true)}
   </nav>
   <span class="places" data-places hidden></span>
   ${githubLinkEnabled() ? repoBadge(repoInfo()) : ''}
@@ -105,7 +105,12 @@ ${faviconTag()}
   <form method="post" action="/logout" class="who"><span>${escapeHtml(session.sub)}</span><button class="link">Sign out</button></form>
   <a class="about-link" href="/about" title="License and source code">About</a>
 </header>
-<main>${body}</main>
+${MY_AREA.includes(view) ? `<nav class="subnav adv">
+  ${link('/', 'Sandboxes', 'mine')}
+  ${link('/settings/tokens', 'Access tokens', 'tokens', true)}
+  ${link('/settings/ssh-keys', 'SSH keys', 'ssh-keys', true)}
+</nav>
+` : ''}<main>${body}</main>
 <script src="/assets/panel.js" defer></script>
 <script src="/assets/app.js" defer></script>
 </body>

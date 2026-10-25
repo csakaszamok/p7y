@@ -189,7 +189,7 @@ for (const b of document.querySelectorAll('[data-mode-set]')) b.addEventListener
   try { await api('/me/view', { method: 'PUT', body: JSON.stringify({ view: mode }) }) } catch { return }
   document.body.dataset.mode = mode
   for (const o of document.querySelectorAll('[data-mode-set]')) o.setAttribute('aria-pressed', String(o.dataset.modeSet === mode))
-  // On a page Simple hides (Overview, Access tokens, SSH keys): to My sandboxes
+  // On a page Simple hides (Overview, Access tokens, SSH keys): to My area's sandboxes
   if (document.querySelector('nav a.active.adv')) { location.href = '/'; return }
   if (selected) { renderedJSON = null; void showPanel(selected) }
 })
