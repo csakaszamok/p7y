@@ -1663,7 +1663,7 @@
 
 
 <h1 id="files">Files<a class="headerlink" href="#files" title="Permanent link">&para;</a></h1>
-<p>The <strong>Files</strong> tab of a sandbox's panel shows its files: open folders, upload files (<strong>Upload…</strong>, or drop them on the list, several at once), download a file, or a whole folder as a <code>.tar</code> (<strong>Download folder</strong>), make folders and delete.</p>
+<p>The <strong>Files</strong> tab of a sandbox's panel shows its files: open folders, upload files (<strong>Upload…</strong>, or drop them on the list, several at once) or whole folders with everything in them (<strong>Upload folder…</strong>, or drop the folder; folders on the way that are not there yet are made, empty ones too when dropped), download a file, or a whole folder as a <code>.tar</code> (<strong>Download folder</strong>), make folders and delete.</p>
 <p>It shows four folders, the ones that are kept when the sandbox goes into deep sleep or its container is recreated: <code>/root</code> (where it opens), <code>/home</code>, <code>/srv</code> and <code>/opt</code>. Anything else in the sandbox container is gone then, so it is not offered here.</p>
 <h2 id="the-apps-volumes">The apps' volumes<a class="headerlink" href="#the-apps-volumes" title="Permanent link">&para;</a></h2>
 <p><strong>Volumes</strong>, next to the four folders, lists the volumes of the apps in the sandbox's own Docker (a database's data, an app's uploads), with their compose project and the containers that use them; open one to browse, upload and download as above. Their files are in the sandbox container already (the sandbox's Docker keeps them under <code>/var/lib/docker/volumes/&lt;volume&gt;/_data</code>, in the <code>docker_data</code> volume), so nothing extra is started, and they are kept over a deep sleep too. Only the local driver's volumes are shown; a container's own files outside its volumes are not (use <code>docker cp</code> in the sandbox for those).</p>
@@ -1696,7 +1696,7 @@
 <tr>
 <td><code>PUT</code></td>
 <td><code>/sandboxes/:name/files/content?path=…</code></td>
-<td>Upload: the body is the file (<code>curl -T report.pdf</code>)</td>
+<td>Upload: the body is the file (<code>curl -T report.pdf</code>); missing folders on the path are made</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
