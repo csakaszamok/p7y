@@ -173,6 +173,15 @@ async function loadList() {
 }
 
 // ---------- panel tabs ----------
+// ---------- light / dark (topbar, every page): the account's choice; until it makes one, the device's ----------
+for (const b of document.querySelectorAll('[data-theme-toggle]')) b.addEventListener('click', () => {
+  const root = document.documentElement
+  const now = root.dataset.theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+  const theme = now === 'light' ? 'dark' : 'light'
+  root.dataset.theme = theme
+  api('/me/theme', { method: 'PUT', body: JSON.stringify({ theme }) }).catch(() => {})
+})
+
 // ---------- the Simple | Advanced switch (topbar, every page) ----------
 for (const b of document.querySelectorAll('[data-mode-set]')) b.addEventListener('click', async () => {
   const mode = b.dataset.modeSet

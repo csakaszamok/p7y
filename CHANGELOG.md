@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **A light theme:** the web UI follows the device's light or dark setting, until the account picks one with the sun / moon button in the top bar; the choice is kept for the account (`PUT /me/theme`, `theme` in `GET /me`). The page shown while a sandbox wakes up, the error pages, the terminal and the logs stay dark ([#4](https://github.com/csakaszamok/p9m/issues/4)).
+
 ## [0.12.3] - 2026-10-25
 
 Upgrading from 0.12.2: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (only the version changes). A `docker-compose.yml` you keep from before stays on 0.12.2.

@@ -92,3 +92,19 @@ describe('GET /me: the address', () => {
     } finally { vi.stubEnv('PUBLIC_URL', '') }
   })
 })
+
+describe('the light / dark theme', () => {
+  it("GET /me says the caller's theme (null: the browser decides); PUT /me/theme sets it for anyone, light, dark or system", async () => {
+    const fs = await import('node:fs'); const os = await import('node:os'); const path = await import('node:path')
+    vi.stubEnv('USER_PREFS_FILE', path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'prefs-')), 'p.json'))
+    vi.stubEnv('USER_VIEW_SWITCH', '')
+    expect((await (await me(req('p9m_u'))).json()).theme).toBeNull()
+    const { default: put } = await import('../../routes/me/theme/PUT')
+    const set = (theme: unknown) => put(new Request('http://localhost/me/theme', { method: 'PUT', headers: { Authorization: 'Bearer p9m_u', 'Content-Type': 'application/json' }, body: JSON.stringify({ theme }) }))
+    expect(await (await set('light')).json()).toEqual({ theme: 'light' })
+    expect((await (await me(req('p9m_u'))).json()).theme).toBe('light')
+    expect((await set('system')).status).toBe(200)
+    expect((await (await me(req('p9m_u'))).json()).theme).toBeNull()
+    expect((await set('blue')).status).toBe(400)
+  })
+})
