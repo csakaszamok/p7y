@@ -8,12 +8,6 @@ import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
 import { openSignInWarning } from "./services/allowlist";
 import { insecureConfigWarnings, insecureConfigErrors, hostMountWarnings } from "./services/configWarnings";
 import { syncTlsConfig } from "./services/tlsConfig";
-import { migrateRouters } from "./services/routerMigration";
-import { migrateFrpsApiAuth } from "./services/frpsApi";
-import { migrateSocatCheck } from "./services/socatHealthcheck";
-import { migrateDataVolumes } from "./services/dataVolumes";
-import { migrateHostPaths } from "./services/pathMigration";
-import { migrateSandboxDirs, migrateArchives } from "./services/sandboxDirMigration";
 import { startTcpGateway } from "./services/tcpGateway";
 import { resolveTcpHost, resolveDockerHost } from "./services/tcpRoutes";
 import { findSandboxDirByHost, primeSablierSession } from "./services/wake";
@@ -37,7 +31,6 @@ import { defaultRuntime, runtimeAllowed } from "./services/defaultRuntime";
 import { startRegistryGc } from "./services/registryGc";
 import { resumeScans } from "./services/registryScans";
 import { notifySecret } from "./services/notifySecret";
-import { migrateResourceLimits } from "./services/resourceMigration";
 import { resourceDefaults } from "./services/resources";
 
 // Supports both old-style handler.ts (handle(req,res)) and
@@ -341,28 +334,6 @@ startRegistryGc();
 // Scans interrupted by a restart run again (their repos stay private meanwhile)
 void resumeScans().catch(err => console.error("[registry] resuming scans:", err));
 for (const w of resourceDefaults().warnings) console.warn(`[resources] ${w}`);
-// Sandboxes from before opt/sandboxes/<owner>/<name> (and their archives): moved into it.
-// Then sandboxes whose checkout was moved or renamed: point their mounts at the current directory.
-// Then sandboxes created before HTTPS support: put their router on websecure too.
-migrateSandboxDirs()
-  .then(() => migrateArchives())
-  .catch(err => console.error("[sandbox-dirs] migration failed:", err))
-  .then(() => migrateHostPaths())
-  .catch(err => console.error("[paths] migration failed:", err))
-  .then(() => migrateRouters())
-  .catch(err => console.error("[routers] migration failed:", err))
-  // Then sandboxes whose frps API has no password: frps.toml and socat's health check get one
-  .then(() => migrateFrpsApiAuth())
-  .catch(err => console.error("[frps] migration failed:", err))
-  // Then sandboxes whose socat checks its tunnel every 2 s: every 10 s
-  .then(() => migrateSocatCheck())
-  .catch(err => console.error("[socat] migration failed:", err))
-  // Then sandboxes from before the data volumes: /opt, /root, /home, /srv copied into volumes
-  .then(() => migrateDataVolumes())
-  .catch(err => console.error("[data-volumes] migration failed:", err))
-  // Then sandboxes created before CPU/memory limits: give them the default
-  .then(() => migrateResourceLimits())
-  .catch(err => console.error("[resources] migration failed:", err));
 for (const warning of [...insecureConfigWarnings(process.env), ...hostMountWarnings(process.env)]) console.warn(warning);
 
 

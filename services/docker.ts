@@ -12,11 +12,9 @@ export async function engineApiVersion(): Promise<string> {
   return (await docker.version()).ApiVersion
 }
 
-let _hostUsersDir: string | undefined
 let _hostSandboxesDir: string | undefined
 
-export function _resetHostUsersDirCache(): void {
-  _hostUsersDir = undefined
+export function _resetHostSandboxesDirCache(): void {
   _hostSandboxesDir = undefined
 }
 
@@ -34,23 +32,14 @@ async function ownMountSource(destination: string): Promise<string | null> {
   }
 }
 
-/** Host path of the legacy flat sandbox directory (opt/users): read by the startup move only. */
-export async function resolveHostUsersDir(): Promise<string> {
-  if (_hostUsersDir !== undefined) return _hostUsersDir
-  _hostUsersDir = process.env.HOST_USERS_DIR ? normalize(process.env.HOST_USERS_DIR) : (await ownMountSource('/opt/users')) ?? '/opt/users'
-  return _hostUsersDir
-}
-
 /**
  * Host path of opt/sandboxes, which the sandboxes' bind mounts point into: HOST_SANDBOXES_DIR, else the source of
- * p7y's mount on /opt/sandboxes, else the sibling `sandboxes` of a set HOST_USERS_DIR, else /opt/sandboxes
- * (= cannot tell: the migrations that rewrite host paths then do nothing).
+ * p7y's mount on /opt/sandboxes, else /opt/sandboxes (= cannot tell).
  */
 export async function resolveHostSandboxesDir(): Promise<string> {
   if (_hostSandboxesDir !== undefined) return _hostSandboxesDir
   const fromEnv = process.env.HOST_SANDBOXES_DIR ? normalize(process.env.HOST_SANDBOXES_DIR) : null
-  const sibling = process.env.HOST_USERS_DIR ? `${normalize(process.env.HOST_USERS_DIR).replace(/\/[^/]*$/, '')}/sandboxes` : null
-  _hostSandboxesDir = fromEnv ?? (await ownMountSource('/opt/sandboxes')) ?? sibling ?? '/opt/sandboxes'
+  _hostSandboxesDir = fromEnv ?? (await ownMountSource('/opt/sandboxes')) ?? '/opt/sandboxes'
   return _hostSandboxesDir
 }
 

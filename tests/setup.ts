@@ -15,7 +15,6 @@ const defaults: Record<string, string> = {
   USER_STATS_FILE: path.join(dir, 'user-stats.json'),
   // Sandbox directories: empty temp dirs unless a test points them elsewhere
   SANDBOXES_DIR: path.join(dir, 'sandboxes'),
-  LEGACY_USERS_DIR: path.join(dir, 'users'),
   ARCHIVE_DIR: path.join(dir, 'archive'),
   // Rendering a page never asks GitHub for the topbar's counts (tests/services/repoInfo.test.ts turns it on)
   GITHUB_STATS: 'off',

@@ -16,7 +16,7 @@ vi.mock('dockerode', () => {
       State: { Status: 'running', FinishedAt: '0001-01-01T00:00:00Z' },
       Config: { Labels: { 'p7y.deep_sleep_after': '7d' } },
       NetworkSettings: { Networks: { default: { NetworkID: 'net-a' }, 'traefik-net': { NetworkID: 'net-b' } } },
-      Mounts: [{ Destination: '/opt/users', Source: '/auto/detected/path' }, { Destination: '/opt/sandboxes', Source: '/auto/detected/sandboxes' }]
+      Mounts: [{ Destination: '/opt/sandboxes', Source: '/auto/detected/sandboxes' }]
     })
   }
   return {
@@ -40,9 +40,8 @@ vi.mock('dockerode', () => {
 import {
   getContainerStatus,
   getContainerIdByName,
-  resolveHostUsersDir,
   resolveHostSandboxesDir,
-  _resetHostUsersDirCache,
+  _resetHostSandboxesDirCache,
   listedSandboxState,
   listManagedContainers,
   getSandboxState,
@@ -186,56 +185,12 @@ describe('docker service', () => {
 
 })
 
-describe('resolveHostUsersDir', () => {
-  const originalEnv = process.env.HOST_USERS_DIR
-
-  beforeEach(() => {
-    _resetHostUsersDirCache()
-    delete process.env.HOST_USERS_DIR
-  })
-
-  afterEach(() => {
-    _resetHostUsersDirCache()
-    if (originalEnv !== undefined) {
-      process.env.HOST_USERS_DIR = originalEnv
-    } else {
-      delete process.env.HOST_USERS_DIR
-    }
-  })
-
-  it('returns HOST_USERS_DIR env var value when set', async () => {
-    process.env.HOST_USERS_DIR = 'C:\\data\\p7y\\opt\\users'
-    const result = await resolveHostUsersDir()
-    expect(result).toBe('C:/data/p7y/opt/users')
-  })
-
-  it('returns HOST_USERS_DIR with trailing slash stripped', async () => {
-    process.env.HOST_USERS_DIR = '/some/path/'
-    const result = await resolveHostUsersDir()
-    expect(result).toBe('/some/path')
-  })
-
-  it('returns auto-detected Source from inspect when HOST_USERS_DIR is not set', async () => {
-    const result = await resolveHostUsersDir()
-    expect(result).toBe('/auto/detected/path')
-  })
-
-  it('caches the result on subsequent calls', async () => {
-    process.env.HOST_USERS_DIR = '/cached/path'
-    const first = await resolveHostUsersDir()
-    delete process.env.HOST_USERS_DIR
-    const second = await resolveHostUsersDir()
-    expect(first).toBe('/cached/path')
-    expect(second).toBe('/cached/path')
-  })
-})
-
 describe('resolveHostSandboxesDir', () => {
   const saved = { users: process.env.HOST_USERS_DIR, sandboxes: process.env.HOST_SANDBOXES_DIR }
   const inspect = () => new (vi.mocked(Dockerode))().getContainer('x').inspect as ReturnType<typeof vi.fn>
-  beforeEach(() => { _resetHostUsersDirCache(); delete process.env.HOST_USERS_DIR; delete process.env.HOST_SANDBOXES_DIR })
+  beforeEach(() => { _resetHostSandboxesDirCache(); delete process.env.HOST_USERS_DIR; delete process.env.HOST_SANDBOXES_DIR })
   afterEach(() => {
-    _resetHostUsersDirCache()
+    _resetHostSandboxesDirCache()
     for (const [k, v] of [['HOST_USERS_DIR', saved.users], ['HOST_SANDBOXES_DIR', saved.sandboxes]] as const) {
       if (v === undefined) delete process.env[k]; else process.env[k] = v
     }
@@ -250,10 +205,10 @@ describe('resolveHostSandboxesDir', () => {
     process.env.HOST_USERS_DIR = '/elsewhere/opt/users'
     expect(await resolveHostSandboxesDir()).toBe('/auto/detected/sandboxes')
   })
-  it('then the sibling of HOST_USERS_DIR', async () => {
+  it('ignores HOST_USERS_DIR (the former opt/users)', async () => {
     inspect().mockResolvedValueOnce({ Mounts: [] })
     process.env.HOST_USERS_DIR = 'D:\\srv\\p7y\\opt\\users'
-    expect(await resolveHostSandboxesDir()).toBe('D:/srv/p7y/opt/sandboxes')
+    expect(await resolveHostSandboxesDir()).toBe('/opt/sandboxes')
   })
   it('else /opt/sandboxes (cannot tell)', async () => {
     inspect().mockResolvedValueOnce({ Mounts: [] })

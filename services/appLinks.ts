@@ -49,7 +49,7 @@ export async function frpsDomains(name: string): Promise<string[]> {
 
 /** As frpsDomains, but throws when socat (which passes the API on from frps) does not answer within 3 s. */
 async function askFrps(name: string): Promise<string[]> {
-  // Its API has a password (a sandbox from before 0.6 may have none until Purgatory restarts)
+  // Its API has a password, in frps.toml
   let auth: string | null = null
   try { auth = frpsApiAuth(fs.readFileSync(`${dirOf(name)}/frps.toml`, 'utf8')) } catch { /* no frps.toml: ask without */ }
   const headers: Record<string, string> = auth ? { authorization: `Basic ${Buffer.from(auth).toString('base64')}` } : {}

@@ -6,7 +6,7 @@ vi.mock('../../services/compose', () => ({ composeUp: vi.fn(), composeStart: vi.
 let refusal: unknown = null
 vi.mock('../../services/quota', () => ({ reserveWake: vi.fn(async () => (refusal ? { ok: false, refusal } : { ok: true, release: () => {} })) }))
 
-vi.mock('../../services/sandboxPaths', async orig => (await import('../helpers/legacySandboxPaths')).legacySandboxPaths(orig))
+vi.mock('../../services/sandboxPaths', async orig => (await import('../helpers/flatSandboxPaths')).flatSandboxPaths(orig))
 
 let dirs: string[] = []
 let certs = false
@@ -15,7 +15,7 @@ vi.mock('fs', async (orig) => {
   const actual = await orig<typeof import('fs')>()
   const mocked = {
     ...actual,
-    existsSync: vi.fn((p: string) => p === '/opt/users' || dirs.some(d => p === `/opt/users/${d}/docker-compose.yml`) || (certs && (p === '/app/certs/tls.crt' || p === '/app/certs/tls.key'))),
+    existsSync: vi.fn((p: string) => p === '/opt/sandboxes/admin' || dirs.some(d => p === `/opt/sandboxes/admin/${d}/docker-compose.yml`) || (certs && (p === '/app/certs/tls.crt' || p === '/app/certs/tls.key'))),
     readdirSync: vi.fn(() => [...dirs, 'Bad..Name', 'other-thing']),
     readFileSync: vi.fn(() => composeText)
   }
@@ -106,7 +106,7 @@ describe('wakeByHost', () => {
     // The waiting page reloads every 3 s: it keeps saying where the sandbox wakes from
     expect(await wakeByHost('w1-web.lvh.me')).toEqual({ result: 'in_progress', name: 'p7y-w1', from: 'deep_sleep' })
     expect(composeUp).toHaveBeenCalledTimes(1)
-    expect(composeUp).toHaveBeenCalledWith('/opt/users/p7y-w1/docker-compose.yml')
+    expect(composeUp).toHaveBeenCalledWith('/opt/sandboxes/admin/p7y-w1/docker-compose.yml')
   })
 
   it('lets the next request retry after compose up failed', async () => {
@@ -203,7 +203,7 @@ describe('wakeByHost: every wake through p7y', () => {
     vi.mocked(listManagedContainers).mockResolvedValue([sandboxMeta({ name: 'p7y-zz', owner: 'u@x', template: 't', status: 'exited', container_id: 'x', created_at: '' })] as never)
     vi.mocked(composeStart).mockReturnValue(new Promise(() => {}))
     expect(await wakeByHost('zz-web.lvh.me')).toEqual({ result: 'started', name: 'p7y-zz', from: 'asleep' })
-    expect(composeStart).toHaveBeenCalledWith('/opt/users/p7y-zz/docker-compose.yml')
+    expect(composeStart).toHaveBeenCalledWith('/opt/sandboxes/admin/p7y-zz/docker-compose.yml')
     expect(composeUp).not.toHaveBeenCalled()
   })
 

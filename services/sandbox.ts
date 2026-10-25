@@ -21,7 +21,7 @@ import { resourceDefaults, memoryForCompose, type Limits } from './resources'
 import { sandboxName, rawNameOf, readLabel } from './naming'
 import { sessionDurationOf, cappedSleepDefault } from './sleepSettings'
 import { listManagedContainers, resolveHostSandboxesDir, type SandboxMeta } from './docker'
-import { sandboxDir, legacyUsersDir, listSandboxDirs, newSandboxDir, archiveRoot, ownerDirName, ownerOfCompose, sandboxesDir, forgetSandboxDir, sandboxesMounted, SANDBOX_NAME } from './sandboxPaths'
+import { sandboxDir, sandboxParent, listSandboxDirs, newSandboxDir, archiveRoot, ownerDirName, ownerOfCompose, sandboxesDir, forgetSandboxDir, sandboxesMounted, SANDBOX_NAME } from './sandboxPaths'
 import { composeUp, composeStop, composeStart, composeDown, composeUpInner, composeConfigCheck } from './compose'
 import { concurrency } from './concurrency'
 import { parseComposeText } from './composeCache'
@@ -29,7 +29,7 @@ import { hashPassword } from './registryAuth'
 import { listProjectVolumes, exportVolume, removeVolume, stopProjectContainers, removeProjectContainers } from './project'
 
 /** The sandbox's directory; for an unknown one a path that does not exist (reads then fail as before). */
-const dirOf = (name: string) => sandboxDir(name) ?? `${legacyUsersDir()}/${name}`
+const dirOf = (name: string) => sandboxDir(name) ?? `${sandboxParent(name)}/${name}`
 
 /** Removes an owner directory its last sandbox has left. */
 function removeEmptyOwnerDir(dir: string): void {

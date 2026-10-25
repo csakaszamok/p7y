@@ -12,8 +12,6 @@ services:
       - ./data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
       - ./opt/sandboxes:/opt/sandboxes
-      # Sandboxes from before opt/sandboxes/<owner>/<name>: read by the startup move; removed in a later version
-      - ./opt/users:/opt/users
       - ./opt/archive:/opt/archive
       - ./certs:/app/certs:ro
       - ./dynamic:/app/traefik-dynamic
@@ -55,9 +53,7 @@ services:
       TRAEFIK_DYNAMIC_DIR: /app/traefik-dynamic
       API_TITLE: "Purgatory API"
       # Host path of ./opt/sandboxes; override only if auto-detect fails (e.g. HOST_SANDBOXES_DIR=C:/m/docker/.../opt/sandboxes).
-      # HOST_USERS_DIR (the old ./opt/users) still works: its sibling `sandboxes` is used.
       HOST_SANDBOXES_DIR: ${HOST_SANDBOXES_DIR:-}
-      HOST_USERS_DIR: ${HOST_USERS_DIR:-}
       # How often to look for sandboxes to put into deep sleep (e.g. 30s, 1m, 1h)
       DEEP_SLEEP_CHECK_INTERVAL: ${DEEP_SLEEP_CHECK_INTERVAL:-1m}
       # Max sandboxes per signed-in user (0 = unlimited); the admin is not limited

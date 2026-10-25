@@ -43,8 +43,8 @@ vi.mock('../../services/project', () => ({
   removeVolume: vi.fn().mockResolvedValue(undefined)
 }))
 
-// Sandbox directories on the mocked fs: legacy flat /opt/users; new sandboxes are written to /opt/sandboxes/<owner>/<name>
-vi.mock('../../services/sandboxPaths', async orig => (await import('../helpers/legacySandboxPaths')).legacySandboxPaths(orig))
+// Sandbox directories on the mocked fs: /opt/sandboxes/admin; new sandboxes are written to /opt/sandboxes/<owner>/<name>
+vi.mock('../../services/sandboxPaths', async orig => (await import('../helpers/flatSandboxPaths')).flatSandboxPaths(orig))
 
 vi.mock('fs', async (orig) => {
   const actual = await orig<typeof import('fs')>()
@@ -73,7 +73,6 @@ vi.stubEnv('HOST_ADDRESS', '127.0.0.1')
 vi.stubEnv('TEMPLATES_DIR', './templates')
 vi.stubEnv('RUNTIMES_DIR', './runtimes')
 vi.stubEnv('SANDBOXES_DIR', '/opt/sandboxes')
-vi.stubEnv('LEGACY_USERS_DIR', '/opt/users')
 vi.stubEnv('ARCHIVE_DIR', '/opt/archive')
 
 import { sandboxService } from '../../services/sandbox'
@@ -180,7 +179,7 @@ describe('sandbox service', () => {
 
   it('rejects a name-prefix conflict against a deep-sleeping sandbox dir, not just live containers', async () => {
     const realExists = vi.mocked(fs.existsSync).getMockImplementation()!
-    vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/users' || realExists(p))
+    vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/sandboxes/admin' || realExists(p))
     vi.spyOn(fs, 'readdirSync').mockReturnValue(['p7y-bob'] as unknown as ReturnType<typeof fs.readdirSync>)
     try {
       await expect(sandboxService.createSandbox('bob-inner')).rejects.toThrow('conflicts with an existing sandbox')
@@ -257,7 +256,7 @@ describe('sandbox service', () => {
 
   it('refuses a name that exists only in the legacy layout (not moved yet)', async () => {
     const realExists = vi.mocked(fs.existsSync).getMockImplementation()!
-    vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/users/p7y-old1' || realExists(p))
+    vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/sandboxes/admin/p7y-old1' || realExists(p))
     try {
       await expect(sandboxService.createSandbox('old1')).rejects.toThrow('Sandbox already exists')
     } finally { vi.mocked(fs.existsSync).mockImplementation(realExists) }
@@ -471,7 +470,7 @@ describe('sandbox service', () => {
 
 describe('archiveSandbox', () => {
   const name = 'p7y-arc1'
-  const dir = `/opt/users/${name}`
+  const dir = `/opt/sandboxes/admin/${name}`
   const vol = `${name}_docker_data`
   let steps: string[]
   let realExists: (p: fs.PathLike) => boolean
@@ -611,7 +610,7 @@ describe('sysbox runtime', () => {
 
 describe('deep-sleeping sandboxes in the API', () => {
   const name = 'p7y-ds9'
-  const dir = `/opt/users/${name}`
+  const dir = `/opt/sandboxes/admin/${name}`
   let realExists: (p: fs.PathLike) => boolean
   let realRead: typeof fs.readFileSync
 
@@ -619,7 +618,7 @@ describe('deep-sleeping sandboxes in the API', () => {
     realExists = vi.mocked(fs.existsSync).getMockImplementation()! as (p: fs.PathLike) => boolean
     realRead = vi.mocked(fs.readFileSync).getMockImplementation()! as typeof fs.readFileSync
     vi.mocked(listManagedContainers).mockResolvedValue([])
-    vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/users' || String(p).startsWith(dir) || realExists(p))
+    vi.mocked(fs.existsSync).mockImplementation(p => p === '/opt/sandboxes/admin' || String(p).startsWith(dir) || realExists(p))
     vi.spyOn(fs, 'readdirSync').mockReturnValue([name, 'Bad..Name', 'p7y-nocompose'] as unknown as ReturnType<typeof fs.readdirSync>)
     vi.mocked(fs.readFileSync).mockImplementation(((p: unknown, o?: unknown) =>
       p === `${dir}/docker-compose.yml`
@@ -685,7 +684,7 @@ describe('tunnel URLs only for running sandboxes', () => {
     mockFetch.mockReset()
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({ proxies: [] }) })
     realExists = vi.mocked(fs.existsSync).getMockImplementation()! as (p: fs.PathLike) => boolean
-    vi.mocked(fs.existsSync).mockImplementation(p => String(p) === `/opt/users/${name}/frps.toml` || realExists(p))
+    vi.mocked(fs.existsSync).mockImplementation(p => String(p) === `/opt/sandboxes/admin/${name}/frps.toml` || realExists(p))
     vi.mocked(listManagedContainers).mockResolvedValue([
       sandboxMeta({ name, owner: 'admin', template: 't', status: 'exited', container_id: 'x', created_at: '' })
     ])
@@ -704,7 +703,7 @@ describe('tunnel URLs only for running sandboxes', () => {
     const realRead = vi.mocked(fs.readFileSync).getMockImplementation()!
     const apps = [{ url: 'asleep1-inner-web-port8080.lvh.me', port: 8080, service: 'web' }, { url: 'asleep1-portainer.lvh.me', port: 9000, service: 'portainer' }]
     vi.mocked(fs.readFileSync).mockImplementation(((p: fs.PathOrFileDescriptor, o?: unknown) =>
-      String(p) === `/opt/users/${name}/apps.json` ? JSON.stringify(apps) : realRead(p, o as never)) as typeof fs.readFileSync)
+      String(p) === `/opt/sandboxes/admin/${name}/apps.json` ? JSON.stringify(apps) : realRead(p, o as never)) as typeof fs.readFileSync)
     try {
       const info = await sandboxService.getSandbox(name)
       expect(info.tunnel_urls).toEqual(['asleep1-inner-web-port8080.lvh.me', 'asleep1-portainer.lvh.me'])
@@ -761,7 +760,7 @@ describe('startSandbox and the limits', () => {
     const spy = vi.spyOn(sandboxService, 'getSandbox')
     spy.mockResolvedValueOnce({ name: 'p7y-x', owner: 'u@x', status: 'exited' } as never)
     await sandboxService.startSandbox('p7y-x')
-    expect(composeStart).toHaveBeenCalledWith('/opt/users/p7y-x/docker-compose.yml')
+    expect(composeStart).toHaveBeenCalledWith('/opt/sandboxes/admin/p7y-x/docker-compose.yml')
     expect((slot as { release: () => void }).release).toHaveBeenCalled()
     vi.mocked(reserveWake).mockClear()
     spy.mockResolvedValueOnce({ name: 'p7y-x', owner: 'u@x', status: 'running' } as never)
@@ -774,8 +773,8 @@ describe('startSandbox and the limits', () => {
     const spy = vi.spyOn(sandboxService, 'getSandbox')
     spy.mockImplementation(async (n: string) => ({ name: n, owner: 'u@x', status: n === 'p7y-shop' ? 'running' : 'exited' }) as never)
     await sandboxService.startSandbox('p7y-x', { sleep: 'p7y-shop' })
-    expect(composeStop).toHaveBeenCalledWith('/opt/users/p7y-shop/docker-compose.yml')
-    expect(composeStart).toHaveBeenCalledWith('/opt/users/p7y-x/docker-compose.yml')
+    expect(composeStop).toHaveBeenCalledWith('/opt/sandboxes/admin/p7y-shop/docker-compose.yml')
+    expect(composeStart).toHaveBeenCalledWith('/opt/sandboxes/admin/p7y-x/docker-compose.yml')
     expect(vi.mocked(composeStop).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(composeStart).mock.invocationCallOrder[0])
     spy.mockRestore()
   })

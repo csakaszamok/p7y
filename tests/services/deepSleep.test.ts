@@ -10,7 +10,7 @@ vi.mock('../../services/project', () => ({
   nudgeTraefik: vi.fn().mockResolvedValue(undefined)
 }))
 vi.mock('../../services/lastRunning', () => ({ rememberLastRunning: vi.fn() }))
-vi.mock('../../services/sandboxPaths', async orig => (await import('../helpers/legacySandboxPaths')).legacySandboxPaths(orig))
+vi.mock('../../services/sandboxPaths', async orig => (await import('../helpers/flatSandboxPaths')).flatSandboxPaths(orig))
 
 vi.mock('fs', async (orig) => {
   const actual = await orig<typeof import('fs')>()
@@ -69,7 +69,7 @@ describe('runDeepSleepOnce', () => {
     vi.mocked(listManagedContainers).mockResolvedValue([meta('p7y-a')])
     vi.mocked(getSandboxState).mockResolvedValue(state())
     await runDeepSleepOnce(NOW)
-    expect(composeDown).toHaveBeenCalledWith('/opt/users/p7y-a/docker-compose.yml')
+    expect(composeDown).toHaveBeenCalledWith('/opt/sandboxes/admin/p7y-a/docker-compose.yml')
   })
 
   it('nudges Traefik after taking a sandbox down so its stale router is dropped', async () => {
@@ -118,7 +118,7 @@ describe('deepSleepNow', () => {
     // No "is it due" check (the user asked for it): a running sandbox, never due, goes down too
     vi.mocked(getSandboxState).mockResolvedValue(state({ status: 'running' }))
     await deepSleepNow('p7y-shop')
-    expect(composeDown).toHaveBeenCalledWith('/opt/users/p7y-shop/docker-compose.yml')
+    expect(composeDown).toHaveBeenCalledWith('/opt/sandboxes/admin/p7y-shop/docker-compose.yml')
     expect(removeProjectContainers).toHaveBeenCalledWith('p7y-shop')
     expect(nudgeTraefik).toHaveBeenCalled()
   })

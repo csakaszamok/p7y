@@ -17,8 +17,7 @@ export default async (req: Request): Promise<Response> => {
     `It was created before HTTPS was enabled, so its address only works over plain HTTP, which now redirects to HTTPS.
   Delete it in Purgatory (its data is archived) and create it again to get an HTTPS address.`)
   if (result === 'no_route') return messageResponse(502, name, 'This address does not reach the sandbox',
-    `The sandbox is running, but none of its routes matches this address. If you opened it over https://, try http://;
-  restarting Purgatory updates the routes of sandboxes created before HTTPS support.`)
+    `The sandbox is running, but none of its routes matches this address. If you opened it over https://, try http://.`)
   return new Response(wakingPage(name, from, `${publicBase()}/wake/ready?host=${encodeURIComponent(host)}`), {
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }
   })

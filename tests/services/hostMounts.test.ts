@@ -7,8 +7,6 @@ import {
   MOUNTS_LABEL, SYSTEM_DIRS, hostMountRoots, parseHostMountRoots, cleanPath, underRoot, ownTargets,
   validateMount, readMounts, withMounts, mountsOf, setMounts, type HostMount,
 } from '../../services/hostMounts'
-import { withDataVolumes } from '../../services/dataVolumes'
-import { withUsersDir, mountedUsersDir } from '../../services/pathMigration'
 
 // The sandbox's compose file as created from runtimes/dind.yaml (its mounts are what the targets must keep clear of)
 const RUNTIME = yaml.load(fs.readFileSync(path.join(__dirname, '..', '..', 'runtimes', 'dind.yaml'), 'utf8')) as { docker_compose: unknown }
@@ -123,25 +121,6 @@ describe('withMounts / readMounts', () => {
     expect(readMounts(compose())).toEqual([])
     expect(readMounts(': not yaml [')).toEqual([])
     expect(() => withMounts(yaml.dump({ services: { other: {} } }), [m1])).toThrow(/no sandbox service/)
-  })
-
-  it('kept by the data-volume migration and the host-path migrations', () => {
-    // An old file without the data volumes, with mounts
-    const old = withMounts(compose().replace(/\n\s+- sandbox_(opt|root|home|srv):\/\w+/g, ''), [m1])
-    const migrated = withDataVolumes(old)!
-    expect(migrated).not.toBeNull()
-    expect(readMounts(migrated)).toEqual([m1])
-    expect(sandbox(migrated).volumes).toContainEqual(expect.objectContaining({ source: '/srv/shared', target: '/mnt/shared' }))
-    expect(withDataVolumes(migrated)).toBeNull()
-
-    // A host mount that happens to sit in the sandbox's old directory is not moved with it
-    const inDir = { host: `${HOST}/p7y-shop/shared`, target: '/mnt/x', readonly: false }
-    const text = withMounts(compose(), [inDir])
-    expect(mountedUsersDir(text, 'p7y-shop')).toBe(HOST)
-    const moved = withUsersDir(text, 'p7y-shop', HOST, '/new/sandboxes/admin')
-    expect(readMounts(moved)).toEqual([inDir])
-    expect(sandbox(moved).volumes).toContainEqual(expect.objectContaining({ source: inDir.host }))
-    expect(sandbox(moved).volumes).toContain('/new/sandboxes/admin/p7y-shop/certs:/certs')
   })
 })
 

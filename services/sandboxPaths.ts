@@ -3,15 +3,13 @@ import path from 'path'
 
 /**
  * Where a sandbox's files live: opt/sandboxes/<owner>/<name>/ (in the container /opt/sandboxes/…), archives under
- * opt/archive/<owner>/. Sandboxes from before this layout sit in the flat opt/users/<name>/ until the startup move
- * (sandboxDirMigration) takes them over; every lookup falls back to them meanwhile.
+ * opt/archive/<owner>/.
  */
 
 /** A sandbox directory name (= sandbox name). */
 export const SANDBOX_NAME = /^[a-z0-9][a-z0-9_-]{0,70}$/
 
 export const sandboxesDir = () => process.env.SANDBOXES_DIR ?? '/opt/sandboxes'
-export const legacyUsersDir = () => process.env.LEGACY_USERS_DIR ?? '/opt/users'
 export const archiveDir = () => process.env.ARCHIVE_DIR ?? '/opt/archive'
 
 /** The directory name for an owner id (admin, or an OIDC e-mail): safe on any file system. */
@@ -43,7 +41,7 @@ export function sandboxesMounted(): boolean {
   try { return fs.statSync(sandboxesDir()).dev !== fs.statSync('/').dev } catch { return false }
 }
 
-export interface SandboxDirEntry { name: string; owner: string; dir: string; legacy: boolean }
+export interface SandboxDirEntry { name: string; owner: string; dir: string }
 
 const subdirs = (p: string): string[] => {
   try { return fs.readdirSync(p, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name) } catch { return [] }
@@ -61,51 +59,41 @@ const ownerOfDir = (dir: string) => {
 
 let cache = new Map<string, string>()
 
-/** Every sandbox directory: the per-owner layout, then legacy flat ones not moved yet. */
+/** Every sandbox directory (opt/sandboxes/<owner>/<name>). */
 export function listSandboxDirs(): SandboxDirEntry[] {
   const seen = new Map<string, SandboxDirEntry>()
   for (const o of subdirs(sandboxesDir())) {
     for (const name of subdirs(`${sandboxesDir()}/${o}`)) {
       if (!SANDBOX_NAME.test(name) || seen.has(name)) continue
       const dir = `${sandboxesDir()}/${o}/${name}`
-      seen.set(name, { name, owner: ownerOfDir(dir), dir, legacy: false })
+      seen.set(name, { name, owner: ownerOfDir(dir), dir })
     }
-  }
-  for (const name of subdirs(legacyUsersDir())) {
-    if (!SANDBOX_NAME.test(name) || seen.has(name)) continue
-    const dir = `${legacyUsersDir()}/${name}`
-    // A leftover of a move (no compose file) is not a sandbox: it must not hold the name
-    if (!fs.existsSync(`${dir}/docker-compose.yml`)) continue
-    seen.set(name, { name, owner: ownerOfDir(dir), dir, legacy: true })
   }
   cache = new Map([...seen.values()].map(e => [e.name, e.dir]))
   return [...seen.values()]
 }
 
-/** Every sandbox (listSandboxDirs), or the sandboxes of one flat directory when given (as the old opt/users was). */
+/** Every sandbox (listSandboxDirs), or the sandboxes of one directory when given (tests). */
 export function entriesIn(flatDir?: string): SandboxDirEntry[] {
   if (flatDir === undefined) return listSandboxDirs()
   return subdirs(flatDir).filter(n => SANDBOX_NAME.test(n))
-    .map(name => ({ name, owner: ownerOfDir(`${flatDir}/${name}`), dir: `${flatDir}/${name}`, legacy: true }))
+    .map(name => ({ name, owner: ownerOfDir(`${flatDir}/${name}`), dir: `${flatDir}/${name}` }))
 }
 
-const movedAlready = (name: string) => subdirs(sandboxesDir()).some(o => fs.existsSync(`${sandboxesDir()}/${o}/${name}`))
-
-/** The sandbox's directory (per-owner layout first, then legacy), or null. */
+/** The sandbox's directory, or null. */
 export function sandboxDir(name: string): string | null {
   if (!SANDBOX_NAME.test(name)) return null
   const hit = cache.get(name)
-  // A cached legacy path is checked again: the startup move may have taken it over meanwhile
-  if (hit && fs.existsSync(hit) && !(hit.startsWith(`${legacyUsersDir()}/`) && movedAlready(name))) return hit
+  if (hit && fs.existsSync(hit)) return hit
   listSandboxDirs()
   return cache.get(name) ?? null
 }
 
-/** The directory holding the sandbox's directory; for an unknown sandbox the legacy one (its paths then do not exist). */
+/** The directory holding the sandbox's directory; for an unknown sandbox opt/sandboxes (its paths then do not exist). */
 export function sandboxParent(name: string): string {
   const d = sandboxDir(name)
   // posix: these are container paths, also when the tests run on Windows
-  return d ? path.posix.dirname(d) : legacyUsersDir()
+  return d ? path.posix.dirname(d) : sandboxesDir()
 }
 
 export const newSandboxDir = (owner: string, name: string) => `${sandboxesDir()}/${ownerDirName(owner)}/${name}`

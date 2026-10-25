@@ -38,7 +38,7 @@ The stack runs Traefik v3.6 with the Sablier plugin, Sablier, a registry and the
 !!! tip "An app takes seconds to open the first time?"
     In Chrome, *Settings → Privacy and security → Security → Use secure DNS*: with "your current service provider" each new `*.lvh.me` name can wait for a slow or filtering resolver. Turn it off, or pick a provider such as Cloudflare (1.1.1.1).
 
-Each sandbox's files (compose file, certificates, tunnel config) live in `opt/sandboxes/<owner>/<name>/`, its archives in `opt/archive/<owner>/`; `<owner>` is `admin` or the user's sign-in e-mail. Sandboxes from older versions (`opt/users/<name>/`) are moved there at startup; a running one restarts once.
+Each sandbox's files (compose file, certificates, tunnel config) live in `opt/sandboxes/<owner>/<name>/`, its archives in `opt/archive/<owner>/`; `<owner>` is `admin` or the user's sign-in e-mail.
 
 > **Give the Docker daemon a larger address pool.** Every sandbox — sleeping ones included — keeps its own compose network until it is archived. Docker's default pools only allow about 30 networks; beyond that sandbox creation fails with `fully subnetted`. Set smaller subnets in the daemon config (`/etc/docker/daemon.json`, or Docker Desktop → Settings → Docker Engine) and restart Docker:
 >
