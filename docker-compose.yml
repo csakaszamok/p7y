@@ -204,10 +204,7 @@ services:
       sablier-net: {}
     restart: unless-stopped
     # Its error-page middleware is in dynamic/errors.yml, which p9m-init writes; restarted when a new release
-    # recreates p9m-init. Pulling 0.5 into an old checkout recreates dynamic/ under a running Traefik, which would keep
-    # reading the deleted directory: this label is new in 0.5, so the upgrade's `up` recreates Traefik once.
-    labels:
-      p9m.compose: "0.5"
+    # recreates p9m-init.
     depends_on:
       p9m-init:
         condition: service_completed_successfully

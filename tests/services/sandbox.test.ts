@@ -84,7 +84,7 @@ import { composeUp, composeUpInner, composeDown, composeConfigCheck, composeStar
 import { listProjectVolumes, exportVolume, removeVolume, stopProjectContainers, removeProjectContainers } from '../../services/project'
 import fs from 'fs'
 import yaml from 'js-yaml'
-import { ownerDirName } from '../../services/sandboxPaths'
+import { ownerDirName, sandboxDir } from '../../services/sandboxPaths'
 
 describe('sandbox service', () => {
   beforeEach(() => {
@@ -547,6 +547,17 @@ describe('archiveSandbox', () => {
 
   it('reports not found when there is no sandbox directory', async () => {
     await expect(sandboxService.archiveSandbox('p9m-nobody')).rejects.toThrow('not found')
+  })
+
+  it('removes nothing for an unknown sandbox even when a path of its name exists (e.g. an owner directory)', async () => {
+    const known = vi.mocked(sandboxDir).getMockImplementation()!
+    vi.mocked(sandboxDir).mockReturnValue(null)
+    try {
+      await expect(sandboxService.archiveSandbox(name)).rejects.toThrow('not found')
+    } finally {
+      vi.mocked(sandboxDir).mockImplementation(known)
+    }
+    expect(steps).toEqual([])
   })
 })
 
