@@ -411,7 +411,7 @@
     const why = cap.by === 'disk'
       ? `the disk holds about ${cap.disk} sandboxes at their disk limit, asleep ones too`
       : `${cap.ideal} can use their full CPU and memory limits at once (${by} first), twice that since most idle or sleep`
-    const over = lim && lim > cap.suggested * 1.5 ? ` <span class="warn">⚠ SANDBOX_MAX_TOTAL is ${lim}: more running at once than the host can serve when they work</span>` : ''
+    const over = lim && lim > cap.suggested * 1.5 ? `<br><span class="warn">⚠ SANDBOX_MAX_TOTAL is ${lim}: more running at once than the host can serve when they all work</span>` : ''
     return `<p class="ov-suggest">Suggested server limit: <strong>${cap.suggested}</strong> running <span class="muted">· ${why}</span>${over}</p>`
   }
 
