@@ -86,9 +86,12 @@ docker_compose:
       depends_on:
         - frps
       # Healthy only once frpc inside the sandbox has registered its proxies,
-      # so Sablier does not redirect the user before the tunnel works.
+      # so Sablier does not redirect the user before the tunnel works. A stack that publishes no port has
+      # no HTTP proxy: then frpc's readiness marker (<name>.ready, stcp) online for 15 s, in case an
+      # app's proxy is still on its way (the time since the marker was first seen, in /dev/shm: empty
+      # on every start of the container).
       healthcheck:
-        test: ["CMD-SHELL", "wget -qO- http://$$FRPS_API_AUTH@127.0.0.1:7500/api/proxy/http | grep -q online"]
+        test: ["CMD-SHELL", "a=http://$$FRPS_API_AUTH@127.0.0.1:7500/api/proxy; wget -qO- $$a/http | grep -q online || { wget -qO- $$a/stcp | grep -q online && { [ -f /dev/shm/ready ] || touch /dev/shm/ready; [ $$(( $$(date +%s) - $$(stat -c %Y /dev/shm/ready) )) -ge 15 ]; }; }"]
         # Every 10 s once up (each check is a `docker exec`: with many sandboxes, every 2 s kept dockerd busy);
         # a broken tunnel still takes its router away within 2 minutes
         interval: 10s

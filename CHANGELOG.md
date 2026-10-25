@@ -4,6 +4,11 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- **A sandbox whose stack publishes no port** (only workers, or only `127.0.0.1:` ports) becomes healthy: socat's health check waited for an HTTP proxy that never came, so such a sandbox had no router and every start or wake waited for the full timeout. Now frpc's readiness marker (`<name>.ready`) online for 15 seconds is enough when there is no HTTP proxy; a stack with an app is still healthy once its proxy is online. Sandboxes created before keep their old check: re-create one that has no public port ([#1](https://github.com/csakaszamok/p9m/issues/1)).
+- The version links at the bottom of this changelog point to `csakaszamok/p9m` and cover every release.
+
 ## [0.12.2] - 2026-10-25
 
 Upgrading from 0.12.1: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (only the version changes). A `docker-compose.yml` you keep from before stays on 0.12.1.
@@ -578,13 +583,44 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p7y/compare/v0.6.0...HEAD
-[0.6.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.6.0
-[0.5.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.2
-[0.5.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.1
-[0.5.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.5.0
-[0.4.2]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.2
-[0.4.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.1
-[0.4.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.4.0
-[0.3.1]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.1
-[0.3.0]: https://github.com/csakaszamok/p7y/releases/tag/v0.3.0
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.2...HEAD
+[0.12.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.2
+[0.12.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.1
+[0.12.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.0
+[0.11.12]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.12
+[0.11.11]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.11
+[0.11.10]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.10
+[0.11.9]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.9
+[0.11.8]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.8
+[0.11.7]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.7
+[0.11.6]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.6
+[0.11.5]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.5
+[0.11.4]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.4
+[0.11.3]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.3
+[0.11.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.2
+[0.11.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.1
+[0.11.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.11.0
+[0.10.3]: https://github.com/csakaszamok/p9m/releases/tag/v0.10.3
+[0.10.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.10.2
+[0.10.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.10.1
+[0.10.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.10.0
+[0.9.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.9.1
+[0.9.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.9.0
+[0.8.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.8.0
+[0.7.3]: https://github.com/csakaszamok/p9m/releases/tag/v0.7.3
+[0.7.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.7.2
+[0.7.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.7.1
+[0.7.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.7.0
+[0.6.4]: https://github.com/csakaszamok/p9m/releases/tag/v0.6.4
+[0.6.3]: https://github.com/csakaszamok/p9m/releases/tag/v0.6.3
+[0.6.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.6.2
+[0.6.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.6.1
+[0.6.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.6.0
+[0.5.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.5.2
+[0.5.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.5.1
+[0.5.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.5.0
+[0.4.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.4.2
+[0.4.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.4.1
+[0.4.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.4.0
+[0.3.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.3.1
+[0.3.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.3.0
