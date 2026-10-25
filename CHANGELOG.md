@@ -4,6 +4,18 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-10-25
+
+Upgrading from 0.12.0: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (besides the version, Traefik loses its `p9m.compose` label, so it is recreated once). A `docker-compose.yml` you keep from before stays on 0.12.0.
+
+### Fixed
+
+- **Deleting a sandbox Purgatorium does not know** removes nothing: the archive step only takes a known sandbox directory, never a path made up from the name (which could have been another directory).
+
+### Removed
+
+- What was left of upgrading an old checkout: Traefik's `p9m.compose` label in `docker-compose.yml`, and the notes about sandboxes or users "from before" in the docs.
+
 ## [0.12.0] - 2026-10-25
 
 **Purgatory (p7y) is now Purgatorium (p9m).** There is no upgrade from Purgatory: install Purgatorium afresh ([install](docs/install.md)) in a new directory called `p9m`. Sandboxes, archives, users, tokens and settings are not carried over.
