@@ -5,7 +5,7 @@
 #
 #   curl -fsSL https://github.com/csakaszamok/p9m/releases/latest/download/setup.sh | bash -s -- dev.example.com
 #
-# The domain (optional) becomes HOST_DOMAIN: every address is under it (the UI is p9m.<domain>).
+# The domain (optional) becomes HOST_DOMAIN: every address is under it (the UI is p9m.<domain>, or UI_HOST).
 set -euo pipefail
 
 # Set in the release asset (e.g. v0.5.0); empty in a checkout, which uses its own .env.example
@@ -80,7 +80,8 @@ if [ -n "$domain" ]; then
   case "$(get PUBLIC_URL)" in
     ""|http://p9m.lvh.me|https://p9m.lvh.me|"http://p9m.$previous"|"https://p9m.$previous")
       if [ -f certs/tls.crt ] && [ -f certs/tls.key ]; then scheme=https; else scheme=http; fi
-      set_value PUBLIC_URL "$scheme://p9m.$domain" ;;
+      ui=$(get UI_HOST)
+      set_value PUBLIC_URL "$scheme://${ui:-p9m.$domain}" ;;
   esac
 fi
 

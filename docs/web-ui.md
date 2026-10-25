@@ -1,6 +1,6 @@
 # Web UI and sign-in
 
-Purgatorium has a small web UI (`http://p9m.<HOST_DOMAIN>`) for creating and managing sandboxes without the API directly, alongside the REST API.
+Purgatorium has a small web UI (`http://p9m.<HOST_DOMAIN>`, or `UI_HOST`) for creating and managing sandboxes without the API directly, alongside the REST API.
 
 Two ways to sign in:
 

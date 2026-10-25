@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { uiHost } from './uiHost'
 
 export type Role = 'user' | 'admin'
 export interface Session { sub: string; role: Role; exp: number }
@@ -60,7 +61,7 @@ export function getCookie(req: Request, name: string): string | undefined {
 }
 
 export function publicUrl(): string {
-  return (process.env.PUBLIC_URL ?? `http://p9m.${process.env.HOST_DOMAIN ?? 'lvh.me'}`).replace(/\/+$/, '')
+  return (process.env.PUBLIC_URL ?? `http://${uiHost()}`).replace(/\/+$/, '')
 }
 
 export function cookieHeader(name: string, value: string, maxAgeSec: number): string {

@@ -49,6 +49,10 @@ sed -i 's|^PUBLIC_URL=.*|PUBLIC_URL=https://purgatorium.example.org|' .env
 bash "$repo/setup.sh" other.example.com >/dev/null
 grep -qx 'PUBLIC_URL=https://purgatorium.example.org' .env && grep -qx 'HOST_DOMAIN=other.example.com' .env \
   && pass "a PUBLIC_URL of the user's own is kept" || fail "PUBLIC_URL: $(grep PUBLIC_URL .env)"
+# UI_HOST in .env: PUBLIC_URL is made from it
+mkdir "$tmp/h" && cd "$tmp/h" && bash "$repo/setup.sh" >/dev/null && echo 'UI_HOST=console.dev.example.com' >> .env
+bash "$repo/setup.sh" dev.example.com >/dev/null
+grep -qx 'PUBLIC_URL=http://console.dev.example.com' .env && pass "UI_HOST: PUBLIC_URL from it" || fail "PUBLIC_URL: $(grep PUBLIC_URL .env)"
 # Without a domain on a fresh directory: it says lvh.me only works on this machine
 mkdir "$tmp/f" && cd "$tmp/f"
 out=$(bash "$repo/setup.sh")

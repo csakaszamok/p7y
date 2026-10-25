@@ -59,7 +59,8 @@ services:
       # Max sandboxes per signed-in user (0 = unlimited); the admin is not limited
       SANDBOX_QUOTA: ${SANDBOX_QUOTA:-3}
       # UI sign-in. Admin: local account. Everyone else: OIDC (Google or any OpenID Connect provider).
-      PUBLIC_URL: ${PUBLIC_URL:-http://p9m.${HOST_DOMAIN:-lvh.me}}
+      PUBLIC_URL: ${PUBLIC_URL:-http://${UI_HOST:-p9m.${HOST_DOMAIN:-lvh.me}}}
+      UI_HOST: ${UI_HOST:-}
       SESSION_SECRET: ${SESSION_SECRET:-}
       ADMIN_USER: ${ADMIN_USER:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
@@ -91,7 +92,7 @@ services:
       - attempts:2
     labels:
       traefik.enable: "true"
-      traefik.http.routers.p9m.rule: "Host(`p9m.${HOST_DOMAIN:-lvh.me}`)"
+      traefik.http.routers.p9m.rule: "Host(`${UI_HOST:-p9m.${HOST_DOMAIN:-lvh.me}}`)"
       traefik.http.routers.p9m.entrypoints: web,websecure
       traefik.http.routers.p9m.service: p9m
       traefik.http.services.p9m.loadbalancer.server.port: "3000"
@@ -201,7 +202,7 @@ services:
         aliases:
           # Sandboxes reach the registry and its token endpoint through Traefik by name (not 127.0.0.1)
           - registry.${HOST_DOMAIN:-lvh.me}
-          - p9m.${HOST_DOMAIN:-lvh.me}
+          - ${UI_HOST:-p9m.${HOST_DOMAIN:-lvh.me}}
       sablier-net: {}
     restart: unless-stopped
     # Its error-page middleware is in dynamic/errors.yml, which p9m-init writes; restarted when a new release
