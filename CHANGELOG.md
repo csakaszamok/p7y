@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.8] - 2026-10-25
+
+Upgrading from 0.12.7: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (only the version changes). A `docker-compose.yml` you keep from before stays on 0.12.7.
+
 ### Changed
 
 - **My area in the topbar:** *My sandboxes*, *Access tokens* and *SSH keys* are one menu item, **My area**, with the three as tabs in a row below it on those pages, so the topbar has room for the rest (e.g. the admin's newer-release notice). Simple shows no row: My area is the sandboxes there. The addresses (`/`, `/settings/tokens`, `/settings/ssh-keys`) stay.
@@ -625,7 +629,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.7...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.8...HEAD
+[0.12.8]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.8
 [0.12.7]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.7
 [0.12.6]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.6
 [0.12.5]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.5
