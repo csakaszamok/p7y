@@ -31,7 +31,7 @@ ECHO_HOST="$NAME-inner-http-echo-port5678.$HOST_DOMAIN"
 status() {
   curl -s -H "Authorization: Bearer $P9M_TOKEN" "$P9M_API/sandboxes/$FULL" | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4
 }
-body() { curl -s -m 10 -H "Host: $ECHO_HOST" "$TRAEFIK_URL/" | head -c 4000; }
+body() { curl -s -m 10 -H "Host: $ECHO_HOST" "$TRAEFIK_URL/" | head -c 20000; }
 wait_status() { # $1 wanted status, $2 deadline seconds
   local t; t=$(date +%s)
   until [ "$(status)" = "$1" ]; do
