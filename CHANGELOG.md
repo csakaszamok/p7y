@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.11] - 2026-10-26
+
+Upgrading from 0.12.10: **if the admin signs in with the password, first add `ADMIN_LOGIN=on` to `.env`** (the new default is off; OIDC admins and `ADMIN_TOKEN` are not affected). Then download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml` (it passes `ADMIN_LOGIN`), and `docker compose pull && docker compose up -d`. If `.env` still has `UI_TITLE=Purgatorium` from `setup.sh`, empty it for the new name. A `docker-compose.yml` you keep from before stays on 0.12.10.
+
 ### Changed
 
 - **The admin's password sign-in is off by default:** a new `ADMIN_LOGIN` (default `off`) decides whether the **Administrator sign-in** form is on the sign-in page (and the Hub's); off, it is not shown and the password is not even checked. Upgrading: on a server where the admin signs in with the password, set `ADMIN_LOGIN=on` in `.env` before `docker compose up -d`, or the admin can only sign in with OIDC (`OIDC_ADMIN_EMAILS`) and use the API with `ADMIN_TOKEN`. Meant as an emergency door: turn it on, sign in, turn it off. While on, Purgatorium warns at startup. See [Configuration](docs/configuration.md).
@@ -657,7 +661,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.10...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.11...HEAD
+[0.12.11]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.11
 [0.12.10]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.10
 [0.12.9]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.9
 [0.12.8]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.8
