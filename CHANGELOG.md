@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.12] - 2026-10-26
+
+Upgrading from 0.12.11, **two defaults change; before `docker compose up -d`:** (1) install [sysbox](https://github.com/nestybox/sysbox) on the server, or no new sandbox can be created (existing ones keep running); (2) label the apps everyone should open `p9m.access: public` (or `domain`), or set `APPS_ACCESS_DEFAULT=public` in `.env` to keep the old behaviour: without a label an app now opens only for its owner. Then download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml` and `docker compose pull && docker compose up -d`. Afterwards, run the new `check-host.sh` in the `p9m` folder: it lists what is not secure. A `docker-compose.yml` you keep from before stays on 0.12.11.
+
 ### Changed
 
 - **Only sysbox by default; `dind` is for development only:** `ALLOWED_RUNTIMES` defaults to `sysbox` (also `all` now allows every runtime). On a host without sysbox no new sandbox can be created, and Purgatorium says so at startup; `docker-compose.dev.yml` allows `all` for development (Docker Desktop has no sysbox). Upgrading: install sysbox on the server; existing `dind` sandboxes keep running, sleeping and waking (recreate them under sysbox). To allow `dind` anyway: `ALLOWED_RUNTIMES=sysbox,dind`, which `check-host.sh` reports as not secure.
@@ -670,7 +674,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.11...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.12...HEAD
+[0.12.12]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.12
 [0.12.11]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.11
 [0.12.10]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.10
 [0.12.9]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.9
