@@ -68,13 +68,37 @@
         <ellipse cx="30" cy="29" rx="8" ry="4" fill="#fff" opacity=".45" stroke="none" transform="rotate(-25 30 29)"/>
       </g>
     </symbol>
+    <!-- the agent carrying a container --><symbol id="carrier" viewBox="0 0 100 130">
+      <g stroke="#1b1424" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M41 108 V123 M59 108 V123" stroke-width="13" fill="none"/><path d="M41 108 V123 M59 108 V123" stroke="currentColor" stroke-width="7" fill="none"/>
+        <line x1="50" y1="21" x2="50" y2="9"/>
+        <circle class="tip" cx="50" cy="7" r="5" fill="#ff8a2a"/>
+        <rect x="8" y="36" width="10" height="20" rx="4" fill="#ff8a2a"/><rect x="82" y="36" width="10" height="20" rx="4" fill="#ff8a2a"/>
+        <rect x="15" y="20" width="70" height="52" rx="19" fill="currentColor"/>
+        <rect x="23" y="29" width="54" height="31" rx="14" fill="#1b1424"/>
+        <g class="eyes"><ellipse cx="40" cy="43" rx="5" ry="6.5" fill="#7ff6ff" stroke="none"/><ellipse cx="60" cy="43" rx="5" ry="6.5" fill="#7ff6ff" stroke="none"/></g>
+        <path d="M44 52 Q50 56.5 56 52" stroke="#7ff6ff" stroke-width="2.5" fill="none"/>
+        <rect x="28" y="74" width="44" height="36" rx="14" fill="currentColor"/>
+        <circle cx="50" cy="91" r="6" fill="#ff8a2a"/>
+        <ellipse cx="30" cy="29" rx="8" ry="4" fill="#fff" opacity=".45" stroke="none" transform="rotate(-25 30 29)"/>
+        <path d="M31 84 L20 104 M69 84 L80 104" stroke-width="13" fill="none"/><path d="M31 84 L20 104 M69 84 L80 104" stroke="currentColor" stroke-width="7" fill="none"/>
+      </g>
+      <use href="#crate" x="18" y="90" width="64" height="41.6"/>
+      <g stroke="#1b1424" stroke-width="3"><circle cx="20" cy="106" r="6" fill="currentColor"/><circle cx="80" cy="106" r="6" fill="currentColor"/></g>
+    </symbol>
+    <symbol id="crate" viewBox="0 0 40 26">
+      <rect x="1.5" y="1.5" width="37" height="23" rx="2" fill="#c2410c" stroke="#1b1424" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M7 4.5v17M33 4.5v17" stroke="#7c2d12" stroke-width="1.6"/>
+      <rect x="10" y="7.5" width="20" height="11" rx="1.5" fill="#fff6e8" stroke="#1b1424" stroke-width="1.5"/>
+      <text x="20" y="15.8" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-weight="800" font-size="8" fill="#1b1424">app</text>
+    </symbol>
     <!-- the floor: an agent that ducks goes out of sight below it -->
     <clipPath id="floor"><rect x="-200" y="-200" width="1300" height="520"/></clipPath>
   </defs>
   <g clip-path="url(#floor)">
-    <g class="shy" data-shy><g class="peek"><use href="#agent" x="115" y="150" width="100" height="130" style="color:#f2efe9"/></g></g>
-    <g class="shy" data-shy><g class="peek b"><use href="#agent" x="400" y="150" width="100" height="130" style="color:#8bd3ff"/></g></g>
-    <g class="shy" data-shy><g class="peek c"><use href="#agent" x="690" y="150" width="100" height="130" style="color:#ffb066"/></g></g>
+    <g class="shy" data-shy><g class="peek"><use href="#carrier" x="115" y="150" width="100" height="130" style="color:#f2efe9"/></g></g>
+    <g class="shy" data-shy><g class="peek b"><use href="#carrier" x="400" y="150" width="100" height="130" style="color:#8bd3ff"/></g></g>
+    <g class="shy" data-shy><g class="peek c"><use href="#carrier" x="690" y="150" width="100" height="130" style="color:#ffb066"/></g></g>
   </g>
   <text x="450" y="320" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-weight="800" font-size="300" letter-spacing="20" fill="#6b4630" stroke="#8a5a3a" stroke-width="4">404</text>
   <!-- one did not hide: it is looking with its own torch (until the light finds it) -->
