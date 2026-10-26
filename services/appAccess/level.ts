@@ -8,9 +8,10 @@ const parse = (v: string | undefined): Access | null => {
   return (LEVELS as string[]).includes(t) ? t as Access : null
 }
 
-/** APPS_ACCESS_DEFAULT, public when unset; an unknown value is owner (closed, not open). */
+/** APPS_ACCESS_DEFAULT, owner when unset (an app is opened up on purpose, not by forgetting a label);
+ * an unknown value is owner too (closed, not open). */
 export function accessDefault(env: NodeJS.ProcessEnv = process.env): Access {
-  if (!env.APPS_ACCESS_DEFAULT?.trim()) return 'public'
+  if (!env.APPS_ACCESS_DEFAULT?.trim()) return 'owner'
   return parse(env.APPS_ACCESS_DEFAULT) ?? 'owner'
 }
 

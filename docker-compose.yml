@@ -20,8 +20,9 @@ services:
       # Per-route auth is handled by ADMIN_TOKEN in services/auth.ts instead.
       ADMIN_TOKEN: ${ADMIN_TOKEN:-abc123}
       DEFAULT_RUNTIME: ${DEFAULT_RUNTIME:-auto}
-      # Runtimes new sandboxes may use (comma list, e.g. sysbox); empty = all
-      ALLOWED_RUNTIMES: ${ALLOWED_RUNTIMES:-}
+      # Runtimes new sandboxes may use (comma list); default sysbox. The privileged dind is for development only
+      # (ALLOWED_RUNTIMES=sysbox,dind, or all): root in a dind sandbox can reach the host
+      ALLOWED_RUNTIMES: ${ALLOWED_RUNTIMES:-sysbox}
       DEFAULT_TEMPLATE: ${DEFAULT_TEMPLATE:-starter}
       # off: never ask GitHub for the star and fork counts in the topbar
       GITHUB_STATS: ${GITHUB_STATS:-on}
@@ -75,7 +76,7 @@ services:
       OIDC_ALLOWED_EMAILS: ${OIDC_ALLOWED_EMAILS:-}
       OIDC_ADMIN_EMAILS: ${OIDC_ADMIN_EMAILS:-}
       # App access (docs: app-access.md): who opens an app without p9m.access; the key of its cookies and tickets
-      APPS_ACCESS_DEFAULT: ${APPS_ACCESS_DEFAULT:-public}
+      APPS_ACCESS_DEFAULT: ${APPS_ACCESS_DEFAULT:-owner}
       APP_ACCESS_SECRET: ${APP_ACCESS_SECRET:-}
       # The Hub (docs: hub.md): off unless true; viewers besides the builders by domain or address
       HUB_ENABLED: ${HUB_ENABLED:-false}

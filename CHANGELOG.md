@@ -4,6 +4,15 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **Only sysbox by default; `dind` is for development only:** `ALLOWED_RUNTIMES` defaults to `sysbox` (also `all` now allows every runtime). On a host without sysbox no new sandbox can be created, and Purgatorium says so at startup; `docker-compose.dev.yml` allows `all` for development (Docker Desktop has no sysbox). Upgrading: install sysbox on the server; existing `dind` sandboxes keep running, sleeping and waking (recreate them under sysbox). To allow `dind` anyway: `ALLOWED_RUNTIMES=sysbox,dind`, which `check-host.sh` reports as not secure.
+- **Web apps open only for their owner by default:** `APPS_ACCESS_DEFAULT` defaults to `owner` (was `public`): an app without a `p9m.access` label opens only for its sandbox's owner and the admin, so an app is made public on purpose. Upgrading: label the apps everyone should open `p9m.access: public` (webhook receivers too, they cannot sign in), or `domain` for colleagues, or keep the old behaviour with `APPS_ACCESS_DEFAULT=public`. Apps with `p9m.publish` and no label are no longer on the Hub (owner-only apps are not published): label them `domain` or `public`.
+
+### Added
+
+- **Security checks in `check-host.sh`:** run in the `p9m` folder, it checks the `.env` (API port open to all networks, `ADMIN_LOGIN` on, default secrets, OIDC open to anyone, no HTTPS, `dind` allowed) and the host (other open ports, no firewall, no automatic updates, SSH passwords), marks each with **!**, and lists them all again at the end under a big *NOT SECURE* banner.
+
 ## [0.12.11] - 2026-10-26
 
 Upgrading from 0.12.10: **if the admin signs in with the password, first add `ADMIN_LOGIN=on` to `.env`** (the new default is off; OIDC admins and `ADMIN_TOKEN` are not affected). Then download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml` (it passes `ADMIN_LOGIN`), and `docker compose pull && docker compose up -d`. If `.env` still has `UI_TITLE=Purgatorium` from `setup.sh`, empty it for the new name. A `docker-compose.yml` you keep from before stays on 0.12.10.

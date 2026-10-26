@@ -4,8 +4,9 @@ import { accessDefault, accessOfLabel, mostRestrictive, mayOpen } from '../../..
 const env = (o: Record<string, string> = {}) => ({ ...o }) as NodeJS.ProcessEnv
 
 describe('access levels', () => {
-  it('the default is public, or APPS_ACCESS_DEFAULT when valid', () => {
-    expect(accessDefault(env())).toBe('public')
+  it('the default is owner, or APPS_ACCESS_DEFAULT when valid', () => {
+    expect(accessDefault(env())).toBe('owner')
+    expect(accessDefault(env({ APPS_ACCESS_DEFAULT: 'public' }))).toBe('public')
     expect(accessDefault(env({ APPS_ACCESS_DEFAULT: 'domain' }))).toBe('domain')
     expect(accessDefault(env({ APPS_ACCESS_DEFAULT: 'Owner' }))).toBe('owner')
     // An unknown default is the closed one, not public
@@ -15,7 +16,7 @@ describe('access levels', () => {
     expect(accessOfLabel('public', env())).toEqual({ access: 'public', invalid: false })
     expect(accessOfLabel(' Domain ', env())).toEqual({ access: 'domain', invalid: false })
     expect(accessOfLabel(undefined, env({ APPS_ACCESS_DEFAULT: 'domain' }))).toEqual({ access: 'domain', invalid: false })
-    expect(accessOfLabel('', env())).toEqual({ access: 'public', invalid: false })
+    expect(accessOfLabel('', env())).toEqual({ access: 'owner', invalid: false })
     expect(accessOfLabel('privat', env())).toEqual({ access: 'owner', invalid: true })
   })
   it('the most restrictive of several; none: the default', () => {

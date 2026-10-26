@@ -29,7 +29,7 @@ import { handleHub } from "./services/hub/router";
 import { mcpCaller, mcpToolsFor } from "./services/mcp";
 // From the base image (ghcr.io/csakaszamok/rododentron): the API routes as MCP tools
 import { createMcpHandler } from "./mcp-core";
-import { defaultRuntime, runtimeAllowed } from "./services/defaultRuntime";
+import { defaultRuntime, runtimeAllowed, runtimeMissing } from "./services/defaultRuntime";
 import { startRegistryGc } from "./services/registryGc";
 import { resumeScans } from "./services/registryScans";
 import { notifySecret } from "./services/notifySecret";
@@ -331,8 +331,9 @@ repoInfo();
 // Say once which runtime new sandboxes get, and why dind when sysbox would be safer
 void defaultRuntime().then(rt => {
   const auto = !process.env.DEFAULT_RUNTIME || process.env.DEFAULT_RUNTIME === "auto";
-  if (auto && rt === "dind") console.warn("[runtime] sysbox is not installed: new sandboxes run privileged (dind). Install sysbox on a Linux host for isolation.");
+  if (auto && rt === "dind") console.warn("[runtime] sysbox is not installed: new sandboxes run privileged (dind), which is for development only. Install sysbox on a Linux host for isolation.");
   else console.log(`[runtime] new sandboxes run on ${rt}${auto ? " (auto)" : ""}`);
+  void runtimeMissing(rt).then(missing => { if (missing) console.warn(`[runtime] new sandboxes cannot be created: ${missing}`) });
   if (!runtimeAllowed(rt)) console.warn(`[runtime] the default runtime ${rt} is not in ALLOWED_RUNTIMES: a create without a runtime is refused; set DEFAULT_RUNTIME to an allowed one`);
 });
 startRegistryGc();

@@ -5,16 +5,22 @@
 #   curl -fsSL https://github.com/csakaszamok/p9m/releases/latest/download/check-host.sh | bash -s -- [domain]
 #   ./check-host.sh [domain]     # domain: the HOST_DOMAIN you plan to use, e.g. dev.example.com (UI: p9m.dev.example.com)
 #
-# Exit code 1 if any check failed (✘), 0 otherwise (warnings ⚠ allowed).
+# Exit code 1 if any check failed (✘), 0 otherwise (warnings ⚠ allowed). What is not secure (!) is listed again at the end.
+# Run it in the Purgatorium folder of a running server too: it then also checks the settings in its .env.
 set -uo pipefail
 cd "$(dirname "$0")" || exit 1
 
 DOMAIN=${1:-}
 fails=0 warns=0
+risks=()
 ok()   { printf '  \033[32m✔\033[0m %s\n' "$1"; }
 warn() { printf '  \033[33m⚠\033[0m %s\n' "$1"; [ -n "${2:-}" ] && printf '      → %s\n' "$2"; warns=$((warns + 1)); }
 fail() { printf '  \033[31m✘\033[0m %s\n' "$1"; [ -n "${2:-}" ] && printf '      → %s\n' "$2"; fails=$((fails + 1)); }
 section() { printf '\n\033[1m%s\033[0m\n' "$1"; }
+# Not secure: shown now, and again in the summary at the end
+insecure() { printf '  \033[1;31m!\033[0m %s\n' "$1"; [ -n "${2:-}" ] && printf '      → %s\n' "$2"; risks+=("$1"$'\t'"${2:-}"); }
+# A setting of .env (none before setup.sh)
+env_get() { [ -f .env ] && sed -n "s/^$1=//p" .env | tail -1; }
 has() { command -v "$1" >/dev/null 2>&1; }
 # size_mb SIZE: 4g, 512m, 1024k → megabytes
 size_mb() { awk -v s="$1" 'BEGIN { n = s + 0; u = tolower(substr(s, length(s))); print int(u == "g" ? n * 1024 : u == "m" ? n : u == "k" ? n / 1024 : n / 1048576) }'; }
@@ -77,9 +83,17 @@ fi
 if $docker_ok; then
   section "Sandbox runtime"
   runtimes=$(docker info --format '{{range $k, $v := .Runtimes}}{{$k}} {{end}}' 2>/dev/null)
+  allowed=$(env_get ALLOWED_RUNTIMES | tr 'A-Z' 'a-z' | tr -d ' ')
+  dind_allowed=false
+  [[ ",$allowed," == *",dind,"* || ",$allowed," == *",all,"* ]] && dind_allowed=true
   if [[ " $runtimes " != *" sysbox-runc "* ]]; then
-    warn "sysbox is not installed: new sandboxes will use dind, which runs privileged (code with root in a sandbox can reach the host)" \
-         "for a server shared by several people install sysbox: https://github.com/nestybox/sysbox"
+    if $dind_allowed; then
+      insecure "sysbox is not installed, and ALLOWED_RUNTIMES=$allowed lets sandboxes run privileged (dind): root in a sandbox can reach the host" \
+               "dind is for development only: install sysbox (https://github.com/nestybox/sysbox) and empty ALLOWED_RUNTIMES"
+    else
+      fail "sysbox is not installed: new sandboxes cannot be created (only sysbox is allowed; dind is for development only)" \
+           "install sysbox: https://github.com/nestybox/sysbox (to try Purgatorium on a laptop: ALLOWED_RUNTIMES=sysbox,dind in .env)"
+    fi
   else
     inactive=""
     if has systemctl; then
@@ -89,6 +103,7 @@ if $docker_ok; then
       fail "sysbox is registered with Docker, but not running:$inactive" "systemctl start sysbox (and check: systemctl status sysbox)"
     elif out=$(timeout 120 docker run --rm --runtime=sysbox-runc alpine true 2>&1); then
       ok "sysbox works (new sandboxes use it: no privileged containers)"
+      if $dind_allowed; then insecure "ALLOWED_RUNTIMES=$allowed also allows the privileged dind runtime" "dind is for development only: empty ALLOWED_RUNTIMES (sysbox only)"; fi
     else
       fail "sysbox is installed, but a test container did not start" "$(echo "$out" | tail -1)"
     fi
@@ -125,7 +140,6 @@ fi
 
 section "How many sandboxes"
 # The per-sandbox limits of .env, if there is one already, else the defaults
-env_get() { [ -f .env ] && sed -n "s/^$1=//p" .env | tail -1; }
 per_cpus=$(env_get SANDBOX_CPUS) per_mem=$(env_get SANDBOX_MEMORY) per_disk=$(env_get SANDBOX_DISK)
 host_mb=$(awk '/MemTotal/ {print int($2 / 1024)}' /proc/meminfo 2>/dev/null)
 if [ -z "$host_mb" ]; then
@@ -220,7 +234,77 @@ else
   warn "no domain given: DNS not checked" "run again with the domain you plan to use: ./check-host.sh dev.example.com"
 fi
 
+section "Security"
+if [ -f .env ]; then
+  # The settings of this folder's .env (a server already set up)
+  case "$(env_get P9M_API_BIND)" in
+    127.0.0.1|localhost|::1) ok "the API port 8081 listens on this machine only (P9M_API_BIND)" ;;
+    *) insecure "the API port 8081 is open to every network, as plain HTTP: tokens and passwords cross it unencrypted" "P9M_API_BIND=127.0.0.1 in .env, then docker compose up -d" ;;
+  esac
+  case "$(env_get ADMIN_LOGIN | tr 'A-Z' 'a-z' | tr -d ' ')" in
+    on|true|1|yes) insecure "ADMIN_LOGIN is on: the admin can sign in with a password" "it is for emergencies: ADMIN_LOGIN=off once you are done, then docker compose up -d" ;;
+    *) ok "the admin's password sign-in is off (ADMIN_LOGIN)" ;;
+  esac
+  weak=""
+  case "$(env_get ADMIN_TOKEN)" in ""|abc123|change-me-to-a-strong-secret) weak="$weak ADMIN_TOKEN" ;; esac
+  case "$(env_get SESSION_SECRET)" in ""|change-me-to-a-long-random-string) weak="$weak SESSION_SECRET" ;; esac
+  [ "$(env_get ADMIN_PASSWORD)" = change-me ] && weak="$weak ADMIN_PASSWORD"
+  if [ -n "$weak" ]; then insecure "default or example secrets in .env:$weak" "run ./setup.sh (it fills in random ones), or set long random values"
+  else ok "no default secrets in .env"; fi
+  if [ -n "$(env_get OIDC_ISSUER)" ] && [ -z "$(env_get OIDC_ALLOWED_DOMAINS)$(env_get OIDC_ALLOWED_EMAILS)" ]; then
+    insecure "OIDC sign-in is open to anyone with an account at the provider: strangers can create sandboxes" "OIDC_ALLOWED_DOMAINS or OIDC_ALLOWED_EMAILS in .env"
+  fi
+  public_url=$(env_get PUBLIC_URL)
+  case "$public_url" in
+    https://*) ok "the UI is served over HTTPS ($public_url)" ;;
+    *lvh.me*|"") ;;
+    *) insecure "PUBLIC_URL is not https ($public_url): sign-ins and tokens cross the network unencrypted" "put a certificate into certs/, then PUBLIC_URL=https://… (see the HTTPS page of the docs)" ;;
+  esac
+else
+  warn "no .env here: Purgatorium's settings not checked" "run this again in the Purgatorium folder after ./setup.sh"
+fi
+if [ "$(uname -s)" = Linux ]; then
+  # Listening on every interface, besides SSH, HTTP(S) and the API port checked above
+  if has ss; then
+    open=$(ss -ltnH 2>/dev/null | awk '{print $4}' | grep -E '^(0\.0\.0\.0|\*|\[::\]):' | sed 's/.*://' | sort -un | grep -vxE '22|80|443|8081' | tr '\n' ' ')
+    if [ -n "$open" ]; then insecure "ports open to every network besides 22, 80 and 443: $open" "close what does not have to be public (a port Docker publishes passes by ufw: bind it to 127.0.0.1)"
+    else ok "no other ports open to every network (besides 22, 80, 443)"; fi
+  fi
+  if has systemctl && { systemctl is-active --quiet ufw || systemctl is-active --quiet firewalld || systemctl is-active --quiet nftables; }; then
+    ok "a firewall is running"
+  else
+    insecure "no firewall is running (ufw, firewalld or nftables)" "e.g. ufw allow 22,80,443/tcp && ufw enable"
+  fi
+  if [ -d /etc/apt/apt.conf.d ]; then
+    if grep -rqsE 'Unattended-Upgrade[^;]*"1"' /etc/apt/apt.conf.d/ && has unattended-upgrade; then ok "automatic security updates are on (unattended-upgrades)"
+    else insecure "automatic security updates are off" "apt install unattended-upgrades && dpkg-reconfigure -plow unattended-upgrades"; fi
+  elif has systemctl && systemctl list-unit-files 2>/dev/null | grep -q '^dnf-automatic'; then
+    if systemctl is-active --quiet dnf-automatic.timer || systemctl is-active --quiet dnf-automatic-install.timer; then ok "automatic updates are on (dnf-automatic)"
+    else insecure "automatic updates are off" "systemctl enable --now dnf-automatic-install.timer"; fi
+  fi
+  # sshd takes the first value it reads: the drop-ins (read first by the main file's Include) usually decide
+  if [ -f /etc/ssh/sshd_config ]; then
+    pw=$(cat /etc/ssh/sshd_config.d/*.conf /etc/ssh/sshd_config 2>/dev/null | grep -iE '^\s*PasswordAuthentication\s' | head -1 | awk '{print tolower($2)}')
+    if [ "$pw" = no ]; then ok "SSH takes keys only (PasswordAuthentication no)"
+    else insecure "SSH accepts passwords: they can be guessed" "PasswordAuthentication no in /etc/ssh/sshd_config (with your key in place first), then systemctl reload ssh"; fi
+  fi
+fi
+
 echo
+if [ "${#risks[@]}" -gt 0 ]; then
+  printf '\033[1;31m'
+  printf '  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n'
+  printf '  !!!                                                      !!!\n'
+  printf '  !!!   NOT SECURE: %2d thing(s) to fix before going public  !!!\n' "${#risks[@]}"
+  printf '  !!!                                                      !!!\n'
+  printf '  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n'
+  printf '\033[0m'
+  for r in "${risks[@]}"; do
+    printf '  \033[1;31m!\033[0m %s\n' "${r%%$'\t'*}"
+    fix=${r#*$'\t'}; [ -n "$fix" ] && printf '      → %s\n' "$fix"
+  done
+  echo
+fi
 if [ "$fails" -gt 0 ]; then
   printf '\033[31m%d problem(s)\033[0m and %d warning(s): fix the ✘ lines before installing.\n' "$fails" "$warns"
   exit 1
