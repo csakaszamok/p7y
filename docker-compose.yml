@@ -3,7 +3,7 @@ services:
     # The released image: it carries the templates, runtimes and the files p9m-init installs.
     # To work on the code, add docker-compose.dev.yml (COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml,
     # and COMPOSE_PATH_SEPARATOR=: on Windows, in .env).
-    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.9}
+    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.10}
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
       # to localhost (P9M_API_BIND=127.0.0.1) so everything goes through HTTPS.
@@ -31,7 +31,7 @@ services:
       USER_VIEW_SWITCH: ${USER_VIEW_SWITCH:-false}
       # The name and logo at the top left, on the sign-in page and in the tab titles: none hides them;
       # the logo can be an https:// address or an image file in the container (e.g. /app/data/logo.png)
-      UI_TITLE: ${UI_TITLE:-Purgatorium}
+      UI_TITLE: ${UI_TITLE:-Purgatorium Agentium}
       UI_LOGO: ${UI_LOGO:-}
       # off: the public sign-in page does not show the sandbox places (taken / free)
       LOGIN_CAPACITY: ${LOGIN_CAPACITY:-on}
@@ -127,7 +127,7 @@ services:
   # One-shot, on every up: copies this release's Sablier themes, registry config and
   # dynamic/errors.yml from the image, so they always match it (no files from a checkout).
   p9m-init:
-    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.9}
+    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.10}
     entrypoint: ["sh", "/app/assets/install-assets.sh"]
     volumes:
       - sablier_themes:/out/sablier-themes
