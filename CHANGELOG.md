@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.14] - 2026-10-26
+
+Upgrading from 0.12.13: if `.env` has `APPS_ACCESS_DEFAULT=public` (written by `setup.sh` before 0.12.12), empty it so apps without a `p9m.access` label open only for their owner (label the public ones `p9m.access: public` first). Then download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, and `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.13.
+
 ### Fixed
 
 - **Apps owner-only by default on servers set up before 0.12.12:** `setup.sh` had written `APPS_ACCESS_DEFAULT=public` into `.env` (from `env.example`), which kept every app without a `p9m.access` label public. A new `.env` leaves it empty (the default, `owner`), and `check-host.sh` marks `public` as not secure. On a server set up before: empty `APPS_ACCESS_DEFAULT` in `.env`, then `docker compose up -d`.
@@ -687,7 +691,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.13...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.14...HEAD
+[0.12.14]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.14
 [0.12.13]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.13
 [0.12.12]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.12
 [0.12.11]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.11
