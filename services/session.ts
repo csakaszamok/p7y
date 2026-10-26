@@ -1,11 +1,22 @@
 import crypto from 'node:crypto'
 import { uiHost } from './uiHost'
+import { parseDuration } from './duration'
 
 export type Role = 'user' | 'admin'
-export interface Session { sub: string; role: Role; exp: number }
+/** seen: when its user last did something (seconds); the session ends SESSION_IDLE_TIMEOUT after it */
+export interface Session { sub: string; role: Role; exp: number; seen?: number }
 
 export const SESSION_COOKIE = 'p9m_session'
 export const SESSION_MAX_AGE = 7 * 24 * 3600
+export const DEFAULT_IDLE_TIMEOUT = '30m'
+
+/** SESSION_IDLE_TIMEOUT in seconds (default 30m): signed out after that long without doing anything; null = off. */
+export function idleTimeout(env: NodeJS.ProcessEnv = process.env): number | null {
+  const v = (env.SESSION_IDLE_TIMEOUT ?? '').trim().toLowerCase()
+  if (v === 'off' || v === '0') return null
+  const ms = parseDuration(v || DEFAULT_IDLE_TIMEOUT, 'smhd') ?? parseDuration(DEFAULT_IDLE_TIMEOUT)!
+  return Math.floor(ms / 1000)
+}
 
 let generatedSecret: string | undefined
 
@@ -43,13 +54,35 @@ export function verifyValue<T>(value: string | undefined): T | null {
 }
 
 export function createSession(sub: string, role: Role, now = Date.now()): string {
-  return signValue({ sub, role, exp: Math.floor(now / 1000) + SESSION_MAX_AGE })
+  const t = Math.floor(now / 1000)
+  return signValue({ sub, role, exp: t + SESSION_MAX_AGE, seen: t })
 }
 
-export function readSession(value: string | undefined, now = Date.now()): Session | null {
+/** A session made before seen existed: as if last active when it was made. */
+const seenOf = (s: Session) => typeof s.seen === 'number' ? s.seen : s.exp - SESSION_MAX_AGE
+
+export function readSession(value: string | undefined, now = Date.now(), env: NodeJS.ProcessEnv = process.env): Session | null {
   const s = verifyValue<Session>(value)
   if (!s || typeof s.sub !== 'string' || !s.sub || (s.role !== 'user' && s.role !== 'admin') || typeof s.exp !== 'number') return null
-  return s.exp > Math.floor(now / 1000) ? { sub: s.sub, role: s.role, exp: s.exp } : null
+  const t = Math.floor(now / 1000)
+  if (s.exp <= t) return null
+  const idle = idleTimeout(env)
+  if (idle !== null && t - seenOf(s) >= idle) return null
+  return { sub: s.sub, role: s.role, exp: s.exp, seen: seenOf(s) }
+}
+
+/** Seconds left before the session ends for doing nothing (null: no idle limit). */
+export function idleLeft(s: Session, now = Date.now(), env: NodeJS.ProcessEnv = process.env): number | null {
+  const idle = idleTimeout(env)
+  return idle === null ? null : Math.max(0, seenOf(s) + idle - Math.floor(now / 1000))
+}
+
+/** The session cookie again, its user active now (the 7-day end stays); null for no valid session. */
+export function touchedSessionCookie(value: string | undefined, now = Date.now(), env: NodeJS.ProcessEnv = process.env): string | null {
+  const s = readSession(value, now, env)
+  if (!s) return null
+  const t = Math.floor(now / 1000)
+  return cookieHeader(SESSION_COOKIE, signValue({ sub: s.sub, role: s.role, exp: s.exp, seen: t }), s.exp - t)
 }
 
 export function getCookie(req: Request, name: string): string | undefined {

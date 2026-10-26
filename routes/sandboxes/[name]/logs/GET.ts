@@ -24,6 +24,6 @@ ${faviconTag()}
 <button data-log-pause>Pause</button><button data-log-clear>Clear</button></span></header>
 <div data-log></div>
 <button class="log-newer" data-log-newer hidden>↓ new lines</button>
-<script src="/assets/logs.js"></script>
+<script src="/assets/logs.js"></script><script src="/assets/idle.js" defer></script>
 </body></html>`)
 }

@@ -23,6 +23,6 @@ ${faviconTag()}
 <header class="topbar"><span class="brand">${logoImg(20)}${short}</span>
 <span class="muted" data-term-status>connecting…</span><button class="link" data-term-reconnect hidden>Reconnect</button></header>
 <div data-term></div>
-<script src="/assets/xterm.js"></script><script src="/assets/addon-fit.js"></script><script src="/assets/terminal.js"></script>
+<script src="/assets/xterm.js"></script><script src="/assets/addon-fit.js"></script><script src="/assets/terminal.js"></script><script src="/assets/idle.js" defer></script>
 </body></html>`)
 }

@@ -4,6 +4,7 @@ import { customLogoFile } from '../../../services/ui/brand'
 
 const ASSETS: Record<string, string> = {
   'app.js': 'text/javascript; charset=utf-8',
+  'idle.js': 'text/javascript; charset=utf-8',
   'embers.js': 'text/javascript; charset=utf-8',
   'waiting.js': 'text/javascript; charset=utf-8',
   'style.css': 'text/css; charset=utf-8',

@@ -3,14 +3,50 @@ import { describe, it, expect, vi } from 'vitest'
 vi.stubEnv('SESSION_SECRET', 'test-secret')
 vi.stubEnv('PUBLIC_URL', 'http://p9m.lvh.me')
 
-import { createSession, readSession, signValue, verifyValue, getCookie, cookieHeader, publicUrl, SESSION_MAX_AGE } from '../../services/session'
+import { createSession, readSession, signValue, verifyValue, getCookie, cookieHeader, publicUrl, SESSION_MAX_AGE, idleTimeout, idleLeft, touchedSessionCookie } from '../../services/session'
+
+describe('signed out for doing nothing (SESSION_IDLE_TIMEOUT)', () => {
+  const now = Date.UTC(2026, 9, 26, 12)
+  const MIN = 60_000
+
+  it('30 minutes by default; another duration, or off', () => {
+    expect(idleTimeout({})).toBe(30 * 60)
+    expect(idleTimeout({ SESSION_IDLE_TIMEOUT: '2h' })).toBe(7200)
+    expect(idleTimeout({ SESSION_IDLE_TIMEOUT: 'off' })).toBeNull()
+    expect(idleTimeout({ SESSION_IDLE_TIMEOUT: 'nonsense' })).toBe(30 * 60)
+  })
+
+  it('a session ends 30 minutes after its user last did something; doing something starts the time again', () => {
+    const v = createSession('alice@example.com', 'user', now)
+    expect(readSession(v, now + 29 * MIN, {})).not.toBeNull()
+    expect(idleLeft(readSession(v, now + 29 * MIN, {})!, now + 29 * MIN, {})).toBe(60)
+    expect(readSession(v, now + 30 * MIN, {})).toBeNull()
+    // Active at minute 20: good until minute 50, still ending after 7 days at the latest
+    const touched = touchedSessionCookie(v, now + 20 * MIN, {})!
+    expect(touched).toMatch(/^p9m_session=[^;]+; Path=\/; HttpOnly; SameSite=Lax; Max-Age=\d+/)
+    const renewed = touched.split(';')[0].slice('p9m_session='.length)
+    expect(readSession(renewed, now + 49 * MIN, {})).not.toBeNull()
+    expect(readSession(renewed, now + 50 * MIN, {})).toBeNull()
+    expect(readSession(renewed, now + 49 * MIN, {})!.exp).toBe(now / 1000 + SESSION_MAX_AGE)
+    // An ended session cannot be renewed
+    expect(touchedSessionCookie(v, now + 31 * MIN, {})).toBeNull()
+  })
+
+  it('a session made before this (no seen): as if last active when it was made', () => {
+    const old = signValue({ sub: 'alice@example.com', role: 'user', exp: now / 1000 + SESSION_MAX_AGE })
+    expect(readSession(old, now + 10 * MIN, {})).not.toBeNull()
+    expect(readSession(old, now + 31 * MIN, {})).toBeNull()
+  })
+})
 
 describe('session cookie', () => {
   it('round-trips a session until it expires', () => {
     const now = Date.UTC(2026, 8, 27)
     const v = createSession('alice@example.com', 'user', now)
-    expect(readSession(v, now)).toEqual({ sub: 'alice@example.com', role: 'user', exp: now / 1000 + SESSION_MAX_AGE })
-    expect(readSession(v, now + SESSION_MAX_AGE * 1000 + 1000)).toBeNull()
+    expect(readSession(v, now)).toEqual({ sub: 'alice@example.com', role: 'user', exp: now / 1000 + SESSION_MAX_AGE, seen: now / 1000 })
+    const noIdle = { SESSION_IDLE_TIMEOUT: 'off' }
+    expect(readSession(v, now + (SESSION_MAX_AGE - 1) * 1000, noIdle)).not.toBeNull()
+    expect(readSession(v, now + SESSION_MAX_AGE * 1000 + 1000, noIdle)).toBeNull()
   })
 
   it('rejects tampered, foreign-key and malformed values', () => {
