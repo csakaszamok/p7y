@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 
 vi.stubEnv('ADMIN_TOKEN', 'admin-secret')
+// Every runtime, as in development (the default, sysbox only, has its own test)
+vi.stubEnv('ALLOWED_RUNTIMES', 'all')
 
 const release = vi.fn()
 vi.mock('../../../services/quota', () => ({ reserveSandboxSlot: vi.fn(async () => ({ ok: true, release })) }))
@@ -70,7 +72,7 @@ describe('POST /sandboxes', () => {
       expect(over.status).toBe(400)
       expect((await over.json()).error).toMatch(/never is not allowed on this server: at most 2h/)
       expect((await handler(jsonReq({ name: 'lim2', idle_timeout: 'off' }))).status).toBe(201)
-    } finally { vi.unstubAllEnvs(); vi.stubEnv('ADMIN_TOKEN', 'admin-secret') }
+    } finally { vi.unstubAllEnvs(); vi.stubEnv('ADMIN_TOKEN', 'admin-secret'); vi.stubEnv('ALLOWED_RUNTIMES', 'all') }
   })
 
   it('passes a valid idle_timeout through to the service', async () => {
@@ -151,6 +153,22 @@ describe('POST /sandboxes', () => {
     expect((await res.json()).error).toBe('Unknown runtime')
   })
 
+  it('without ALLOWED_RUNTIMES only sysbox: on a host without it, a create says to install sysbox (dind is for development)', async () => {
+    vi.mocked(sandboxService.createSandbox).mockClear()
+    vi.stubEnv('ALLOWED_RUNTIMES', '')
+    const { _resetDefaultRuntime } = await import('../../../services/defaultRuntime')
+    _resetDefaultRuntime(); hostRuntimes = ['runc']
+    try {
+      const dind = await handler(jsonReq({ name: 'nd', runtime: 'dind' }))
+      expect(dind.status).toBe(400)
+      expect((await dind.json()).error).toMatch(/dind is not allowed on this server/)
+      const def = await handler(jsonReq({ name: 'nd2' }))
+      expect(def.status).toBe(400)
+      expect((await def.json()).error).toMatch(/sysbox is not installed on this host.*development only/)
+      expect(sandboxService.createSandbox).not.toHaveBeenCalled()
+    } finally { vi.stubEnv('ALLOWED_RUNTIMES', 'all') }
+  })
+
   it('a runtime not in ALLOWED_RUNTIMES: 400, nothing created (the default too, saying so)', async () => {
     vi.mocked(sandboxService.createSandbox).mockClear()
     vi.stubEnv('ALLOWED_RUNTIMES', 'sysbox')
@@ -163,7 +181,7 @@ describe('POST /sandboxes', () => {
       expect(def.status).toBe(400)
       expect((await def.json()).error).toMatch(/the default runtime \(dind\) is not allowed/)
       expect(sandboxService.createSandbox).not.toHaveBeenCalled()
-    } finally { vi.stubEnv('ALLOWED_RUNTIMES', ''); vi.stubEnv('DEFAULT_RUNTIME', '') }
+    } finally { vi.stubEnv('ALLOWED_RUNTIMES', 'all'); vi.stubEnv('DEFAULT_RUNTIME', '') }
   })
 
   it('rejects a non-string runtime or template with 400', async () => {

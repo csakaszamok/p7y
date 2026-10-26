@@ -11,7 +11,7 @@ describe('docker-compose.yml', () => {
   // The p9m service lists its environment explicitly: a setting not listed never reaches the container
   it('passes the app access settings to Purgatorium', () => {
     const env = compose.services.p9m.environment ?? {}
-    expect(env.APPS_ACCESS_DEFAULT).toBe('${APPS_ACCESS_DEFAULT:-public}')
+    expect(env.APPS_ACCESS_DEFAULT).toBe('${APPS_ACCESS_DEFAULT:-owner}')
     expect(env.APP_ACCESS_SECRET).toBe('${APP_ACCESS_SECRET:-}')
   })
   it('passes the sleep limits to Purgatorium', () => {

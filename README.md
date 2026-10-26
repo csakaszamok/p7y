@@ -81,7 +81,7 @@ More in [how it compares](https://csakaszamok.github.io/p9m/latest/comparison/).
 
 **[csakaszamok.github.io/p9m](https://csakaszamok.github.io/p9m/latest/)**: [tutorials](https://csakaszamok.github.io/p9m/latest/tutorials/), [install](https://csakaszamok.github.io/p9m/latest/install/), [configuration](https://csakaszamok.github.io/p9m/latest/configuration/), [let your agent deploy](https://csakaszamok.github.io/p9m/latest/agents/), [MCP](https://csakaszamok.github.io/p9m/latest/mcp/), [API](https://csakaszamok.github.io/p9m/latest/api/), and [`llms-full.txt`](https://csakaszamok.github.io/p9m/latest/llms-full.txt) for agents.
 
-> **Security:** where [sysbox](https://github.com/nestybox/sysbox) is installed, sandboxes run without a privileged container; without it they fall back to the privileged `dind`, which suits a team that trusts each other, not hostile code. On a shared server install sysbox and set `ALLOWED_RUNTIMES=sysbox` ([details](https://csakaszamok.github.io/p9m/latest/security/)).
+> **Security:** sandboxes run under [sysbox](https://github.com/nestybox/sysbox), without a privileged container; install it on the server. The privileged `dind` runtime is for development only (Docker Desktop, a laptop) and is not allowed unless `ALLOWED_RUNTIMES` says so. Web apps in a sandbox open only for its owner unless labelled otherwise ([details](https://csakaszamok.github.io/p9m/latest/security/)).
 
 [Contributing](CONTRIBUTING.md) · [Security issues](SECURITY.md) · [AGPL-3.0](LICENSE)
 

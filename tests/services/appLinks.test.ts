@@ -3,6 +3,8 @@ import fs from 'fs'
 import { publicAppNames, appLinks, appLinksForView, forgetAppLinks, rememberedApps } from '../../services/appLinks'
 import { forgetSandboxDir } from '../../services/sandboxPaths'
 import type { InnerContainer } from '../../services/tcpNames'
+// These apps carry no p9m.access label: as public ones (the default is owner; see appAccess/level.test.ts)
+vi.stubEnv('APPS_ACCESS_DEFAULT', 'public')
 
 const ct = (name: string, ports: Array<[string, number]>, labels: Record<string, string> = {}): InnerContainer => ({
   Names: [`/${name}`], Labels: { 'com.docker.compose.project': 'inner', 'com.docker.compose.service': name, ...labels },

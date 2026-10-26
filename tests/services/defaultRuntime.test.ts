@@ -7,8 +7,10 @@ const { defaultRuntime, runtimeMissing, runtimeAllowed, allowedRuntimes, _resetD
 beforeEach(() => { _resetDefaultRuntime(); installed = ['runc'] })
 
 describe('defaultRuntime', () => {
-  it('auto (the default): sysbox where the host has sysbox-runc, dind otherwise', async () => {
-    expect(await defaultRuntime({})).toBe('dind')
+  it('auto (the default): sysbox where the host has sysbox-runc, dind otherwise when allowed', async () => {
+    expect(await defaultRuntime({ ALLOWED_RUNTIMES: 'all' })).toBe('dind')
+    // dind not allowed (the default): sysbox, so a create says sysbox is missing
+    expect(await defaultRuntime({})).toBe('sysbox')
     _resetDefaultRuntime(); installed = ['runc', 'sysbox-runc']
     expect(await defaultRuntime({ DEFAULT_RUNTIME: 'auto' })).toBe('sysbox')
   })
@@ -28,10 +30,13 @@ describe('runtimeMissing', () => {
 })
 
 describe('ALLOWED_RUNTIMES', () => {
-  it('empty or unset: every runtime is allowed', () => {
-    expect(allowedRuntimes({})).toBeNull()
-    expect(allowedRuntimes({ ALLOWED_RUNTIMES: ' , ' })).toBeNull()
-    expect(runtimeAllowed('dind', {})).toBe(true)
+  it('empty or unset: sysbox only (dind is for development); all: every runtime', () => {
+    expect(allowedRuntimes({})).toEqual(['sysbox'])
+    expect(allowedRuntimes({ ALLOWED_RUNTIMES: ' , ' })).toEqual(['sysbox'])
+    expect(runtimeAllowed('dind', {})).toBe(false)
+    expect(runtimeAllowed('sysbox', {})).toBe(true)
+    expect(allowedRuntimes({ ALLOWED_RUNTIMES: 'All' })).toBeNull()
+    expect(runtimeAllowed('dind', { ALLOWED_RUNTIMES: 'all' })).toBe(true)
   })
   it('a comma list (spaces and case ignored) allows only those', () => {
     const env = { ALLOWED_RUNTIMES: ' Sysbox, kata ' }

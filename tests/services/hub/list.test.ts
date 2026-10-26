@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { hubEntries, forgetHubList, type HubListDeps } from '../../../services/hub/list'
 import type { InnerContainer } from '../../../services/tcpNames'
+// These apps carry no p9m.access label: as public ones (the default is owner; see appAccess/level.test.ts)
+vi.stubEnv('APPS_ACCESS_DEFAULT', 'public')
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hublist-'))
 const web = (name: string, labels: Record<string, string>): InnerContainer =>

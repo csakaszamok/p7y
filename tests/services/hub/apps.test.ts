@@ -1,6 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { hubAppsOf } from '../../../services/hub/apps'
 import type { InnerContainer } from '../../../services/tcpNames'
+// These apps carry no p9m.access label: as public ones (the default is owner; see appAccess/level.test.ts)
+vi.stubEnv('APPS_ACCESS_DEFAULT', 'public')
 
 const c = (name: string, labels: Record<string, string>, ports: InnerContainer['Ports'] = []): InnerContainer =>
   ({ Names: [`/${name}`], Labels: { 'com.docker.compose.project': 'inner', 'com.docker.compose.service': name, ...labels }, Ports: ports })

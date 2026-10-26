@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 
 vi.stubEnv('ADMIN_TOKEN', 'admin-secret')
+// Every runtime, as in development (the default, sysbox only, has its own test)
+vi.stubEnv('ALLOWED_RUNTIMES', 'all')
 vi.mock('../../services/tokens', () => ({ resolveToken: vi.fn(() => null) }))
 vi.mock('../../services/runtimeLoader', () => ({
   listRuntimes: () => [{ name: 'dind', description: 'Docker-in-Docker', docker_compose: {} }, { name: 'sysbox', description: 'Sysbox', docker_compose: {}, daemon_json: { tls: true } }]
@@ -49,7 +51,7 @@ describe('GET /runtimes and GET /templates', () => {
     vi.stubEnv('ALLOWED_RUNTIMES', 'sysbox')
     try {
       expect((await (await runtimes(req('/runtimes'))).json()).map((r: { name: string }) => r.name)).toEqual(['sysbox'])
-    } finally { vi.stubEnv('ALLOWED_RUNTIMES', ''); vi.stubEnv('DEFAULT_RUNTIME', '') }
+    } finally { vi.stubEnv('ALLOWED_RUNTIMES', 'all'); vi.stubEnv('DEFAULT_RUNTIME', '') }
   })
 
   it('require authentication', async () => {
