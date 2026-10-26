@@ -2,7 +2,7 @@
 # Integration test: OIDC sign-in, ownership, personal tokens, admin view.
 # Starts a local mock OIDC provider; p9m must be configured to use it:
 #   OIDC_ISSUER=http://host.docker.internal:8090/default OIDC_CLIENT_ID=p9m \
-#   OIDC_CLIENT_SECRET=secret ADMIN_PASSWORD=pw SESSION_SECRET=e2e \
+#   OIDC_CLIENT_SECRET=secret ADMIN_PASSWORD=pw ADMIN_LOGIN=on SESSION_SECRET=e2e \
 #   PUBLIC_URL=http://localhost:8081 docker compose up -d p9m
 #
 # Usage: bash tests/self-service.sh   (from the repo root)

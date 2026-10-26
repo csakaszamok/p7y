@@ -20,6 +20,7 @@ import { pathToFileURL } from "node:url";
 import { writeWebResponse, readBody } from "./services/http";
 import { filesMaxUpload } from "./services/sandboxFiles";
 import { attachTerminals } from "./services/terminalServer";
+import { CLIENT_IP_HEADER, clientAddress } from "./services/loginGuard";
 import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
 import { repoInfo, p9mVersion } from "./services/repoInfo";
@@ -175,6 +176,9 @@ async function toWebRequest(req: IncomingMessage): Promise<Request> {
   for (const [k, v] of Object.entries(req.headers)) {
     if (v) headers.set(k, Array.isArray(v) ? v.join(", ") : v);
   }
+  // Who is asking, for the sign-in limits: set here, so a client cannot send its own
+  const xff = req.headers["x-forwarded-for"];
+  headers.set(CLIENT_IP_HEADER, clientAddress(req.socket.remoteAddress, Array.isArray(xff) ? xff.join(", ") : xff));
   return new Request(url.toString(), {
     method: req.method ?? "GET",
     headers,

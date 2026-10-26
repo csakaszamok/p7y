@@ -127,6 +127,8 @@ Next:
 Then sign in at ${public_url:-http://p9m.lvh.me}
   user:     $(get ADMIN_USER)
   password: $(get ADMIN_PASSWORD)
+  (only with ADMIN_LOGIN=on in .env: it is off by default, for an emergency;
+   the everyday way in is OIDC, with your address in OIDC_ADMIN_EMAILS)
 API token (Authorization: Bearer ...): $(get ADMIN_TOKEN)
 EOF
 

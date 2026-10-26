@@ -12,7 +12,8 @@ import { hubPage, hubLoginPage } from './page'
 import { html, redirect } from '../ui/layout'
 import { CUSTOM_LOGO, customLogoFile } from '../ui/brand'
 import { aboutPage } from '../ui/aboutPage'
-import { checkAdminLogin, sameOrigin } from '../principal'
+import { sameOrigin } from '../principal'
+import { adminLoginEnabled, adminSignIn, CLIENT_IP_HEADER, loginLimiter, oidcSignInFailed, oidcSignInRefusal } from '../loginGuard'
 import { beginLogin, finishLogin, oidcEnabled, providerName, LoginError } from '../oidc'
 import { hubAllowed, subAllowed } from '../allowlist'
 import { getCookie, SESSION_MAX_AGE } from '../session'
@@ -55,12 +56,13 @@ export async function handleHub(req: Request, deps: Deps = {}): Promise<Response
       : new Response(jsonFeed(list, hub), { headers: { 'Content-Type': 'application/feed+json; charset=utf-8', 'Cache-Control': 'max-age=300' } })
   }
   if (req.method === 'GET' && p === '/login') {
-    return html(hubLoginPage({ title: hubTitle(), error: url.searchParams.get('error'), sso: oidcEnabled() ? providerName() : null }))
+    return html(hubLoginPage({ title: hubTitle(), error: url.searchParams.get('error'), sso: oidcEnabled() ? providerName() : null, admin: adminLoginEnabled() }))
   }
   if (req.method === 'POST' && p === '/login') {
     if (!sameOrigin(req)) return new Response('Cross-site request rejected', { status: 403 })
     const form = new URLSearchParams(await req.text())
-    if (!(await checkAdminLogin(form.get('username') ?? '', form.get('password') ?? ''))) return redirect(`/login?error=${encodeURIComponent('Invalid username or password')}`)
+    const refused = await adminSignIn(req.headers.get(CLIENT_IP_HEADER) ?? 'unknown', form.get('username') ?? '', form.get('password') ?? '')
+    if (refused) return redirect(`/login?error=${encodeURIComponent(refused)}`)
     return new Response(null, { status: 303, headers: { location: '/', 'set-cookie': hubCookieHeader(HUB_COOKIE, createHubSession('admin', null), SESSION_MAX_AGE) } })
   }
   if (req.method === 'POST' && p === '/logout') {
@@ -79,13 +81,18 @@ export async function handleHub(req: Request, deps: Deps = {}): Promise<Response
   }
   if (req.method === 'GET' && p === '/auth/callback') {
     const headers = new Headers({ 'set-cookie': hubCookieHeader(HUB_OIDC_COOKIE, '', 0) })
+    const address = req.headers.get(CLIENT_IP_HEADER) ?? 'unknown'
+    const refused = oidcSignInRefusal(address)
+    if (refused) { headers.set('location', `/login?error=${encodeURIComponent(refused)}`); return new Response(null, { status: 303, headers }) }
     try {
       const { email, name } = await finishLogin(new URL(`${hubUrl()}/auth/callback${url.search}`), getCookie(req, HUB_OIDC_COOKIE),
         e => (hubAllowed(e) ? null : 'Your account is not allowed to use the Hub.'))
       rememberName(email, name)
       headers.append('set-cookie', hubCookieHeader(HUB_COOKIE, createHubSession(email, name), SESSION_MAX_AGE))
       headers.set('location', '/')
+      loginLimiter.succeeded(address)
     } catch (err) {
+      oidcSignInFailed(address, err)
       headers.set('location', `/login?error=${encodeURIComponent(err instanceof LoginError ? err.message : 'Sign-in failed, please try again')}`)
     }
     return new Response(null, { status: 303, headers })

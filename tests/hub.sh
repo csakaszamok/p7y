@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Integration test: the Hub. Run the stack with HUB_ENABLED=true (and ADMIN_USER/ADMIN_PASSWORD set).
+# Integration test: the Hub. Run the stack with HUB_ENABLED=true (and ADMIN_USER/ADMIN_PASSWORD set and ADMIN_LOGIN=on).
 # Creates a sandbox with one published and one unpublished container, signs in to the Hub as the admin,
 # checks the list, a vote and taking it back, the feed with and without the key, and that the sandbox
 # API is not reachable on the Hub host.

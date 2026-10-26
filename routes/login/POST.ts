@@ -1,15 +1,16 @@
-import { checkAdminLogin, sameOrigin } from '../../services/principal'
+import { sameOrigin } from '../../services/principal'
 import { createSession, cookieHeader, SESSION_COOKIE, SESSION_MAX_AGE } from '../../services/session'
 import { nextAfterSignIn, NEXT_COOKIE } from '../../services/appAccess/start'
 import { recordSignIn } from '../../services/userStats'
+import { adminSignIn, CLIENT_IP_HEADER } from '../../services/loginGuard'
 
 const back = (error: string) => new Response(null, { status: 303, headers: { location: `/login?error=${encodeURIComponent(error)}` } })
 
 export default async (req: Request): Promise<Response> => {
   if (!sameOrigin(req)) return new Response('Cross-site request rejected', { status: 403 })
   const form = new URLSearchParams(await req.text())
-  const ok = await checkAdminLogin(form.get('username') ?? '', form.get('password') ?? '')
-  if (!ok) return back('Invalid username or password')
+  const refused = await adminSignIn(req.headers.get(CLIENT_IP_HEADER) ?? 'unknown', form.get('username') ?? '', form.get('password') ?? '')
+  if (refused) return back(refused)
   recordSignIn('admin')
   // Signed in for a sandbox app (p9m.access): back to it
   const next = nextAfterSignIn(req)

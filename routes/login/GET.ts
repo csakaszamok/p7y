@@ -2,11 +2,13 @@ import { escapeHtml, html, pageSession, redirect } from '../../services/ui/layou
 import { oidcEnabled, providerName } from '../../services/oidc'
 import { capacityHtml, loginCapacity } from '../../services/loginCapacity'
 import { brandTitle, faviconTag, logoImg } from '../../services/ui/brand'
+import { adminLoginEnabled } from '../../services/loginGuard'
 
 export default async (req: Request): Promise<Response> => {
   if (pageSession(req)) return redirect('/')
   const error = new URL(req.url).searchParams.get('error')
-  const adminEnabled = !!(process.env.ADMIN_USER && process.env.ADMIN_PASSWORD)
+  // Off (the default): the form is not there at all
+  const adminEnabled = adminLoginEnabled()
   const capacity = capacityHtml(await loginCapacity.get())
   const name = brandTitle()
   return html(`<!DOCTYPE html>
@@ -29,7 +31,7 @@ ${faviconTag()}</head>
     <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
     <button class="primary wide">Sign in</button>
   </form></details>` : ''}
-  ${!oidcEnabled() && !adminEnabled ? '<p class="error">No sign-in method is configured.</p>' : ''}
+  ${!oidcEnabled() && !adminEnabled ? '<p class="error">No sign-in method is on: set up OIDC, or for the admin ADMIN_LOGIN=on.</p>' : ''}
 </div>
 <p class="about-foot"><a href="/about">About · AGPL-3.0</a></p>
 <script src="/assets/embers.js" defer></script>

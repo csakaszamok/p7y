@@ -64,6 +64,8 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:-}
       ADMIN_USER: ${ADMIN_USER:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # on: the admin can sign in with ADMIN_USER / ADMIN_PASSWORD (for emergencies; off: the form is not shown)
+      ADMIN_LOGIN: ${ADMIN_LOGIN:-off}
       OIDC_ISSUER: ${OIDC_ISSUER:-}
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
