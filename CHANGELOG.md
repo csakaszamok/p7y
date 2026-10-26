@@ -6,6 +6,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Added
 
+- **Two new 404 pages, one picked at random:** agents drifting in space, or hiding behind the digits in the dark while the pointer is a flashlight. Every `error-pages/404*.html` takes part; still self-contained, and still for reduced motion.
 - **Time left before signing out, in the header:** next to the user's name, e.g. `27 min`; in the warning colour for the last two minutes. Hidden with `SESSION_IDLE_TIMEOUT=off`.
 
 ## [0.12.15] - 2026-10-26

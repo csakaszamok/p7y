@@ -64,6 +64,6 @@ wait_api
 has_portainer && fail "starter has Portainer" || pass "starter from the image (no Portainer)"
 [ -f dynamic/errors.yml ] && pass "dynamic/errors.yml written" || fail "no dynamic/errors.yml"
 for _ in $(seq 1 15); do curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && break; sleep 2; done
-curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q '<h1>Nothing here</h1>' && pass "our 404 page" || fail "404 page"
+curl -s -m 5 -H 'Host: nothing-here.lvh.me' http://localhost/ | grep -q 'id="portal"' && pass "our 404 page" || fail "404 page"
 docker run --rm --entrypoint ls -v "${COMPOSE_PROJECT_NAME}_sablier_themes:/t" "ghcr.io/csakaszamok/p9m:$TAG" /t | grep -qx p9m.html && pass "Sablier has the p9m theme" || fail "theme"
 
