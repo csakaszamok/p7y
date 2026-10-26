@@ -4,6 +4,14 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **The admin's password sign-in is off by default:** a new `ADMIN_LOGIN` (default `off`) decides whether the **Administrator sign-in** form is on the sign-in page (and the Hub's); off, it is not shown and the password is not even checked. Upgrading: on a server where the admin signs in with the password, set `ADMIN_LOGIN=on` in `.env` before `docker compose up -d`, or the admin can only sign in with OIDC (`OIDC_ADMIN_EMAILS`) and use the API with `ADMIN_TOKEN`. Meant as an emergency door: turn it on, sign in, turn it off. While on, Purgatorium warns at startup. See [Configuration](docs/configuration.md).
+
+### Added
+
+- **Limits against password guessing:** an address with 5 failed sign-ins within 15 minutes (the admin's password, or OIDC) waits 1 minute, then twice as long after each further failure, up to an hour; after 30 failed admin passwords in an hour from all addresses together, the admin password is refused for everyone for the rest of that hour. Each refusal is a `[login]` line in the log, with the address Traefik saw (for fail2ban).
+
 ### Fixed
 
 - **The new name on installed servers:** `setup.sh` wrote `UI_TITLE=Purgatorium` into `.env` (from `env.example`), which kept the old name after 0.12.10. A new `.env` leaves `UI_TITLE` empty (the default). On a server set up before: change or empty `UI_TITLE` in `.env`, then `docker compose up -d` (a `restart` does not read `.env` again).
