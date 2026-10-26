@@ -1839,8 +1839,13 @@
 </tr>
 <tr>
 <td><code>GET</code></td>
+<td><code>/sandboxes/:name/containers</code></td>
+<td>The containers in the sandbox's own Docker: <code>name</code>, <code>project</code>, <code>service</code>, <code>image</code>, <code>state</code>, <code>status</code>, running ones first; the sandbox must be running (409 <code>not_running</code> otherwise)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
 <td><code>/sandboxes/:name/terminal</code></td>
-<td>The browser terminal (page; the same path as a websocket: the shell)</td>
+<td>The browser terminal (page; the same path as a websocket: the shell; <code>?container=&lt;name&gt;</code>: in that container of the sandbox's own Docker)</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
