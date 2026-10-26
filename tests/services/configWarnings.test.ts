@@ -29,10 +29,16 @@ describe('insecureConfigWarnings', () => {
   it('returns no warnings for an empty env (unset, not the insecure default)', () => {
     expect(insecureConfigWarnings({})).toEqual([])
   })
+
+  it('warns while the admin password sign-in is on (ADMIN_LOGIN=on)', () => {
+    const on = insecureConfigWarnings({ ADMIN_USER: 'admin', ADMIN_PASSWORD: 'a-real-password', ADMIN_LOGIN: 'on' })
+    expect(on.some(w => w.includes('ADMIN_LOGIN is on'))).toBe(true)
+    expect(insecureConfigWarnings({ ADMIN_USER: 'admin', ADMIN_PASSWORD: 'a-real-password' })).toEqual([])
+  })
 })
 
 describe('insecureConfigErrors', () => {
-  const strong = { ADMIN_TOKEN: 'x'.repeat(32), SESSION_SECRET: 'y'.repeat(64), ADMIN_PASSWORD: 'pw-strong' }
+  const strong = { ADMIN_TOKEN: 'x'.repeat(32), SESSION_SECRET: 'y'.repeat(64), ADMIN_USER: 'admin', ADMIN_PASSWORD: 'pw-strong', ADMIN_LOGIN: 'on' }
 
   it('blocks a public (https) start with default or example secrets', () => {
     const https = { PUBLIC_URL: 'https://p9m.example.com' }
@@ -44,6 +50,8 @@ describe('insecureConfigErrors', () => {
     const { SESSION_SECRET: _omit, ...noSecret } = strong
     expect(insecureConfigErrors({ ...https, ...noSecret }).some(e => e.includes('SESSION_SECRET'))).toBe(true)
     expect(insecureConfigErrors({ ...https, ...strong })).toEqual([])
+    // With the admin's sign-in off, the example password cannot be used: not fatal
+    expect(insecureConfigErrors({ ...https, ...strong, ADMIN_PASSWORD: 'change-me', ADMIN_LOGIN: 'off' })).toEqual([])
   })
 
   it('never blocks a plain-http (local) start', () => {

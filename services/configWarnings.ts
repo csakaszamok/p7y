@@ -1,4 +1,5 @@
 import { parseHostMountRoots } from './hostMounts'
+import { adminLoginEnabled } from './loginGuard'
 
 /**
  * Local-dev defaults that must not survive into a publicly reachable
@@ -16,6 +17,9 @@ export function insecureConfigWarnings(env: NodeJS.ProcessEnv = process.env): st
   }
   if (env.ADMIN_PASSWORD === 'change-me') {
     warnings.push('WARNING: ADMIN_PASSWORD is set to the default "change-me". Set a strong ADMIN_PASSWORD before exposing Purgatorium publicly.')
+  }
+  if (adminLoginEnabled(env)) {
+    warnings.push('WARNING: ADMIN_LOGIN is on: the admin can sign in with a password. Turn it off (ADMIN_LOGIN=off) once you no longer need it.')
   }
   return warnings
 }
@@ -39,8 +43,8 @@ export function insecureConfigErrors(env: NodeJS.ProcessEnv = process.env): stri
   if (!env.SESSION_SECRET || env.SESSION_SECRET === 'change-me-to-a-long-random-string') {
     errors.push('SESSION_SECRET is missing or the example value; set a long random SESSION_SECRET (a generated one would sign everyone out on every restart).')
   }
-  if (env.ADMIN_PASSWORD === 'change-me') {
-    errors.push('ADMIN_PASSWORD is the example value; set a strong ADMIN_PASSWORD (or leave it empty to disable admin sign-in).')
+  if (env.ADMIN_PASSWORD === 'change-me' && adminLoginEnabled(env)) {
+    errors.push('ADMIN_PASSWORD is the example value; set a strong ADMIN_PASSWORD (or ADMIN_LOGIN=off to turn the admin sign-in off).')
   }
   return errors
 }

@@ -64,7 +64,7 @@ describe('handleHub', () => {
     }
   })
   it('signs the admin in with the password', async () => {
-    process.env.ADMIN_USER = 'admin'; process.env.ADMIN_PASSWORD = 'pw'
+    process.env.ADMIN_USER = 'admin'; process.env.ADMIN_PASSWORD = 'pw'; process.env.ADMIN_LOGIN = 'on'
     const r = await handleHub(new Request('https://hub.example.com/login', { method: 'POST', headers: { origin: 'https://hub.example.com', host: 'hub.example.com', 'content-type': 'application/x-www-form-urlencoded' }, body: 'username=admin&password=pw' }), deps)
     expect(r.status).toBe(303)
     expect(r.headers.get('set-cookie')).toContain('p9m_hub=')

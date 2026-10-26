@@ -31,7 +31,7 @@ MSYS_NO_PATHCONV=1 openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj "/CN=
 pass "certs/tls.crt + certs/tls.key"
 
 info "[2/5] Restart p9m with PUBLIC_URL=https://p9m.lvh.me"
-PUBLIC_URL=https://p9m.lvh.me ADMIN_TOKEN="$TOKEN" SESSION_SECRET="$SECRET" ADMIN_PASSWORD="$PW" docker compose up -d p9m traefik >/dev/null
+PUBLIC_URL=https://p9m.lvh.me ADMIN_TOKEN="$TOKEN" SESSION_SECRET="$SECRET" ADMIN_PASSWORD="$PW" ADMIN_LOGIN=on docker compose up -d p9m traefik >/dev/null
 for i in $(seq 1 30); do [ "$(curl -sk -o /dev/null -w '%{http_code}' -H 'Host: p9m.lvh.me' https://localhost/login)" = 200 ] && break; sleep 1; done
 [ "$(curl -sk -o /dev/null -w '%{http_code}' -H 'Host: p9m.lvh.me' https://localhost/login)" = 200 ] || fail "https login page not up"
 pass "https://p9m.lvh.me/login → 200"

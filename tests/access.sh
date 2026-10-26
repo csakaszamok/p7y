@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Integration test: app access (p9m.access). Run the stack with ADMIN_USER/ADMIN_PASSWORD set, on lvh.me (or set
+# Integration test: app access (p9m.access). Run the stack with ADMIN_USER/ADMIN_PASSWORD set and ADMIN_LOGIN=on, on lvh.me (or set
 # DOMAIN to a domain whose names reach this machine). Creates a sandbox with three whoami apps — public, domain,
 # owner —, then checks what an anonymous visitor and the signed-in admin get, that the app never sees Purgatorium's
 # app cookie, and that a client-sent X-P9m-User is removed. Archives the sandbox at the end.

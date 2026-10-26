@@ -4,6 +4,7 @@ vi.stubEnv('SESSION_SECRET', 'test-secret')
 vi.stubEnv('PUBLIC_URL', 'http://p9m.lvh.me')
 vi.stubEnv('ADMIN_USER', 'admin')
 vi.stubEnv('ADMIN_PASSWORD', 'pw')
+vi.stubEnv('ADMIN_LOGIN', 'on')
 vi.stubEnv('OIDC_ISSUER', 'https://accounts.example.com')
 vi.stubEnv('OIDC_CLIENT_ID', 'cid')
 vi.stubEnv('OIDC_CLIENT_SECRET', 'csecret')
@@ -29,6 +30,8 @@ const loginPost = (await import('../../routes/login/POST')).default
 const logout = (await import('../../routes/logout/POST')).default
 const oidcStart = (await import('../../routes/auth/oidc/GET')).default
 const callback = (await import('../../routes/auth/callback/GET')).default
+const { loginLimiter } = await import('../../services/loginGuard')
+beforeEach(() => loginLimiter.reset())
 
 const cookieValue = (res: Response, name: string) =>
   res.headers.getSetCookie().find(c => c.startsWith(`${name}=`))?.split(';')[0].slice(name.length + 1)
