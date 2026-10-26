@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- **The new name on installed servers:** `setup.sh` wrote `UI_TITLE=Purgatorium` into `.env` (from `env.example`), which kept the old name after 0.12.10. A new `.env` leaves `UI_TITLE` empty (the default). On a server set up before: change or empty `UI_TITLE` in `.env`, then `docker compose up -d` (a `restart` does not read `.env` again).
+
 ## [0.12.10] - 2026-10-26
 
 Upgrading from 0.12.9: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (the version and `UI_TITLE`'s default change). A `docker-compose.yml` you keep from before stays on 0.12.9 and on the name *Purgatorium*.
