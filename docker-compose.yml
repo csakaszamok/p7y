@@ -3,7 +3,7 @@ services:
     # The released image: it carries the templates, runtimes and the files p9m-init installs.
     # To work on the code, add docker-compose.dev.yml (COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml,
     # and COMPOSE_PATH_SEPARATOR=: on Windows, in .env).
-    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.11}
+    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.12}
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
       # to localhost (P9M_API_BIND=127.0.0.1) so everything goes through HTTPS.
@@ -20,8 +20,9 @@ services:
       # Per-route auth is handled by ADMIN_TOKEN in services/auth.ts instead.
       ADMIN_TOKEN: ${ADMIN_TOKEN:-abc123}
       DEFAULT_RUNTIME: ${DEFAULT_RUNTIME:-auto}
-      # Runtimes new sandboxes may use (comma list, e.g. sysbox); empty = all
-      ALLOWED_RUNTIMES: ${ALLOWED_RUNTIMES:-}
+      # Runtimes new sandboxes may use (comma list); default sysbox. The privileged dind is for development only
+      # (ALLOWED_RUNTIMES=sysbox,dind, or all): root in a dind sandbox can reach the host
+      ALLOWED_RUNTIMES: ${ALLOWED_RUNTIMES:-sysbox}
       DEFAULT_TEMPLATE: ${DEFAULT_TEMPLATE:-starter}
       # off: never ask GitHub for the star and fork counts in the topbar
       GITHUB_STATS: ${GITHUB_STATS:-on}
@@ -75,7 +76,7 @@ services:
       OIDC_ALLOWED_EMAILS: ${OIDC_ALLOWED_EMAILS:-}
       OIDC_ADMIN_EMAILS: ${OIDC_ADMIN_EMAILS:-}
       # App access (docs: app-access.md): who opens an app without p9m.access; the key of its cookies and tickets
-      APPS_ACCESS_DEFAULT: ${APPS_ACCESS_DEFAULT:-public}
+      APPS_ACCESS_DEFAULT: ${APPS_ACCESS_DEFAULT:-owner}
       APP_ACCESS_SECRET: ${APP_ACCESS_SECRET:-}
       # The Hub (docs: hub.md): off unless true; viewers besides the builders by domain or address
       HUB_ENABLED: ${HUB_ENABLED:-false}
@@ -129,7 +130,7 @@ services:
   # One-shot, on every up: copies this release's Sablier themes, registry config and
   # dynamic/errors.yml from the image, so they always match it (no files from a checkout).
   p9m-init:
-    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.11}
+    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.12}
     entrypoint: ["sh", "/app/assets/install-assets.sh"]
     volumes:
       - sablier_themes:/out/sablier-themes

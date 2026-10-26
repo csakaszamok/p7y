@@ -1,6 +1,6 @@
 # How a sandbox runs: its own compose file (the DinD container, frps, socat, Traefik and Sablier labels).
 # The stack inside comes from a template (templates/<name>/compose.yaml).
-description: "Docker-in-Docker, privileged: any Docker host (incl. Docker Desktop / WSL)"
+description: "Docker-in-Docker, privileged: for development only (Docker Desktop / WSL), never on a server"
 
 docker_compose:
   services:

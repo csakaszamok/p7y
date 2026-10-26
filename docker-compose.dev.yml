@@ -5,6 +5,9 @@
 services:
   p9m:
     build: .
+    environment:
+      # Development: dind too (Docker Desktop has no sysbox); a server keeps the default, sysbox only
+      ALLOWED_RUNTIMES: ${ALLOWED_RUNTIMES:-all}
     volumes:
       - ./server.ts:/app/server.ts
       - ./routes:/app/routes

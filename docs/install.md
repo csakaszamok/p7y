@@ -16,7 +16,7 @@ less check-host.sh
 bash check-host.sh dev.example.com
 ```
 
-Then, on a Linux host with Docker Engine and the compose plugin (Compose 2.17 or newer):
+Then, on a Linux host with Docker Engine, the compose plugin (Compose 2.17 or newer) and [sysbox](https://github.com/nestybox/sysbox) (without it no sandbox can be created: the privileged `dind` runtime is for development only):
 
 ```bash
 mkdir p9m && cd p9m
@@ -27,7 +27,7 @@ docker compose up -d
 
 The directory must be called `p9m`: the compose project name comes from it. For a given version, use `releases/download/v0.5.0/…` instead of `releases/latest/download/…`.
 
-`check-host.sh` checks Docker and Docker Compose, sysbox, the address pools, ports, disk and registry access, and changes nothing (its sysbox check runs one throw-away `alpine` container); with the `HOST_DOMAIN` you plan to use it also checks the DNS records and, if `certs/` has one, the certificate. Lines marked ✘ must be fixed first, ⚠ are worth reading.
+`check-host.sh` checks Docker and Docker Compose, sysbox, the address pools, ports, disk and registry access, and changes nothing (its sysbox check runs one throw-away `alpine` container); with the `HOST_DOMAIN` you plan to use it also checks the DNS records and, if `certs/` has one, the certificate. Lines marked ✘ must be fixed first, ⚠ are worth reading. Run it again in the `p9m` folder once Purgatorium is set up: it then also checks the security of its `.env` and of the host (the API port, the admin's password sign-in, default secrets, an open OIDC sign-in, HTTPS, other open ports, the firewall, automatic updates, SSH passwords), marks each problem with **!**, and lists them all again at the end under *NOT SECURE*.
 
 `setup.sh` works in the current directory: it creates `.env` from its release's `env.example`, sets `HOST_DOMAIN` to the domain you give it and `PUBLIC_URL` to `p9m.<domain>` (`https://` if `certs/` already holds a certificate, else `http://`: run it again with the domain after adding one; a `PUBLIC_URL` you set yourself is kept), fills in random secrets, creates `data/`, `opt/`, `certs/` and `dynamic/`, and prints the admin password and token. It keeps values you already set, so it is safe to run again. Without it: download `env.example` of the release as `.env` and set `HOST_DOMAIN`, `PUBLIC_URL` and the three secrets by hand.
 
