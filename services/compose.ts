@@ -50,9 +50,14 @@ export function composeUp(composePath: string, pull: 'always' | 'missing' | 'nev
   return run(`docker compose -f "${composePath}" up -d --pull ${pull}`)
 }
 
-/** (Re)creates one service after its config changed; `start: false` leaves it stopped. Other services are not touched. */
-export function composeUpService(composePath: string, service: string, start: boolean): Promise<void> {
-  return run(`docker compose -f "${composePath}" up ${start ? '-d' : '--no-start'} --no-deps "${service}"`)
+/**
+ * (Re)creates one service after its config changed; `start: false` leaves it stopped. Other services are not touched.
+ * Removed first: compose's own recreate makes the new container under a temporary name (<id>_<name>), which Sablier
+ * puts into the sandbox's group, and a wake then fails ("No such container") until Sablier reconciles a minute later.
+ */
+export async function composeUpService(composePath: string, service: string, start: boolean, exec: (cmd: string) => Promise<void> = run): Promise<void> {
+  await exec(`docker compose -f "${composePath}" rm -s -f "${service}"`)
+  await exec(`docker compose -f "${composePath}" up ${start ? '-d' : '--no-start'} --no-deps "${service}"`)
 }
 
 /** (Re)creates the services whose config changed without starting them. */

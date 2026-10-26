@@ -256,6 +256,12 @@ if [ -f .env ]; then
   if [ -n "$(env_get OIDC_ISSUER)" ] && [ -z "$(env_get OIDC_ALLOWED_DOMAINS)$(env_get OIDC_ALLOWED_EMAILS)" ]; then
     insecure "OIDC sign-in is open to anyone with an account at the provider: strangers can create sandboxes" "OIDC_ALLOWED_DOMAINS or OIDC_ALLOWED_EMAILS in .env"
   fi
+  # setup.sh wrote public into .env before 0.12.12 (from env.example)
+  if [ "$(env_get APPS_ACCESS_DEFAULT | tr 'A-Z' 'a-z' | tr -d ' ')" = public ]; then
+    insecure "APPS_ACCESS_DEFAULT=public: every sandbox app without a p9m.access label opens for anyone" "empty APPS_ACCESS_DEFAULT in .env (only the owner opens them), label the public ones p9m.access: public, then docker compose up -d"
+  else
+    ok "sandbox apps without a label open only for their owner (or the domain) (APPS_ACCESS_DEFAULT)"
+  fi
   public_url=$(env_get PUBLIC_URL)
   case "$public_url" in
     https://*) ok "the UI is served over HTTPS ($public_url)" ;;

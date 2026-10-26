@@ -4,6 +4,11 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- **Apps owner-only by default on servers set up before 0.12.12:** `setup.sh` had written `APPS_ACCESS_DEFAULT=public` into `.env` (from `env.example`), which kept every app without a `p9m.access` label public. A new `.env` leaves it empty (the default, `owner`), and `check-host.sh` marks `public` as not secure. On a server set up before: empty `APPS_ACCESS_DEFAULT` in `.env`, then `docker compose up -d`.
+- **"No such container: <id>_p9m-…-socat" for about a minute after changing a sandbox's sleep time:** the socat container was recreated by compose under a temporary name, which Sablier took into the sandbox's group until its next reconciliation, so opening an app failed meanwhile. The container is now removed first and created under its own name (also when a host folder mount recreates the sandbox container).
+
 ## [0.12.13] - 2026-10-26
 
 Upgrading from 0.12.12: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (only the version changes). A `docker-compose.yml` you keep from before stays on 0.12.12.
