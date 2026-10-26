@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.15] - 2026-10-26
+
+Upgrading from 0.12.14: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml` (it passes `SESSION_IDLE_TIMEOUT`), then `docker compose pull && docker compose up -d`. Browser sessions idle for over 30 minutes are signed out. A `docker-compose.yml` you keep from before stays on 0.12.14.
+
 ### Added
 
 - **Signed out for doing nothing:** after 30 minutes without a click, a key (also in a browser terminal), a scroll or opening a page, the web UI signs its user out (`SESSION_IDLE_TIMEOUT`, e.g. `2h`, or `off`). The list's automatic refreshes do not count, so a tab left open does not stay signed in. Two minutes before, a bar offers **Stay signed in**; after signing in again, the same page opens. Sessions still end after 7 days at the latest; tokens are not affected. Upgrading signs out the sessions idle for over 30 minutes.
@@ -695,7 +699,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.14...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.15...HEAD
+[0.12.15]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.15
 [0.12.14]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.14
 [0.12.13]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.13
 [0.12.12]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.12
