@@ -200,7 +200,9 @@ if [ -n "$DOMAIN" ]; then
       ok "$1 → $ip ($2)"
     fi
   }
-  check_name "p9m.$DOMAIN" "the UI" fail
+  # The UI's own name (UI_HOST in .env, e.g. console.example.com), else p9m.<domain>
+  ui_host=$(env_get UI_HOST)
+  check_name "${ui_host:-p9m.$DOMAIN}" "the UI" fail
   # A made-up name: only a wildcard record resolves it (every sandbox app has its own name)
   check_name "check-$RANDOM-web.$DOMAIN" "wildcard record for sandbox apps" warn
 
@@ -306,8 +308,11 @@ if [ "${#risks[@]}" -gt 0 ]; then
   echo
 fi
 if [ "$fails" -gt 0 ]; then
-  printf '\033[31m%d problem(s)\033[0m and %d warning(s): fix the ✘ lines before installing.\n' "$fails" "$warns"
+  if [ -f .env ]; then printf '\033[31m%d problem(s)\033[0m and %d warning(s): fix the ✘ lines.\n' "$fails" "$warns"
+  else printf '\033[31m%d problem(s)\033[0m and %d warning(s): fix the ✘ lines before installing.\n' "$fails" "$warns"; fi
   exit 1
 fi
-if [ "$warns" -gt 0 ]; then printf 'Ready, with %d warning(s). Next: ./setup.sh\n' "$warns"
-else echo "Ready. Next: ./setup.sh"; fi
+# Set up already (a .env here): nothing comes next
+if [ -f .env ]; then next=""; else next=" Next: ./setup.sh"; fi
+if [ "$warns" -gt 0 ]; then printf 'Ready, with %d warning(s).%s\n' "$warns" "$next"
+else echo "Ready.$next"; fi
