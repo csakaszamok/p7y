@@ -2,6 +2,7 @@ import { StringDecoder } from 'node:string_decoder'
 import { getSandboxState, openShell } from './docker'
 import { sandboxService } from './sandbox'
 import { primeSablierSession } from './wake'
+import { openContainerShell } from './sandboxContainers'
 
 export interface WsLike {
   send(data: string): void
@@ -13,6 +14,7 @@ export interface TerminalDeps {
   state(name: string): Promise<{ status: string } | null>
   wake(name: string): Promise<void>
   openShell: typeof openShell
+  openContainerShell: typeof openContainerShell
   keepAlive(name: string): Promise<void>
   keepAliveMs: number
   wakeTimeoutMs: number
@@ -23,12 +25,12 @@ export const TERMINAL_KEEPALIVE_MS = 20_000
 /** Output waiting to reach the browser above which the shell is paused */
 const MAX_BUFFERED = 1024 * 1024
 const defaults: TerminalDeps = {
-  state: getSandboxState, wake: async n => { await sandboxService.startSandbox(n) }, openShell, keepAlive: async n => { await primeSablierSession(n) },
+  state: getSandboxState, wake: async n => { await sandboxService.startSandbox(n) }, openShell, openContainerShell, keepAlive: async n => { await primeSablierSession(n) },
   keepAliveMs: TERMINAL_KEEPALIVE_MS, wakeTimeoutMs: 90_000, pollMs: 1000,
 }
 
-/** One browser terminal: wake the sandbox if needed, then a shell piped as JSON messages. */
-export async function runTerminal(ws: WsLike, name: string, overrides: Partial<TerminalDeps> = {}): Promise<void> {
+/** One browser terminal: wake the sandbox if needed, then a shell (in the sandbox, or in one of its containers) piped as JSON messages. */
+export async function runTerminal(ws: WsLike, name: string, overrides: Partial<TerminalDeps> = {}, container?: string): Promise<void> {
   const d = { ...defaults, ...overrides }
   const send = (m: Record<string, unknown>) => { try { ws.send(JSON.stringify(m)) } catch { /* gone */ } }
   let closed = false
@@ -57,7 +59,7 @@ export async function runTerminal(ws: WsLike, name: string, overrides: Partial<T
     }
   }
   if (closed) return
-  shell = await d.openShell(name, 80, 24)
+  shell = container ? await d.openContainerShell(name, container, 80, 24) : await d.openShell(name, 80, 24)
   if (closed) { end(); return } // the tab went while the shell was opening
   const out = stream()!
   // The exec stream is a hijacked socket: it errors when the sandbox goes away under it

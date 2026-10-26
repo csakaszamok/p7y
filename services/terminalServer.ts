@@ -5,11 +5,11 @@ import { runTerminal } from './terminalSession'
 
 interface Deps {
   check(url: string, headers: Record<string, string | string[] | undefined>): Promise<GateResult>
-  run(ws: never, name: string): Promise<void>
+  run(ws: never, name: string, container?: string): Promise<void>
 }
 
 /** Browser terminals: /sandboxes/:name/terminal upgraded to a websocket (checked before the upgrade). */
-export function attachTerminals(server: Server, deps: Deps = { check: checkTerminalUpgrade, run: runTerminal as never }): void {
+export function attachTerminals(server: Server, deps: Deps = { check: checkTerminalUpgrade, run: (ws, name, container) => runTerminal(ws, name, {}, container) }): void {
   // Terminal input is keystrokes and resizes: a bigger message is not one of ours
   const wss = new WebSocketServer({ noServer: true, maxPayload: 64 * 1024 })
   server.on('upgrade', async (req, socket, head) => {
@@ -28,10 +28,11 @@ export function attachTerminals(server: Server, deps: Deps = { check: checkTermi
     if (socket.destroyed) { gate.release(); return }
     wss.handleUpgrade(req, socket, head, ws => {
       ws.on('error', () => ws.terminate()) // a malformed frame: drop this connection, not the server
-      console.log(`[terminal] ${gate.name}: opened by ${gate.sub}`)
-      ws.on('close', () => console.log(`[terminal] ${gate.name}: closed`))
-      deps.run(ws as never, gate.name).catch(err => {
-        console.error(`[terminal] ${gate.name}: ${err instanceof Error ? err.message : err}`)
+      const where = gate.container ? `${gate.name}/${gate.container}` : gate.name
+      console.log(`[terminal] ${where}: opened by ${gate.sub}`)
+      ws.on('close', () => console.log(`[terminal] ${where}: closed`))
+      deps.run(ws as never, gate.name, gate.container).catch(err => {
+        console.error(`[terminal] ${where}: ${err instanceof Error ? err.message : err}`)
         try { ws.send(JSON.stringify({ type: 'error', text: err instanceof Error ? err.message : String(err) })); ws.close() } catch { /* gone */ }
       })
     })

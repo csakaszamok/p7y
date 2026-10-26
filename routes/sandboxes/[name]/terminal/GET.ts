@@ -2,21 +2,24 @@ import { pageSession, redirect, html, escapeHtml, htmlTag } from '../../../../se
 import { getOwnedSandbox } from '../../../../services/access'
 import { rawNameOf } from '../../../../services/naming'
 import { faviconTag, logoImg, titleSuffix } from '../../../../services/ui/brand'
+import { CONTAINER_NAME } from '../../../../services/sandboxContainers'
 
-/** The browser terminal page; the websocket on this same path is handled in server.ts (upgrade). */
+/** The browser terminal page (?container=: in that container of the sandbox's own Docker); the websocket on this same path is handled in server.ts (upgrade). */
 export default async (req: Request): Promise<Response> => {
   const session = pageSession(req)
   if (!session) return redirect('/login')
   let name: string
   try { name = decodeURIComponent(new URL(req.url).pathname.split('/')[2]) } catch { return html('<p>Sandbox not found.</p>', 404) }
   try { await getOwnedSandbox({ sub: session.sub, role: session.role, via: 'session' }, name) } catch { return html('<p>Sandbox not found.</p>', 404) }
-  const short = escapeHtml(rawNameOf(name) ?? name)
+  const container = new URL(req.url).searchParams.get('container') || null
+  if (container !== null && !CONTAINER_NAME.test(container)) return html('<p>Container not found.</p>', 404)
+  const short = escapeHtml(rawNameOf(name) ?? name) + (container ? ` / ${escapeHtml(container)}` : '')
   return html(`<!DOCTYPE html>
 ${htmlTag(session.sub)}<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${short} — terminal${titleSuffix()}</title>
 ${faviconTag()}
 <link rel="stylesheet" href="/assets/xterm.css"><link rel="stylesheet" href="/assets/style.css">
-</head><body class="terminal-page" data-sandbox="${escapeHtml(name)}">
+</head><body class="terminal-page" data-sandbox="${escapeHtml(name)}"${container ? ` data-container="${escapeHtml(container)}"` : ''}>
 <header class="topbar"><span class="brand">${logoImg(20)}${short}</span>
 <span class="muted" data-term-status>connecting…</span><button class="link" data-term-reconnect hidden>Reconnect</button></header>
 <div data-term></div>

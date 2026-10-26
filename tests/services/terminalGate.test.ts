@@ -37,6 +37,19 @@ describe('checkTerminalUpgrade', () => {
     expect(await checkTerminalUpgrade('/sandboxes/p9m-a1/terminal', { host: 'p9m.lvh.me', cookie: cookie('alice@example.com') })).toMatchObject({ ok: false, status: 403 })
   })
 
+  it("passes on a container of the sandbox's own Docker; refuses an odd name", async () => {
+    const r = await checkTerminalUpgrade('/sandboxes/p9m-a1/terminal?container=claude-dev', h({ cookie: cookie('alice@example.com') }))
+    expect(r).toMatchObject({ ok: true, name: 'p9m-a1', container: 'claude-dev' })
+    if (r.ok) r.release()
+    const plain = await checkTerminalUpgrade('/sandboxes/p9m-a1/terminal', h({ cookie: cookie('alice@example.com') }))
+    expect(plain.ok && 'container' in plain).toBe(false)
+    if (plain.ok) plain.release()
+    for (const bad of ['-x', 'a;b', 'a%20b', '..%2Fetc']) {
+      expect(await checkTerminalUpgrade(`/sandboxes/p9m-a1/terminal?container=${bad}`, h({ cookie: cookie('alice@example.com') }))).toMatchObject({ ok: false, status: 404 })
+    }
+    expect(await checkTerminalUpgrade('/sandboxes/p9m-b1/terminal?container=claude-dev', h({ cookie: cookie('alice@example.com') }))).toMatchObject({ ok: false, status: 404 })
+  })
+
   it('takes the slot itself, so many upgrades at once still get at most 5 terminals', async () => {
     const results = await Promise.all(Array.from({ length: 10 }, () => checkTerminalUpgrade('/sandboxes/p9m-a1/terminal', h({ cookie: cookie('alice@example.com') }))))
     expect(results.filter(r => r.ok)).toHaveLength(MAX_TERMINALS_PER_USER)

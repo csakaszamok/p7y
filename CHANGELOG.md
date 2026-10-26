@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **A terminal in a sandbox's containers:** a new **Containers** tab in the panel (not in Simple) lists the containers in the sandbox's own Docker (`GET /sandboxes/:name/containers`, MCP `list_sandbox_containers`), and **Terminal** next to a running one opens the browser terminal in it, as the container's own user in its working directory, with that user's login shell. For apps that only have a console, such as Claude Code in a devcontainer. See [SSH, terminal and logs](docs/shell-and-logs.md#terminal-in-a-container).
+
 ## [0.12.8] - 2026-10-25
 
 Upgrading from 0.12.7: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (only the version changes). A `docker-compose.yml` you keep from before stays on 0.12.7.

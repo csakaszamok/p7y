@@ -74,6 +74,13 @@ describe('pages', () => {
     expect((await terminalPage(r('/sandboxes/p9m-mine/terminal'))).status).toBe(302)
   })
 
+  it("a terminal in one of the sandbox's containers names it on the page; an odd name is not found", async () => {
+    const html = await (await terminalPage(r('/sandboxes/p9m-mine/terminal?container=claude-dev', as('alice@example.com', 'user')))).text()
+    expect(html).toContain('data-container="claude-dev"')
+    expect(html).toContain('/ claude-dev')
+    expect((await terminalPage(r('/sandboxes/p9m-mine/terminal?container=%3Cx%3E', as('alice@example.com', 'user')))).status).toBe(404)
+  })
+
   // A sandbox's app on another *.<domain> is same-site: it could frame our pages (the terminal above all)
   it('forbids framing of every page', async () => {
     for (const res of [
