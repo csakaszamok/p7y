@@ -376,3 +376,6 @@ a.ov-card:hover { border-color: #ea580c; transform: translateY(-1px) }
 .about-foot a { color: var(--muted); text-decoration: none }
 .about-foot a:hover { color: var(--fg-2) }
 .card.about p { margin: 0 0 12px }
+
+/* Signed out soon for doing nothing (ui/idle.js) */
+.idle-bar { position: fixed; z-index: 100; left: 50%; bottom: 16px; transform: translateX(-50%); max-width: calc(100% - 32px); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 10px 14px; border-radius: 8px; background: var(--surface); color: var(--fg); border: 1px solid var(--warn-line); box-shadow: 0 6px 24px rgba(0, 0, 0, .35) }

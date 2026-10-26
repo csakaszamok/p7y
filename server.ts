@@ -21,6 +21,7 @@ import { writeWebResponse, readBody } from "./services/http";
 import { filesMaxUpload } from "./services/sandboxFiles";
 import { attachTerminals } from "./services/terminalServer";
 import { CLIENT_IP_HEADER, clientAddress } from "./services/loginGuard";
+import { getCookie, SESSION_COOKIE, touchedSessionCookie } from "./services/session";
 import { startUsageSampler } from "./services/usageSampler";
 import { startDiskSampler } from "./services/diskUsage";
 import { repoInfo, p9mVersion } from "./services/repoInfo";
@@ -281,6 +282,12 @@ async function handle(req: IncomingMessage, res: ServerResponse, internal: boole
       // New-style Web API handler
       const webReq = await toWebRequest(req);
       const webRes = await (handler as NewHandlerModule).default(webReq);
+      // Opening a page is doing something: the session's idle time starts again (background polls are not pages)
+      if (method === "GET" && req.headers["sec-fetch-mode"] === "navigate" && !webRes.headers.getSetCookie().some(c => c.startsWith(`${SESSION_COOKIE}=`))) {
+        const touched = touchedSessionCookie(getCookie(webReq, SESSION_COOKIE));
+        // A Response.redirect() has immutable headers: that page is not opened, nothing to renew
+        if (touched) try { webRes.headers.append("set-cookie", touched); } catch { /* immutable */ }
+      }
       await writeWebResponse(webRes, res);
     } else {
       res.writeHead(500).end("Invalid handler module");

@@ -6,6 +6,7 @@ Main settings in `.env`:
 |---|---|---|
 | `ADMIN_TOKEN` | `abc123` (dev only) | Bearer token with admin rights on the API |
 | `ADMIN_USER`, `ADMIN_PASSWORD` | `admin`, — | The local admin account of the UI; it can sign in only with `ADMIN_LOGIN=on` |
+| `SESSION_IDLE_TIMEOUT` | `30m` | Signed out of the web UI after this long without doing anything: a click, a key (also in a browser terminal), a scroll, or opening a page starts the time again; the list's own refreshes do not. Two minutes before, a bar offers **Stay signed in**; afterwards the sign-in page, and after signing in back to the same page. A session ends after 7 days in any case. `off`: only the 7 days. Tokens are not affected |
 | `ADMIN_LOGIN` | `off` | `on`: the sign-in page has the **Administrator sign-in** form (also the Hub's). Off, the form is not shown and the password is not even checked: it is an emergency door, not the everyday way in (that is OIDC with `OIDC_ADMIN_EMAILS`). Turn it on in `.env`, `docker compose up -d` (a `restart` does not read `.env`), sign in, then turn it off again. While on, Purgatorium warns at startup |
 | `SESSION_SECRET` | — | Signs the session cookie; a long random string |
 | `HOST_DOMAIN` | `lvh.me` | Every address is under it: the UI, the registry, the sandbox apps (needs a wildcard DNS record) |

@@ -63,6 +63,8 @@ services:
       PUBLIC_URL: ${PUBLIC_URL:-http://${UI_HOST:-p9m.${HOST_DOMAIN:-lvh.me}}}
       UI_HOST: ${UI_HOST:-}
       SESSION_SECRET: ${SESSION_SECRET:-}
+      # Signed out after this long without doing anything in the web UI (e.g. 30m, 2h; off: never)
+      SESSION_IDLE_TIMEOUT: ${SESSION_IDLE_TIMEOUT:-30m}
       ADMIN_USER: ${ADMIN_USER:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       # on: the admin can sign in with ADMIN_USER / ADMIN_PASSWORD (for emergencies; off: the form is not shown)

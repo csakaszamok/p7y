@@ -256,6 +256,9 @@ if [ -f .env ]; then
   if [ -n "$(env_get OIDC_ISSUER)" ] && [ -z "$(env_get OIDC_ALLOWED_DOMAINS)$(env_get OIDC_ALLOWED_EMAILS)" ]; then
     insecure "OIDC sign-in is open to anyone with an account at the provider: strangers can create sandboxes" "OIDC_ALLOWED_DOMAINS or OIDC_ALLOWED_EMAILS in .env"
   fi
+  if [ "$(env_get SESSION_IDLE_TIMEOUT | tr 'A-Z' 'a-z' | tr -d ' ')" = off ]; then
+    insecure "SESSION_IDLE_TIMEOUT=off: a browser left signed in stays signed in for 7 days" "empty SESSION_IDLE_TIMEOUT in .env (30 minutes), then docker compose up -d"
+  fi
   # setup.sh wrote public into .env before 0.12.12 (from env.example)
   if [ "$(env_get APPS_ACCESS_DEFAULT | tr 'A-Z' 'a-z' | tr -d ' ')" = public ]; then
     insecure "APPS_ACCESS_DEFAULT=public: every sandbox app without a p9m.access label opens for anyone" "empty APPS_ACCESS_DEFAULT in .env (only the owner opens them), label the public ones p9m.access: public, then docker compose up -d"
