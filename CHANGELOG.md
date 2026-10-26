@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.13] - 2026-10-26
+
+Upgrading from 0.12.12: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (only the version changes). A `docker-compose.yml` you keep from before stays on 0.12.12.
+
 ### Fixed
 
 - **`check-host.sh` on a server already set up:** it checked the DNS record of `p9m.<domain>` even with a `UI_HOST` of its own (e.g. `console.example.com`); now that one. And it no longer ends with *Next: ./setup.sh* when the folder has a `.env`.
@@ -678,7 +682,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.12...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.13...HEAD
+[0.12.13]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.13
 [0.12.12]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.12
 [0.12.11]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.11
 [0.12.10]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.10
