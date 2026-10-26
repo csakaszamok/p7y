@@ -6,6 +6,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ### Added
 
+- **The sandbox's Apps tab is now called App ports:** it lists the ports the sandbox's containers publish, with their links; the Containers tab lists all of them.
 - **Two new 404 pages, one picked at random:** agents drifting in space, or hiding behind the digits in the dark while the pointer is a flashlight. Every `error-pages/404*.html` takes part; still self-contained, and still for reduced motion.
 - **Time left before signing out, in the header:** next to the user's name, e.g. `27 min`; in the warning colour for the last two minutes. Hidden with `SESSION_IDLE_TIMEOUT=off`.
 

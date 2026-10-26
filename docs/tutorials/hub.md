@@ -21,7 +21,7 @@ services:
       p9m.description: "Who took what from the stock room"
 ```
 
-Within about a minute and a half the app is on the Hub. In Purgatorium its **Apps** tab marks it **On the Hub**.
+Within about a minute and a half the app is on the Hub. In Purgatorium its **App ports** tab marks it **On the Hub**.
 
 ## 2. A picture on its card
 
