@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Not found</title>
+<!-- Self-contained: no request leaves this page. Purgatorium serves it with the portal's address (PUBLIC_URL) in place
+     of {{P9M_URL}}; without it the script below guesses p9m.<domain>. One of the 404-*.html pages, picked at random. -->
+<style>
+  :root { color-scheme: dark }
+  * { box-sizing: border-box }
+  html, body { height: 100%; margin: 0 }
+  body { overflow: hidden; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #ede6df; background: #14100d; cursor: none }
+  main { position: absolute; z-index: 10; bottom: 7%; left: 50%; transform: translateX(-50%); width: min(480px, calc(100% - 32px)); text-align: center; cursor: auto }
+  h1 { font-size: 22px; margin: 6px 0 }
+  p { color: #a8a09a; margin: 0 0 18px }
+  h1, p { text-shadow: 0 2px 8px #000 }
+  code { color: #ede6df; word-break: break-all }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center }
+  a, button {
+    font: inherit; cursor: pointer; text-decoration: none; padding: 9px 16px; border-radius: 8px;
+    border: 1px solid #3a2a20; background: #1e1611cc; color: #ede6df;
+  }
+  a:hover, button:hover { border-color: #ea580c }
+  .primary { background: #ea580c; border-color: #ea580c; color: #fff }
+  .primary:hover { background: #f97316 }
+  [hidden] { display: none }
+
+  /* the agent: blinking, its antenna glowing */
+  .eyes { animation: blink 5s infinite; transform-box: fill-box; transform-origin: center }
+  @keyframes blink { 0%, 94%, 100% { transform: scaleY(1) } 97% { transform: scaleY(.1) } }
+  .tip { animation: tip 1.6s ease-in-out infinite alternate }
+  @keyframes tip { from { fill: #ff8a2a } to { fill: #ffe0a0 } }
+
+  .big { position: absolute; left: 50%; top: 36%; transform: translate(-50%, -50%); width: min(900px, 96vw); overflow: visible }
+  /* the pointer is a flashlight; idle, it wanders by itself */
+  .shade { position: absolute; inset: 0; z-index: 5; pointer-events: none;
+    background: radial-gradient(circle at var(--x, 50%) var(--y, 45%), transparent 0 80px, rgba(4, 3, 3, .55) 120px, rgba(4, 3, 3, .97) 190px) }
+  /* agents hiding behind the digits, peeking out now and then */
+  .peek { animation: peek 7s ease-in-out infinite }
+  .peek.b { animation-delay: 2.3s } .peek.c { animation-delay: 4.6s }
+  @keyframes peek { 0%, 60%, 100% { transform: translateY(0) } 70%, 90% { transform: translateY(-46px) } }
+  /* caught in the light: ducks below the floor at once, comes back up slowly */
+  .shy { transition: transform .7s ease-out }
+  .shy.ducked { transform: translateY(200px); transition: transform .18s ease-in }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0s !important; animation-iteration-count: 1 !important } }
+</style>
+</head>
+<body>
+<svg class="big" viewBox="0 0 900 360" aria-hidden="true">
+  <defs>
+    <symbol id="agent" viewBox="0 0 100 130">
+      <g stroke="#1b1424" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M31 84 L13 99" stroke-width="13" fill="none"/><path d="M31 84 L13 99" stroke="currentColor" stroke-width="7" fill="none"/>
+        <path d="M69 84 L87 72" stroke-width="13" fill="none"/><path d="M69 84 L87 72" stroke="currentColor" stroke-width="7" fill="none"/>
+        <path d="M41 108 V123 M59 108 V123" stroke-width="13" fill="none"/><path d="M41 108 V123 M59 108 V123" stroke="currentColor" stroke-width="7" fill="none"/>
+        <line x1="50" y1="21" x2="50" y2="9"/>
+        <circle class="tip" cx="50" cy="7" r="5" fill="#ff8a2a"/>
+        <rect x="8" y="36" width="10" height="20" rx="4" fill="#ff8a2a"/><rect x="82" y="36" width="10" height="20" rx="4" fill="#ff8a2a"/>
+        <rect x="15" y="20" width="70" height="52" rx="19" fill="currentColor"/>
+        <rect x="23" y="29" width="54" height="31" rx="14" fill="#1b1424"/>
+        <g class="eyes"><ellipse cx="40" cy="43" rx="5" ry="6.5" fill="#7ff6ff" stroke="none"/><ellipse cx="60" cy="43" rx="5" ry="6.5" fill="#7ff6ff" stroke="none"/></g>
+        <path d="M44 52 Q50 56.5 56 52" stroke="#7ff6ff" stroke-width="2.5" fill="none"/>
+        <rect x="28" y="74" width="44" height="36" rx="14" fill="currentColor"/>
+        <circle cx="50" cy="91" r="6" fill="#ff8a2a"/>
+        <ellipse cx="30" cy="29" rx="8" ry="4" fill="#fff" opacity=".45" stroke="none" transform="rotate(-25 30 29)"/>
+      </g>
+    </symbol>
+    <!-- the agent carrying a container --><symbol id="carrier" viewBox="0 0 100 130">
+      <g stroke="#1b1424" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M41 108 V123 M59 108 V123" stroke-width="13" fill="none"/><path d="M41 108 V123 M59 108 V123" stroke="currentColor" stroke-width="7" fill="none"/>
+        <line x1="50" y1="21" x2="50" y2="9"/>
+        <circle class="tip" cx="50" cy="7" r="5" fill="#ff8a2a"/>
+        <rect x="8" y="36" width="10" height="20" rx="4" fill="#ff8a2a"/><rect x="82" y="36" width="10" height="20" rx="4" fill="#ff8a2a"/>
+        <rect x="15" y="20" width="70" height="52" rx="19" fill="currentColor"/>
+        <rect x="23" y="29" width="54" height="31" rx="14" fill="#1b1424"/>
+        <g class="eyes"><ellipse cx="40" cy="43" rx="5" ry="6.5" fill="#7ff6ff" stroke="none"/><ellipse cx="60" cy="43" rx="5" ry="6.5" fill="#7ff6ff" stroke="none"/></g>
+        <path d="M44 52 Q50 56.5 56 52" stroke="#7ff6ff" stroke-width="2.5" fill="none"/>
+        <rect x="28" y="74" width="44" height="36" rx="14" fill="currentColor"/>
+        <circle cx="50" cy="91" r="6" fill="#ff8a2a"/>
+        <ellipse cx="30" cy="29" rx="8" ry="4" fill="#fff" opacity=".45" stroke="none" transform="rotate(-25 30 29)"/>
+        <path d="M31 84 L20 104 M69 84 L80 104" stroke-width="13" fill="none"/><path d="M31 84 L20 104 M69 84 L80 104" stroke="currentColor" stroke-width="7" fill="none"/>
+      </g>
+      <use href="#crate" x="18" y="90" width="64" height="41.6"/>
+      <g stroke="#1b1424" stroke-width="3"><circle cx="20" cy="106" r="6" fill="currentColor"/><circle cx="80" cy="106" r="6" fill="currentColor"/></g>
+    </symbol>
+    <symbol id="crate" viewBox="0 0 40 26">
+      <rect x="1.5" y="1.5" width="37" height="23" rx="2" fill="#c2410c" stroke="#1b1424" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M7 4.5v17M33 4.5v17" stroke="#7c2d12" stroke-width="1.6"/>
+      <rect x="10" y="7.5" width="20" height="11" rx="1.5" fill="#fff6e8" stroke="#1b1424" stroke-width="1.5"/>
+      <text x="20" y="15.8" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-weight="800" font-size="8" fill="#1b1424">app</text>
+    </symbol>
+    <!-- the floor: an agent that ducks goes out of sight below it -->
+    <clipPath id="floor"><rect x="-200" y="-200" width="1300" height="520"/></clipPath>
+  </defs>
+  <g clip-path="url(#floor)">
+    <g class="shy" data-shy><g class="peek"><use href="#carrier" x="115" y="150" width="100" height="130" style="color:#f2efe9"/></g></g>
+    <g class="shy" data-shy><g class="peek b"><use href="#carrier" x="400" y="150" width="100" height="130" style="color:#8bd3ff"/></g></g>
+    <g class="shy" data-shy><g class="peek c"><use href="#carrier" x="690" y="150" width="100" height="130" style="color:#ffb066"/></g></g>
+  </g>
+  <!-- big crates; the agents hide behind them -->
+  <g stroke="#8a5a3a" stroke-width="4" stroke-linejoin="round">
+    <rect x="85" y="180" width="160" height="140" rx="6" fill="#6b4630"/>
+    <path d="M107 190 v120 M223 190 v120" stroke-width="3" opacity=".6"/>
+    <rect x="125" y="226" width="80" height="44" rx="4" fill="#3a2418"/>
+  </g>
+  <text x="165" y="258" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-weight="800" font-size="26" fill="#8a5a3a">app</text>
+  <g stroke="#8a5a3a" stroke-width="4" stroke-linejoin="round">
+    <rect x="370" y="180" width="160" height="140" rx="6" fill="#6b4630"/>
+    <path d="M392 190 v120 M508 190 v120" stroke-width="3" opacity=".6"/>
+    <rect x="410" y="226" width="80" height="44" rx="4" fill="#3a2418"/>
+  </g>
+  <text x="450" y="258" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-weight="800" font-size="26" fill="#8a5a3a">?</text>
+  <g stroke="#8a5a3a" stroke-width="4" stroke-linejoin="round">
+    <rect x="660" y="180" width="160" height="140" rx="6" fill="#6b4630"/>
+    <path d="M682 190 v120 M798 190 v120" stroke-width="3" opacity=".6"/>
+    <rect x="700" y="226" width="80" height="44" rx="4" fill="#3a2418"/>
+  </g>
+  <text x="740" y="258" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-weight="800" font-size="26" fill="#8a5a3a">app</text>
+  <!-- one did not hide: it is looking with its own torch (until the light finds it) -->
+  <g clip-path="url(#floor)"><g class="shy" data-shy><g transform="translate(842 242) scale(.6)"><use href="#agent" width="100" height="130" style="color:#c4a7ff"/>
+    <path d="M86 72 L150 40 L150 104 Z" fill="#ffe9a8" opacity=".25"/></g></g></g>
+</svg>
+<div class="shade" data-shade></div>
+
+<main>
+  <h1>Who turned off the lights?</h1>
+  <p>Even our agents can't find <code id="where"></code>. Move the flashlight around: maybe you will. They are a bit shy. If it is a sandbox app, the sandbox may have been deleted or archived.</p>
+  <div class="actions">
+    <button type="button" id="back" hidden>Go back</button>
+    <a href="/" id="home" hidden>Start page of this site</a>
+    <a href="{{P9M_URL}}" id="portal" class="primary">Open the sandbox portal</a>
+  </div>
+</main>
+<script>
+  (function () {
+    var host = location.hostname
+    document.getElementById('where').textContent = host + location.pathname
+    if (history.length > 1) {
+      var back = document.getElementById('back')
+      back.hidden = false
+      back.onclick = function () { history.back() }
+    }
+    if (location.pathname !== '/') document.getElementById('home').hidden = false
+    var portal = document.getElementById('portal')
+    // Not filled in by Purgatorium: p9m.<the domain this host is under>
+    if (portal.getAttribute('href').indexOf('{{') === 0) {
+      var parts = host.split('.')
+      var domain = parts.length > 2 ? parts.slice(1).join('.') : host
+      portal.href = location.protocol + '//p9m.' + domain
+    }
+
+    // The flashlight follows the pointer (or a finger); left alone, it wanders, unless motion is reduced
+    var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+    var shade = document.querySelector('[data-shade]')
+    var px = 50, py = 45, last = 0
+    function place() { shade.style.setProperty('--x', px + '%'); shade.style.setProperty('--y', py + '%'); shy() }
+
+    // An agent the light reaches ducks; it comes up again once the light has been away from it for a while
+    var agents = Array.prototype.map.call(document.querySelectorAll('[data-shy]'), function (el) { return { el: el, ducked: false } })
+    function near(r, x, y, d) {
+      var dx = Math.max(r.left - x, 0, x - r.right), dy = Math.max(r.top - y, 0, y - r.bottom)
+      return dx * dx + dy * dy < d * d
+    }
+    function shy() {
+      var now = performance.now(), x = px / 100 * innerWidth, y = py / 100 * innerHeight
+      agents.forEach(function (a) {
+        if (!a.ducked) {
+          var r = a.el.getBoundingClientRect()
+          if (near(r, x, y, 60)) { a.ducked = true; a.spot = r; a.lit = now; a.el.classList.add('ducked') }
+        } else if (near(a.spot, x, y, 170)) a.lit = now
+        else if (now - a.lit > 1500) { a.ducked = false; a.el.classList.remove('ducked') }
+      })
+    }
+    addEventListener('pointermove', function (e) {
+      px = e.clientX / innerWidth * 100; py = e.clientY / innerHeight * 100; last = performance.now()
+      if (reduced) place()
+    })
+    function wander(t) {
+      if (performance.now() - last > 2500) { px = 50 + 34 * Math.sin(t / 2300); py = 45 + 22 * Math.sin(t / 1700) }
+      place()
+      requestAnimationFrame(wander)
+    }
+    if (!reduced) requestAnimationFrame(wander)
+    else setInterval(shy, 300)
+  })()
+</script>
+</body>
+</html>
