@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- **`check-host.sh` on a server already set up:** it checked the DNS record of `p9m.<domain>` even with a `UI_HOST` of its own (e.g. `console.example.com`); now that one. And it no longer ends with *Next: ./setup.sh* when the folder has a `.env`.
+
 ## [0.12.12] - 2026-10-26
 
 Upgrading from 0.12.11, **two defaults change; before `docker compose up -d`:** (1) install [sysbox](https://github.com/nestybox/sysbox) on the server, or no new sandbox can be created (existing ones keep running); (2) label the apps everyone should open `p9m.access: public` (or `domain`), or set `APPS_ACCESS_DEFAULT=public` in `.env` to keep the old behaviour: without a label an app now opens only for its owner. Then download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml` and `docker compose pull && docker compose up -d`. Afterwards, run the new `check-host.sh` in the `p9m` folder: it lists what is not secure. A `docker-compose.yml` you keep from before stays on 0.12.11.
