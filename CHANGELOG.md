@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **Time left before signing out, in the header:** next to the user's name, e.g. `27 min`; in the warning colour for the last two minutes. Hidden with `SESSION_IDLE_TIMEOUT=off`.
+
 ## [0.12.15] - 2026-10-26
 
 Upgrading from 0.12.14: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml` (it passes `SESSION_IDLE_TIMEOUT`), then `docker compose pull && docker compose up -d`. Browser sessions idle for over 30 minutes are signed out. A `docker-compose.yml` you keep from before stays on 0.12.14.

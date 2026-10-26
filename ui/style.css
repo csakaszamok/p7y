@@ -85,6 +85,8 @@ label.check input { width: auto }
 .subnav a:hover { color: var(--strong) }
 .subnav a.active { color: var(--strong); font-weight: 600; border-bottom-color: #ea580c }
 .who { display: flex; gap: 12px; align-items: center; margin: 0; color: var(--dim) }
+.idle-left { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums }
+.idle-left.soon { color: var(--warn) }
 /* Simple | Advanced: Simple hides what is marked adv (it does not restrict anything) */
 body[data-mode="simple"] .adv { display: none !important }
 body:not([data-mode="simple"]) .simple-only { display: none !important }
