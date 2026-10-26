@@ -1592,7 +1592,12 @@
 <tr>
 <td><code>ADMIN_USER</code>, <code>ADMIN_PASSWORD</code></td>
 <td><code>admin</code>, —</td>
-<td>The local admin account of the UI</td>
+<td>The local admin account of the UI; it can sign in only with <code>ADMIN_LOGIN=on</code></td>
+</tr>
+<tr>
+<td><code>ADMIN_LOGIN</code></td>
+<td><code>off</code></td>
+<td><code>on</code>: the sign-in page has the <strong>Administrator sign-in</strong> form (also the Hub's). Off, the form is not shown and the password is not even checked: it is an emergency door, not the everyday way in (that is OIDC with <code>OIDC_ADMIN_EMAILS</code>). Turn it on in <code>.env</code>, <code>docker compose up -d</code> (a <code>restart</code> does not read <code>.env</code>), sign in, then turn it off again. While on, Purgatorium warns at startup</td>
 </tr>
 <tr>
 <td><code>SESSION_SECRET</code></td>

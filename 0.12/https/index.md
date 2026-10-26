@@ -27,4 +27,4 @@ Then close the browser completely and open `https://p9m.lvh.me` again. On macOS 
 
 For a public deployment also set `P9M_API_BIND=127.0.0.1` (the direct plain-HTTP API port 8081 is then only reachable on the host) — with `PUBLIC_URL` set, docker clients get registry tokens from `$PUBLIC_URL/v2/auth`, i.e. over HTTPS.
 
-With an `https://` `PUBLIC_URL`, Purgatorium **refuses to start** while `ADMIN_TOKEN`, `SESSION_SECRET` or `ADMIN_PASSWORD` is a default or `.env.example` value (or `SESSION_SECRET` is unset). A running sandbox whose address no router matches shows "This address does not reach the sandbox" instead of an endless waiting page.
+With an `https://` `PUBLIC_URL`, Purgatorium **refuses to start** while `ADMIN_TOKEN` or `SESSION_SECRET` is a default or `.env.example` value (or `SESSION_SECRET` is unset), or `ADMIN_PASSWORD` is while `ADMIN_LOGIN=on`. A running sandbox whose address no router matches shows "This address does not reach the sandbox" instead of an endless waiting page.
