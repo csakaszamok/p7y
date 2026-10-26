@@ -1743,7 +1743,7 @@
 redis-cli<span class="w"> </span>-h<span class="w"> </span>&lt;name&gt;-redis-tcp.&lt;domain&gt;<span class="w"> </span>-p<span class="w"> </span><span class="m">443</span><span class="w"> </span>--tls<span class="w"> </span>--sni<span class="w"> </span>&lt;name&gt;-redis-tcp.&lt;domain&gt;<span class="w"> </span>-a<span class="w"> </span>&lt;password&gt;<span class="w"> </span>ping<span class="w">   </span><span class="c1"># add --insecure with the self-signed certificate</span>
 ssh<span class="w"> </span>-o<span class="w"> </span><span class="nv">ProxyCommand</span><span class="o">=</span><span class="s2">"openssl s_client -quiet -connect %h:443 -servername %h"</span><span class="w"> </span>demo@&lt;name&gt;-ssh-tcp.&lt;domain&gt;
 </code></pre></div>
-<p>The three TCP containers also get an HTTP link in <strong>Apps</strong> (frpc tunnels every published port); those links do not lead anywhere useful.</p>
+<p>The three TCP containers also get an HTTP link in <strong>App ports</strong> (frpc tunnels every published port); those links do not lead anywhere useful.</p>
 
 
 

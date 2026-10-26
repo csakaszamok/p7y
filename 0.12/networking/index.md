@@ -52,4 +52,4 @@ redis-cli -h <name>-redis-tcp.<domain> -p 443 --tls --sni <name>-redis-tcp.<doma
 ssh -o ProxyCommand="openssl s_client -quiet -connect %h:443 -servername %h" demo@<name>-ssh-tcp.<domain>
 ```
 
-The three TCP containers also get an HTTP link in **Apps** (frpc tunnels every published port); those links do not lead anywhere useful.
+The three TCP containers also get an HTTP link in **App ports** (frpc tunnels every published port); those links do not lead anywhere useful.

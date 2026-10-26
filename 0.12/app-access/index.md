@@ -18,7 +18,7 @@ services:
       p9m.access: public    # or domain; owner when there is no label
 ```
 
-An app without the label gets the server's default, `APPS_ACCESS_DEFAULT` (`owner` unless set; a company may set `domain`; `public` is how it was before 0.12.12). A value that is not one of the three (a typo such as `privat`) means `owner`, and the sandbox's **Details** tab says so. The **Apps** tab marks each app that is not public: *Owner only*, *Your domain*.
+An app without the label gets the server's default, `APPS_ACCESS_DEFAULT` (`owner` unless set; a company may set `domain`; `public` is how it was before 0.12.12). A value that is not one of the three (a typo such as `privat`) means `owner`, and the sandbox's **Details** tab says so. The **App ports** tab marks each app that is not public: *Owner only*, *Your domain*.
 
 ## What a visitor sees
 
