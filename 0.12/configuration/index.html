@@ -1595,6 +1595,11 @@
 <td>The local admin account of the UI; it can sign in only with <code>ADMIN_LOGIN=on</code></td>
 </tr>
 <tr>
+<td><code>SESSION_IDLE_TIMEOUT</code></td>
+<td><code>30m</code></td>
+<td>Signed out of the web UI after this long without doing anything: a click, a key (also in a browser terminal), a scroll, or opening a page starts the time again; the list's own refreshes do not. Two minutes before, a bar offers <strong>Stay signed in</strong>; afterwards the sign-in page, and after signing in back to the same page. A session ends after 7 days in any case. <code>off</code>: only the 7 days. Tokens are not affected</td>
+</tr>
+<tr>
 <td><code>ADMIN_LOGIN</code></td>
 <td><code>off</code></td>
 <td><code>on</code>: the sign-in page has the <strong>Administrator sign-in</strong> form (also the Hub's). Off, the form is not shown and the password is not even checked: it is an emergency door, not the everyday way in (that is OIDC with <code>OIDC_ADMIN_EMAILS</code>). Turn it on in <code>.env</code>, <code>docker compose up -d</code> (a <code>restart</code> does not read <code>.env</code>), sign in, then turn it off again. While on, Purgatorium warns at startup</td>
