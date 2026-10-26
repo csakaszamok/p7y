@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- **A token limited to one sandbox can list its containers:** `GET /sandboxes/<name>/containers` (the Containers tab, `list_sandbox_containers` over MCP) answered 403 to it.
+
 ## [0.12.16] - 2026-10-26
 
 Upgrading from 0.12.15: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.15.

@@ -40,6 +40,8 @@ const SCOPED_ALLOWED: Array<[string, RegExp]> = [
   ['POST', /^\/sandboxes\/[^/]+\/files\/mkdir$/],
   ['PUT', /^\/sandboxes\/[^/]+\/files\/content$/],
   ['GET', /^\/sandboxes\/[^/]+\/volumes$/],
+  // The containers in its own Docker (the Containers tab, list_sandbox_containers over MCP)
+  ['GET', /^\/sandboxes\/[^/]+\/containers$/],
   // The host folders mounted into it (only the admin changes them)
   ['GET', /^\/sandboxes\/[^/]+\/mounts$/],
 ]

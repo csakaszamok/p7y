@@ -128,6 +128,7 @@ describe('sandbox-scoped tokens', () => {
       ['GET', '/me'], ['GET', '/templates'], ['GET', '/runtimes'], ['GET', '/sandboxes/'],
       // its files (the Files tab, and an agent over MCP)
       ['GET', '/sandboxes/p9m-shop/files'], ['DELETE', '/sandboxes/p9m-shop/files'], ['POST', '/sandboxes/p9m-shop/files/mkdir'], ['GET', '/sandboxes/p9m-shop/files/content'], ['PUT', '/sandboxes/p9m-shop/files/content'], ['GET', '/sandboxes/p9m-shop/files/text'], ['GET', '/sandboxes/p9m-shop/volumes'],
+      ['GET', '/sandboxes/p9m-shop/containers'],
       // a single-use link to the .p9m folder (get_sandbox gives it the keys anyway)
       ['POST', '/sandboxes/p9m-shop/project-link'],
     ]
@@ -178,6 +179,7 @@ describe('scoped-token allowlist against the real routes', () => {
       'sandboxes/[name]/GET.ts',
       'sandboxes/[name]/PATCH.ts',
       'sandboxes/[name]/compose/GET.ts',
+      'sandboxes/[name]/containers/GET.ts',
       'sandboxes/[name]/deep-sleep/POST.ts',
       'sandboxes/[name]/files/DELETE.ts',
       'sandboxes/[name]/files/GET.ts',
