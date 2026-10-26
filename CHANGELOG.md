@@ -4,6 +4,14 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.17] - 2026-10-26
+
+Upgrading from 0.12.16: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.16.
+
+### Fixed
+
+- **A token limited to one sandbox can list its containers:** `GET /sandboxes/<name>/containers` (the Containers tab, `list_sandbox_containers` over MCP) answered 403 to it.
+
 ## [0.12.16] - 2026-10-26
 
 Upgrading from 0.12.15: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.15.
@@ -712,7 +720,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.16...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.17...HEAD
+[0.12.17]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.17
 [0.12.16]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.16
 [0.12.15]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.15
 [0.12.14]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.14
