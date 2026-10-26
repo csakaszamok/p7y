@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **Signed out for doing nothing:** after 30 minutes without a click, a key (also in a browser terminal), a scroll or opening a page, the web UI signs its user out (`SESSION_IDLE_TIMEOUT`, e.g. `2h`, or `off`). The list's automatic refreshes do not count, so a tab left open does not stay signed in. Two minutes before, a bar offers **Stay signed in**; after signing in again, the same page opens. Sessions still end after 7 days at the latest; tokens are not affected. Upgrading signs out the sessions idle for over 30 minutes.
+
 ## [0.12.14] - 2026-10-26
 
 Upgrading from 0.12.13: if `.env` has `APPS_ACCESS_DEFAULT=public` (written by `setup.sh` before 0.12.12), empty it so apps without a `p9m.access` label open only for their owner (label the public ones `p9m.access: public` first). Then download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, and `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.13.

@@ -116,7 +116,7 @@ describe('pages', () => {
   })
 
   it('serves the vendored xterm files and the terminal script', async () => {
-    for (const f of ['xterm.js', 'xterm.css', 'addon-fit.js', 'terminal.js']) expect((await asset(r(`/assets/${f}`))).status, f).toBe(200)
+    for (const f of ['xterm.js', 'xterm.css', 'addon-fit.js', 'terminal.js', 'idle.js']) expect((await asset(r(`/assets/${f}`))).status, f).toBe(200)
   })
 
   it('renders the SSH keys page, linked from the header', async () => {

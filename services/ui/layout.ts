@@ -113,6 +113,7 @@ ${MY_AREA.includes(view) ? `<nav class="subnav adv">
 ` : ''}<main>${body}</main>
 <script src="/assets/panel.js" defer></script>
 <script src="/assets/app.js" defer></script>
+<script src="/assets/idle.js" defer></script>
 </body>
 </html>`
 }
