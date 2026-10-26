@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **The default name is *Purgatorium Agentium*:** at the top left, on the sign-in page and in the browser tab titles (`UI_TITLE`'s default). A server with its own `UI_TITLE` keeps it; the About page still says *Based on Purgatorium (p9m)*.
+
 ## [0.12.9] - 2026-10-26
 
 Upgrading from 0.12.8: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (only the version changes). A `docker-compose.yml` you keep from before stays on 0.12.8.

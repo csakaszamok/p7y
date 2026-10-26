@@ -31,7 +31,7 @@ services:
       USER_VIEW_SWITCH: ${USER_VIEW_SWITCH:-false}
       # The name and logo at the top left, on the sign-in page and in the tab titles: none hides them;
       # the logo can be an https:// address or an image file in the container (e.g. /app/data/logo.png)
-      UI_TITLE: ${UI_TITLE:-Purgatorium}
+      UI_TITLE: ${UI_TITLE:-Purgatorium Agentium}
       UI_LOGO: ${UI_LOGO:-}
       # off: the public sign-in page does not show the sandbox places (taken / free)
       LOGIN_CAPACITY: ${LOGIN_CAPACITY:-on}
