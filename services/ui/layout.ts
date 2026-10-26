@@ -102,7 +102,7 @@ ${faviconTag()}
   ${session.role === 'admin' ? updateNotice(repoInfo()) : ''}
   <button type="button" class="theme-switch" data-theme-toggle title="Light or dark" aria-label="Switch between light and dark">${SUN_ICON}${MOON_ICON}</button>
   ${canSwitchView(session.role) ? `<span class="mode-switch" role="group" aria-label="View">${modeButton('simple', 'Simple')}${modeButton('advanced', 'Advanced')}</span>` : ''}
-  <form method="post" action="/logout" class="who"><span>${escapeHtml(session.sub)}</span><button class="link">Sign out</button></form>
+  <form method="post" action="/logout" class="who"><span>${escapeHtml(session.sub)}</span><span class="idle-left" data-idle-left hidden title="Signed out after this long without doing anything"></span><button class="link">Sign out</button></form>
   <a class="about-link" href="/about" title="License and source code">About</a>
 </header>
 ${MY_AREA.includes(view) ? `<nav class="subnav adv">

@@ -16,6 +16,16 @@
   let deadline = null // ms, local clock
   let lastPing = Date.now()
   let bar = null
+  // The header's countdown (layout pages only; terminal and logs have none)
+  const counter = document.querySelector('[data-idle-left]')
+  const showLeft = () => {
+    if (!counter) return
+    if (deadline === null) { counter.hidden = true; return }
+    const s = Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
+    counter.textContent = s >= 60 ? `${Math.ceil(s / 60)} min` : `${s} s`
+    counter.classList.toggle('soon', s <= WARN_S)
+    counter.hidden = false
+  }
 
   const call = async method => {
     const res = await fetch('/me/active', { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } })
@@ -27,6 +37,7 @@
     if (!d) return signOut()
     deadline = d.idle_left === null ? null : Date.now() + d.idle_left * 1000
     if (bar && (deadline === null || deadline - Date.now() > WARN_S * 1000)) { bar.remove(); bar = null }
+    showLeft()
   }
   function signOut() {
     try { sessionStorage.setItem(RETURN_KEY, location.pathname + location.search) } catch { /* no storage */ }
@@ -57,6 +68,7 @@
   for (const ev of ['pointerdown', 'keydown', 'wheel', 'touchstart']) addEventListener(ev, onInput, { passive: true, capture: true })
 
   setInterval(async () => {
+    showLeft()
     if (deadline === null) return
     const left = deadline - Date.now()
     if (left > WARN_S * 1000) { if (bar) { bar.remove(); bar = null } return }
