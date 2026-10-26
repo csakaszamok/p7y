@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>404 – Not found</title>
+<title>Not found</title>
 <!-- Self-contained: no request leaves this page. Purgatorium serves it with the portal's address (PUBLIC_URL) in place
      of {{P9M_URL}}; without it the script below guesses p9m.<domain>. One of the 404-*.html pages, picked at random. -->
 <style>
@@ -17,7 +17,7 @@
   }
   main { position: absolute; z-index: 10; top: 12%; left: 50%; transform: translateX(-50%); width: min(480px, calc(100% - 32px)); text-align: center }
   .code {
-    margin: 0; font: 800 clamp(64px, 16vw, 112px)/1 ui-monospace, Consolas, monospace; letter-spacing: .04em;
+    margin: 0; font: 800 clamp(40px, 10vw, 72px)/1.05 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; letter-spacing: -.01em;
     background: linear-gradient(180deg, #ffb066, #ea580c 60%, #7c2d12); -webkit-background-clip: text; background-clip: text; color: transparent;
   }
   h1 { font-size: 22px; margin: 6px 0 }
@@ -50,7 +50,7 @@
   @keyframes across { from { transform: translate(-25vw, var(--y0)) } to { transform: translate(115vw, var(--y1)) } }
   @keyframes bob { from { transform: translateY(-14px) } to { transform: translateY(14px) } }
   @keyframes spin { to { transform: rotate(360deg) } }
-  .sign { font: 800 22px ui-monospace, Consolas, monospace }
+  .sign { font: 800 32px ui-monospace, Consolas, monospace }
 
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0s !important; animation-iteration-count: 1 !important } }
 </style>
@@ -123,14 +123,14 @@
     <svg class="agent" width="150" height="190" viewBox="-25 -60 150 190" style="color:#ffb066; animation: none">
       <path d="M50 -4 L50 18" stroke="#1b1424" stroke-width="3"/>
       <rect x="-10" y="-52" width="120" height="50" rx="8" fill="#fff6e8" stroke="#1b1424" stroke-width="3" transform="rotate(-6 50 -27)"/>
-      <text class="sign" x="50" y="-17" text-anchor="middle" fill="#c2410c" transform="rotate(-6 50 -27)">404?</text>
+      <text class="sign" x="50" y="-17" text-anchor="middle" fill="#c2410c" transform="rotate(-6 50 -27)">?</text>
       <use href="#agent" width="100" height="130"/>
     </svg></div></div>
 </div>
 
 <main>
-  <p class="code">404</p>
-  <h1>Houston, we have a 404</h1>
+  <p class="code">Lost in space</p>
+  <h1>Houston, we lost an app</h1>
   <p>There is no page at <code id="where"></code>. It drifted off into space; our agents went out to find it and have not come back yet. If it is a sandbox app, the sandbox may have been deleted or archived.</p>
   <div class="actions">
     <button type="button" id="back" hidden>Go back</button>

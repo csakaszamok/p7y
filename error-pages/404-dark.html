@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>404 – Not found</title>
+<title>Not found</title>
 <!-- Self-contained: no request leaves this page. Purgatorium serves it with the portal's address (PUBLIC_URL) in place
      of {{P9M_URL}}; without it the script below guesses p9m.<domain>. One of the 404-*.html pages, picked at random. -->
 <style>
@@ -100,9 +100,27 @@
     <g class="shy" data-shy><g class="peek b"><use href="#carrier" x="400" y="150" width="100" height="130" style="color:#8bd3ff"/></g></g>
     <g class="shy" data-shy><g class="peek c"><use href="#carrier" x="690" y="150" width="100" height="130" style="color:#ffb066"/></g></g>
   </g>
-  <text x="450" y="320" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-weight="800" font-size="300" letter-spacing="20" fill="#6b4630" stroke="#8a5a3a" stroke-width="4">404</text>
+  <!-- big crates; the agents hide behind them -->
+  <g stroke="#8a5a3a" stroke-width="4" stroke-linejoin="round">
+    <rect x="85" y="180" width="160" height="140" rx="6" fill="#6b4630"/>
+    <path d="M107 190 v120 M223 190 v120" stroke-width="3" opacity=".6"/>
+    <rect x="125" y="226" width="80" height="44" rx="4" fill="#3a2418"/>
+  </g>
+  <text x="165" y="258" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-weight="800" font-size="26" fill="#8a5a3a">app</text>
+  <g stroke="#8a5a3a" stroke-width="4" stroke-linejoin="round">
+    <rect x="370" y="180" width="160" height="140" rx="6" fill="#6b4630"/>
+    <path d="M392 190 v120 M508 190 v120" stroke-width="3" opacity=".6"/>
+    <rect x="410" y="226" width="80" height="44" rx="4" fill="#3a2418"/>
+  </g>
+  <text x="450" y="258" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-weight="800" font-size="26" fill="#8a5a3a">?</text>
+  <g stroke="#8a5a3a" stroke-width="4" stroke-linejoin="round">
+    <rect x="660" y="180" width="160" height="140" rx="6" fill="#6b4630"/>
+    <path d="M682 190 v120 M798 190 v120" stroke-width="3" opacity=".6"/>
+    <rect x="700" y="226" width="80" height="44" rx="4" fill="#3a2418"/>
+  </g>
+  <text x="740" y="258" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-weight="800" font-size="26" fill="#8a5a3a">app</text>
   <!-- one did not hide: it is looking with its own torch (until the light finds it) -->
-  <g clip-path="url(#floor)"><g class="shy" data-shy><g transform="translate(830 230) scale(.6)"><use href="#agent" width="100" height="130" style="color:#c4a7ff"/>
+  <g clip-path="url(#floor)"><g class="shy" data-shy><g transform="translate(842 242) scale(.6)"><use href="#agent" width="100" height="130" style="color:#c4a7ff"/>
     <path d="M86 72 L150 40 L150 104 Z" fill="#ffe9a8" opacity=".25"/></g></g></g>
 </svg>
 <div class="shade" data-shade></div>
