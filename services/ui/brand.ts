@@ -4,12 +4,12 @@ import { escapeHtml } from './layout'
 
 /**
  * The name and logo the pages show, and whether the topbar links to GitHub:
- * UI_TITLE (default Purgatorium, none = no name), UI_LOGO (default the built-in one, none = no logo,
+ * UI_TITLE (default Purgatorium Agentium, none = no name), UI_LOGO (default the built-in one, none = no logo,
  * an http(s) address, or a file in the container such as /app/data/logo.png, served as /assets/custom-logo),
  * GITHUB_LINK=off (no GitHub card in the topbar).
  */
 
-const DEFAULT_TITLE = 'Purgatorium'
+const DEFAULT_TITLE = 'Purgatorium Agentium'
 export const BUILTIN_LOGO = '/assets/logo.svg'
 export const CUSTOM_LOGO = '/assets/custom-logo'
 
@@ -48,7 +48,7 @@ export function customLogoFile(env: NodeJS.ProcessEnv = process.env): { body: Ui
   try { return { body: new Uint8Array(fs.readFileSync(v)), type } } catch { return null }
 }
 
-/** " — Purgatorium" after a page's own title, nothing without a name. */
+/** " — Purgatorium Agentium" after a page's own title, nothing without a name. */
 export function titleSuffix(env: NodeJS.ProcessEnv = process.env): string {
   const t = brandTitle(env)
   return t ? ` — ${escapeHtml(t)}` : ''
