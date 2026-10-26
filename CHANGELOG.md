@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.9] - 2026-10-26
+
+Upgrading from 0.12.8: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d` (only the version changes). A `docker-compose.yml` you keep from before stays on 0.12.8.
+
 ### Added
 
 - **A terminal in a sandbox's containers:** a new **Containers** tab in the panel (not in Simple) lists the containers in the sandbox's own Docker (`GET /sandboxes/:name/containers`, MCP `list_sandbox_containers`), and **Terminal** next to a running one opens the browser terminal in it, as the container's own user in its working directory, with that user's login shell. For apps that only have a console, such as Claude Code in a devcontainer. See [SSH, terminal and logs](docs/shell-and-logs.md#terminal-in-a-container).
@@ -633,7 +637,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.8...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.9...HEAD
+[0.12.9]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.9
 [0.12.8]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.8
 [0.12.7]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.7
 [0.12.6]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.6
