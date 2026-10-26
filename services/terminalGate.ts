@@ -1,5 +1,6 @@
 import { getPrincipal } from './principal'
 import { getOwnedSandbox } from './access'
+import { CONTAINER_NAME } from './sandboxContainers'
 
 export const MAX_TERMINALS_PER_USER = 5
 const open = new Map<string, number>()
@@ -9,12 +10,15 @@ export function terminalClosed(sub: string): void {
   if (n > 0) open.set(sub, n); else open.delete(sub)
 }
 
-export type GateResult = { ok: true; name: string; sub: string; release: () => void } | { ok: false; status: 401 | 403 | 404 | 429; reason: string }
+export type GateResult = { ok: true; name: string; container?: string; sub: string; release: () => void } | { ok: false; status: 401 | 403 | 404 | 429; reason: string }
 
-/** Whether this websocket upgrade may open a shell: a browser session (no tokens), same origin, own sandbox. */
+/** Whether this websocket upgrade may open a shell: a browser session (no tokens), same origin, own sandbox.
+ * `?container=` opens it in that container of the sandbox's own Docker instead. */
 export async function checkTerminalUpgrade(url: string, headers: Record<string, string | string[] | undefined>): Promise<GateResult> {
   const m = /^\/sandboxes\/([^/]+)\/terminal$/.exec(url.split('?')[0])
   if (!m) return { ok: false, status: 404, reason: 'Not found' }
+  const container = new URLSearchParams(url.split('?')[1] ?? '').get('container') || undefined
+  if (container !== undefined && !CONTAINER_NAME.test(container)) return { ok: false, status: 404, reason: 'Not found' }
   let name: string
   try { name = decodeURIComponent(m[1]) } catch { return { ok: false, status: 404, reason: 'Not found' } }
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? ''
@@ -34,5 +38,5 @@ export async function checkTerminalUpgrade(url: string, headers: Record<string, 
   terminalOpened(p.sub)
   let released = false
   const sub = p.sub
-  return { ok: true, name, sub, release: () => { if (!released) { released = true; terminalClosed(sub) } } }
+  return { ok: true, name, ...(container ? { container } : {}), sub, release: () => { if (!released) { released = true; terminalClosed(sub) } } }
 }

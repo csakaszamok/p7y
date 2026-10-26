@@ -210,14 +210,21 @@ async function stateOf(name: string, info: Dockerode.ContainerInspectInfo): Prom
 
 /** A root shell in the sandbox container (bash if there is one), with a TTY, for the browser terminal. */
 export async function openShell(name: string, cols: number, rows: number) {
-  const container = docker.getContainer(name)
+  return ttyShell(docker.getContainer(name), cols, rows, pidFile => `echo $$ > ${pidFile}; command -v bash >/dev/null && exec bash -l || exec sh -l`,
+    { Env: ['TERM=xterm-256color', 'HOME=/root'], WorkingDir: '/root' })
+}
+
+export type Shell = Awaited<ReturnType<typeof ttyShell>>
+
+/** A shell with a TTY in any container (the sandbox's, or one in its own Docker), run by `sh -c script(pidFile)`. */
+export async function ttyShell(container: Dockerode.Container, cols: number, rows: number, script: (pidFile: string) => string, opts: { Env: string[]; WorkingDir?: string }) {
   // The shell notes its pid (exec keeps it): Docker does not end an exec's process when its connection
   // goes, so closing the terminal HUPs that process group with a second exec
   const pidFile = `/tmp/.p9m-term-${crypto.randomUUID()}`
   const exec = await container.exec({
-    Cmd: ['sh', '-c', `echo $$ > ${pidFile}; command -v bash >/dev/null && exec bash -l || exec sh -l`],
+    Cmd: ['sh', '-c', script(pidFile)],
     AttachStdin: true, AttachStdout: true, AttachStderr: true, Tty: true,
-    Env: ['TERM=xterm-256color', 'HOME=/root'], WorkingDir: '/root',
+    ...opts,
   })
   const stream = await exec.start({ hijack: true, stdin: true, Tty: true }) as unknown as NodeJS.ReadWriteStream
   await exec.resize({ h: rows, w: cols }).catch(() => {})

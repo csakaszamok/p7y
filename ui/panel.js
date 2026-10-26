@@ -2,7 +2,7 @@
 // module.exports in Node for the tests. ui/app.js renders it and handles the clicks.
 ;(function (root) {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
-  const TABS = [['apps', 'Apps'], ['access', 'Access'], ['files', 'Files'], ['resources', 'Resources'], ['registry', 'Registry'], ['settings', 'Details']]
+  const TABS = [['apps', 'Apps'], ['containers', 'Containers'], ['access', 'Access'], ['files', 'Files'], ['resources', 'Resources'], ['registry', 'Registry'], ['settings', 'Details']]
 
   const statusLabel = s => ({ exited: 'asleep', created: 'asleep', deep_sleep: 'deep sleep', starting: 'creating…' }[s] || s)
   // A stopped sandbox whose last start failed is not asleep; "created" (recreated, never started) is asleep
@@ -304,6 +304,20 @@
     }).join('')
   }
 
+  // ---------- the Containers tab (GET /sandboxes/:name/containers) ----------
+  function containersTable(d) {
+    if (!d.containers.length) return `<p class="muted">No containers in this sandbox's Docker yet.</p>`
+    const rows = d.containers.map(c => {
+      const running = c.state === 'running'
+      const service = c.project ? `${esc(c.project)}${c.service ? ` / ${esc(c.service)}` : ''}` : '<span class="muted">—</span>'
+      return `<tr><td>${esc(c.name)}</td><td>${service}</td><td class="tcp">${esc(c.image)}</td>
+        <td${running ? '' : ' class="muted"'}>${esc(c.status || c.state)}</td>
+        <td>${running ? `<button data-container-terminal="${esc(c.name)}">Terminal</button>` : ''}</td></tr>`
+    })
+    return table(['Container', 'Project / service', 'Image', 'State', ''], rows)
+      + `<p class="muted">Terminal opens a shell in the container in a new tab, as the container's own user, in its working directory. Closing the tab ends the shell.</p>`
+  }
+
   // ---------- the Files tab (GET /sandboxes/:name/files) ----------
   const fileSize = b => b < 1024 ? `${b} B` : b < 1024 ** 2 ? `${Math.round(b / 1024)} KB` : fmtBytes(b)
   const VOLUME_ROOT = /^\/var\/lib\/docker\/volumes\/[^/]+\/_data/
@@ -375,6 +389,8 @@
       access: accessTab(s, ctx),
       resources: `<div data-resources>${resourcesTable(s)}</div><div class="actions"><button data-act="resources">Change limits…</button></div>${mountsSection(s, ctx)}`,
       registry: '<div data-registry><p class="muted">Loading…</p></div>',
+      containers: s.status === 'running' ? '<div data-containers><p class="muted">Loading…</p></div>'
+        : `<p class="muted">The sandbox is ${esc(statusLabel(s.status))}: wake it to see its containers.</p><div class="actions"><button data-act="start">Wake</button></div>`,
       files: s.status === 'running' ? '<div data-files><p class="muted">Loading…</p></div>'
         : `<p class="muted">The sandbox is ${esc(statusLabel(s.status))}: wake it to see its files.</p><div class="actions"><button data-act="start">Wake</button></div>`,
       settings: settingsTab(s, ctx),
@@ -514,7 +530,7 @@
     return `/p9m:init ${u} ${sandboxShort}`
   }
 
-  const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, mountsSection, registryTable, renderPanel, STALE_APPS }
+  const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, mountsSection, registryTable, containersTable, renderPanel, STALE_APPS }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P9mPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)
