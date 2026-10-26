@@ -214,7 +214,7 @@ describe('agent access in the panel', () => {
   })
 
   it('a Registry tab: images, scan state, findings, delete', () => {
-    expect(P.TABS.map(([id]: [string]) => id)).toEqual(['apps', 'access', 'files', 'resources', 'registry', 'settings'])
+    expect(P.TABS.map(([id]: [string]) => id)).toEqual(['apps', 'containers', 'access', 'files', 'resources', 'registry', 'settings'])
     expect(panelOf(P.renderPanel(running, ctx), 'registry')).toContain('data-registry')
     const html = P.registryTable({ registry: 'registry.lvh.me', public_pull: true, repos: [{ repo: 'shop/todo', versions: [
       { digest: 'sha256:aaaaaaaaaaaaaaaa', state: 'clean', tags: ['1'], pushed_at: '2026-10-04T10:00:00Z', findings: [] },
@@ -438,6 +438,29 @@ describe("overview: a user's bar", () => {
   })
 })
 
+describe('the Containers tab', () => {
+  const containers = [
+    { name: 'claude-dev', project: 'claude', service: 'claude', image: 'claude-devcontainer:latest', state: 'running', status: 'Up 2 hours' },
+    { name: 'old<b>', project: null, service: null, image: 'alpine', state: 'exited', status: 'Exited (0) 3 days ago' },
+  ]
+  it('a running sandbox loads its containers, a sleeping one offers to wake it; Simple has no such tab', () => {
+    expect(P.renderPanel(running, { ...ctx, tab: 'containers' })).toContain('data-containers')
+    const asleep = P.renderPanel({ ...running, status: 'exited' }, { ...ctx, tab: 'containers' })
+    expect(asleep).toContain('wake it to see its containers')
+    expect(asleep).toContain('data-act="start"')
+    expect(P.renderPanel(running, { ...ctx, simple: true })).not.toContain('data-tab="containers"')
+  })
+  it('a terminal for each running container only, names escaped', () => {
+    const html = P.containersTable({ containers })
+    expect(html).toContain('data-container-terminal="claude-dev"')
+    expect(html).toContain('claude / claude')
+    expect(html).toContain('Up 2 hours')
+    expect(html).toContain('old&lt;b&gt;')
+    expect(html.match(/data-container-terminal/g)).toHaveLength(1)
+    expect(P.containersTable({ containers: [] })).toContain('No containers')
+  })
+})
+
 describe('the Files tab', () => {
   const listing = { path: '/root/app', roots: ['/root', '/home', '/srv', '/opt'], max_upload: 100 * 1024 ** 2, entries: [
     { name: 'src', type: 'dir', size: 4096, mtime: '2026-10-04T14:00:00.000Z' },
@@ -445,7 +468,7 @@ describe('the Files tab', () => {
     { name: 'latest', type: 'link', size: 7, mtime: '2026-10-04T14:00:00.000Z' },
   ] }
   it('is a tab; a running sandbox loads its files, a sleeping one offers to wake it', () => {
-    expect(P.TABS.map(([id]: string[]) => id)).toEqual(['apps', 'access', 'files', 'resources', 'registry', 'settings'])
+    expect(P.TABS.map(([id]: string[]) => id)).toEqual(['apps', 'containers', 'access', 'files', 'resources', 'registry', 'settings'])
     expect(P.renderPanel(running, { ...ctx, tab: 'files' })).toContain('data-files')
     const asleep = P.renderPanel({ ...running, status: 'exited' }, { ...ctx, tab: 'files' })
     expect(asleep).toContain('wake it to see its files')
@@ -595,7 +618,7 @@ describe('Simple view', () => {
   })
   it('Advanced (no ctx.simple) keeps every tab and the TCP columns', () => {
     const html = P.renderPanel(running, ctx)
-    expect([...html.matchAll(/data-tab="(\w+)"/g)].map(m => m[1])).toEqual(['apps', 'access', 'files', 'resources', 'registry', 'settings'])
+    expect([...html.matchAll(/data-tab="(\w+)"/g)].map(m => m[1])).toEqual(['apps', 'containers', 'access', 'files', 'resources', 'registry', 'settings'])
     expect(panelOf(html, 'apps')).toContain('data-connect')
   })
 })

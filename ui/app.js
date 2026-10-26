@@ -208,7 +208,18 @@ function selectTab(tab, focus = false) {
   }
   for (const p of panel.querySelectorAll('[role="tabpanel"]')) p.hidden = p.dataset.tabpanel !== tab
   if (tab === 'registry' && selected) void loadRegistry(selected)
+  if (tab === 'containers' && selected) void loadContainers(selected)
   if (tab === 'files' && selected) void loadFiles(selected)
+}
+
+// The Containers tab: the containers in the sandbox's own Docker, each running one with a terminal
+async function loadContainers(name) {
+  const box = $('[data-panel] [data-containers]')
+  if (!box) return
+  try {
+    const data = await api(`/sandboxes/${encodeURIComponent(name)}/containers`)
+    if (selected === name && box.isConnected) box.innerHTML = P9mPanel.containersTable(data)
+  } catch (e) { if (box.isConnected) box.innerHTML = `<p class="error">${esc(e.message)}</p>` }
 }
 
 // The Registry tab: the sandbox's images and their secret-scan results
@@ -478,6 +489,7 @@ async function showPanel(name) {
   renderedJSON = sJSON
   panel.innerHTML = P9mPanel.renderPanel(s, { isAdmin, me, shortName, tab: panelTab, protocol: location.protocol, simple: simpleView() })
   if (panelTab === 'registry') void loadRegistry(name)
+  if (panelTab === 'containers') void loadContainers(name)
   if (panelTab === 'files') void loadFiles(name)
   if (busy.has(name)) markBusy(panel, busy.get(name))
 }
@@ -896,6 +908,7 @@ function initSandboxes() {
     if (b.dataset.tab) return selectTab(b.dataset.tab)
     if (b.dataset.copyText !== undefined) return void copyText(b)
     if (b.dataset.deleteDigest) return void deleteVersion(b)
+    if (b.dataset.containerTerminal) return void window.open(`/sandboxes/${encodeURIComponent(selected)}/terminal?container=${encodeURIComponent(b.dataset.containerTerminal)}`, '_blank')
     if (b.dataset.filesPath) return void loadFiles(selected, b.dataset.filesPath)
     if ('filesVolumes' in b.dataset) return void loadFiles(selected, 'volumes')
     if (b.dataset.filesDelete) return void deleteFile(b.dataset.filesDelete)

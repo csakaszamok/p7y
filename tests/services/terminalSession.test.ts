@@ -52,6 +52,17 @@ describe('runTerminal', () => {
     ws.close()
   })
 
+  it('opens the shell in the container asked for, not in the sandbox', async () => {
+    const ws = fakeWs(); const s = fakeShell()
+    const openShell = vi.fn(async () => s.shell)
+    const openContainerShell = vi.fn(async () => s.shell)
+    await runTerminal(ws, 'p9m-a1', { state: async () => ({ status: 'running' }), wake: async () => {}, openShell, openContainerShell, keepAlive: async () => {}, keepAliveMs: 60_000, wakeTimeoutMs: 1000, pollMs: 10 }, 'claude-dev')
+    expect(openContainerShell).toHaveBeenCalledWith('p9m-a1', 'claude-dev', 80, 24)
+    expect(openShell).not.toHaveBeenCalled()
+    expect(ws.sent).toContainEqual({ type: 'status', text: 'connected' })
+    ws.close()
+  })
+
   it('stops the keep-alive when the tab closes', async () => {
     vi.useFakeTimers()
     try {
