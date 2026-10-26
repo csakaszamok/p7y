@@ -1751,7 +1751,7 @@
 
 
 <h1 id="app-access">App access<a class="headerlink" href="#app-access" title="Permanent link">&para;</a></h1>
-<p>By default every web app in a sandbox is public: anyone with its address opens it. A builder can choose, app by app, who opens it, with a label on the app's container:</p>
+<p>By default a web app in a sandbox opens only for its sandbox's owner (and the admin): an app is made public on purpose, not by forgetting a label. A builder chooses, app by app, who opens it, with a label on the app's container:</p>
 <table>
 <thead>
 <tr>
@@ -1780,9 +1780,9 @@
 <span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"8080:8080"</span><span class="p p-Indicator">]</span>
 <span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unless-stopped</span>
 <span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">p9m.access</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">owner</span><span class="w">     </span><span class="c1"># or domain, or public</span>
+<span class="w">      </span><span class="nt">p9m.access</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">public</span><span class="w">    </span><span class="c1"># or domain; owner when there is no label</span>
 </code></pre></div>
-<p>An app without the label gets the server's default, <code>APPS_ACCESS_DEFAULT</code> (<code>public</code> unless set; a company may set <code>domain</code>). A value that is not one of the three (a typo such as <code>privat</code>) means <code>owner</code>, and the sandbox's <strong>Details</strong> tab says so. The <strong>Apps</strong> tab marks each app that is not public: <em>Owner only</em>, <em>Your domain</em>.</p>
+<p>An app without the label gets the server's default, <code>APPS_ACCESS_DEFAULT</code> (<code>owner</code> unless set; a company may set <code>domain</code>; <code>public</code> is how it was before 0.12.12). A value that is not one of the three (a typo such as <code>privat</code>) means <code>owner</code>, and the sandbox's <strong>Details</strong> tab says so. The <strong>Apps</strong> tab marks each app that is not public: <em>Owner only</em>, <em>Your domain</em>.</p>
 <h2 id="what-a-visitor-sees">What a visitor sees<a class="headerlink" href="#what-a-visitor-sees" title="Permanent link">&para;</a></h2>
 <p>The first time someone opens an app that is not public, their browser makes a short hop to Purgatorium: they sign in if they are not signed in yet, and come straight back to the app. That gives them a cookie for that one app's address, for 8 hours. Someone who may not open it sees a page that says so (<em>This app is open only to its owner</em>) and which account they are signed in with.</p>
 <p>Purgatorium's own sign-in never reaches an app: the cookie an app's address gets says only that this person may view this app, and Purgatorium takes it off every request before the app sees it, so an app cannot use it to act as its visitor.</p>
@@ -1798,7 +1798,7 @@
 </ul>
 <h2 id="timing-and-failures">Timing and failures<a class="headerlink" href="#timing-and-failures" title="Permanent link">&para;</a></h2>
 <ul>
-<li>A new or changed label applies within about 12 seconds of the deploy (Purgatorium reads the running sandboxes' labels every 10 s; Traefik asks Purgatorium every 2 s). Until then the sandbox goes by what Purgatorium last knew of it: in a sandbox whose apps were all public, a newly deployed <code>owner</code> app is open for those seconds. For an app that must never be open, not even briefly, publish its port on <code>127.0.0.1</code> first and on all interfaces only after a few seconds, or deploy it into a sandbox that already has a <code>domain</code> or <code>owner</code> app.</li>
+<li>A new or changed label applies within about 12 seconds of the deploy (Purgatorium reads the running sandboxes' labels every 10 s; Traefik asks Purgatorium every 2 s). Until then the sandbox goes by what Purgatorium last knew of it: in a sandbox whose apps were all public, a newly deployed <code>owner</code> app (with the label, or without one) is open for those seconds. For an app that must never be open, not even briefly, publish its port on <code>127.0.0.1</code> first and on all interfaces only after a few seconds, or deploy it into a sandbox that already has a <code>domain</code> or <code>owner</code> app.</li>
 <li>A sandbox whose apps are all public does not depend on Purgatorium while it runs, as before. One with a <code>domain</code> or <code>owner</code> app does: while Purgatorium is down, those apps do not open (it fails closed); public sandboxes keep working.</li>
 <li>The check is per sandbox (one router serves all its apps): in a sandbox with a <code>domain</code> or <code>owner</code> app, its <strong>public</strong> apps also need Purgatorium. Keep an app that must stay reachable while Purgatorium is down (a webhook receiver, a status page) in a sandbox whose apps are all public.</li>
 <li>If Traefik restarts while Purgatorium is down, no sandbox app opens until Purgatorium is back (Traefik has not yet read the access middlewares).</li>
@@ -1817,8 +1817,8 @@
 <tbody>
 <tr>
 <td><code>APPS_ACCESS_DEFAULT</code></td>
-<td><code>public</code></td>
-<td>The level of an app without <code>p9m.access</code>: <code>public</code>, <code>domain</code> or <code>owner</code>.</td>
+<td><code>owner</code></td>
+<td>The level of an app without <code>p9m.access</code>: <code>owner</code>, <code>domain</code> or <code>public</code>.</td>
 </tr>
 <tr>
 <td><code>APP_ACCESS_SECRET</code></td>

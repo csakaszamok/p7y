@@ -1,6 +1,6 @@
 # App access
 
-By default every web app in a sandbox is public: anyone with its address opens it. A builder can choose, app by app, who opens it, with a label on the app's container:
+By default a web app in a sandbox opens only for its sandbox's owner (and the admin): an app is made public on purpose, not by forgetting a label. A builder chooses, app by app, who opens it, with a label on the app's container:
 
 | `p9m.access` | Who opens the app's web address                                                                                                      |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -15,10 +15,10 @@ services:
     ports: ["8080:8080"]
     restart: unless-stopped
     labels:
-      p9m.access: owner     # or domain, or public
+      p9m.access: public    # or domain; owner when there is no label
 ```
 
-An app without the label gets the server's default, `APPS_ACCESS_DEFAULT` (`public` unless set; a company may set `domain`). A value that is not one of the three (a typo such as `privat`) means `owner`, and the sandbox's **Details** tab says so. The **Apps** tab marks each app that is not public: *Owner only*, *Your domain*.
+An app without the label gets the server's default, `APPS_ACCESS_DEFAULT` (`owner` unless set; a company may set `domain`; `public` is how it was before 0.12.12). A value that is not one of the three (a typo such as `privat`) means `owner`, and the sandbox's **Details** tab says so. The **Apps** tab marks each app that is not public: *Owner only*, *Your domain*.
 
 ## What a visitor sees
 
@@ -41,7 +41,7 @@ Behind `domain` and `owner`, every request to the app carries `X-P9m-User: <thei
 
 ## Timing and failures
 
-- A new or changed label applies within about 12 seconds of the deploy (Purgatorium reads the running sandboxes' labels every 10 s; Traefik asks Purgatorium every 2 s). Until then the sandbox goes by what Purgatorium last knew of it: in a sandbox whose apps were all public, a newly deployed `owner` app is open for those seconds. For an app that must never be open, not even briefly, publish its port on `127.0.0.1` first and on all interfaces only after a few seconds, or deploy it into a sandbox that already has a `domain` or `owner` app.
+- A new or changed label applies within about 12 seconds of the deploy (Purgatorium reads the running sandboxes' labels every 10 s; Traefik asks Purgatorium every 2 s). Until then the sandbox goes by what Purgatorium last knew of it: in a sandbox whose apps were all public, a newly deployed `owner` app (with the label, or without one) is open for those seconds. For an app that must never be open, not even briefly, publish its port on `127.0.0.1` first and on all interfaces only after a few seconds, or deploy it into a sandbox that already has a `domain` or `owner` app.
 - A sandbox whose apps are all public does not depend on Purgatorium while it runs, as before. One with a `domain` or `owner` app does: while Purgatorium is down, those apps do not open (it fails closed); public sandboxes keep working.
 - The check is per sandbox (one router serves all its apps): in a sandbox with a `domain` or `owner` app, its **public** apps also need Purgatorium. Keep an app that must stay reachable while Purgatorium is down (a webhook receiver, a status page) in a sandbox whose apps are all public.
 - If Traefik restarts while Purgatorium is down, no sandbox app opens until Purgatorium is back (Traefik has not yet read the access middlewares).
@@ -54,5 +54,5 @@ An owner-only app is not published on the [Hub](https://csakaszamok.github.io/p9
 
 | Variable              | Default   |                                                                                                                                       |
 | --------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `APPS_ACCESS_DEFAULT` | `public`  | The level of an app without `p9m.access`: `public`, `domain` or `owner`.                                                              |
+| `APPS_ACCESS_DEFAULT` | `owner`   | The level of an app without `p9m.access`: `owner`, `domain` or `public`.                                                              |
 | `APP_ACCESS_SECRET`   | generated | Signs the app cookies and the one-time sign-in tickets. Without it Purgatorium generates one into `data/app-access.key` and keeps it. |

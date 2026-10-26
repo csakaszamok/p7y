@@ -2,10 +2,10 @@
 
 A sandbox is a **runtime** (how it runs) plus a **template** (what runs inside), picked separately on create (`runtime`, `template`; the **New sandbox** form has a select for each):
 
-| Runtime  | Isolation                                  | Use                                                                               |
-| -------- | ------------------------------------------ | --------------------------------------------------------------------------------- |
-| `dind`   | `privileged: true`                         | development, any Docker host (incl. Docker Desktop / WSL)                         |
-| `sysbox` | `runtime: sysbox-runc`, no privileged mode | production; requires [sysbox](https://github.com/nestybox/sysbox) on a Linux host |
+| Runtime  | Isolation                                  | Use                                                                                                                                                                                                         |
+| -------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sysbox` | `runtime: sysbox-runc`, no privileged mode | every server (the only one allowed by default); requires [sysbox](https://github.com/nestybox/sysbox) on a Linux host                                                                                       |
+| `dind`   | `privileged: true`                         | **development only** (a laptop, Docker Desktop / WSL, where sysbox cannot run): root in a `dind` sandbox can reach the host. Never on a server; allowed only with `ALLOWED_RUNTIMES=sysbox,dind` (or `all`) |
 
 | Template            | What runs inside                                                                                                                                                                                        |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -14,7 +14,7 @@ A sandbox is a **runtime** (how it runs) plus a **template** (what runs inside),
 | `tcp-demo`          | a demo of [TLS TCP addresses](https://csakaszamok.github.io/p9m/0.12/networking/#tls-tcp-addresses): Postgres, Redis, SSH and pgweb                                                                     |
 | `empty`             | nothing: paste your own compose file in the dialog                                                                                                                                                      |
 
-Both runtimes have the same wiring (FRP tunnel, Traefik route, Sablier sleep/wake, `docker_data` volume, archive on delete). The sysbox image runs plain `dockerd`, so its TLS listener is configured through the runtime's `daemon_json` field, which Purgatorium merges into the generated `daemon.json`. Both run in production. On a shared server use `sysbox` only: install it on the host and set `ALLOWED_RUNTIMES=sysbox` (see [Security](https://csakaszamok.github.io/p9m/0.12/security/index.md)).
+Both runtimes have the same wiring (FRP tunnel, Traefik route, Sablier sleep/wake, `docker_data` volume, archive on delete). The sysbox image runs plain `dockerd`, so its TLS listener is configured through the runtime's `daemon_json` field, which Purgatorium merges into the generated `daemon.json`. Only `sysbox` belongs on a server, and it is the only runtime allowed unless `ALLOWED_RUNTIMES` says otherwise (see [Security](https://csakaszamok.github.io/p9m/0.12/security/index.md)).
 
 **Runtimes** are `runtimes/<name>.yaml`: a `description`, the sandbox's own `docker_compose` (the DinD container, frps, socat, and their Traefik and Sablier labels) and an optional `daemon_json`. **Templates** are directories, `templates/<name>/`:
 

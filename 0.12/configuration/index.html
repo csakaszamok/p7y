@@ -1641,8 +1641,8 @@
 </tr>
 <tr>
 <td><code>APPS_ACCESS_DEFAULT</code></td>
-<td><code>public</code></td>
-<td>Who opens a sandbox app without a <code>p9m.access</code> label: <code>public</code>, <code>domain</code> (anyone who can sign in to Purgatorium) or <code>owner</code> (see <a href="../app-access/">App access</a>)</td>
+<td><code>owner</code></td>
+<td>Who opens a sandbox app without a <code>p9m.access</code> label: <code>owner</code> (its sandbox's owner and the admin), <code>domain</code> (anyone who can sign in to Purgatorium) or <code>public</code> (anyone; the default before 0.12.12) (see <a href="../app-access/">App access</a>)</td>
 </tr>
 <tr>
 <td><code>APP_ACCESS_SECRET</code></td>
@@ -1696,8 +1696,8 @@
 </tr>
 <tr>
 <td><code>ALLOWED_RUNTIMES</code></td>
-<td>— (all)</td>
-<td>Runtimes new sandboxes may use, as a comma list: <code>sysbox</code> forbids the privileged <code>dind</code> on a shared server. Others are left out of <code>GET /runtimes</code> and the <strong>New sandbox</strong> form, and a create asking for one is a 400 (so is one without a runtime when the default is not allowed). Existing sandboxes keep running, sleeping and waking</td>
+<td><code>sysbox</code></td>
+<td>Runtimes new sandboxes may use, as a comma list, or <code>all</code>. The privileged <code>dind</code> is for development only (Docker Desktop, a laptop): <code>sysbox,dind</code> there; the development compose file (<code>docker-compose.dev.yml</code>) allows <code>all</code>. Others are left out of <code>GET /runtimes</code> and the <strong>New sandbox</strong> form, and a create asking for one is a 400 (so is one without a runtime when the default is not allowed). Existing sandboxes keep running, sleeping and waking</td>
 </tr>
 <tr>
 <td><code>SANDBOX_CPUS</code>, <code>SANDBOX_MEMORY</code></td>
