@@ -212,6 +212,15 @@ function selectTab(tab, focus = false) {
   if (tab === 'files' && selected) void loadFiles(selected)
 }
 
+// Just woken, the sandbox's own Docker does not answer for a few seconds: say so and ask again, while the box is shown
+const DOCKER_STARTING = '<p class="muted">Docker is starting in the sandbox…</p>'
+function whenDockerStarts(e, box, again) {
+  if (e.body?.reason !== 'docker_starting') return false
+  box.innerHTML = DOCKER_STARTING
+  setTimeout(() => { if (box.isConnected) again() }, 2000)
+  return true
+}
+
 // The Containers tab: the containers in the sandbox's own Docker, each running one with a terminal
 async function loadContainers(name) {
   const box = $('[data-panel] [data-containers]')
@@ -219,7 +228,10 @@ async function loadContainers(name) {
   try {
     const data = await api(`/sandboxes/${encodeURIComponent(name)}/containers`)
     if (selected === name && box.isConnected) box.innerHTML = P9mPanel.containersTable(data)
-  } catch (e) { if (box.isConnected) box.innerHTML = `<p class="error">${esc(e.message)}</p>` }
+  } catch (e) {
+    if (!box.isConnected || whenDockerStarts(e, box, () => loadContainers(name))) return
+    box.innerHTML = `<p class="error">${esc(e.message)}</p>`
+  }
 }
 
 // The Registry tab: the sandbox's images and their secret-scan results
@@ -270,7 +282,8 @@ async function loadFiles(name, path = filesAt.get(name) || '/root') {
   } catch (e) {
     // A folder removed meanwhile (or in a terminal): back to /root
     if (path !== '/root' && /^No such|^Not a folder/.test(e.message)) { filesAt.delete(name); return loadFiles(name, '/root') }
-    if (box.isConnected) box.innerHTML = `<p class="error">${esc(e.message)}</p>`
+    if (!box.isConnected || whenDockerStarts(e, box, () => loadFiles(name, path))) return
+    box.innerHTML = `<p class="error">${esc(e.message)}</p>`
   }
 }
 function filesStatus(text, error = false) {
