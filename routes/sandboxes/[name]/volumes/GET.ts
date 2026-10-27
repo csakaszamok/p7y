@@ -9,7 +9,7 @@ export const openapi = {
   responses: {
     200: { description: '{ volumes: [{ name, path, project, containers: [{ name, service, running, mount }] }] }; path is e.g. /var/lib/docker/volumes/shop_db/_data' },
     404: { description: 'Sandbox not found' },
-    409: { description: 'The sandbox is not running (reason: not_running)' },
+    409: { description: 'The sandbox is not running (reason: not_running), or just woken and its Docker not answering yet (reason: docker_starting): try again in a few seconds' },
   },
 }
 

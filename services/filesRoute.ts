@@ -11,9 +11,13 @@ const STATUS: Array<[RegExp, number]> = [
   [/^Only \/root|^Not a |^A folder|^Too big|cannot be removed|^Give a path/, 400],
 ]
 
+// The socket's errors while the sandbox's inner Docker (on <name>:2376) is not listening yet
+const DOCKER_STARTING = new Set(['ECONNREFUSED', 'ECONNRESET', 'EHOSTUNREACH'])
+
 /**
  * The owner (or the admin) of a running sandbox; the path (?path= or from the body) only inside the folders that
- * outlive a deep sleep. A sleeping sandbox: 409 with reason not_running (waking it is the caller's choice).
+ * outlive a deep sleep. A sleeping sandbox: 409 with reason not_running (waking it is the caller's choice); one just
+ * woken whose own Docker does not answer yet: 409 with reason docker_starting.
  */
 export async function filesRoute(req: Request, run: (c: FilesCall) => Promise<Response>, opts: { path?: string | null } = {}): Promise<Response> {
   const p = requirePrincipal(req)
@@ -29,6 +33,10 @@ export async function filesRoute(req: Request, run: (c: FilesCall) => Promise<Re
     }
     return await run({ name: sandbox.name, url, path })
   } catch (err) {
+    // Just woken: the container runs, its own Docker does not answer for a few seconds yet
+    if (DOCKER_STARTING.has((err as { code?: string } | null)?.code ?? '')) {
+      return Response.json({ error: "The sandbox's Docker is still starting: try again in a few seconds", reason: 'docker_starting' }, { status: 409 })
+    }
     const msg = err instanceof Error ? err.message : String(err)
     const status = STATUS.find(([re]) => re.test(msg))?.[1] ?? 500
     if (status === 500) console.error(`[files] ${name}:`, err)

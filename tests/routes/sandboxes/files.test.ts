@@ -112,6 +112,14 @@ describe('GET /sandboxes/:name/volumes', () => {
     expect((await volumes(req('/sandboxes/p9m-other/volumes'))).status).toBe(404)
     expect((await volumes(req('/sandboxes/p9m-sleepy/volumes'))).status).toBe(409)
   })
+  it("just woken, its own Docker not answering yet: 409 with reason docker_starting, not the socket's error", async () => {
+    sandboxVolumes.mockRejectedValueOnce(Object.assign(new Error('connect ECONNREFUSED 10.10.0.38:2376'), { code: 'ECONNREFUSED' }))
+    const res = await volumes(req('/sandboxes/p9m-mine/volumes'))
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body).toMatchObject({ reason: 'docker_starting' })
+    expect(body.error).not.toMatch(/ECONNREFUSED|10\.10/)
+  })
   it("a volume's files go through the Files routes", async () => {
     const res = await list(req('/sandboxes/p9m-mine/files?path=/var/lib/docker/volumes/shop_db/_data'))
     expect(res.status).toBe(200)
