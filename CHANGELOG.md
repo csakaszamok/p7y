@@ -4,6 +4,11 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- **Uploads and downloads in the Files tab work on sysbox sandboxes:** they went through Docker's archive API, which finds no path at all in a `sysbox-runc` container (*no such container - Could not find the file /home in container …*); listing worked, so the folders were offered. Files now go in and out with `tar` in an exec, like the listing.
+- **Just after a wake, the Containers tab and the volumes list say *Docker is starting in the sandbox…*** and try again every 2 seconds, instead of showing `connect ECONNREFUSED …:2376` until the next refresh. The API answers 409 with reason `docker_starting` (`GET /sandboxes/<name>/containers`, `GET /sandboxes/<name>/volumes`).
+
 ## [0.12.17] - 2026-10-26
 
 Upgrading from 0.12.16: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.16.
