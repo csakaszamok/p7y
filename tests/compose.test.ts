@@ -28,6 +28,11 @@ describe('docker-compose.yml', () => {
     const traefik = compose.services.traefik as unknown as { networks: Record<string, { aliases?: string[] } | null> }
     expect(traefik.networks['traefik-net']?.aliases).toContain(ui)
   })
+  it('the TCP and Docker addresses are under APPS_DOMAIN, HOST_DOMAIN when it is empty', () => {
+    const p9m = compose.services.p9m as { environment?: Record<string, string>; labels?: Record<string, string> }
+    expect(p9m.environment?.APPS_DOMAIN).toBe('${APPS_DOMAIN:-}')
+    expect(p9m.labels?.['traefik.tcp.routers.p9m-tcp.rule']).toBe('HostSNIRegexp(`^[a-z0-9-]+-(tcp|docker)[.]${APPS_DOMAIN:-${HOST_DOMAIN:-lvh.me}}$$`)')
+  })
   // Not on the published API port: Traefik reaches them on the internal one
   it("Traefik reads the access middlewares from Purgatorium's internal port", () => {
     expect(compose.services.traefik.command).toContain('--providers.http.endpoint=http://p9m:3001/traefik/access')

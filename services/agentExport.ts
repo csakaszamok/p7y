@@ -1,3 +1,4 @@
+import { hostDomain } from './domains'
 import fs from 'fs'
 import { rawNameOf } from './naming'
 import { dockerHostName } from './dockerAccess'
@@ -16,10 +17,9 @@ export function prepareExport(
 ): (token: string, portainer?: { url: string; token: string } | { skipped: string }) => Array<{ path: string; data: string; mode?: number }> {
   const withDocker = opts.docker !== false
   const raw = rawNameOf(sandbox) ?? sandbox
-  const domain = (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()
   const url = (process.env.PUBLIC_URL ?? `https://${uiHost()}`).replace(/\/$/, '')
-  const docker = dockerHostName(sandbox, domain)
-  const registry = `registry.${domain}`
+  const docker = dockerHostName(sandbox)
+  const registry = `registry.${hostDomain()}`
   const dir = '.p9m'
   const read = opts.readCert ?? ((f: string) => fs.readFileSync(`${opts.usersDir ?? sandboxParent(sandbox)}/${sandbox}/certs/client/${f}`, 'utf8'))
   const certs = withDocker ? { ca: read('ca.pem'), cert: read('cert.pem'), key: read('key.pem') } : null

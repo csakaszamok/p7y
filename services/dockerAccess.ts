@@ -1,3 +1,4 @@
+import { appsDomain, hostDomain } from './domains'
 import fs from 'fs'
 import path from 'path'
 import forge from 'node-forge'
@@ -5,10 +6,9 @@ import { generateCertBundle } from './tls'
 import { rawNameOf } from './naming'
 import { sandboxParent } from './sandboxPaths'
 
-const hostDomain = () => (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()
 
 /** `<raw>-docker.<domain>`: where a Docker CLI reaches this sandbox's dockerd (TLS passed through). */
-export function dockerHostName(name: string, domain = hostDomain()): string {
+export function dockerHostName(name: string, domain = appsDomain()): string {
   return `${rawNameOf(name) ?? name}-docker.${domain}`
 }
 

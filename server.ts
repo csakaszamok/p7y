@@ -1,3 +1,4 @@
+import { appsDomain } from "./services/domains";
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { startDeepSleepScheduler } from "./services/deepSleep";
 import { startAccessRefresher } from "./services/appAccess/traefik";
@@ -9,6 +10,7 @@ import { openSignInWarning } from "./services/allowlist";
 import { insecureConfigWarnings, insecureConfigErrors, hostMountWarnings } from "./services/configWarnings";
 import { syncTlsConfig } from "./services/tlsConfig";
 import { migrateHostPaths } from "./services/pathMigration";
+import { migrateAppsDomain } from "./services/appsDomainMigration";
 import { startTcpGateway } from "./services/tcpGateway";
 import { resolveTcpHost, resolveDockerHost } from "./services/tcpRoutes";
 import { findSandboxDirByHost, primeSablierSession } from "./services/wake";
@@ -312,7 +314,7 @@ startTcpGateway({
   port: tcpPort, key: tcpCreds.key, cert: tcpCreds.cert, resolve: (sni, signal) => resolveTcpHost(sni, { signal }),
   // <raw>-docker.<domain>: the sandbox's dockerd, TLS passed through untouched (its own CA and client certificates)
   passthrough: {
-    match: sni => sni.endsWith(`-docker.${(process.env.HOST_DOMAIN ?? "lvh.me").toLowerCase()}`),
+    match: sni => sni.endsWith(`-docker.${appsDomain()}`),
     resolve: (sni, signal) => resolveDockerHost(sni, { signal }),
     // Docker access does not pass Sablier: renew its session while bytes go through (a build, `docker logs -f`),
     // not for a connection that is only open (Docker Desktop keeps a context connected for its Builds view)
@@ -347,8 +349,10 @@ startRegistryGc();
 // Scans interrupted by a restart run again (their repos stay private meanwhile)
 void resumeScans().catch(err => console.error("[registry] resuming scans:", err));
 for (const w of resourceDefaults().warnings) console.warn(`[resources] ${w}`);
-// Sandboxes whose install directory was moved or renamed: point their mounts at the current directory
-migrateHostPaths().catch(err => console.error("[paths] migration failed:", err));
+// Sandboxes whose install directory was moved or renamed: point their mounts at the current directory; then those
+// made under another apps domain (APPS_DOMAIN set or changed): their apps under the current one
+migrateHostPaths().catch(err => console.error("[paths] migration failed:", err))
+  .then(() => migrateAppsDomain()).catch(err => console.error("[apps-domain] migration failed:", err));
 for (const warning of [...insecureConfigWarnings(process.env), ...hostMountWarnings(process.env)]) console.warn(warning);
 
 

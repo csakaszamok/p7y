@@ -1,3 +1,4 @@
+import { appsDomain } from './domains'
 import fs from 'fs'
 import { innerDocker } from './innerDocker'
 import { sandboxParent } from './sandboxPaths'
@@ -60,7 +61,7 @@ export async function publicTcpPorts(name: string, usersDir = sandboxParent(name
   const instance = fs.readFileSync(`${dir}/instance-name`, 'utf8').trim()
   const inner = innerDocker(name, usersDir)
   const containers = await inner.listContainers() as unknown as InnerContainer[]
-  const ports = tcpPortsOf(instance, containers, (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase())
+  const ports = tcpPortsOf(instance, containers, appsDomain())
   // Not an empty answer: right after a wake the inner containers are not up yet
   if (ports.length) rememberLastSeen(dir, 'tcp', ports)
   return ports

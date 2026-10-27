@@ -1,3 +1,4 @@
+import { appsDomain, hostDomain } from './domains'
 import fs from 'fs'
 import http from 'node:http'
 import https from 'node:https'
@@ -22,18 +23,15 @@ export function wakeInProgress(name: string): boolean {
   return starting.has(name) || creating.has(name)
 }
 
-function hostDomain(): string {
-  return (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()
-}
 
 /**
- * Sandbox dir for a host the sandbox router would match (`<raw>-<x>.<HOST_DOMAIN>`,
+ * Sandbox dir for a host the sandbox router would match (`<raw>-<x>.<APPS_DOMAIN>`,
  * same rule as the template's HostRegexp), longest raw name first. Other hosts
  * would never reach the sandbox after a wake, so they are not woken.
  */
 export function findSandboxDirByHost(host: string): string | null {
   const h = host.replace(/:\d+$/, '').toLowerCase()
-  const suffix = `.${hostDomain()}`
+  const suffix = `.${appsDomain()}`
   if (!h.endsWith(suffix)) return null
   const label = h.slice(0, -suffix.length)
   if (!/^[a-z0-9-]+$/.test(label)) return null
@@ -47,6 +45,19 @@ export function findSandboxDirByHost(host: string): string | null {
     .map(e => e.name)
     .sort((a, b) => b.length - a.length)
   return matches[0] ?? null
+}
+
+/**
+ * A sandbox app's address under HOST_DOMAIN from before a separate APPS_DOMAIN (`<raw>-<x>.<HOST_DOMAIN>`): the
+ * same address under the apps domain, where the sandbox answers now. Null for any other host.
+ */
+export function movedAppHost(host: string): string | null {
+  const own = hostDomain()
+  if (appsDomain() === own) return null
+  const h = host.replace(/:\d+$/, '').toLowerCase()
+  if (!h.endsWith(`.${own}`)) return null
+  const moved = `${h.slice(0, -(own.length + 1))}.${appsDomain()}`
+  return findSandboxDirByHost(moved) ? moved : null
 }
 
 // Every p9m waiting page has it (the limit page does not): a request answered by one did not reach the sandbox
@@ -90,7 +101,7 @@ export function requestViaTraefik(hostHeader: string, method: string, path: stri
 /** Opens (or renews) the sandbox's Sablier session; false if it could not within `attempts`. */
 export async function primeSablierSession(name: string, attempts = 30, delayMs = 1000): Promise<boolean> {
   const raw = rawNameOf(name) ?? name
-  const host = `${raw}-p9m-wake.${hostDomain()}`
+  const host = `${raw}-p9m-wake.${appsDomain()}`
   for (let i = 0; i < attempts; i++) {
     try {
       // Through the sandbox router the request passes Sablier (session opened) and

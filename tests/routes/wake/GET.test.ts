@@ -9,7 +9,8 @@ vi.mock('../../../services/wake', () => ({
       : host.startsWith('ip-') ? { result: 'in_progress', name: 'p9m-ip' }
       : host.startsWith('old-') ? { result: 'outdated', name: 'p9m-old' }
       : host.startsWith('nr-') ? { result: 'no_route', name: 'p9m-nr' }
-      : { result: 'not_found' })
+      : { result: 'not_found' }),
+  movedAppHost: vi.fn((host: string) => host.startsWith('mv-') ? host.replace(/\.p9m\.dev$/, '.p9m.app') : null),
 }))
 
 // App access: own-* is an owner-only app this visitor may not open (yet); pub-* answers 200; others are not known
@@ -24,6 +25,12 @@ const { default: handler } = await import('../../../routes/wake/GET')
 const req = (host: string) => new Request('http://localhost/wake', { headers: { host } })
 
 describe('GET /wake', () => {
+  it("an app's address from before APPS_DOMAIN: 308 to the same path under the apps domain", async () => {
+    const res = await handler(new Request('http://localhost/wake?q=1', { headers: { host: 'mv-web.p9m.dev', 'x-replaced-path': '/a/b', 'x-forwarded-proto': 'https' } }))
+    expect(res.status).toBe(308)
+    expect(res.headers.get('location')).toBe('https://mv-web.p9m.app/a/b?q=1')
+  })
+
   it('404s for hosts without a sandbox', async () => {
     expect((await handler(req('nope.lvh.me'))).status).toBe(404)
   })
