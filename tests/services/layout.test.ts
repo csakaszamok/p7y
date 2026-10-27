@@ -106,7 +106,7 @@ describe('renderPage: Simple / Advanced', () => {
     })
     it('Claude Code, in Claude Code instead: the /plugin commands', () => {
       const other = /<details[^>]*>[\s\S]*?<\/details>/.exec(claude)?.[0] ?? ''
-      expect(other).toContain('<code>/plugin marketplace add csakaszamok/p9m</code>')
+      expect(other).toContain('<code>/plugin marketplace add p9m-team/p9m</code>')
       expect(other).toContain('<code>/plugin install p9m@p9m</code>')
     })
     it('the zip keeps its Download button', () => {

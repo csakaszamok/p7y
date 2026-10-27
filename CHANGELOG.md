@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **The Claude Code plugin installs from `p9m-team/p9m`:** `/plugin marketplace add p9m-team/p9m`, then `/plugin install p9m@p9m` as before, in the docs and under **Let your agent deploy…**. The plugin is the same and still comes from this repository; a marketplace added as `csakaszamok/p9m` keeps working.
+
 ## [0.12.18] - 2026-10-27
 
 Upgrading from 0.12.17: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.17.
