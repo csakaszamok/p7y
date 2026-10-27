@@ -1,3 +1,4 @@
+import { appsDomain } from '../domains'
 import fs from 'node:fs'
 import { hubAppsOf, type HubApp } from './apps'
 import { rememberLastSeen, lastSeen } from '../lastSeen'
@@ -85,7 +86,7 @@ async function liveApps(name: string, d: HubListDeps, prev: Remembered | null): 
     return gone
   }
   const https = (process.env.PUBLIC_URL ?? '').startsWith('https://')
-  const { apps, unlinked, badImage, ownerOnly } = hubAppsOf(d.instance(name), containers, (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase(), https ? 'https' : 'http')
+  const { apps, unlinked, badImage, ownerOnly } = hubAppsOf(d.instance(name), containers, appsDomain(), https ? 'https' : 'http')
   const now = new Date(d.now()).toISOString()
   const seen = { ...(prev?.seen ?? Object.fromEntries((prev?.apps ?? []).map(a => [a.id, { updated_at: a.updated_at, title: a.title, description: a.description }]))) }
   const merged = apps.map(a => {

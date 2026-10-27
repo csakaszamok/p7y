@@ -1,3 +1,4 @@
+import { appsDomain } from '../../../services/domains'
 import { requirePrincipal } from '../../../services/principal'
 import { getOwnedSandbox } from '../../../services/access'
 import { sleepTimes } from '../../../services/sleepTimes'
@@ -49,7 +50,7 @@ export default async (req: Request): Promise<Response> => {
     const tcp_urls = tcp.map(p => `${p.host}:443`)
     // port: the container's own port, so a client can tell Postgres from SSH (the name may not say)
     const tcp_addresses = tcp.map(p => ({ address: `${p.host}:443`, port: p.privatePort, ...(p.user ? { user: p.user } : {}) }))
-    const domain = process.env.HOST_DOMAIN ?? 'lvh.me'
+    const domain = appsDomain()
     // Which of its apps are on the Hub (what the Hub list last read), and published ones with no web address
     // Running (and the Hub on): read live, so the marker follows a new or removed label at once
     const remembered = hubEnabled() && sandbox.status === 'running'

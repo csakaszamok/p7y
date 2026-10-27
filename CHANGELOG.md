@@ -4,6 +4,18 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.19] - 2026-10-27
+
+Upgrading from 0.12.18: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.18.
+
+### Added
+
+- **`APPS_DOMAIN`: the sandboxes' apps under a domain of their own,** e.g. `example.app` beside `HOST_DOMAIN=example.dev`, as GitHub Pages and Vercel do: a phishing app reported to a blocklist cannot take the UI's domain with it, nor set cookies for it. The apps, TCP, SSH and Docker addresses move; the UI, the registry and the Hub stay. The sandboxes made before move at the next start, and their old web addresses redirect (308). Needs a wildcard DNS record and certificate for the new domain: see [A separate domain for the apps](https://csakaszamok.github.io/p9m/latest/networking/#a-separate-domain-for-the-apps). Empty, as before: everything under `HOST_DOMAIN`.
+
+### Changed
+
+- **The Claude Code plugin installs from `p9m-team/p9m`:** `/plugin marketplace add p9m-team/p9m`, then `/plugin install p9m@p9m` as before, in the docs and under **Let your agent deploy…**. The plugin is the same and still comes from this repository; a marketplace added as `csakaszamok/p9m` keeps working.
+
 ## [0.12.18] - 2026-10-27
 
 Upgrading from 0.12.17: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.17.
@@ -729,7 +741,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.18...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.19...HEAD
+[0.12.19]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.19
 [0.12.18]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.18
 [0.12.17]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.17
 [0.12.16]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.16

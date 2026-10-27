@@ -1,3 +1,4 @@
+import { appsDomain } from './domains'
 import { publicUrl } from './session'
 import { frpsToml, newFrpsApiPassword } from './frpsApi'
 import { createStepTimer } from './stepTimer'
@@ -176,7 +177,7 @@ function conflictingRawName(rawName: string, existingNames: Set<string>): string
 function offlineApps(meta: SandboxMeta): Array<{ host: string; service: string }> {
   const innerProject = () => { try { return loadTemplate(meta.template).inner_project_name } catch { return undefined } }
   return rememberedApps(meta.name)?.map(l => ({ host: l.url, service: l.service }))
-    ?? appEntriesOffline(meta.name, dirOf(meta.name), process.env.HOST_DOMAIN ?? 'lvh.me', innerProject)
+    ?? appEntriesOffline(meta.name, dirOf(meta.name), appsDomain(), innerProject)
 }
 
 export const sandboxService = {
@@ -201,6 +202,8 @@ export const sandboxService = {
     const hostAddress = process.env.HOST_ADDRESS ?? '127.0.0.1'
     const hostDomain = process.env.HOST_DOMAIN ?? 'lvh.me'
     const registryUrl = `registry.${hostDomain}`
+    // The sandbox's own addresses (apps, TCP, Docker): ${host_domain} in runtimes and templates, hostDomain in a before_script
+    const appDomain = appsDomain()
     const name = sandboxName(rawName)
     // One line at the end says where the time went
     const timer = createStepTimer()
@@ -234,7 +237,7 @@ export const sandboxService = {
 
     // <raw>-docker.<domain>: where a Docker CLI reaches this dockerd through the gateway (TLS passed through)
     timer.lap('checks')
-    const certs = generateCertBundle(hostAddress, name, 2048, [`${rawName}-docker.${hostDomain}`])
+    const certs = generateCertBundle(hostAddress, name, 2048, [`${rawName}-docker.${appDomain}`])
     timer.lap('certificates')
     const createdAt = new Date().toISOString()
     const hostSandboxesDir = await resolveHostSandboxesDir()
@@ -268,7 +271,7 @@ export const sandboxService = {
       // ${host_users_dir}/${name} (custom runtimes) and ${sandbox_dir} both name the sandbox's own directory
       host_users_dir: `${hostSandboxesDir}/${ownerDirName(owner)}`,
       sandbox_dir: `${hostSandboxesDir}/${ownerDirName(owner)}/${name}`,
-      host_domain: hostDomain,
+      host_domain: appDomain,
       frp_token: frpToken,
       frps_api_auth: `p9m:${frpsApiPassword}`,
       // A template's default, cut to the server's limit for a user's sandbox
@@ -284,7 +287,7 @@ export const sandboxService = {
 
     let extras: Record<string, string> = {}
     if (createInnerStack && template.before_script) {
-      extras = await runBeforeScript(template.before_script, { name, rawName, hostDomain, scheme: publicUrl().startsWith('https://') ? 'https' : 'http' })
+      extras = await runBeforeScript(template.before_script, { name, rawName, hostDomain: appDomain, scheme: publicUrl().startsWith('https://') ? 'https' : 'http' })
       Object.assign(vars, extras)
     }
 
@@ -329,7 +332,7 @@ export const sandboxService = {
     let tunnelUrls: string[] = []
     if (hasFrps && createInnerStack) {
       // Done as soon as frps serves every app the inner compose publishes (not on fixed 3 s polls)
-      const expected = innerText === undefined ? [] : appHostsFromCompose(innerText, { instance: rawName, project: template.inner_project_name ?? 'inner', domain: hostDomain })
+      const expected = innerText === undefined ? [] : appHostsFromCompose(innerText, { instance: rawName, project: template.inner_project_name ?? 'inner', domain: appDomain })
       tunnelUrls = await waitForTunnels(() => frpsDomains(name), expected)
       // What frpc registered, minus ports bound to 127.0.0.1 (private to the sandbox)
       if (tunnelUrls.length) { const seen = tunnelUrls; tunnelUrls = (await appLinks(name, {}, seen)).map(l => l.url) }

@@ -54,9 +54,30 @@ vi.mock('node:https', async () => {
   return { default: { get, request: get }, get, request: get }
 })
 
-import { findSandboxDirByHost, wakeByHost } from '../../services/wake'
+import { findSandboxDirByHost, wakeByHost, movedAppHost } from '../../services/wake'
 import { composeUp, composeStart } from '../../services/compose'
 import { listManagedContainers } from '../../services/docker'
+
+describe('movedAppHost', () => {
+  beforeEach(() => { dirs = ['p9m-a', 'p9m-ab'] })
+
+  it("an app's address under HOST_DOMAIN from before APPS_DOMAIN: the same one under the apps domain", () => {
+    vi.stubEnv('HOST_DOMAIN', 'p9m.dev')
+    vi.stubEnv('APPS_DOMAIN', 'p9m.app')
+    try {
+      expect(movedAppHost('ab-web.p9m.dev')).toBe('ab-web.p9m.app')
+      expect(movedAppHost('AB-Web.P9m.dev:443')).toBe('ab-web.p9m.app')
+      expect(movedAppHost('zzz-web.p9m.dev')).toBeNull()   // no such sandbox
+      expect(movedAppHost('ab-web.p9m.app')).toBeNull()    // already there
+      expect(movedAppHost('p9m.dev')).toBeNull()
+      expect(movedAppHost('ab-web.sub.p9m.dev')).toBeNull()
+    } finally { vi.unstubAllEnvs() }
+  })
+
+  it('nothing moved without an APPS_DOMAIN of its own', () => {
+    expect(movedAppHost('ab-web.lvh.me')).toBeNull()
+  })
+})
 
 describe('findSandboxDirByHost', () => {
   beforeEach(() => { dirs = ['p9m-a', 'p9m-ab'] })
@@ -78,6 +99,15 @@ describe('findSandboxDirByHost', () => {
     dirs = ['p9m-a', 'p9m-shop']
     expect(findSandboxDirByHost('shop-portainer.lvh.me')).toBe('p9m-shop')
     expect(findSandboxDirByHost('a-portainer.lvh.me')).toBe('p9m-a')
+  })
+
+  it('with APPS_DOMAIN, the hosts under it: not those under HOST_DOMAIN', () => {
+    vi.stubEnv('HOST_DOMAIN', 'p9m.dev')
+    vi.stubEnv('APPS_DOMAIN', 'p9m.app')
+    try {
+      expect(findSandboxDirByHost('ab-web.p9m.app')).toBe('p9m-ab')
+      expect(findSandboxDirByHost('ab-web.p9m.dev')).toBeNull()
+    } finally { vi.unstubAllEnvs() }
   })
 
   it('returns null for unknown hosts and dirs without a compose file', () => {
