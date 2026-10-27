@@ -1672,7 +1672,7 @@
 <p>Deploy this repo to my Purgatorium sandbox <code>p9m-shop</code> at <code>https://p9m.example.com</code> with the token <code>p9m_…</code>. Follow https://csakaszamok.github.io/p9m/latest/agent-guide/index.md.</p>
 </blockquote>
 <p><a href="../agent-guide/">docs/agent-guide.md</a> is written for the agent: every call it needs, tried against a live Purgatorium. A token limited to one sandbox keeps the agent away from your other sandboxes; a token for all your sandboxes (Access tokens → + New token) acts as you.</p>
-<p>An agent with MCP can also use Purgatorium as an MCP server with the same token: see <a href="../mcp/">MCP</a>. In Claude Code, the <a href="../claude-plugin/">p9m plugin</a> needs no token typed in: install it once (<code>/plugin marketplace add csakaszamok/p9m</code>, <code>/plugin install p9m@p9m</code>), then run <code>/p9m:init &lt;address&gt; &lt;sandbox&gt;</code> in the project and approve in the browser.</p>
+<p>An agent with MCP can also use Purgatorium as an MCP server with the same token: see <a href="../mcp/">MCP</a>. In Claude Code, the <a href="../claude-plugin/">p9m plugin</a> needs no token typed in: install it once (<code>/plugin marketplace add p9m-team/p9m</code>, <code>/plugin install p9m@p9m</code>), then run <code>/p9m:init &lt;address&gt; &lt;sandbox&gt;</code> in the project and approve in the browser.</p>
 <h2 id="docker-registry-export">Docker, registry, export<a class="headerlink" href="#docker-registry-export" title="Permanent link">&para;</a></h2>
 <p>A coding agent (Claude Code, Codex…) can work on a sandbox with plain <code>docker</code> commands:</p>
 <ul>

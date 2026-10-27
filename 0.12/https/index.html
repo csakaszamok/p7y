@@ -1643,7 +1643,7 @@
 <h1 id="https">HTTPS<a class="headerlink" href="#https" title="Permanent link">&para;</a></h1>
 <p>Purgatorium serves HTTPS with a certificate you copy in (no automatic issuing):</p>
 <ol>
-<li>Copy a wildcard certificate for <code>*.&lt;HOST_DOMAIN&gt;</code> (ideally also <code>&lt;HOST_DOMAIN&gt;</code>) to <code>certs/tls.crt</code> (PEM, full chain: certificate + intermediates) and its key to <code>certs/tls.key</code> (PEM, unencrypted). <code>certs/</code> is git-ignored.</li>
+<li>Copy a wildcard certificate for <code>*.&lt;HOST_DOMAIN&gt;</code> (ideally also <code>&lt;HOST_DOMAIN&gt;</code>; with an <a href="../networking/#a-separate-domain-for-the-apps"><code>APPS_DOMAIN</code></a>, <code>*.&lt;APPS_DOMAIN&gt;</code> too, in the same certificate) to <code>certs/tls.crt</code> (PEM, full chain: certificate + intermediates) and its key to <code>certs/tls.key</code> (PEM, unencrypted). <code>certs/</code> is git-ignored.</li>
 <li>Set <code>PUBLIC_URL=https://p9m.&lt;HOST_DOMAIN&gt;</code> and strong <code>ADMIN_TOKEN</code>, <code>SESSION_SECRET</code> and <code>ADMIN_PASSWORD</code> in <code>.env</code>.</li>
 <li><code>docker compose up -d p9m traefik</code>. At startup Purgatorium writes <code>dynamic/tls.yml</code> (the certificate + an HTTP→HTTPS redirect for every host); Traefik serves the UI, API, registry and every sandbox app on port 443.</li>
 </ol>

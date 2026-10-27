@@ -1615,6 +1615,11 @@
 <td>Every address is under it: the UI, the registry, the sandbox apps (needs a wildcard DNS record)</td>
 </tr>
 <tr>
+<td><code>APPS_DOMAIN</code></td>
+<td><code>&lt;HOST_DOMAIN&gt;</code></td>
+<td>The sandboxes' app, TCP, SSH and Docker addresses under a domain of their own, e.g. <code>example.app</code> beside <code>HOST_DOMAIN=example.dev</code>: the UI, the registry and the Hub stay under <code>HOST_DOMAIN</code>. Needs its own wildcard DNS record and certificate. See <a href="../networking/#a-separate-domain-for-the-apps">A separate domain for the apps</a></td>
+</tr>
+<tr>
 <td><code>HOST_ADDRESS</code></td>
 <td><code>localhost</code></td>
 <td>The host's address, put into the sandbox TLS certificates and used for the registry token URL when <code>PUBLIC_URL</code> is not set</td>

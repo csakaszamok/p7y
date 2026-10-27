@@ -1736,11 +1736,11 @@
 <p>The <code>p9m</code> plugin teaches Claude Code to deploy: you say <em>put my app online</em>, it deploys the project to your sandbox's own Docker, checks that the app answers and gives you its address. The plugin itself keeps no address and no token: each project says which Purgatorium and which sandbox it belongs to, in its own <code>.p9m</code> folder.</p>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
 <p>Once on your computer, from a terminal (a sandbox's <strong>Let your agent deploy…</strong> shows these lines ready to copy). Claude Code in an editor (the VS Code extension) has no <code>/plugin</code>, so there this is the way:</p>
-<div class="highlight"><pre><span></span><code>claude plugin marketplace add csakaszamok/p9m
+<div class="highlight"><pre><span></span><code>claude plugin marketplace add p9m-team/p9m
 claude plugin install p9m@p9m
 </code></pre></div>
 <p>Or in Claude Code:</p>
-<div class="highlight"><pre><span></span><code>/plugin marketplace add csakaszamok/p9m
+<div class="highlight"><pre><span></span><code>/plugin marketplace add p9m-team/p9m
 /plugin install p9m@p9m
 </code></pre></div>
 <p>Claude Code asks where to install it: <strong>user</strong> (every folder of yours; usually what you want), <strong>project</strong> (this repository, for everyone who uses it, through its <code>.claude/settings.json</code>) or <strong>local</strong> (this folder, only you). It asks for nothing else: no address, no token. Updates come with Purgatorium's releases (<code>/plugin marketplace update p9m</code>).</p>
@@ -1762,7 +1762,7 @@ claude plugin install p9m@p9m
 </ul>
 <p>The plugin does not bring the MCP server. Purgatorium still has one, for other MCP clients: see <a href="../mcp/">MCP</a>.</p>
 <h2 id="where-it-works">Where it works<a class="headerlink" href="#where-it-works" title="Permanent link">&para;</a></h2>
-<p>The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's <strong>Code</strong> tab; also in Claude Code inside a sandbox, deploying to another one (on a local <code>lvh.me</code> stack see <a href="../agents/#an-agent-inside-a-sandbox">An agent inside a sandbox</a>). Claude chat and Cowork can install it too (<strong>Customize → Plugins</strong>, add the marketplace <code>csakaszamok/p9m</code>), but they cannot run commands on your computer, so there it does not do much. Without the plugin, any agent can deploy with an export (<strong>Let your agent deploy…</strong> on a sandbox) or a token: see <a href="../agents/">Let your agent deploy</a>.</p>
+<p>The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's <strong>Code</strong> tab; also in Claude Code inside a sandbox, deploying to another one (on a local <code>lvh.me</code> stack see <a href="../agents/#an-agent-inside-a-sandbox">An agent inside a sandbox</a>). Claude chat and Cowork can install it too (<strong>Customize → Plugins</strong>, add the marketplace <code>p9m-team/p9m</code>), but they cannot run commands on your computer, so there it does not do much. Without the plugin, any agent can deploy with an export (<strong>Let your agent deploy…</strong> on a sandbox) or a token: see <a href="../agents/">Let your agent deploy</a>.</p>
 
 
 

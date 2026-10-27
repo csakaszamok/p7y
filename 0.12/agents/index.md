@@ -9,7 +9,7 @@ Give a coding agent (Claude Code, Codex, Cursor…) a personal access token and 
 
 [docs/agent-guide.md](https://csakaszamok.github.io/p9m/0.12/agent-guide/index.md) is written for the agent: every call it needs, tried against a live Purgatorium. A token limited to one sandbox keeps the agent away from your other sandboxes; a token for all your sandboxes (Access tokens → + New token) acts as you.
 
-An agent with MCP can also use Purgatorium as an MCP server with the same token: see [MCP](https://csakaszamok.github.io/p9m/0.12/mcp/index.md). In Claude Code, the [p9m plugin](https://csakaszamok.github.io/p9m/0.12/claude-plugin/index.md) needs no token typed in: install it once (`/plugin marketplace add csakaszamok/p9m`, `/plugin install p9m@p9m`), then run `/p9m:init <address> <sandbox>` in the project and approve in the browser.
+An agent with MCP can also use Purgatorium as an MCP server with the same token: see [MCP](https://csakaszamok.github.io/p9m/0.12/mcp/index.md). In Claude Code, the [p9m plugin](https://csakaszamok.github.io/p9m/0.12/claude-plugin/index.md) needs no token typed in: install it once (`/plugin marketplace add p9m-team/p9m`, `/plugin install p9m@p9m`), then run `/p9m:init <address> <sandbox>` in the project and approve in the browser.
 
 ## Docker, registry, export
 

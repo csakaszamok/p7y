@@ -11,14 +11,14 @@ The `p9m` plugin teaches Claude Code to deploy: you say *put my app online*, it 
 Once on your computer, from a terminal (a sandbox's **Let your agent deploy…** shows these lines ready to copy). Claude Code in an editor (the VS Code extension) has no `/plugin`, so there this is the way:
 
 ```
-claude plugin marketplace add csakaszamok/p9m
+claude plugin marketplace add p9m-team/p9m
 claude plugin install p9m@p9m
 ```
 
 Or in Claude Code:
 
 ```
-/plugin marketplace add csakaszamok/p9m
+/plugin marketplace add p9m-team/p9m
 /plugin install p9m@p9m
 ```
 
@@ -55,4 +55,4 @@ The plugin does not bring the MCP server. Purgatorium still has one, for other M
 
 ## Where it works
 
-The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's **Code** tab; also in Claude Code inside a sandbox, deploying to another one (on a local `lvh.me` stack see [An agent inside a sandbox](https://csakaszamok.github.io/p9m/0.12/agents/#an-agent-inside-a-sandbox)). Claude chat and Cowork can install it too (**Customize → Plugins**, add the marketplace `csakaszamok/p9m`), but they cannot run commands on your computer, so there it does not do much. Without the plugin, any agent can deploy with an export (**Let your agent deploy…** on a sandbox) or a token: see [Let your agent deploy](https://csakaszamok.github.io/p9m/0.12/agents/index.md).
+The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's **Code** tab; also in Claude Code inside a sandbox, deploying to another one (on a local `lvh.me` stack see [An agent inside a sandbox](https://csakaszamok.github.io/p9m/0.12/agents/#an-agent-inside-a-sandbox)). Claude chat and Cowork can install it too (**Customize → Plugins**, add the marketplace `p9m-team/p9m`), but they cannot run commands on your computer, so there it does not do much. Without the plugin, any agent can deploy with an export (**Let your agent deploy…** on a sandbox) or a token: see [Let your agent deploy](https://csakaszamok.github.io/p9m/0.12/agents/index.md).

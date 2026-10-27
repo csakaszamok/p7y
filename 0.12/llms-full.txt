@@ -98,6 +98,7 @@ Main settings in `.env`:
 | `ADMIN_LOGIN`                                                               | `off`                                                 | `on`: the sign-in page has the **Administrator sign-in** form (also the Hub's). Off, the form is not shown and the password is not even checked: it is an emergency door, not the everyday way in (that is OIDC with `OIDC_ADMIN_EMAILS`). Turn it on in `.env`, `docker compose up -d` (a `restart` does not read `.env`), sign in, then turn it off again. While on, Purgatorium warns at startup                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `SESSION_SECRET`                                                            | —                                                     | Signs the session cookie; a long random string                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `HOST_DOMAIN`                                                               | `lvh.me`                                              | Every address is under it: the UI, the registry, the sandbox apps (needs a wildcard DNS record)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `APPS_DOMAIN`                                                               | `<HOST_DOMAIN>`                                       | The sandboxes' app, TCP, SSH and Docker addresses under a domain of their own, e.g. `example.app` beside `HOST_DOMAIN=example.dev`: the UI, the registry and the Hub stay under `HOST_DOMAIN`. Needs its own wildcard DNS record and certificate. See [A separate domain for the apps](https://csakaszamok.github.io/p9m/0.12/networking/#a-separate-domain-for-the-apps)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `HOST_ADDRESS`                                                              | `localhost`                                           | The host's address, put into the sandbox TLS certificates and used for the registry token URL when `PUBLIC_URL` is not set                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `UI_HOST`                                                                   | `p9m.<HOST_DOMAIN>`                                   | The UI's own address, e.g. `console.example.com` with `HOST_DOMAIN=example.com`: the sandbox apps stay `<sandbox>-<subdomain>.example.com`. Under `HOST_DOMAIN`, the wildcard DNS record and certificate cover it. Set `PUBLIC_URL` to it too, and register its `/auth/callback` with the OIDC provider. A sandbox whose apps' addresses would include it (a sandbox `console` with `console-admin.example.com`) cannot be created                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `PUBLIC_URL`                                                                | `http://<UI_HOST>`                                    | The address of the UI as users see it; `https://…` turns on the HTTPS checks (see [HTTPS](https://csakaszamok.github.io/p9m/0.12/https/index.md))                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -139,7 +140,7 @@ Main settings in `.env`:
 
 Purgatorium serves HTTPS with a certificate you copy in (no automatic issuing):
 
-1. Copy a wildcard certificate for `*.<HOST_DOMAIN>` (ideally also `<HOST_DOMAIN>`) to `certs/tls.crt` (PEM, full chain: certificate + intermediates) and its key to `certs/tls.key` (PEM, unencrypted). `certs/` is git-ignored.
+1. Copy a wildcard certificate for `*.<HOST_DOMAIN>` (ideally also `<HOST_DOMAIN>`; with an [`APPS_DOMAIN`](https://csakaszamok.github.io/p9m/0.12/networking/#a-separate-domain-for-the-apps), `*.<APPS_DOMAIN>` too, in the same certificate) to `certs/tls.crt` (PEM, full chain: certificate + intermediates) and its key to `certs/tls.key` (PEM, unencrypted). `certs/` is git-ignored.
 1. Set `PUBLIC_URL=https://p9m.<HOST_DOMAIN>` and strong `ADMIN_TOKEN`, `SESSION_SECRET` and `ADMIN_PASSWORD` in `.env`.
 1. `docker compose up -d p9m traefik`. At startup Purgatorium writes `dynamic/tls.yml` (the certificate + an HTTP→HTTPS redirect for every host); Traefik serves the UI, API, registry and every sandbox app on port 443.
 
@@ -201,7 +202,7 @@ The switch at the top right changes how much the screen shows. **Simple** is eno
 1. In the window's step **1**, click **Copy** next to each of the two lines, open a terminal (in VS Code: **Terminal → New Terminal**; on Windows also PowerShell, on a Mac the Terminal app), paste them one after the other and press Enter after each:
 
    ```
-   claude plugin marketplace add csakaszamok/p9m
+   claude plugin marketplace add p9m-team/p9m
    claude plugin install p9m@p9m
    ```
 
@@ -210,7 +211,7 @@ The switch at the top right changes how much the screen shows. **Simple** is eno
 Good to know
 
 - `claude` not found? Claude Code is not installed for the terminal: see [Claude Code's setup](https://code.claude.com/docs/en/setup). An *unknown option* means an older Claude Code: run `claude update`.
-- Already in Claude Code? **In Claude Code instead** in the same window shows the same two lines as `/plugin marketplace add csakaszamok/p9m` and `/plugin install p9m@p9m`. (The Claude Code panel in VS Code has no `/plugin`: use the terminal.)
+- Already in Claude Code? **In Claude Code instead** in the same window shows the same two lines as `/plugin marketplace add p9m-team/p9m` and `/plugin install p9m@p9m`. (The Claude Code panel in VS Code has no `/plugin`: use the terminal.)
 
 You install the plugin once. Each project then gets its sandbox in the next step.
 
@@ -416,7 +417,7 @@ Both runtimes have the same wiring (FRP tunnel, Traefik route, Sablier sleep/wak
 - `compose.yaml` (required): the stack deployed into the sandbox's own Docker on creation, a plain compose file.
 - `template.yaml` (optional, every field optional): `description` (default: the directory name), `before_script` (JavaScript run on create; what it returns becomes `${variables}` for both compose files and the sandbox's `extras`, e.g. a generated password), `idle_timeout` (Go duration, default `30m`: how long a sandbox may go without HTTP traffic before it sleeps; a create request can override it), `deep_sleep_after` (default `7d`), `inner_project_name` (default `inner`).
 
-A new template is a new directory; it shows up in `GET /templates` and the form without a restart. In both files Purgatorium fills in `${name}`, `${raw_name}`, `${host_domain}`, `${template_name}`, `${runtime_name}` and whatever `before_script` returned; any other `${…}` is left for docker compose (write `$$` for a literal `$`). Publish a port on all interfaces (`"5432:5432"`) to give it a link and a [TLS TCP address](https://csakaszamok.github.io/p9m/0.12/networking/#tls-tcp-addresses); a port on `127.0.0.1` stays private to the sandbox; a `p9m.connect.user` label puts its login into the **Connect…** commands. Pass passwords through variables whose name contains `PASSWORD` (or `TOKEN`, `SECRET`, `KEY`): **Starter stack…** masks those.
+A new template is a new directory; it shows up in `GET /templates` and the form without a restart. In both files Purgatorium fills in `${name}`, `${raw_name}`, `${host_domain}` (the domain of the sandbox's addresses: `APPS_DOMAIN`, or `HOST_DOMAIN` without it), `${template_name}`, `${runtime_name}` and whatever `before_script` returned; any other `${…}` is left for docker compose (write `$$` for a literal `$`). Publish a port on all interfaces (`"5432:5432"`) to give it a link and a [TLS TCP address](https://csakaszamok.github.io/p9m/0.12/networking/#tls-tcp-addresses); a port on `127.0.0.1` stays private to the sandbox; a `p9m.connect.user` label puts its login into the **Connect…** commands. Pass passwords through variables whose name contains `PASSWORD` (or `TOKEN`, `SECRET`, `KEY`): **Starter stack…** masks those.
 
 The **New sandbox** dialog shows the chosen template's `compose.yaml`; edit it there, or pick `empty` and paste your own (`empty` without a compose text is refused). The sandbox then gets that text (comments kept, the same variables filled in, the template's `before_script` still run) and shows "(edited)" in the list and its panel. The text is checked first: it must be YAML with at least one service, at most 256 KB, that docker compose accepts. Keys that would make the compose CLI (which runs in the Purgatorium container) read the server's files are refused: `build`, `env_file`, `label_file`, `extends.file`, `include`, and `secrets`/`configs` from a `file` or `environment` — build images through `DOCKER_HOST` or Portainer instead. The CLI gets no Purgatorium settings in its environment, so an unknown `${VAR}` is empty.
 
@@ -530,6 +531,16 @@ services:
 ```
 
 A container with `p9m.subdomain` that publishes several ports has one web address for all of them; each port's TCP address (below) gets `-port<N>` too.
+
+## A separate domain for the apps
+
+By default the apps are under `HOST_DOMAIN`, beside the UI. A server whose sandboxes run apps of people you do not fully trust should put them under a domain of their own, as GitHub Pages (`github.io`) and Vercel (`vercel.app`) do: set `APPS_DOMAIN=example.app` beside `HOST_DOMAIN=example.dev`.
+
+- **What moves:** every sandbox address, `<sandbox>-<…>.example.app`: the apps, the TCP and SSH addresses, Docker access. The UI, the registry and the Hub stay under `example.dev`.
+- **Why:** a phishing app reported to a blocklist (Google Safe Browsing, a company proxy) takes its domain with it; under its own domain, the UI and its sign-in stay reachable. To the browser, an app is then another site: it cannot set cookies for the UI's domain, nor send it same-site requests.
+- **What it needs:** a wildcard DNS record `*.example.app` pointing to the server, and the certificate covering `*.example.app` as well as `*.example.dev` ([HTTPS](https://csakaszamok.github.io/p9m/0.12/https/index.md): one certificate with both names).
+- **The sandboxes made before:** at the next start (`docker compose up -d`) Purgatorium moves them to the new domain, restarting those that run. Their old web addresses redirect to the new ones (308). A TCP, SSH or Docker client has to use the new address; Docker access needs its certificates made again (**Docker access…** says so).
+- **The Public Suffix List:** with the apps domain on the [Public Suffix List](https://publicsuffix.org/) (its private section; you request it), browsers and blocklists treat each app's address as a site of its own, so one bad app does not take the others with it. Purgatorium needs nothing for it: its app cookies are each app's own.
 
 ## TLS TCP addresses
 
@@ -763,7 +774,7 @@ Give a coding agent (Claude Code, Codex, Cursor…) a personal access token and 
 
 [docs/agent-guide.md](https://csakaszamok.github.io/p9m/0.12/agent-guide/index.md) is written for the agent: every call it needs, tried against a live Purgatorium. A token limited to one sandbox keeps the agent away from your other sandboxes; a token for all your sandboxes (Access tokens → + New token) acts as you.
 
-An agent with MCP can also use Purgatorium as an MCP server with the same token: see [MCP](https://csakaszamok.github.io/p9m/0.12/mcp/index.md). In Claude Code, the [p9m plugin](https://csakaszamok.github.io/p9m/0.12/claude-plugin/index.md) needs no token typed in: install it once (`/plugin marketplace add csakaszamok/p9m`, `/plugin install p9m@p9m`), then run `/p9m:init <address> <sandbox>` in the project and approve in the browser.
+An agent with MCP can also use Purgatorium as an MCP server with the same token: see [MCP](https://csakaszamok.github.io/p9m/0.12/mcp/index.md). In Claude Code, the [p9m plugin](https://csakaszamok.github.io/p9m/0.12/claude-plugin/index.md) needs no token typed in: install it once (`/plugin marketplace add p9m-team/p9m`, `/plugin install p9m@p9m`), then run `/p9m:init <address> <sandbox>` in the project and approve in the browser.
 
 ## Docker, registry, export
 
@@ -828,14 +839,14 @@ The `p9m` plugin teaches Claude Code to deploy: you say *put my app online*, it 
 Once on your computer, from a terminal (a sandbox's **Let your agent deploy…** shows these lines ready to copy). Claude Code in an editor (the VS Code extension) has no `/plugin`, so there this is the way:
 
 ```
-claude plugin marketplace add csakaszamok/p9m
+claude plugin marketplace add p9m-team/p9m
 claude plugin install p9m@p9m
 ```
 
 Or in Claude Code:
 
 ```
-/plugin marketplace add csakaszamok/p9m
+/plugin marketplace add p9m-team/p9m
 /plugin install p9m@p9m
 ```
 
@@ -872,7 +883,7 @@ The plugin does not bring the MCP server. Purgatorium still has one, for other M
 
 ## Where it works
 
-The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's **Code** tab; also in Claude Code inside a sandbox, deploying to another one (on a local `lvh.me` stack see [An agent inside a sandbox](https://csakaszamok.github.io/p9m/0.12/agents/#an-agent-inside-a-sandbox)). Claude chat and Cowork can install it too (**Customize → Plugins**, add the marketplace `csakaszamok/p9m`), but they cannot run commands on your computer, so there it does not do much. Without the plugin, any agent can deploy with an export (**Let your agent deploy…** on a sandbox) or a token: see [Let your agent deploy](https://csakaszamok.github.io/p9m/0.12/agents/index.md).
+The plugin works fully in Claude Code: in the terminal, and in the Claude desktop app's **Code** tab; also in Claude Code inside a sandbox, deploying to another one (on a local `lvh.me` stack see [An agent inside a sandbox](https://csakaszamok.github.io/p9m/0.12/agents/#an-agent-inside-a-sandbox)). Claude chat and Cowork can install it too (**Customize → Plugins**, add the marketplace `p9m-team/p9m`), but they cannot run commands on your computer, so there it does not do much. Without the plugin, any agent can deploy with an export (**Let your agent deploy…** on a sandbox) or a token: see [Let your agent deploy](https://csakaszamok.github.io/p9m/0.12/agents/index.md).
 
 # Purgatorium for agents: deploy and update apps in a sandbox
 

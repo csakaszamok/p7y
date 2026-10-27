@@ -22,7 +22,7 @@ The switch at the top right changes how much the screen shows. **Simple** is eno
 1. In the window's step **1**, click **Copy** next to each of the two lines, open a terminal (in VS Code: **Terminal → New Terminal**; on Windows also PowerShell, on a Mac the Terminal app), paste them one after the other and press Enter after each:
 
    ```
-   claude plugin marketplace add csakaszamok/p9m
+   claude plugin marketplace add p9m-team/p9m
    claude plugin install p9m@p9m
    ```
 
@@ -31,7 +31,7 @@ The switch at the top right changes how much the screen shows. **Simple** is eno
 Good to know
 
 - `claude` not found? Claude Code is not installed for the terminal: see [Claude Code's setup](https://code.claude.com/docs/en/setup). An *unknown option* means an older Claude Code: run `claude update`.
-- Already in Claude Code? **In Claude Code instead** in the same window shows the same two lines as `/plugin marketplace add csakaszamok/p9m` and `/plugin install p9m@p9m`. (The Claude Code panel in VS Code has no `/plugin`: use the terminal.)
+- Already in Claude Code? **In Claude Code instead** in the same window shows the same two lines as `/plugin marketplace add p9m-team/p9m` and `/plugin install p9m@p9m`. (The Claude Code panel in VS Code has no `/plugin`: use the terminal.)
 
 You install the plugin once. Each project then gets its sandbox in the next step.
 

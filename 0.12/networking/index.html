@@ -1072,6 +1072,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-separate-domain-for-the-apps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A separate domain for the apps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tls-tcp-addresses" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1657,6 +1668,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-separate-domain-for-the-apps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A separate domain for the apps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tls-tcp-addresses" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1730,6 +1752,15 @@
 <span class="w">      </span><span class="nt">p9m.subdomain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
 </code></pre></div>
 <p>A container with <code>p9m.subdomain</code> that publishes several ports has one web address for all of them; each port's TCP address (below) gets <code>-port&lt;N&gt;</code> too.</p>
+<h2 id="a-separate-domain-for-the-apps">A separate domain for the apps<a class="headerlink" href="#a-separate-domain-for-the-apps" title="Permanent link">&para;</a></h2>
+<p>By default the apps are under <code>HOST_DOMAIN</code>, beside the UI. A server whose sandboxes run apps of people you do not fully trust should put them under a domain of their own, as GitHub Pages (<code>github.io</code>) and Vercel (<code>vercel.app</code>) do: set <code>APPS_DOMAIN=example.app</code> beside <code>HOST_DOMAIN=example.dev</code>.</p>
+<ul>
+<li><strong>What moves:</strong> every sandbox address, <code>&lt;sandbox&gt;-&lt;…&gt;.example.app</code>: the apps, the TCP and SSH addresses, Docker access. The UI, the registry and the Hub stay under <code>example.dev</code>.</li>
+<li><strong>Why:</strong> a phishing app reported to a blocklist (Google Safe Browsing, a company proxy) takes its domain with it; under its own domain, the UI and its sign-in stay reachable. To the browser, an app is then another site: it cannot set cookies for the UI's domain, nor send it same-site requests.</li>
+<li><strong>What it needs:</strong> a wildcard DNS record <code>*.example.app</code> pointing to the server, and the certificate covering <code>*.example.app</code> as well as <code>*.example.dev</code> (<a href="../https/">HTTPS</a>: one certificate with both names).</li>
+<li><strong>The sandboxes made before:</strong> at the next start (<code>docker compose up -d</code>) Purgatorium moves them to the new domain, restarting those that run. Their old web addresses redirect to the new ones (308). A TCP, SSH or Docker client has to use the new address; Docker access needs its certificates made again (<strong>Docker access…</strong> says so).</li>
+<li><strong>The Public Suffix List:</strong> with the apps domain on the <a href="https://publicsuffix.org/">Public Suffix List</a> (its private section; you request it), browsers and blocklists treat each app's address as a site of its own, so one bad app does not take the others with it. Purgatorium needs nothing for it: its app cookies are each app's own.</li>
+</ul>
 <h2 id="tls-tcp-addresses">TLS TCP addresses<a class="headerlink" href="#tls-tcp-addresses" title="Permanent link">&para;</a></h2>
 <p>A port an inner container publishes on all interfaces (<code>"5432:5432"</code>) also gets a TCP address, its HTTP name plus <code>-tcp</code>, on port 443, TLS only: <code>shop-inner-db-port5432-tcp.&lt;domain&gt;:443</code>. Ports published on <code>127.0.0.1</code> stay private: no TCP address and no link.</p>
 <ul>

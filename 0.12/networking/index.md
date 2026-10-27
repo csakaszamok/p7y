@@ -34,6 +34,16 @@ services:
 
 A container with `p9m.subdomain` that publishes several ports has one web address for all of them; each port's TCP address (below) gets `-port<N>` too.
 
+## A separate domain for the apps
+
+By default the apps are under `HOST_DOMAIN`, beside the UI. A server whose sandboxes run apps of people you do not fully trust should put them under a domain of their own, as GitHub Pages (`github.io`) and Vercel (`vercel.app`) do: set `APPS_DOMAIN=example.app` beside `HOST_DOMAIN=example.dev`.
+
+- **What moves:** every sandbox address, `<sandbox>-<…>.example.app`: the apps, the TCP and SSH addresses, Docker access. The UI, the registry and the Hub stay under `example.dev`.
+- **Why:** a phishing app reported to a blocklist (Google Safe Browsing, a company proxy) takes its domain with it; under its own domain, the UI and its sign-in stay reachable. To the browser, an app is then another site: it cannot set cookies for the UI's domain, nor send it same-site requests.
+- **What it needs:** a wildcard DNS record `*.example.app` pointing to the server, and the certificate covering `*.example.app` as well as `*.example.dev` ([HTTPS](https://csakaszamok.github.io/p9m/0.12/https/index.md): one certificate with both names).
+- **The sandboxes made before:** at the next start (`docker compose up -d`) Purgatorium moves them to the new domain, restarting those that run. Their old web addresses redirect to the new ones (308). A TCP, SSH or Docker client has to use the new address; Docker access needs its certificates made again (**Docker access…** says so).
+- **The Public Suffix List:** with the apps domain on the [Public Suffix List](https://publicsuffix.org/) (its private section; you request it), browsers and blocklists treat each app's address as a site of its own, so one bad app does not take the others with it. Purgatorium needs nothing for it: its app cookies are each app's own.
+
 ## TLS TCP addresses
 
 A port an inner container publishes on all interfaces (`"5432:5432"`) also gets a TCP address, its HTTP name plus `-tcp`, on port 443, TLS only: `shop-inner-db-port5432-tcp.<domain>:443`. Ports published on `127.0.0.1` stay private: no TCP address and no link.
