@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import type { Limits } from './resources'
 import fs from 'node:fs'
+import { PassThrough } from 'node:stream'
 import { composeDeepSleepAfter } from './sleepSettings'
 import { managedLabelFilters, readLabel } from './naming'
 import Dockerode from 'dockerode'
@@ -284,12 +285,37 @@ export async function execRun(name: string, cmd: string[]): Promise<{ code: numb
   return { code: (await exec.inspect()).ExitCode ?? -1, stdout: Buffer.concat(out).toString('utf8'), stderr: Buffer.concat(err).toString('utf8') }
 }
 
-/** A path in a sandbox container as a tar stream (Docker's archive API). */
+// Files go in and out through tar in an exec, not Docker's archive API: under sysbox-runc that API finds no path at all
+// ("Could not find the file /etc/hostname in container ...").
+
+/** A path in a sandbox container as a tar stream, laid out like Docker's archive API (one entry named after it). */
 export async function archiveOf(name: string, path: string): Promise<AsyncIterable<Uint8Array>> {
-  return await docker.getContainer(name).getArchive({ path }) as unknown as AsyncIterable<Uint8Array>
+  const exec = await docker.getContainer(name).exec({ Cmd: ['sh', '-c', 'cd -- "$(dirname -- "$1")" && exec tar -c -- "$(basename -- "$1")"', 'sh', path], AttachStdout: true, AttachStderr: true })
+  const stream = await exec.start({ hijack: true, stdin: false }) as unknown as NodeJS.ReadableStream
+  const out = new PassThrough(), err: Buffer[] = []
+  docker.modem.demuxStream(stream, out, { write: (c: Buffer) => { err.push(Buffer.from(c)); return true } } as unknown as NodeJS.WritableStream)
+  stream.on('end', async () => {
+    const code = (await exec.inspect().catch(() => null))?.ExitCode
+    if (code === 0) out.end()
+    else out.destroy(new Error(Buffer.concat(err).toString('utf8').trim() || `Could not read ${path}`))
+  })
+  stream.on('error', e => out.destroy(e))
+  return out
 }
 
-/** Unpacks a tar into a folder of a sandbox container. */
+/** Unpacks a tar into a folder of a sandbox container; a folder that is not there is a 404, as with the archive API. */
 export async function putArchiveTo(name: string, dir: string, tar: Buffer): Promise<void> {
-  await docker.getContainer(name).putArchive(tar, { path: dir })
+  const exec = await docker.getContainer(name).exec({ Cmd: ['sh', '-c', '[ -d "$1" ] || exit 3; exec tar -x -C "$1"', 'sh', dir], AttachStdin: true, AttachStdout: true, AttachStderr: true })
+  const stream = await exec.start({ hijack: true, stdin: true }) as unknown as NodeJS.ReadWriteStream
+  const err: Buffer[] = []
+  const sink = (into: Buffer[] | null) => ({ write: (c: Buffer) => { into?.push(Buffer.from(c)); return true } }) as unknown as NodeJS.WritableStream
+  await new Promise<void>((resolve, reject) => {
+    docker.modem.demuxStream(stream, sink(null), sink(err))
+    stream.on('end', () => resolve())
+    stream.on('error', reject)
+    stream.end(tar)
+  })
+  const code = (await exec.inspect()).ExitCode
+  if (code === 3) throw Object.assign(new Error(`No such folder: ${dir}`), { statusCode: 404 })
+  if (code !== 0) throw new Error(Buffer.concat(err).toString('utf8').trim() || `Could not write into ${dir}`)
 }

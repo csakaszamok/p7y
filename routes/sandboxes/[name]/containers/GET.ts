@@ -9,7 +9,7 @@ export const openapi = {
   responses: {
     200: { description: '{ containers: [{ name, project, service, image, state, status }] }; running ones first' },
     404: { description: 'Sandbox not found' },
-    409: { description: 'The sandbox is not running (reason: not_running)' },
+    409: { description: 'The sandbox is not running (reason: not_running), or just woken and its Docker not answering yet (reason: docker_starting): try again in a few seconds' },
   },
 }
 

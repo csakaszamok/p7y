@@ -4,6 +4,15 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.18] - 2026-10-27
+
+Upgrading from 0.12.17: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.17.
+
+### Fixed
+
+- **Uploads and downloads in the Files tab work on sysbox sandboxes:** they went through Docker's archive API, which finds no path at all in a `sysbox-runc` container (*no such container - Could not find the file /home in container …*); listing worked, so the folders were offered. Files now go in and out with `tar` in an exec, like the listing.
+- **Just after a wake, the Containers tab and the volumes list say *Docker is starting in the sandbox…*** and try again every 2 seconds, instead of showing `connect ECONNREFUSED …:2376` until the next refresh. The API answers 409 with reason `docker_starting` (`GET /sandboxes/<name>/containers`, `GET /sandboxes/<name>/volumes`).
+
 ## [0.12.17] - 2026-10-26
 
 Upgrading from 0.12.16: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.16.
@@ -720,7 +729,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.17...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.18...HEAD
+[0.12.18]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.18
 [0.12.17]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.17
 [0.12.16]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.16
 [0.12.15]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.15
