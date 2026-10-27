@@ -1,4 +1,4 @@
-import { wakeByHost } from '../../services/wake'
+import { wakeByHost, movedAppHost } from '../../services/wake'
 import { waitingPage } from '../../services/ui/waitingPage'
 import type { WakeRefusal } from '../../services/quota'
 import { decide } from '../../services/appAccess/decide'
@@ -6,8 +6,12 @@ import { uiHost } from '../../services/uiHost'
 
 export default async (req: Request): Promise<Response> => {
   const host = req.headers.get('host') ?? ''
+  const path = (req.headers.get('x-replaced-path') ?? '/') + new URL(req.url).search
+  // An app's address from before APPS_DOMAIN: the same app under it (a sandbox migrated at startup answers there)
+  const moved = movedAppHost(host)
+  if (moved) return new Response(null, { status: 308, headers: { Location: `${req.headers.get('x-forwarded-proto') ?? 'https'}://${moved}${path}`, 'Cache-Control': 'no-store' } })
   // An app that is not public: only someone who may open it gets to wake it (the original path is X-Replaced-Path)
-  const gate = await decide({ host, proto: req.headers.get('x-forwarded-proto') ?? 'https', uri: (req.headers.get('x-replaced-path') ?? '/') + new URL(req.url).search, cookie: req.headers.get('cookie') ?? '' })
+  const gate = await decide({ host, proto: req.headers.get('x-forwarded-proto') ?? 'https', uri: path, cookie: req.headers.get('cookie') ?? '' })
   if (gate.status === 302) return new Response(null, { status: 302, headers: gate.headers })
   const { result, name, from, refusal } = await wakeByHost(host)
   if (result === 'not_found' || !name) return new Response('Not found', { status: 404 })

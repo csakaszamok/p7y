@@ -1,3 +1,4 @@
+import { appsDomain } from '../domains'
 import type { AccessMap } from '../appLinks'
 import type { HostAccess } from './hosts'
 
@@ -22,7 +23,7 @@ export function rebuildIndex(d: IndexDeps): void {
     for (const [label, access] of Object.entries(d.accessOf(name) ?? {})) next.set(label.toLowerCase(), { sandbox: name, owner, access })
   }
   labels = next
-  domain = (d.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()
+  domain = appsDomain(d.env)
 }
 
 /** From memory: the address's access, or undefined when the index does not know it. */

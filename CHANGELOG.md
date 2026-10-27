@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **`APPS_DOMAIN`: the sandboxes' apps under a domain of their own,** e.g. `example.app` beside `HOST_DOMAIN=example.dev`, as GitHub Pages and Vercel do: a phishing app reported to a blocklist cannot take the UI's domain with it, nor set cookies for it. The apps, TCP, SSH and Docker addresses move; the UI, the registry and the Hub stay. The sandboxes made before move at the next start, and their old web addresses redirect (308). Needs a wildcard DNS record and certificate for the new domain: see [A separate domain for the apps](https://csakaszamok.github.io/p9m/latest/networking/#a-separate-domain-for-the-apps). Empty, as before: everything under `HOST_DOMAIN`.
+
 ### Changed
 
 - **The Claude Code plugin installs from `p9m-team/p9m`:** `/plugin marketplace add p9m-team/p9m`, then `/plugin install p9m@p9m` as before, in the docs and under **Let your agent deploy…**. The plugin is the same and still comes from this repository; a marketplace added as `csakaszamok/p9m` keeps working.

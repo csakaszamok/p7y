@@ -1,3 +1,4 @@
+import { appsDomain } from './domains'
 import fs from 'fs'
 import forge from 'node-forge'
 
@@ -5,7 +6,7 @@ import forge from 'node-forge'
 export function tcpTlsCredentials(opts: { certDir?: string; dataDir?: string; domain?: string } = {}): { key: string; cert: string; source: 'certs' | 'generated' } {
   const certDir = opts.certDir ?? process.env.CERTS_DIR ?? '/app/certs'
   const dataDir = opts.dataDir ?? '/app/data'
-  const domain = (opts.domain ?? process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()
+  const domain = (opts.domain ?? appsDomain()).toLowerCase()
   if (fs.existsSync(`${certDir}/tls.crt`) && fs.existsSync(`${certDir}/tls.key`)) {
     return { cert: fs.readFileSync(`${certDir}/tls.crt`, 'utf8'), key: fs.readFileSync(`${certDir}/tls.key`, 'utf8'), source: 'certs' }
   }

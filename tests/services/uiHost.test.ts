@@ -18,6 +18,10 @@ describe('ownHostTaken', () => {
     expect(ownHostTaken('console', e)).toBe('console-admin.p9m.dev')
     expect(ownHostTaken('team', e)).toBe('team-hub.p9m.dev')
   })
+  it('null with an APPS_DOMAIN of its own: the sandbox routers answer only under it', () => {
+    expect(ownHostTaken('console', env({ HOST_DOMAIN: 'p9m.dev', APPS_DOMAIN: 'p9m.app', UI_HOST: 'console-admin.p9m.dev' }))).toBeNull()
+    expect(ownHostTaken('console', env({ HOST_DOMAIN: 'p9m.dev', APPS_DOMAIN: 'p9m.dev', UI_HOST: 'console-admin.p9m.dev' }))).toBe('console-admin.p9m.dev')
+  })
   it('null for every other name, and for the default addresses (no dash)', () => {
     expect(ownHostTaken('console-admin', e)).toBeNull()
     expect(ownHostTaken('consol', e)).toBeNull()

@@ -1,3 +1,4 @@
+import { appsDomain } from './domains'
 import net from 'node:net'
 import { publicTcpPorts, type TcpPort } from './tcpNames'
 import { findSandboxDirByHost, wakeInProgress } from './wake'
@@ -60,7 +61,7 @@ const canConnect = (host: string, port: number) => new Promise<boolean>(resolve 
  * `deadlineMs`, or until `signal` says the client has gone.
  */
 export async function resolveTcpHost(sni: string, opts: { deadlineMs?: number; retryMs?: number; host?: string; signal?: AbortSignal; sshPort?: number } = {}): Promise<Target | null> {
-  const domain = (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()
+  const domain = appsDomain()
   const name = sni.toLowerCase()
   const suffix = `-tcp.${domain}`
   if (!name.endsWith(suffix)) return null
@@ -107,7 +108,7 @@ export async function resolveTcpHost(sni: string, opts: { deadlineMs?: number; r
  * unknown sandbox or one whose certificate does not carry the name yet (Enable first).
  */
 export async function resolveDockerHost(sni: string, opts: { signal?: AbortSignal; deadlineMs?: number; host?: string; port?: number } = {}): Promise<Target | null> {
-  const domain = (process.env.HOST_DOMAIN ?? 'lvh.me').toLowerCase()
+  const domain = appsDomain()
   const name = sni.toLowerCase()
   const suffix = `-docker.${domain}`
   if (!name.endsWith(suffix)) return null
