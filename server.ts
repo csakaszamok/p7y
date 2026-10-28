@@ -2,7 +2,7 @@ import { appsDomain } from "./services/domains";
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { startDeepSleepScheduler } from "./services/deepSleep";
 import { startAccessRefresher } from "./services/appAccess/traefik";
-import { internalOnly, INTERNAL_PORT } from "./services/appAccess/internal";
+import { internalOnly, internalListenAddress, INTERNAL_NETWORK, INTERNAL_PORT } from "./services/appAccess/internal";
 import { errorPage, ERROR_PAGE_PATH } from "./services/errorPage";
 import { startSessionWatch } from "./services/sessionWatch";
 import { startTrafficKeepAlive } from "./services/trafficKeepAlive";
@@ -11,6 +11,7 @@ import { insecureConfigWarnings, insecureConfigErrors, hostMountWarnings } from 
 import { syncTlsConfig } from "./services/tlsConfig";
 import { migrateHostPaths } from "./services/pathMigration";
 import { migrateAppsDomain } from "./services/appsDomainMigration";
+import { migrateReadOnlyMounts } from "./services/mountMigration";
 import { startTcpGateway } from "./services/tcpGateway";
 import { resolveTcpHost, resolveDockerHost } from "./services/tcpRoutes";
 import { findSandboxDirByHost, primeSablierSession } from "./services/wake";
@@ -302,8 +303,11 @@ async function handle(req: IncomingMessage, res: ServerResponse, internal: boole
 }
 const server = createServer((req, res) => handle(req, res, false));
 server.listen(3000, () => console.log("Listening on :3000"));
-// Only for Traefik on the internal network (not published): app access
-createServer((req, res) => handle(req, res, true)).listen(INTERNAL_PORT, () => console.log(`Listening on :${INTERNAL_PORT} (internal: app access)`));
+// Only for Traefik on the internal network (not published, not on traefik-net where the sandboxes are): app access
+internalListenAddress().then(addr => {
+  if (!addr) console.warn(`[internal] WARNING: not on the ${INTERNAL_NETWORK} network: port ${INTERNAL_PORT} listens on every address, so a sandbox can read every sandbox's name and its apps' access levels. Use the docker-compose.yml of this release.`);
+  createServer((req, res) => handle(req, res, true)).listen(INTERNAL_PORT, addr ?? undefined, () => console.log(`Listening on ${addr ?? ""}:${INTERNAL_PORT} (internal: app access)`));
+});
 
 // Browser terminals: /sandboxes/:name/terminal upgraded to a websocket (checked before the upgrade)
 attachTerminals(server);
@@ -352,7 +356,8 @@ for (const w of resourceDefaults().warnings) console.warn(`[resources] ${w}`);
 // Sandboxes whose install directory was moved or renamed: point their mounts at the current directory; then those
 // made under another apps domain (APPS_DOMAIN set or changed): their apps under the current one
 migrateHostPaths().catch(err => console.error("[paths] migration failed:", err))
-  .then(() => migrateAppsDomain()).catch(err => console.error("[apps-domain] migration failed:", err));
+  .then(() => migrateAppsDomain()).catch(err => console.error("[apps-domain] migration failed:", err))
+  .then(() => migrateReadOnlyMounts()).catch(err => console.error("[mounts] migration failed:", err));
 for (const warning of [...insecureConfigWarnings(process.env), ...hostMountWarnings(process.env)]) console.warn(warning);
 
 

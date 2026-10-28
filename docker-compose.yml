@@ -3,7 +3,7 @@ services:
     # The released image: it carries the templates, runtimes and the files p9m-init installs.
     # To work on the code, add docker-compose.dev.yml (COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml,
     # and COMPOSE_PATH_SEPARATOR=: on Windows, in .env).
-    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.21}
+    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.22}
     ports:
       # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
       # to localhost (P9M_API_BIND=127.0.0.1) so everything goes through HTTPS.
@@ -89,9 +89,12 @@ services:
       HUB_ALLOWED_EMAILS: ${HUB_ALLOWED_EMAILS:-}
       HUB_TITLE: ${HUB_TITLE:-Hub}
     networks:
-      - default
-      - traefik-net
-      - sablier-net   # read Sablier's /metrics (session expiry per sandbox)
+      default:
+      traefik-net:
+      # Internal (no sandbox on it): Sablier's /metrics (session expiry per sandbox), and Traefik asks Purgatorium's
+      # internal port here (app access, the 404 page), which listens on this network only
+      sablier-net:
+        aliases: [p9m-internal]
     # A name that does not resolve (a sandbox just removed or asleep) waits for the host's resolver: 5 s by default,
     # holding up Purgatorium's other lookups meanwhile. Give up after 1 s, once more
     dns_opt:
@@ -134,7 +137,7 @@ services:
   # One-shot, on every up: copies this release's Sablier themes, registry config and
   # dynamic/errors.yml from the image, so they always match it (no files from a checkout).
   p9m-init:
-    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.21}
+    image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.12.22}
     entrypoint: ["sh", "/app/assets/install-assets.sh"]
     volumes:
       - sablier_themes:/out/sablier-themes
@@ -188,12 +191,11 @@ services:
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
       - --entrypoints.websecure.http.tls=true
-      - --api.insecure=true
 
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--providers.file.watch=true"
       # The app access middleware of every sandbox (p9m.access), from Purgatorium every 2 s
-      - "--providers.http.endpoint=http://p9m:3001/traefik/access"
+      - "--providers.http.endpoint=http://p9m-internal:3001/traefik/access"
       - "--providers.http.pollInterval=2s"
       - "--entrypoints.web.http.middlewares=global-error-pages@file"
       - "--entrypoints.websecure.http.middlewares=global-error-pages@file"

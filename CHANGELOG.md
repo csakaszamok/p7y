@@ -4,6 +4,16 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.22] - 2026-10-29
+
+Upgrading from 0.12.21 (or 0.12.20: 0.12.21 can be skipped): download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.21. This release needs the new one (Traefik's flags, Purgatorium's internal address): with one from before, Purgatorium warns at startup. After upgrading, change `ADMIN_TOKEN` and `SESSION_SECRET` in `.env` (then `docker compose up -d`): before this release a sandbox could read them.
+
+### Security
+
+- **A sandbox can no longer make Purgatorium read or write one of Purgatorium's own files.** Its `/inner` and `/certs` were mounted read-write, and Purgatorium reads and writes files there as root: root in the sandbox could put a symlink in their place. Now `/inner` is read-only, of `/certs` the sandbox gets only its dockerd's certificate, read-only, and Purgatorium reads and writes in a sandbox's directory without following a symlink, only plain files of a limited size. The sandboxes made before get the new mounts at the next start of Purgatorium (running ones restart).
+- **Traefik's API is no longer served:** the sandboxes could read every router from it, so every user's sandboxes and apps.
+- **Purgatorium's internal port (app access for Traefik) listens only on an internal network no sandbox is on** (`sablier-net`, where Traefik reaches it as `p9m-internal`): from `traefik-net` the sandboxes could read every sandbox's name and its apps' access levels.
+
 ## [0.12.21] - 2026-10-28
 
 Upgrading from 0.12.20: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.20. Sandboxes made before keep running as they are; new ones use the sandbox image foxglove 0.10.0.
@@ -765,7 +775,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.21...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.22...HEAD
+[0.12.22]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.22
 [0.12.21]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.21
 [0.12.20]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.20
 [0.12.19]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.19

@@ -1,3 +1,5 @@
+import { readSandboxFileIfAny } from './sandboxFs'
+import { COMPOSE_MAX_BYTES } from './composeInput'
 import fs from 'fs'
 import { sandboxParent } from './sandboxPaths'
 
@@ -21,6 +23,6 @@ export function maskSecrets(text: string): string {
 /** The starter stack Purgatorium deployed into the sandbox, secrets masked; null if it has none. */
 export function starterStack(name: string, usersDir = sandboxParent(name)): string | null {
   if (!fs.existsSync(`${usersDir}/${name}/docker-compose.yml`)) throw new Error(`Sandbox not found: ${name}`)
-  const inner = `${usersDir}/${name}/inner/docker-compose.yml`
-  return fs.existsSync(inner) ? maskSecrets(fs.readFileSync(inner, 'utf8')) : null
+  const text = readSandboxFileIfAny(`${usersDir}/${name}`, 'inner/docker-compose.yml', COMPOSE_MAX_BYTES)
+  return text === null ? null : maskSecrets(text)
 }

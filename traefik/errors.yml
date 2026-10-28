@@ -11,4 +11,4 @@ http:
     error-pages:
       loadBalancer:
         servers:
-          - url: "http://p9m:3001"
+          - url: "http://p9m-internal:3001"

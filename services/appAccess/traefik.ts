@@ -13,7 +13,7 @@ export interface TraefikDeps { sandboxes: () => string[]; access: (name: string)
 const defaults: TraefikDeps = { sandboxes: () => listSandboxDirs().map(e => e.name), access: rememberedAccess }
 
 const NOOP = { headers: { customRequestHeaders: { 'X-P9m-User': '' } } }
-const AUTH = { forwardAuth: { address: 'http://p9m:3001/auth/app', trustForwardHeader: true, authResponseHeaders: ['X-P9m-User', 'Cookie'] } }
+const AUTH = { forwardAuth: { address: 'http://p9m-internal:3001/auth/app', trustForwardHeader: true, authResponseHeaders: ['X-P9m-User', 'Cookie'] } }
 
 export function traefikAccessConfig(deps: Partial<TraefikDeps> = {}) {
   const d = { ...defaults, ...deps }

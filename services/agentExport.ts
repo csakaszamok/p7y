@@ -1,5 +1,5 @@
+import { readSandboxFile } from './sandboxFs'
 import { hostDomain } from './domains'
-import fs from 'fs'
 import { rawNameOf } from './naming'
 import { dockerHostName } from './dockerAccess'
 import { sandboxParent } from './sandboxPaths'
@@ -21,7 +21,7 @@ export function prepareExport(
   const docker = dockerHostName(sandbox)
   const registry = `registry.${hostDomain()}`
   const dir = '.p9m'
-  const read = opts.readCert ?? ((f: string) => fs.readFileSync(`${opts.usersDir ?? sandboxParent(sandbox)}/${sandbox}/certs/client/${f}`, 'utf8'))
+  const read = opts.readCert ?? ((f: string) => readSandboxFile(`${opts.usersDir ?? sandboxParent(sandbox)}/${sandbox}`, `certs/client/${f}`, 64 * 1024))
   const certs = withDocker ? { ca: read('ca.pem'), cert: read('cert.pem'), key: read('key.pem') } : null
   return (token, portainer) => {
   const pt = portainer && 'token' in portainer ? portainer : null

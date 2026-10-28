@@ -1,3 +1,5 @@
+import { readSandboxFileIfAny } from './sandboxFs'
+import { COMPOSE_MAX_BYTES } from './composeInput'
 import fs from 'fs'
 import yaml from 'js-yaml'
 import { rawNameOf } from './naming'
@@ -85,8 +87,8 @@ export function appHostsFromCompose(text: string, ctx: AppHostContext): string[]
  * compose file Purgatorium deployed. Apps started by other means are not listed.
  */
 export function appEntriesOffline(name: string, dir: string, domain: string, innerProject: () => string | undefined): Array<{ host: string; service: string }> {
-  let text: string
-  try { text = fs.readFileSync(`${dir}/inner/docker-compose.yml`, 'utf8') } catch { return [] }
+  const text = readSandboxFileIfAny(dir, 'inner/docker-compose.yml', COMPOSE_MAX_BYTES)
+  if (text === null) return []
   let instance = rawNameOf(name) ?? name
   try { instance = fs.readFileSync(`${dir}/instance-name`, 'utf8').trim() || instance } catch { /* older sandbox */ }
   return appEntriesFromCompose(text, { instance, project: innerProject() ?? 'inner', domain })
