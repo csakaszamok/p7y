@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **A new sandbox needs no name:** **New sandbox** fills in a generated one, six letters and digits like `k3x9q2` (about 1.5 billion of them, a taken one is drawn again), selected, so typing replaces it; *another name* draws a new one. `POST /sandboxes` and MCP's `create_sandbox` without `name` generate one too, and the answer says which; `GET /sandbox-name` suggests one.
+
 ## [0.12.19] - 2026-10-27
 
 Upgrading from 0.12.18: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.18.

@@ -4,12 +4,13 @@
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/sandboxes` | Create a sandbox (`name`; optional `runtime` like `dind`, `template` like `starter`, `compose` (your own compose text instead of the template's; its `before_script` and defaults still apply), `idle_timeout` like `30m`, `deep_sleep_after` like `7d` or `off`, `ssh_keys` (extra SSH public keys for this sandbox only), `cpus` like `2`, `memory` like `4g`, `create_inner_stack: false` for no template stack) |
+| `POST` | `/sandboxes` | Create a sandbox (`name`, or none for a generated one like `k3x9q2`; optional `runtime` like `dind`, `template` like `starter`, `compose` (your own compose text instead of the template's; its `before_script` and defaults still apply), `idle_timeout` like `30m`, `deep_sleep_after` like `7d` or `off`, `ssh_keys` (extra SSH public keys for this sandbox only), `cpus` like `2`, `memory` like `4g`, `create_inner_stack: false` for no template stack) |
 | `GET` | `/sandboxes` | List all sandboxes |
 | `GET` | `/sandboxes/summary` | How many sandboxes: `quota`, `total`, `free`, `running`, `asleep`, `deep_sleep`, `archived`; your own (and `server_full`), or for the admin the whole server, `by_owner`, `server_limit` / `server_used` and `resources` (not with a token limited to one sandbox) |
 | `GET` | `/sandboxes/:name` | Get sandbox details; the Docker client certificates and key (`ca_cert`, `client_cert`, `client_key`) only with `?include_keys=true` |
 | `GET` | `/sandboxes/:name/compose` | The starter stack deployed into the sandbox (compose YAML), secrets masked (**Starter stack…** in the UI) |
 | `PATCH` | `/sandboxes/:name` | Change `idle_timeout` and/or `deep_sleep_after` (see [Sleep and wake](sleep-wake.md)), `cpus` and/or `memory` (see [CPU and memory](resources.md#cpu-and-memory)) |
+| `GET` | `/sandbox-name` | A free name for a new sandbox (`{"name": "k3x9q2"}`): what **New sandbox** fills in |
 | `POST` | `/sandboxes/:name/start` | Wake a sandbox, also from deep sleep (**Wake** in the UI); 409 at the owner's limit with `reason` and `running`; `{"sleep": "<name>"}` puts that running one to sleep first |
 | `POST` | `/sandboxes/:name/stop` | Put a sandbox to sleep now (**Sleep** in the UI) |
 | `POST` | `/sandboxes/:name/deep-sleep` | Put a sandbox into deep sleep now, also a running one (**Deep sleep now** on the panel's **Details** tab) |
