@@ -13,7 +13,8 @@ vi.mock('../../../services/sandbox', () => ({
       if (name === 'nofree') throw new Error('No free ports available in template range')
       if (name === 'badschema') throw new Error('compose is not a valid compose file: services.web.ports must be a list')
       return { name, docker_host: 'tcp://1.2.3.4:32001', ca_cert: 'ca', client_cert: 'cc', client_key: 'ck' }
-    })
+    }),
+    suggestName: vi.fn(async () => 'k3x9q2'),
   }
 }))
 vi.mock('../../../services/tokens', () => ({ resolveToken: vi.fn((t: string) => t === 'p9m_user' ? { owner: 'u@example.com', sandbox: null } : null) }))
@@ -50,9 +51,39 @@ describe('POST /sandboxes', () => {
     expect(body.docker_host).toBe('tcp://1.2.3.4:32001')
   })
 
-  it('returns 400 when name is missing', async () => {
+  it('no name: a generated one, in the answer', async () => {
+    for (const body of [{}, { name: null }]) {
+      const res = await handler(jsonReq(body))
+      expect(res.status).toBe(201)
+      expect((await res.json()).name).toBe('k3x9q2')
+      expect(vi.mocked(sandboxService.createSandbox).mock.lastCall?.[0]).toBe('k3x9q2')
+    }
+  })
+
+  it('no name: one another create took meanwhile is drawn again, up to three times', async () => {
+    vi.mocked(sandboxService.suggestName).mockResolvedValueOnce('dupe').mockResolvedValueOnce('dupe')
     const res = await handler(jsonReq({}))
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(201)
+    expect((await res.json()).name).toBe('k3x9q2')
+    vi.mocked(sandboxService.suggestName).mockResolvedValueOnce('dupe').mockResolvedValueOnce('dupe').mockResolvedValueOnce('dupe')
+    expect((await handler(jsonReq({}))).status).toBe(409)
+  })
+
+  it('no name and none free: 503', async () => {
+    vi.mocked(sandboxService.suggestName).mockResolvedValueOnce(null)
+    const res = await handler(jsonReq({}))
+    expect(res.status).toBe(503)
+    expect((await res.json()).error).toMatch(/give one/)
+  })
+
+  it('a given name is never replaced, not even when taken', async () => {
+    vi.mocked(sandboxService.suggestName).mockClear()
+    expect((await handler(jsonReq({ name: 'dupe' }))).status).toBe(409)
+    expect(sandboxService.suggestName).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 for an empty or non-string name', async () => {
+    for (const name of ['', '  ', 7]) expect((await handler(jsonReq({ name }))).status).toBe(400)
   })
 
   it('returns 409 when sandbox already exists', async () => {

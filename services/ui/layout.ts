@@ -237,8 +237,8 @@ export const SANDBOX_VIEW_BODY = `
 <dialog data-new-dialog class="wide">
   <form method="dialog" data-new-form>
     <h2>New sandbox</h2>
-    <label>Name<input name="name" required pattern="[a-z0-9][a-z0-9_-]{0,62}" placeholder="shop-demo"></label>
-    <small class="muted" data-name-hint>lowercase letters, digits, - and _</small>
+    <label>Name <small class="muted">a generated one, or type your own</small><input name="name" required pattern="[a-z0-9][a-z0-9_-]{0,62}" placeholder="shop-demo" autocomplete="off"></label>
+    <small class="muted"><span data-name-hint>lowercase letters, digits, - and _</span> · <button type="button" class="link" data-new-name>another name</button></small>
     <label class="adv">Runtime<select name="runtime" data-runtimes></select></label>
     <label>Template<select name="template" data-templates></select></label>
     <details class="adv" data-compose-section><summary>Compose <small class="muted">the stack inside the sandbox: edit the template's, or pick <b>empty</b> and paste your own</small></summary>

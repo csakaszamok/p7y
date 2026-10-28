@@ -16,14 +16,13 @@ export const openapi = {
   summary: 'Create sandbox',
   tags: ['sandboxes'],
   requestBody: {
-    required: true,
+    required: false,
     content: {
       'application/json': {
         schema: {
           type: 'object',
-          required: ['name'],
           properties: {
-            name: { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]{0,62}$', example: 'user1' },
+            name: { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]{0,62}$', example: 'user1', description: 'Omit for a generated one (six letters and digits, k3x9q2): the name in the answer says which. GET /sandbox-name suggests one first.' },
             runtime: { type: 'string', example: 'dind', description: 'How the sandbox runs (GET /runtimes). Omit for DEFAULT_RUNTIME (auto: sysbox where installed, else dind).' },
             template: { type: 'string', example: 'starter', description: 'What runs inside (GET /templates). Omit for DEFAULT_TEMPLATE (starter).' },
             cpus: { type: 'number', example: 2, description: 'CPU limit (cores). Default SANDBOX_CPUS; users up to SANDBOX_MAX_CPUS, the admin up to the host.' },
@@ -61,7 +60,7 @@ export const openapi = {
         }
       }
     },
-    400: { description: 'Invalid or missing name' },
+    400: { description: 'Invalid name' },
     401: { description: 'Unauthorized' },
     409: { description: 'Name taken/conflicting, or sandbox limit reached' },
     503: { description: 'No free ports available in template range' }
@@ -76,12 +75,14 @@ export default async (req: Request): Promise<Response> => {
   const body = await req.json().catch(() => ({}))
   const { name, runtime, template, compose, ssh_keys, cpus, memory, create_inner_stack, idle_timeout, deep_sleep_after } = body as { name?: string; runtime?: unknown; template?: unknown; compose?: unknown; ssh_keys?: unknown; cpus?: unknown; memory?: unknown; create_inner_stack?: boolean; idle_timeout?: unknown; deep_sleep_after?: unknown }
 
-  if (!name || typeof name !== 'string' || !name.trim()) {
-    return Response.json({ error: 'name is required' }, { status: 400 })
+  // No name (omitted or null): one is generated right before the create
+  const given = name === undefined || name === null ? undefined : name
+  if (given !== undefined && (typeof given !== 'string' || !given.trim())) {
+    return Response.json({ error: 'name must be a non-empty string, or omitted for a generated one' }, { status: 400 })
   }
 
-  const trimmed = name.trim()
-  if (!/^[a-z0-9][a-z0-9_-]{0,62}$/.test(trimmed)) {
+  const trimmed = given?.trim()
+  if (trimmed !== undefined && !/^[a-z0-9][a-z0-9_-]{0,62}$/.test(trimmed)) {
     return Response.json({ error: 'name must be 1-63 lowercase alphanumeric/underscore/hyphen characters' }, { status: 400 })
   }
 
@@ -163,9 +164,20 @@ export default async (req: Request): Promise<Response> => {
   }
 
   try {
-    const result = await sandboxService.createSandbox(trimmed, create_inner_stack ?? true, idle, deep, p.sub, templateName, runtimeName, compose as string | undefined, sshKeys, limits)
-    recordSandboxCreated(p.sub)
-    return Response.json(result, { status: 201 })
+    // A generated name another create took meanwhile: another one, up to three times
+    for (let attempt = 1; ; attempt++) {
+      const chosen = trimmed ?? await sandboxService.suggestName()
+      if (!chosen) return Response.json({ error: 'No free sandbox name was found: give one' }, { status: 503 })
+      try {
+        const result = await sandboxService.createSandbox(chosen, create_inner_stack ?? true, idle, deep, p.sub, templateName, runtimeName, compose as string | undefined, sshKeys, limits)
+        recordSandboxCreated(p.sub)
+        return Response.json(result, { status: 201 })
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : ''
+        if (trimmed === undefined && attempt < 3 && (msg.includes('already exists') || msg.includes('conflicts with an existing sandbox'))) continue
+        throw err
+      }
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     console.error('[POST /sandboxes] error:', err instanceof Error ? err.stack : err)

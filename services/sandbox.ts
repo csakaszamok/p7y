@@ -1,3 +1,4 @@
+import { generateSandboxName } from './sandboxNames'
 import { appsDomain } from './domains'
 import { publicUrl } from './session'
 import { frpsToml, newFrpsApiPassword } from './frpsApi'
@@ -181,6 +182,13 @@ function offlineApps(meta: SandboxMeta): Array<{ host: string; service: string }
 }
 
 export const sandboxService = {
+  /** A free name for a new sandbox nobody named (sandboxNames.ts): no sandbox has it or conflicts with it, and it
+   *  would not take one of Purgatorium's own addresses. Null when none was found. */
+  async suggestName(): Promise<string | null> {
+    const rawNames = existingRawNames(await listManagedContainers())
+    return generateSandboxName(raw => !rawNames.has(raw) && !conflictingRawName(raw, rawNames) && !ownHostTaken(raw))
+  },
+
   /** Creates a sandbox; while it does, a request to its address waits instead of starting it (wake.ts). */
   async createSandbox(rawName: string, createInnerStack = true, idleTimeout?: string, deepSleepAfter?: string, owner = 'admin', templateName?: string, runtimeName?: string, customCompose?: string, sshKeys?: string[], limits?: Limits): Promise<CreateSandboxResult> {
     const name = sandboxName(rawName)

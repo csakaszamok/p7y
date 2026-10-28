@@ -831,6 +831,20 @@ async function openNewDialog() {
   $('[data-compose-section]').open = tpl === 'empty' || $('[data-compose-editor]').value !== loadedCompose.text
   $('[data-new-error]').hidden = true
   dlg.showModal()
+  // An empty name (not one kept from a failed create) gets a generated one, selected: typing replaces it
+  if (!$('[data-new-form]').elements.name.value) await suggestName()
+}
+
+async function suggestName() {
+  const input = $('[data-new-form]').elements.name
+  try { input.value = (await api('/sandbox-name')).name } catch { return }
+  showNameHint()
+  input.focus(); input.select()
+}
+
+function showNameHint() {
+  const v = $('[data-new-form]').elements.name.value
+  $('[data-name-hint]').textContent = `lowercase letters, digits, - and _ · URLs look like ${v || 'name'}-….${location.hostname.replace(/^p9m\./, '')}`
 }
 
 async function submitNew(ev) {
@@ -972,9 +986,8 @@ function initSandboxes() {
   initTokenDialog()
   initExportDialog()
   initComposeDialog()
-  $('[data-new-form] input[name=name]').addEventListener('input', e => {
-    $('[data-name-hint]').textContent = `lowercase letters, digits, - and _ · URLs look like ${e.target.value || 'name'}-….${location.hostname.replace(/^p9m\./, '')}`
-  })
+  $('[data-new-form] input[name=name]').addEventListener('input', showNameHint)
+  $('[data-new-name]').addEventListener('click', suggestName)
   initSwapDialog()
   loadList().then(() => { if (view === 'mine') wakeFromLink() })
   setInterval(async () => { await loadList(); if (selected && !pending.has(selected) && !busy.has(selected)) showPanel(selected) }, 5000)
