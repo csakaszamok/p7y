@@ -1,41 +1,61 @@
 import { describe, it, expect } from 'vitest'
-import { innerCliEnv, composeConfigCheck, composeUpInner } from '../../services/compose'
+import { composeConfigInner, composeUpInner, type SandboxExec } from '../../services/compose'
 
-describe('innerCliEnv', () => {
-  // docker compose fills any ${VAR} it is not given from its own environment: a compose text
-  // written by a user must not see Purgatorium's secrets
-  it("passes only what the compose CLI needs, never Purgatorium's own settings", () => {
-    const env = innerCliEnv({ PATH: '/bin', HOME: '/root', ADMIN_TOKEN: 'secret', SESSION_SECRET: 's', OIDC_CLIENT_SECRET: 'o', DOCKER_CONFIG: '/root/.docker' },
-      { DOCKER_HOST: 'tcp://x:2376', DOCKER_TLS_VERIFY: '1', DOCKER_CERT_PATH: '/certs' })
-    expect(env).toEqual({ PATH: '/bin', HOME: '/root', DOCKER_CONFIG: '/root/.docker', DOCKER_HOST: 'tcp://x:2376', DOCKER_TLS_VERIFY: '1', DOCKER_CERT_PATH: '/certs' })
-  })
-})
+const ok = { code: 0, stdout: '', stderr: '' }
 
-describe('composeConfigCheck', () => {
-  it('gives up after its time limit instead of holding the create for ever', async () => {
-    const started = Date.now()
-    const problem = await composeConfigCheck('services: {}', { cwd: process.cwd(), timeoutMs: 300, command: [process.execPath, '-e', 'setTimeout(() => {}, 10000)'] })
-    expect(problem).toBe('docker compose config took too long')
-    expect(Date.now() - started).toBeLessThan(5000)
-  })
-})
-
-// The sandbox's dockerd starts about 1.5 s after its container: the first try right after compose up nearly always
-// meets "Cannot connect", and a 3 s pause after it was most of the inner stack's time
+// docker compose on a sandbox's stack runs in the sandbox (docker exec), never in the Purgatorium container: a compose
+// text written by a user (build, env_file, a provider's program…) reads and runs only what the sandbox has
 describe('composeUpInner', () => {
-  it('tries again every half second while the inner dockerd is starting, and says how many tries it took', async () => {
+  it('runs docker compose in the sandbox on its /inner file, with none of its environment', async () => {
+    const calls: Array<[string, string[]]> = []
+    await composeUpInner('p9m-x', 'inner', { exec: async (name, cmd) => { calls.push([name, cmd]); return ok } })
+    expect(calls).toHaveLength(1)
+    const [name, cmd] = calls[0]
+    expect(name).toBe('p9m-x')
+    expect(cmd.slice(0, 2)).toEqual(['env', '-i'])
+    expect(cmd.slice(cmd.indexOf('docker'))).toEqual(['docker', 'compose', '-f', '/inner/docker-compose.yml', '--project-name', 'inner', 'up', '-d', '--pull', 'missing'])
+  })
+
+  // The sandbox's dockerd starts about 1.5 s after its container: the first try right after compose up nearly always
+  // meets "Cannot connect", and a 3 s pause after it was most of the inner stack's time
+  it('tries again every half second while the sandbox or its dockerd is starting, and says how many tries it took', async () => {
     let calls = 0
     const waits: number[] = []
-    const tries = await composeUpInner('/x/docker-compose.yml', 'tcp://p9m-x:2376', '/certs', 'inner', {
-      run: async () => { if (++calls < 3) throw new Error('Cannot connect to the Docker daemon at tcp://p9m-x:2376'); return { stderr: '' } },
-      sleep: async ms => { waits.push(ms) },
-    })
-    expect(tries).toBe(3)
-    expect(waits).toEqual([500, 500])
+    const exec: SandboxExec = async () => {
+      calls++
+      if (calls === 1) throw new Error('(HTTP code 409) container stopped/paused - Container 3f2a is not running')
+      if (calls === 2) return { code: 1, stdout: '', stderr: 'Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?' }
+      // compose v5's words for it, while the socket is not there yet
+      if (calls === 3) return { code: 1, stdout: '', stderr: 'failed to connect to the docker API at unix:///var/run/docker.sock; check if the path is correct and if the daemon is running: dial unix /var/run/docker.sock: connect: no such file or directory' }
+      return ok
+    }
+    expect(await composeUpInner('p9m-x', 'inner', { exec, sleep: async ms => { waits.push(ms) } })).toBe(4)
+    expect(waits).toEqual([500, 500, 500])
   })
-  it('does not try again after another error', async () => {
-    await expect(composeUpInner('/x/docker-compose.yml', 'tcp://p9m-x:2376', '/certs', 'inner', {
-      run: async () => { throw new Error('services.web.ports must be a list') }, sleep: async () => {},
-    })).rejects.toThrow('must be a list')
+
+  it('does not try again after another error, and gives its message', async () => {
+    let calls = 0
+    await expect(composeUpInner('p9m-x', 'inner', {
+      exec: async () => { calls++; return { code: 1, stdout: '', stderr: 'services.web.ports must be a list\n' } }, sleep: async () => {},
+    })).rejects.toThrow('services.web.ports must be a list')
+    expect(calls).toBe(1)
+  })
+})
+
+describe('composeConfigInner', () => {
+  it('is null when docker compose takes the file, and runs at most 20 s', async () => {
+    let cmd: string[] = []
+    expect(await composeConfigInner('p9m-x', 'inner', { exec: async (_, c) => { cmd = c; return ok } })).toBeNull()
+    expect(cmd.slice(0, 2)).toEqual(['timeout', '20'])
+    expect(cmd.slice(-2)).toEqual(['config', '-q'])
+  })
+
+  it('names the problem without its warnings', async () => {
+    const stderr = 'time="x" level=warning msg="The \\"tag\\" variable is not set"\nvalidating /inner/docker-compose.yml: volumes.echo2 additional properties \'image\' not allowed\n'
+    expect(await composeConfigInner('p9m-x', 'inner', { exec: async () => ({ code: 15, stdout: '', stderr }) })).toBe("volumes.echo2 additional properties 'image' not allowed")
+  })
+
+  it('says when it took too long (e.g. a remote include)', async () => {
+    expect(await composeConfigInner('p9m-x', 'inner', { exec: async () => ({ code: 124, stdout: '', stderr: '' }) })).toBe('docker compose config took too long')
   })
 })

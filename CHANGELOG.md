@@ -4,6 +4,18 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Security
+
+- **A sandbox's stack is brought up by `docker compose` inside the sandbox,** on its own Docker, no longer in the Purgatorium container (which holds the host's Docker socket). A compose text given on create could make the CLI there run a program of the server's: keys added to compose after the list of refused ones was written got past it. Now whatever a compose file reads, builds or runs is the sandbox's. Needs the sandbox image foxglove 0.10.0 (the `sysbox` one now has `docker compose`), which the runtimes name.
+
+### Changed
+
+- **A compose text may use `build`, `env_file`, `include`, `extends.file` and `secrets`/`configs` from a file:** they read the sandbox's files (relative paths under `/inner`). A text docker compose refuses still makes no sandbox: it is taken away again, volumes too.
+
+### Fixed
+
+- The disk measurement no longer touches a sandbox while it is created or woken: one taken back during a measurement kept an empty volume.
+
 ## [0.12.20] - 2026-10-28
 
 Upgrading from 0.12.19: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.19.
