@@ -1,8 +1,8 @@
 // A single-use link to a project's .p9m folder (its Docker keys among them), as a tar. The agent unpacks it with
 // curl | tar: the keys go from Purgatorium to the disk and never pass through the model (copied by hand they get
 // garbled, and in an answer they end up in its context and transcript).
+import { readSandboxFile } from './sandboxFs'
 import crypto from 'node:crypto'
-import fs from 'node:fs'
 import path from 'node:path'
 import { sandboxParent } from './sandboxPaths'
 import { dockerHostName } from './dockerAccess'
@@ -73,6 +73,6 @@ export function projectLinkAnswer(sandbox: string, linkToken: string): { url: st
 
 /** The sandbox's Docker client keys, as its export reads them */
 export function readDockerKeys(sandbox: string, usersDir = sandboxParent(sandbox)): { ca_cert: string; client_cert: string; client_key: string } {
-  const read = (f: string) => fs.readFileSync(path.join(usersDir, sandbox, 'certs', 'client', f), 'utf8')
+  const read = (f: string) => readSandboxFile(path.join(usersDir, sandbox), `certs/client/${f}`, 64 * 1024)
   return { ca_cert: read('ca.pem'), client_cert: read('cert.pem'), client_key: read('key.pem') }
 }

@@ -46,7 +46,7 @@ describe('cleanPath / underRoot', () => {
 describe('ownTargets', () => {
   it("the sandbox container's own mount points, from its compose file (not its host mounts)", () => {
     const own = ownTargets(compose())
-    for (const t of ['/var/lib/docker', '/opt', '/root', '/home', '/srv', '/certs', '/inner', '/etc/docker/daemon.json']) expect(own).toContain(t)
+    for (const t of ['/var/lib/docker', '/opt', '/root', '/home', '/srv', '/certs/server', '/inner', '/etc/docker/daemon.json']) expect(own).toContain(t)
     const mounted = withMounts(compose(), [{ host: '/srv/shared', target: '/mnt/shared', readonly: false }])
     expect(ownTargets(mounted)).not.toContain('/mnt/shared')
   })
@@ -73,7 +73,7 @@ describe('validateMount', () => {
     expect(validateMount({ host: '/srv/shared' }, ctx(existing))).toMatch(/already/)
   })
   it("refuses a target on, above or under the sandbox's own mounts (from its compose file)", () => {
-    for (const t of ['/var/lib/docker', '/var/lib', '/var', '/var/lib/docker/volumes/x', '/opt', '/opt/data', '/root/x', '/home', '/srv/x', '/inner', '/certs/a']) {
+    for (const t of ['/var/lib/docker', '/var/lib', '/var', '/var/lib/docker/volumes/x', '/opt', '/opt/data', '/root/x', '/home', '/srv/x', '/inner', '/certs', '/certs/server/a']) {
       expect(validateMount({ host: '/srv/shared', target: t }, ctx()), t).toMatch(/own mount/)
     }
   })
@@ -132,7 +132,7 @@ describe('withMounts / readMounts', () => {
     const moved = withUsersDir(text, 'p9m-shop', HOST, '/new/sandboxes/admin')
     expect(readMounts(moved)).toEqual([inDir])
     expect(sandbox(moved).volumes).toContainEqual(expect.objectContaining({ source: inDir.host }))
-    expect(sandbox(moved).volumes).toContain('/new/sandboxes/admin/p9m-shop/certs:/certs')
+    expect(sandbox(moved).volumes).toContain('/new/sandboxes/admin/p9m-shop/certs/server:/certs/server:ro')
   })
 })
 

@@ -9,7 +9,7 @@ describe('the middlewares Traefik reads', () => {
       access: (n: string): Record<string, 'public' | 'domain' | 'owner'> | null => n === 'p9m-a' ? { a: 'public' as const } : n === 'p9m-b' ? { b1: 'public' as const, b2: 'owner' as const } : null,
     })
     expect(cfg.http.middlewares['access-p9m-a']).toEqual({ headers: { customRequestHeaders: { 'X-P9m-User': '' } } })
-    expect(cfg.http.middlewares['access-p9m-b']).toEqual({ forwardAuth: { address: 'http://p9m:3001/auth/app', trustForwardHeader: true, authResponseHeaders: ['X-P9m-User', 'Cookie'] } })
+    expect(cfg.http.middlewares['access-p9m-b']).toEqual({ forwardAuth: { address: 'http://p9m-internal:3001/auth/app', trustForwardHeader: true, authResponseHeaders: ['X-P9m-User', 'Cookie'] } })
     // Never seen running (just created): forwardAuth until its labels are known, never open by not knowing
     expect(cfg.http.middlewares['access-p9m-c']).toHaveProperty('forwardAuth')
   })

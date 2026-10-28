@@ -14,11 +14,13 @@ docker_compose:
         FRP_TOKEN: "${frp_token}"
         BASE_DOMAIN: "${host_domain}"
       volumes:
-        - "${sandbox_dir}/certs:/certs"
+        # Read-only, and of /certs only its dockerd's own certificate: what Purgatorium reads and writes (its client
+        # keys, the inner compose file) cannot be swapped for a symlink to one of Purgatorium's files
+        - "${sandbox_dir}/certs/server:/certs/server:ro"
         - "${sandbox_dir}/instance-name:/etc/instance/name:ro"
         - "${sandbox_dir}/authorized_keys:/etc/instance/authorized_keys:ro"
         - "${sandbox_dir}/ssh-host-keys:/etc/ssh/host-keys"
-        - "${sandbox_dir}/inner:/inner"
+        - "${sandbox_dir}/inner:/inner:ro"
         - "${sandbox_dir}/daemon.json:/etc/docker/daemon.json:ro"
         - docker_data:/var/lib/docker
         # The sandbox's own files survive a deep sleep or a recreated container
