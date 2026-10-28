@@ -4,6 +4,22 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.21] - 2026-10-28
+
+Upgrading from 0.12.20: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.20. Sandboxes made before keep running as they are; new ones use the sandbox image foxglove 0.10.0.
+
+### Security
+
+- **A sandbox's stack is brought up by `docker compose` inside the sandbox,** on its own Docker, no longer in the Purgatorium container (which holds the host's Docker socket). A compose text given on create could make the CLI there run a program of the server's: keys added to compose after the list of refused ones was written got past it. Now whatever a compose file reads, builds or runs is the sandbox's. Needs the sandbox image foxglove 0.10.0 (the `sysbox` one now has `docker compose`), which the runtimes name.
+
+### Changed
+
+- **A compose text may use `build`, `env_file`, `include`, `extends.file` and `secrets`/`configs` from a file:** they read the sandbox's files (relative paths under `/inner`). A text docker compose refuses still makes no sandbox: it is taken away again, volumes too.
+
+### Fixed
+
+- The disk measurement no longer touches a sandbox while it is created or woken: one taken back during a measurement kept an empty volume.
+
 ## [0.12.20] - 2026-10-28
 
 Upgrading from 0.12.19: download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.19.
@@ -749,7 +765,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.20...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.21...HEAD
+[0.12.21]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.21
 [0.12.20]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.20
 [0.12.19]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.19
 [0.12.18]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.18

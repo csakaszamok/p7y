@@ -55,6 +55,14 @@ describe('measureOnce', () => {
     expect(measure).not.toHaveBeenCalled()
   })
 
+  // Its volumes are mounted by name, and Docker makes a missing one: a create taken back (compose down -v) while it
+  // was measured left an empty volume behind
+  it('leaves a sandbox alone while it is being created or woken', async () => {
+    const measure = vi.fn(async (_: string) => G)
+    await measureOnce({ list: async () => [{ name: 'p9m-a', status: 'running' }, { name: 'p9m-b', status: 'running' }], measure, busy: n => n === 'p9m-a', now: () => t0 })
+    expect(measure.mock.calls.map(c => c[0])).toEqual(['p9m-b'])
+  })
+
   it('reports use against the limit, over when above it, and keeps the results across a restart', async () => {
     await measureOnce({ list: async () => [{ name: 'p9m-b', status: 'exited' }], measure: async () => 30 * G, now: () => t0, intervalMs: 1 })
     const composePath = tempCompose(compose())

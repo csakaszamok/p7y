@@ -6,7 +6,8 @@ vi.mock('../../services/docker', () => ({
   resolveHostSandboxesDir: vi.fn().mockResolvedValue('/host/opt/sandboxes'),
   getContainerIdByName: vi.fn().mockResolvedValue('cnt-abc'),
   getContainerStatus: vi.fn().mockResolvedValue('running'),
-  engineApiVersion: vi.fn().mockResolvedValue('1.48')
+  engineApiVersion: vi.fn().mockResolvedValue('1.48'),
+  execRun: vi.fn()
 }))
 
 vi.mock('../../services/compose', () => ({
@@ -15,7 +16,8 @@ vi.mock('../../services/compose', () => ({
   composeStop: vi.fn().mockResolvedValue(undefined),
   composeStart: vi.fn().mockResolvedValue(undefined),
   composeDown: vi.fn().mockResolvedValue(undefined),
-  composeConfigCheck: vi.fn().mockResolvedValue(null)
+  composeConfigInner: vi.fn().mockResolvedValue(null),
+  composeRemove: vi.fn().mockResolvedValue(undefined)
 }))
 
 // Opening the Sablier session needs Traefik; here only that it is asked for
@@ -80,7 +82,7 @@ const realFs = await vi.importActual<typeof import('fs')>('fs')
 import { listManagedContainers } from '../../services/docker'
 import { primeSablierSession } from '../../services/wake'
 import { writeAuthorizedKeys } from '../../services/sandboxSsh'
-import { composeUp, composeUpInner, composeDown, composeConfigCheck, composeStart, composeStop } from '../../services/compose'
+import { composeUp, composeUpInner, composeDown, composeConfigInner, composeRemove, composeStart, composeStop } from '../../services/compose'
 import { listProjectVolumes, exportVolume, removeVolume, stopProjectContainers, removeProjectContainers } from '../../services/project'
 import fs from 'fs'
 import yaml from 'js-yaml'
@@ -378,7 +380,7 @@ describe('sandbox service', () => {
     expect(Object.keys((yaml.load(inner) as { services: Record<string, unknown> }).services)).toEqual(['db', 'redis', 'ssh', 'pgweb'])
     expect(inner).toContain(`POSTGRES_PASSWORD: ${result.extras.demo_password}`)
     expect(inner).not.toMatch(OURS)
-    expect(vi.mocked(composeUpInner)).toHaveBeenCalledWith('/opt/sandboxes/admin/p9m-demo9/inner/docker-compose.yml', 'tcp://p9m-demo9:2376', '/opt/sandboxes/admin/p9m-demo9/certs/client', 'inner')
+    expect(vi.mocked(composeUpInner)).toHaveBeenCalledWith('p9m-demo9', 'inner', { exec: expect.any(Function) })
   }, 60000)
 
   it('builds the inner stack from a given compose text: comments kept, variables filled, template before_script run', async () => {
@@ -395,21 +397,23 @@ describe('sandbox service', () => {
     expect(labels['p9m.compose']).toBe('edited')
   }, 60000)
 
-  it('checks a given compose text with docker compose before starting anything, and removes the sandbox dir when it fails', async () => {
-    vi.mocked(composeConfigCheck).mockResolvedValueOnce("volumes.echo2 additional properties 'image' not allowed")
-    vi.mocked(composeUp).mockClear()
+  it('checks a given compose text with docker compose in the sandbox before its stack, and takes the sandbox away when it fails', async () => {
+    vi.mocked(composeConfigInner).mockResolvedValueOnce("volumes.echo2 additional properties 'image' not allowed")
+    vi.mocked(composeUpInner).mockClear()
+    vi.mocked(composeRemove).mockClear()
     vi.mocked(fs.rmSync).mockClear()
     await expect(sandboxService.createSandbox('ed3', true, undefined, undefined, 'admin', 'starter', 'dind', 'services:\n  a:\n    image: x\n'))
       .rejects.toThrow("compose is not a valid compose file: volumes.echo2 additional properties 'image' not allowed")
-    expect(composeConfigCheck).toHaveBeenCalledWith(expect.stringContaining('image: x'), { cwd: '/opt/sandboxes/admin/p9m-ed3/inner' })
-    expect(composeUp).not.toHaveBeenCalled()
+    expect(composeConfigInner).toHaveBeenCalledWith('p9m-ed3', 'inner', { exec: expect.any(Function) })
+    expect(composeUpInner).not.toHaveBeenCalled()
+    expect(composeRemove).toHaveBeenCalledWith('/opt/sandboxes/admin/p9m-ed3/docker-compose.yml')
     expect(vi.mocked(fs.rmSync)).toHaveBeenCalledWith('/opt/sandboxes/admin/p9m-ed3', { recursive: true, force: true })
   }, 60000)
 
   it('does not run the docker compose check for a template text', async () => {
-    vi.mocked(composeConfigCheck).mockClear()
-    await sandboxService.createSandbox('ed4', false)
-    expect(composeConfigCheck).not.toHaveBeenCalled()
+    vi.mocked(composeConfigInner).mockClear()
+    await sandboxService.createSandbox('ed4')
+    expect(composeConfigInner).not.toHaveBeenCalled()
   }, 60000)
 
   it('labels a sandbox built from its template text as compose: template', async () => {

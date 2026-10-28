@@ -19,7 +19,7 @@ const NEW = '/data/p9m/opt/sandboxes/admin'
 // The shape the templates generate: bind mounts from ${host_users_dir}/<name>/
 const compose = (dir: string, name: string) => `services:
   sandbox:
-    image: ghcr.io/csakaszamok/foxglove:0.9.0-dind
+    image: ghcr.io/csakaszamok/foxglove:0.10.0-dind
     volumes:
       - ${dir}/${name}/certs:/certs
       - ${dir}/${name}/instance-name:/etc/instance/name:ro

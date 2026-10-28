@@ -88,6 +88,8 @@ export function diskOf(name: string, composePath = composePathOf(name)): DiskInf
 export async function measureOnce(deps: {
   list: () => Promise<Array<{ name: string; status: string }>>
   measure: (name: string) => Promise<number>
+  /** Being created or woken: not now (a create taken back removes its volumes, and a bind by name would make one again) */
+  busy?: (name: string) => boolean
   now?: () => Date
   intervalMs?: number
 }): Promise<void> {
@@ -103,7 +105,7 @@ export async function measureOnce(deps: {
     const last = s.get(sb.name)
     const running = sb.status === 'running'
     const due = !last || (running ? now().getTime() - Date.parse(last.at) >= interval : last.running)
-    if (!due) continue
+    if (!due || deps.busy?.(sb.name)) continue
     try {
       const used = await deps.measure(sb.name)
       s.set(sb.name, { used, at: now().toISOString(), running })
@@ -157,8 +159,8 @@ export function startDiskSampler(): void {
   const tick = () => {
     if (busy) return
     busy = true
-    import('./sandbox')
-      .then(({ sandboxService }) => measureOnce({ list: () => sandboxService.listSandboxStates(), measure: measureVolume }))
+    Promise.all([import('./sandbox'), import('./wake')])
+      .then(([{ sandboxService }, { wakeInProgress }]) => measureOnce({ list: () => sandboxService.listSandboxStates(), measure: measureVolume, busy: wakeInProgress }))
       .catch(err => console.error('[disk]', err instanceof Error ? err.message : err))
       .finally(() => { busy = false })
   }
