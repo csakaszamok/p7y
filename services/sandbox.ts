@@ -22,9 +22,9 @@ import { sshKeysOf } from './sshKeys'
 import { resourceDefaults, memoryForCompose, type Limits } from './resources'
 import { sandboxName, rawNameOf, readLabel } from './naming'
 import { sessionDurationOf, cappedSleepDefault } from './sleepSettings'
-import { listManagedContainers, resolveHostSandboxesDir, type SandboxMeta } from './docker'
+import { listManagedContainers, resolveHostSandboxesDir, execRun, type SandboxMeta } from './docker'
 import { sandboxDir, sandboxParent, listSandboxDirs, newSandboxDir, archiveRoot, ownerDirName, ownerOfCompose, sandboxesDir, forgetSandboxDir, sandboxesMounted, SANDBOX_NAME } from './sandboxPaths'
-import { composeUp, composeStop, composeStart, composeDown, composeUpInner, composeConfigCheck } from './compose'
+import { composeUp, composeStop, composeStart, composeDown, composeUpInner, composeConfigInner, composeRemove } from './compose'
 import { concurrency } from './concurrency'
 import { parseComposeText } from './composeCache'
 import { hashPassword } from './registryAuth'
@@ -306,16 +306,6 @@ export const sandboxService = {
     if (createInnerStack) {
       // A given compose text keeps its own comments and layout; the template's goes through yaml.dump as before
       const inner = customCompose === undefined ? applyVars(template.compose, vars) : applyVarsText(customCompose, vars)
-      // A given text is checked by docker compose itself before anything starts: a schema error found
-      // by the inner compose up would leave a half-made sandbox (outer containers up) holding the name
-      if (customCompose !== undefined) {
-        const problem = await composeConfigCheck(inner, { cwd: `${dir}/inner` })
-        if (problem) {
-          fs.rmSync(dir, { recursive: true, force: true })
-          removeEmptyOwnerDir(dir)
-          throw new Error(`compose is not a valid compose file: ${problem}`)
-        }
-      }
       fs.writeFileSync(`${dir}/inner/docker-compose.yml`, inner)
       innerText = inner
     }
@@ -333,7 +323,20 @@ export const sandboxService = {
     timer.lap('compose up')
 
     if (createInnerStack) {
-      const tries = await composeUpInner(`${dir}/inner/docker-compose.yml`, `tcp://${name}:2376`, clientCertsDir, template.inner_project_name ?? 'inner')
+      const project = template.inner_project_name ?? 'inner'
+      // docker compose runs in the sandbox (see composeUpInner). A given text is checked by it first: a schema error
+      // found by its compose up would leave a half-made sandbox holding the name, so the sandbox is taken down again
+      if (customCompose !== undefined) {
+        const problem = await composeConfigInner(name, project, { exec: execRun })
+        if (problem) {
+          await composeRemove(`${dir}/docker-compose.yml`).catch(err => console.warn(`[create] ${name}: ${err instanceof Error ? err.message : err}`))
+          fs.rmSync(dir, { recursive: true, force: true })
+          removeEmptyOwnerDir(dir)
+          throw new Error(`compose is not a valid compose file: ${problem}`)
+        }
+        timer.lap('compose check')
+      }
+      const tries = await composeUpInner(name, project, { exec: execRun })
       timer.lap('inner stack', tries > 1 ? `${tries} tries` : undefined)
     }
 

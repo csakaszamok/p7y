@@ -22,28 +22,14 @@ describe('checkCompose', () => {
   })
 })
 
-// The compose CLI runs inside the Purgatorium container: these keys would make it read Purgatorium's
-// own files (other sandboxes' TLS keys, the token store) or environment (ADMIN_TOKEN) for the user
-describe('checkCompose: nothing that makes the compose CLI read files or settings of the Purgatorium server', () => {
+// docker compose runs in the sandbox (composeUpInner): what these read or build is the sandbox's own
+describe("checkCompose: build, env_file, include and the like are the sandbox's business", () => {
   const svc = (extra: string) => 'services:\n  web:\n    image: nginx\n' + extra
-  const cases: Array<[string, string]> = [
-    [svc('    build: /opt/users\n'), 'services.web.build'],
-    [svc('    build:\n      context: .\n'), 'services.web.build'],
-    [svc('    env_file: /app/data/x.env\n'), 'services.web.env_file'],
-    [svc('    label_file: ./labels\n'), 'services.web.label_file'],
-    [svc('    extends:\n      file: /app/templates/starter/compose.yaml\n      service: portainer\n'), 'services.web.extends.file'],
-    [svc('') + 'include:\n  - /app/templates/tcp-demo/compose.yaml\n', 'include'],
-    [svc('') + 'secrets:\n  s:\n    file: /app/data/registry-auth.key\n', 'secrets.s.file'],
-    [svc('') + 'configs:\n  c:\n    environment: ADMIN_TOKEN\n', 'configs.c.environment'],
-  ]
-  for (const [text, key] of cases) {
-    it(`refuses ${key}`, () => {
-      expect(checkCompose(text)).toBe(`compose may not use ${key}: it would read files or settings of the Purgatorium server (build images and the like through DOCKER_HOST or Portainer)`)
-    })
+  for (const text of [
+    svc('    build:\n      context: .\n'), svc('    env_file: ./x.env\n'), svc('    label_file: ./labels\n'),
+    svc('    extends:\n      file: ./base.yaml\n      service: web\n'), svc('') + 'include:\n  - ./more.yaml\n',
+    svc('') + 'secrets:\n  s:\n    file: ./s.txt\n', svc('    provider:\n      type: model\n'),
+  ]) {
+    it(`takes ${JSON.stringify(text.split('\n').slice(3).join(' ').trim())}`, () => expect(checkCompose(text)).toBeNull())
   }
-
-  it('allows extends within the same file, external secrets and bind mounts (those are on the sandbox)', () => {
-    const text = svc('    extends:\n      service: base\n    volumes:\n      - /data:/data\n  base:\n    image: nginx\n') + 'secrets:\n  s:\n    external: true\n'
-    expect(checkCompose(text)).toBeNull()
-  })
 })
