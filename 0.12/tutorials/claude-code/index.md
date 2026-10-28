@@ -7,7 +7,7 @@ You have an app on your computer (a website, a dashboard, a small tool) and you 
 ## 1. Make a sandbox
 
 1. Open your Purgatorium address in the browser and sign in.
-1. Click **+ New sandbox**, give it a short name (for example `shop`), keep the template and click **Create**. It takes 10–30 seconds.
+1. Click **+ New sandbox**. It comes with a generated name (like `k3x9q2`): keep it or type your own (for example `shop`), keep the template and click **Create**. It takes 10–30 seconds.
 
 A sandbox is your own small server: your app runs there, not on your computer.
 

@@ -1655,7 +1655,7 @@
 <tr>
 <td><code>POST</code></td>
 <td><code>/sandboxes</code></td>
-<td>Create a sandbox (<code>name</code>; optional <code>runtime</code> like <code>dind</code>, <code>template</code> like <code>starter</code>, <code>compose</code> (your own compose text instead of the template's; its <code>before_script</code> and defaults still apply), <code>idle_timeout</code> like <code>30m</code>, <code>deep_sleep_after</code> like <code>7d</code> or <code>off</code>, <code>ssh_keys</code> (extra SSH public keys for this sandbox only), <code>cpus</code> like <code>2</code>, <code>memory</code> like <code>4g</code>, <code>create_inner_stack: false</code> for no template stack)</td>
+<td>Create a sandbox (<code>name</code>, or none for a generated one like <code>k3x9q2</code>; optional <code>runtime</code> like <code>dind</code>, <code>template</code> like <code>starter</code>, <code>compose</code> (your own compose text instead of the template's; its <code>before_script</code> and defaults still apply), <code>idle_timeout</code> like <code>30m</code>, <code>deep_sleep_after</code> like <code>7d</code> or <code>off</code>, <code>ssh_keys</code> (extra SSH public keys for this sandbox only), <code>cpus</code> like <code>2</code>, <code>memory</code> like <code>4g</code>, <code>create_inner_stack: false</code> for no template stack)</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
@@ -1681,6 +1681,11 @@
 <td><code>PATCH</code></td>
 <td><code>/sandboxes/:name</code></td>
 <td>Change <code>idle_timeout</code> and/or <code>deep_sleep_after</code> (see <a href="../sleep-wake/">Sleep and wake</a>), <code>cpus</code> and/or <code>memory</code> (see <a href="../resources/#cpu-and-memory">CPU and memory</a>)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/sandbox-name</code></td>
+<td>A free name for a new sandbox (<code>{"name": "k3x9q2"}</code>): what <strong>New sandbox</strong> fills in</td>
 </tr>
 <tr>
 <td><code>POST</code></td>
