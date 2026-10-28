@@ -1,3 +1,4 @@
+import { readSandboxFile, writeSandboxFile } from './sandboxFs'
 import { appsDomain, hostDomain } from './domains'
 import fs from 'fs'
 import path from 'path'
@@ -15,7 +16,7 @@ export function dockerHostName(name: string, domain = appsDomain()): string {
 /** Whether the sandbox's dockerd certificate carries the docker name (sandboxes made before do not). */
 export function dockerAccessState(name: string, usersDir = sandboxParent(name)): 'ready' | 'needs-certs' {
   try {
-    const cert = forge.pki.certificateFromPem(fs.readFileSync(path.join(usersDir, name, 'certs/server/cert.pem'), 'utf8'))
+    const cert = forge.pki.certificateFromPem(readSandboxFile(path.join(usersDir, name), 'certs/server/cert.pem', 64 * 1024))
     const ext = cert.getExtension('subjectAltName') as { altNames?: Array<{ value?: string }> } | null
     return (ext?.altNames ?? []).some(a => a.value === dockerHostName(name)) ? 'ready' : 'needs-certs'
   } catch { return 'needs-certs' }
@@ -49,13 +50,9 @@ function withOwnRegistry(file: string): string {
 export async function regenerateCerts(name: string, deps: { usersDir?: string; restart?: (name: string) => Promise<void> } = {}): Promise<void> {
   const dir = path.join(deps.usersDir ?? sandboxParent(name), name)
   const b = generateCertBundle(process.env.HOST_ADDRESS ?? '127.0.0.1', name, 2048, [dockerHostName(name)])
+  // The sandbox could write its /certs before 0.12.22: never through what it may have put there
   const write = (sub: string, files: Record<string, string>) => {
-    fs.mkdirSync(path.join(dir, 'certs', sub), { recursive: true })
-    for (const [f, v] of Object.entries(files)) {
-      const target = path.join(dir, 'certs', sub, f)
-      fs.writeFileSync(target, v)
-      fs.chmodSync(target, f === 'key.pem' ? 0o600 : 0o644) // the mode option only applies to a new file
-    }
+    for (const [f, v] of Object.entries(files)) writeSandboxFile(dir, `certs/${sub}/${f}`, v, f === 'key.pem' ? 0o600 : 0o644)
   }
   write('server', { 'ca.pem': b.caCert, 'cert.pem': b.serverCert, 'key.pem': b.serverKey })
   write('client', { 'ca.pem': b.caCert, 'cert.pem': b.clientCert, 'key.pem': b.clientKey })

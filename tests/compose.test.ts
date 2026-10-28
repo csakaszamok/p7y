@@ -35,7 +35,14 @@ describe('docker-compose.yml', () => {
   })
   // Not on the published API port: Traefik reaches them on the internal one
   it("Traefik reads the access middlewares from Purgatorium's internal port", () => {
-    expect(compose.services.traefik.command).toContain('--providers.http.endpoint=http://p9m:3001/traefik/access')
+    expect(compose.services.traefik.command).toContain('--providers.http.endpoint=http://p9m-internal:3001/traefik/access')
+    const p9m = compose.services.p9m as unknown as { networks: Record<string, { aliases?: string[] } | null> }
+    expect(p9m.networks['sablier-net']?.aliases).toEqual(['p9m-internal'])
+    expect((compose as unknown as { networks: Record<string, { internal?: boolean }> }).networks['sablier-net'].internal).toBe(true)
+  })
+  // Its API (every router: every user's sandboxes and apps) was open to the sandboxes on traefik-net
+  it("Traefik's API is not served", () => {
+    expect((compose.services.traefik.command ?? []).some((c: string) => c.startsWith('--api'))).toBe(false)
   })
 })
 
