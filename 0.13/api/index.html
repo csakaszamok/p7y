@@ -1730,7 +1730,7 @@
 <tr>
 <td><code>POST</code></td>
 <td><code>/device/token</code></td>
-<td>Hand in the confirmation code the approval page showed (no token; <code>device_code</code> and <code>code</code> in the body): <code>approved</code> with the same answer as <code>project-link</code>, once; <code>400</code> <code>{"status": "wrong", "tries_left"}</code> (5 wrong ones end it), <code>403</code> <code>denied</code>, <code>409</code> <code>pending</code>, <code>410</code> <code>expired</code> (also used or ended). The approval resets the 10 minutes</td>
+<td>Hand in the confirmation code the approval page showed (no token; <code>device_code</code> and <code>code</code> in the body): <code>approved</code> with the same answer as <code>project-link</code> and <code>name</code>, the sandbox as the user knows it (<code>shop</code> for <code>p9m-shop</code>), once; <code>400</code> <code>{"status": "wrong", "tries_left"}</code> (5 wrong ones end it), <code>403</code> <code>denied</code>, <code>409</code> <code>pending</code>, <code>410</code> <code>expired</code> (also used or ended). The approval resets the 10 minutes</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
