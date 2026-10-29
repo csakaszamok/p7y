@@ -255,7 +255,9 @@ services:
     volumes:
       - registry_cache_data:/var/lib/registry
     networks:
-      - traefik-net
+      traefik-net:
+        # The sandboxes reach it through their own socat, which goes here by this name
+        aliases: [p9m-registry-cache]
 
 volumes:
   registry_data:

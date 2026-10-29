@@ -85,7 +85,7 @@ export async function resolveTcpHost(sni: string, opts: { deadlineMs?: number; r
   const settled = running && !waking.has(sandbox) && !(Date.now() - startedAt < STARTUP_GRACE_MS)
 
   const deadline = Date.now() + (opts.deadlineMs ?? 60_000)
-  const connectHost = opts.host ?? sandbox // the sandbox (DinD) container on traefik-net
+  const connectHost = opts.host ?? sandbox // its frps on traefik-net (an alias of the sandbox's name), frpc's tcp proxies
   while (Date.now() < deadline && !opts.signal?.aborted) {
     if (shell) {
       const port = opts.sshPort ?? 22

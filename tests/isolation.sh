@@ -2,9 +2,9 @@
 # Integration test: one sandbox's apps cannot reach another sandbox's apps.
 # Creates sandbox A (no inner stack) and B (starter stack), then from a throwaway
 # container inside A tries to reach a port B publishes on 127.0.0.1 only, B's
-# inner containers, Sablier and B's frps API without its password — all must fail,
-# while B's tunnel keeps working. A port B publishes on all interfaces (the
-# starter's 5678) is reachable from A by design: that is what publishing means.
+# inner containers, Sablier, B's frps and socat (where B's published ports, SSH
+# and Docker are) and B's sandbox container by name — all must fail, while B's
+# tunnel keeps working. Since 0.12.23 a sandbox is on its own network only.
 #
 # Usage: bash tests/isolation.sh   (stack running)
 #
@@ -45,7 +45,9 @@ echo "=== Sandbox isolation integration test ==="
 info "[1/3] Creating $FA (no inner stack) and $FB (with inner stack)..."
 curl -sf -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $P9M_TOKEN" -d "{\"name\":\"$A\",\"create_inner_stack\":false}" \
   "$P9M_API/sandboxes" >/dev/null || fail "create $FA failed"
-curl -sf -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $P9M_TOKEN" -d "{\"name\":\"$B\"}" \
+# The starter's app, public: the checks open it without signing in (an app's default level is owner since 0.12.12)
+B_COMPOSE='services:\n  http-echo:\n    image: hashicorp/http-echo:latest\n    container_name: http-echo\n    command: [\"-text=hello ${name}\"]\n    ports: [\"5678:5678\"]\n    labels:\n      p9m.access: public\n'
+curl -sf -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $P9M_TOKEN" -d "{\"name\":\"$B\",\"template\":\"empty\",\"compose\":\"$B_COMPOSE\"}" \
   "$P9M_API/sandboxes" >/dev/null || fail "create $FB failed"
 ECHO_HOST="$B-inner-http-echo-port5678.$HOST_DOMAIN"
 for i in $(seq 1 40); do
@@ -55,17 +57,22 @@ done
 pass "Both created; B's app serves through its tunnel"
 
 info "[2/3] Collecting B's addresses..."
-B_IP=$(docker inspect -f '{{(index .NetworkSettings.Networks "traefik-net").IPAddress}}' "$FB")
+# B's container is on no network A could share; its ports are on its frps (traefik-net), its web relay on its socat
+[ -z "$(docker inspect -f '{{with index .NetworkSettings.Networks "traefik-net"}}{{.IPAddress}}{{end}}' "$FB")" ] || fail "$FB is on traefik-net"
+B_FRPS_IP=$(docker inspect -f '{{(index .NetworkSettings.Networks "traefik-net").IPAddress}}' "$FB-frps")
+B_SOCAT_IP=$(docker inspect -f '{{(index .NetworkSettings.Networks "traefik-net").IPAddress}}' "$FB-socat")
 B_ECHO_IP=$(docker exec "$FB" docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' http-echo)
 SABLIER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker compose ps -q sablier))
-echo "  B DinD (traefik-net): $B_IP   B http-echo (inside B): $B_ECHO_IP   Sablier: $SABLIER_IP"
+echo "  B frps: $B_FRPS_IP   B socat: $B_SOCAT_IP   B http-echo (inside B): $B_ECHO_IP   Sablier: $SABLIER_IP"
 
 info "[3/3] Probing B and Sablier from an app inside $FA..."
 # A port published on 127.0.0.1 only is the sandbox's own
 docker exec "$FB" docker run -d --name iso-private -p 127.0.0.1:5681:5678 hashicorp/http-echo -text=private >/dev/null
 OUT=$(docker exec "$FA" docker run --rm alpine sh -c "
   sleep 2
-  nc -z -w3 $B_IP 5681       && echo LEAK:private-5681
+  for p in 5678 5681 22 2376 65075 65080; do nc -z -w3 $B_FRPS_IP \$p && echo LEAK:frps-\$p; done
+  for p in 8080 7500 5000; do nc -z -w3 $B_SOCAT_IP \$p && echo LEAK:socat-\$p; done
+  nc -z -w3 $FB 5678         && echo LEAK:by-name
   nc -z -w3 $B_ECHO_IP 5678  && echo LEAK:inner-private-ip
   nc -z -w3 $SABLIER_IP 10000 && echo LEAK:sablier
   nc -z -w3 sablier 10000    && echo LEAK:sablier-by-name
@@ -73,17 +80,9 @@ OUT=$(docker exec "$FA" docker run --rm alpine sh -c "
 " 2>&1)
 echo "$OUT" | grep -q probed || fail "probe container did not run: $OUT"
 LEAKS=$(echo "$OUT" | grep LEAK || true)
-[ -z "$LEAKS" ] || fail "reachable from $FA: $(echo "$LEAKS" | tr '\n' ' ')"
-pass "B's 127.0.0.1-published ports, inner containers (private IPs) and Sablier are unreachable from $FA"
-
-OPEN=$(docker exec "$FA" docker run --rm alpine sh -c "wget -qO- -T 5 http://$B_IP:5678/ || echo closed" 2>&1 | tail -1)
-[ "$OPEN" = "hello $FB" ] || fail "the port B's starter publishes on all interfaces is not reachable from $FA (got: $OPEN)"
-pass "A port B publishes on all interfaces is reachable from $FA (by design)"
-
-B_SOCAT_IP=$(docker inspect -f '{{(index .NetworkSettings.Networks "traefik-net").IPAddress}}' "$FB-socat")
-FRPS=$(docker exec "$FA" docker run --rm alpine sh -c "wget -qO- -T 5 http://$B_SOCAT_IP:7500/api/proxy/http 2>&1 || true" 2>&1 | tail -1)
-echo "$FRPS" | grep -q '401' || fail "B's frps API from $FA without its password: $FRPS"
-pass "B's frps API answers 401 to $FA without its password"
+[ -z "$LEAKS" ] || fail "reachable from $FA: $(echo "$LEAKS" | tr '
+' ' ')"
+pass "Nothing of B is reachable from $FA: its published ports, SSH, Docker, frps, socat, inner containers; nor Sablier"
 
 [ "$(curl -sk -m 5 -H "Host: $ECHO_HOST" "$TRAEFIK_URL/" | head -c 5)" = "hello" ] || fail "B's tunnel stopped working"
 pass "B's tunnel still serves"

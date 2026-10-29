@@ -12,6 +12,7 @@ import { syncTlsConfig } from "./services/tlsConfig";
 import { migrateHostPaths } from "./services/pathMigration";
 import { migrateAppsDomain } from "./services/appsDomainMigration";
 import { migrateReadOnlyMounts } from "./services/mountMigration";
+import { migrateIsolatedNetwork } from "./services/networkMigration";
 import { startTcpGateway } from "./services/tcpGateway";
 import { resolveTcpHost, resolveDockerHost } from "./services/tcpRoutes";
 import { findSandboxDirByHost, primeSablierSession } from "./services/wake";
@@ -303,7 +304,7 @@ async function handle(req: IncomingMessage, res: ServerResponse, internal: boole
 }
 const server = createServer((req, res) => handle(req, res, false));
 server.listen(3000, () => console.log("Listening on :3000"));
-// Only for Traefik on the internal network (not published, not on traefik-net where the sandboxes are): app access
+// Only for Traefik on the internal network (not published, not on traefik-net with the sandboxes' frps and socat): app access
 internalListenAddress().then(addr => {
   if (!addr) console.warn(`[internal] WARNING: not on the ${INTERNAL_NETWORK} network: port ${INTERNAL_PORT} listens on every address, so a sandbox can read every sandbox's name and its apps' access levels. Use the docker-compose.yml of this release.`);
   createServer((req, res) => handle(req, res, true)).listen(INTERNAL_PORT, addr ?? undefined, () => console.log(`Listening on ${addr ?? ""}:${INTERNAL_PORT} (internal: app access)`));
@@ -357,7 +358,8 @@ for (const w of resourceDefaults().warnings) console.warn(`[resources] ${w}`);
 // made under another apps domain (APPS_DOMAIN set or changed): their apps under the current one
 migrateHostPaths().catch(err => console.error("[paths] migration failed:", err))
   .then(() => migrateAppsDomain()).catch(err => console.error("[apps-domain] migration failed:", err))
-  .then(() => migrateReadOnlyMounts()).catch(err => console.error("[mounts] migration failed:", err));
+  .then(() => migrateReadOnlyMounts()).catch(err => console.error("[mounts] migration failed:", err))
+  .then(() => migrateIsolatedNetwork()).catch(err => console.error("[network] migration failed:", err));
 for (const warning of [...insecureConfigWarnings(process.env), ...hostMountWarnings(process.env)]) console.warn(warning);
 
 
