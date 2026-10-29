@@ -7,7 +7,8 @@ vi.mock('../../services/docker', () => ({
   getContainerIdByName: vi.fn().mockResolvedValue('cnt-abc'),
   getContainerStatus: vi.fn().mockResolvedValue('running'),
   engineApiVersion: vi.fn().mockResolvedValue('1.48'),
-  execRun: vi.fn()
+  execRun: vi.fn(),
+  justStarted: vi.fn().mockResolvedValue(false)
 }))
 
 vi.mock('../../services/compose', () => ({

@@ -97,7 +97,8 @@ function renderRows() {
       ${view === 'all' ? `<td>${esc(s.owner === 'admin' ? 'admin API' : s.owner)}</td>` : ''}
       <td>${busy.has(s.name)
         ? `<span class="status starting">${esc(ACTIONS[busy.get(s.name)].row)}</span>`
-        : `<span class="status ${esc(statusClass(s))}">${esc(s.start_error ? 'failed to start' : statusLabel(s.status))}</span>`}${s.apps_stale ? ` <span class="warn" title="${esc(P9mPanel.STALE_APPS)}">⚠</span><span class="sr-only">${esc(P9mPanel.STALE_APPS)}</span>` : ''}</td>
+        : `<span class="status ${esc(statusClass(s))}">${esc(s.start_error ? 'failed to start' : statusLabel(s.status))}</span>`}${s.apps_stale ? (s.starting ? ` <span class="muted" title="${esc(P9mPanel.STARTING_APPS)}">⏳</span><span class="sr-only">${esc(P9mPanel.STARTING_APPS)}</span>`
+          : ` <span class="warn" title="${esc(P9mPanel.STALE_APPS)}">⚠</span><span class="sr-only">${esc(P9mPanel.STALE_APPS)}</span>`) : ''}</td>
       <td>${sleepCell(s)}</td>
       <td class="adv">${deepSleepCell(s)}</td>
       <td class="adv">${usageCell(s)}</td>
