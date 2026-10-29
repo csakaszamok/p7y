@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **`/p9m:init` ends with what to do:** *Paste that new code here (XXXX-XXXX) and press Enter.*, on its own line, so the user knows Claude Code is waiting for the code from the page (not the one they approved).
+
 ## [0.13.1] - 2026-10-29
 
 Upgrading from 0.13.0: `docker compose pull && docker compose up -d`. Plugin users: `/plugin marketplace update p9m`.
