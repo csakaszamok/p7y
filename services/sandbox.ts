@@ -28,7 +28,7 @@ import { composeUp, composeStop, composeStart, composeDown, composeUpInner, comp
 import { concurrency } from './concurrency'
 import { parseComposeText } from './composeCache'
 import { hashPassword } from './registryAuth'
-import { ownHostTaken } from './uiHost'
+import { ownHostTaken, uiHost } from './uiHost'
 import { listProjectVolumes, exportVolume, removeVolume, stopProjectContainers, removeProjectContainers } from './project'
 
 /** The sandbox's directory; for an unknown one a path that does not exist (reads then fail as before). */
@@ -282,6 +282,9 @@ export const sandboxService = {
       host_domain: appDomain,
       frp_token: frpToken,
       frps_api_auth: `p9m:${frpsApiPassword}`,
+      // Names the sandbox reaches through its socat (Traefik): the registry and the UI
+      registry_host: registryUrl,
+      ui_host: uiHost(),
       // A template's default, cut to the server's limit for a user's sandbox
       idle_timeout: sessionDurationOf(idleTimeout ?? cappedSleepDefault('idle_timeout', template.idle_timeout ?? '30m', owner)),
       deep_sleep_after: deepSleepAfter ?? cappedSleepDefault('deep_sleep_after', template.deep_sleep_after ?? '7d', owner),
