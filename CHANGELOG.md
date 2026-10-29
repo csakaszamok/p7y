@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-10-29
+
+Upgrading from 0.13.1: plugin users run `/plugin marketplace update p9m`; the server is unchanged but for the version (`docker compose pull && docker compose up -d` when convenient).
+
 ### Changed
 
 - **`/p9m:init` ends with what to do:** *Paste that new code here (XXXX-XXXX) and press Enter.*, on its own line, so the user knows Claude Code is waiting for the code from the page (not the one they approved).
@@ -825,7 +829,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.13.1...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.13.2...HEAD
+[0.13.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.2
 [0.13.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.1
 [0.13.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.0
 [0.12.25]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.25
