@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.24] - 2026-10-29
+
+Upgrading from 0.12.23: `docker compose pull && docker compose up -d`. If `check-host.sh` says `traefik-net` has room for fewer sandboxes than `SANDBOX_MAX_TOTAL`, give it its own subnet (see "traefik-net" in the [install guide](https://csakaszamok.github.io/p9m/latest/install/)).
+
 ### Fixed
 
 - **`check-host.sh` checks how many sandboxes can run at once on `traefik-net`.** Every running sandbox takes two addresses there; with the address pools the install guide suggests (`size: 28`), `traefik-net` got a `/28` too, room for 4 running sandboxes, and the next one started without its tunnel. The [install guide](https://csakaszamok.github.io/p9m/latest/install/) now gives `traefik-net` its own subnet in a `docker-compose.override.yml`, and suggests address pools for 65536 sandbox networks (`10.64.0.0/12`, in place of `10.10.0.0/16`'s 4096).
@@ -787,7 +791,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.23...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.24...HEAD
+[0.12.24]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.24
 [0.12.23]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.23
 [0.12.22]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.22
 [0.12.21]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.21
