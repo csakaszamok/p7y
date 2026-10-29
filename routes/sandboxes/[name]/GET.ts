@@ -16,6 +16,7 @@ import { rememberedHub, refreshHub } from '../../../services/hub/list'
 import { lastRunningOf } from '../../../services/lastRunning'
 import { hubEnabled, hubUrl } from '../../../services/hub/config'
 import { mountsOf, hostMountRoots } from '../../../services/hostMounts'
+import { markStarted } from '../../../services/docker'
 
 export const openapi = {
   mcp: { name: 'get_sandbox' },
@@ -24,7 +25,7 @@ export const openapi = {
   security: [{ bearerAuth: [] }],
   parameters: [{ name: 'include_keys', in: 'query', required: false, description: "true: also the Docker client certificates and private key (ca_cert, client_cert, client_key). Leave it out for an agent: the Claude Code plugin's setup_project_dir writes them to disk without them passing through the model", schema: { type: 'boolean' } }],
   responses: {
-    200: { description: 'Sandbox record (the Docker client keys only with include_keys=true); apps: each link with answers true/false (null when not running) and access (p9m.access: public, domain or owner; access_invalid when its label is not one); apps_stale: true when the sandbox runs but did not answer just now (a busy server), and apps are the ones it last had; mounts: the host folders mounted into it (the admin also gets host_mount_roots)' },
+    200: { description: 'Sandbox record (the Docker client keys only with include_keys=true); apps: each link with answers true/false (null when not running) and access (p9m.access: public, domain or owner; access_invalid when its label is not one); apps_stale: true when the sandbox runs but did not answer just now (a busy server), and apps are the ones it last had; starting: true after it started, until its apps have all answered (at most 90 s): one that does not answer yet is on its way; mounts: the host folders mounted into it (the admin also gets host_mount_roots)' },
     401: { description: 'Unauthorized' },
     404: { description: 'Sandbox not found' }
   }
@@ -45,6 +46,11 @@ export default async (req: Request): Promise<Response> => {
     const apps = sandbox.status === 'running'
       ? await appStatuses(name, (await appLinksForView(name)).links)
       : withRememberedAccess(name, sandbox.tunnel_urls.map(url => ({ url, port: null, service: app_services?.[url] ?? null, answers: null })))
+    // Every app answers: it has started, whatever the time since
+    if (info.starting && !info.apps_stale && apps.every(a => a.answers !== false)) {
+      delete info.starting
+      await markStarted(name)
+    }
     // Asleep: the ports it had when it last ran (a connection wakes it)
     const tcp = sandbox.status === 'running' ? await publicTcpPorts(name).catch(() => []) : rememberedTcpPorts(name) ?? []
     const tcp_urls = tcp.map(p => `${p.host}:443`)

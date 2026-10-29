@@ -140,16 +140,21 @@
 
   const AGENT_BUTTON = '<div class="actions agent-actions"><button class="primary" data-act="export">Let your agent deploy…</button></div>'
   const STALE_APPS = 'Could not see its apps just now (the server is busy)'
+  const STARTING_APPS = 'Starting: its apps show up in a moment'
 
   function appsTab(s, ctx) {
     const extras = s.extras || {}
     const rows = appRows(s)
     // Let your agent deploy: here in both views, for the owner (the new token is theirs)
     const agent = (s.owner || 'admin') === ctx.me ? AGENT_BUTTON : ''
-    // Running, but the sandbox did not answer just now (a busy server): the apps it last had
-    const stale = s.apps_stale ? `<p class="not-answering">⚠ ${STALE_APPS}${rows.length ? ': these are the apps it had last time.' : '.'}</p>` : ''
+    // Running, but the sandbox did not answer just now (a busy server): the apps it last had. Just started
+    // (s.starting, the first 90 s): an hourglass, not a warning, as its tunnel and apps are still on their way
+    const stale = !s.apps_stale ? ''
+      : s.starting ? `<p class="muted starting">⏳ ${STARTING_APPS}${rows.length ? ': these are the apps it had last time.' : '.'}</p>`
+      : `<p class="not-answering">⚠ ${STALE_APPS}${rows.length ? ': these are the apps it had last time.' : '.'}</p>`
     if (!rows.length) return (stale || '<p class="muted">No apps yet — publish a port on all interfaces (e.g. 8080:8080) to get a link.</p>') + agent
     const mark = a => a === true ? ' <span class="ok" title="answering">✓</span><span class="sr-only">answering</span>'
+      : a === false && s.starting ? ' <span class="muted" title="starting">⏳</span><span class="sr-only">starting</span>'
       : a === false ? ' <span class="warn" title="not answering">⚠</span><span class="sr-only">not answering</span>' : ''
     const hub = s.hub || { published: [], unlinked: [] }
     const onHub = r => r.url && hub.published.includes(r.url)
@@ -163,7 +168,7 @@
       ${ctx.simple ? '' : `<td>${r.tcp ? `<span class="tcp">${esc(r.tcp.address)}</span> ${copyButton(r.tcp.address)}` : ''}</td>
       <td>${r.tcp ? `<button class="link" data-connect="${esc(r.tcp.address)}" data-port="${esc(r.tcp.port ?? '')}" data-user="${esc(r.tcp.user ?? '')}"${extras.demo_password ? ` data-demo-password="${esc(extras.demo_password)}"` : ''}>Connect…</button>` : ''}</td>`}
     </tr>`)
-    const down = rows.filter(r => r.answers === false).map(r => r.service)
+    const down = s.starting ? [] : rows.filter(r => r.answers === false).map(r => r.service)
     const tip = !down.length ? ''
       : down.length === 1 ? `<p class="not-answering">⚠ ${esc(down[0])} is not answering — does it listen on 0.0.0.0 (not 127.0.0.1) inside its container?</p>`
       : `<p class="not-answering">⚠ ${down.map(esc).join(', ')} are not answering — do they listen on 0.0.0.0 (not 127.0.0.1) inside their containers?</p>`
@@ -530,7 +535,7 @@
     return `/p9m:init ${u} ${sandboxShort}`
   }
 
-  const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, mountsSection, registryTable, containersTable, renderPanel, STALE_APPS }
+  const api = { usersTable, matchesFilter, loadingPanel, initCommand, filesView, volumesView, quotaLine, placesBadge, overviewHtml, countsOf, esc, TABS, statusLabel, statusClass, remaining, countdown, fmtBytes, meter, portainerShown, parseCreated, relativeAge, appRows, resourcesTable, mountsSection, registryTable, containersTable, renderPanel, STALE_APPS, STARTING_APPS }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.P9mPanel = api
 })(typeof window !== 'undefined' ? window : globalThis)

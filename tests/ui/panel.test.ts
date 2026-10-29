@@ -95,6 +95,18 @@ describe('renderPanel', () => {
     expect(panelOf(P.renderPanel(running, ctx), 'apps')).not.toContain('Could not see its apps')
   })
 
+  // Just woken, its tunnel and apps are on their way: an hourglass, the ⚠ only once it should have answered
+  it('Apps: an hourglass, not a warning, while the sandbox has just started', () => {
+    const apps = panelOf(P.renderPanel({ ...running, starting: true }, ctx), 'apps')
+    expect(apps).toContain('⏳')
+    expect(apps).not.toContain('⚠')
+    expect(apps).not.toContain('is not answering')
+    expect(apps).toContain('✓')
+    const stale = panelOf(P.renderPanel({ ...running, starting: true, apps_stale: true }, ctx), 'apps')
+    expect(stale).toContain('⏳ Starting: its apps show up in a moment: these are the apps it had last time.')
+    expect(stale).not.toContain('Could not see its apps')
+  })
+
   it('Access: SSH, Portainer with a hidden password, token for the owner only', () => {
     const access = panelOf(P.renderPanel(running, ctx), 'access')
     expect(access).toContain('shop-shell-tcp.lvh.me:443')

@@ -191,6 +191,26 @@ export async function listedSandboxState(name: string): Promise<SandboxState | n
   }
 }
 
+/** How long after its container started a sandbox's apps may still be on their way (frpc, the inner stack) */
+export const STARTING_MS = 90_000
+
+// A start (the container's StartedAt) whose apps have all answered: it is up, starting no more
+const upSince = new Map<string, string>()
+
+/** Running, started less than STARTING_MS ago, and its apps have not all answered yet: an app that does not answer
+ * is starting, not broken. */
+export async function justStarted(name: string, now = Date.now()): Promise<boolean> {
+  const state = await listedSandboxState(name)
+  const startedAt = state?.startedAt ?? ''
+  return state?.status === 'running' && upSince.get(name) !== startedAt && now - Date.parse(startedAt) < STARTING_MS
+}
+
+/** Its apps have all answered: for the rest of this start, one that stops answering is not "starting". */
+export async function markStarted(name: string): Promise<void> {
+  const startedAt = (await listedSandboxState(name))?.startedAt
+  if (startedAt) upSince.set(name, startedAt)
+}
+
 async function stateOf(name: string, info: Dockerode.ContainerInspectInfo): Promise<SandboxState> {
   const attached = Object.values(info.NetworkSettings?.Networks ?? {}).map(n => n.NetworkID).filter(Boolean)
   let existing = attached.length ? await networkIds() : new Set<string>()

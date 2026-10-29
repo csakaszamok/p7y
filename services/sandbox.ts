@@ -22,7 +22,7 @@ import { sshKeysOf } from './sshKeys'
 import { resourceDefaults, memoryForCompose, type Limits } from './resources'
 import { sandboxName, rawNameOf, readLabel } from './naming'
 import { sessionDurationOf, cappedSleepDefault } from './sleepSettings'
-import { listManagedContainers, resolveHostSandboxesDir, execRun, type SandboxMeta } from './docker'
+import { listManagedContainers, resolveHostSandboxesDir, execRun, justStarted, type SandboxMeta } from './docker'
 import { sandboxDir, sandboxParent, listSandboxDirs, newSandboxDir, archiveRoot, ownerDirName, ownerOfCompose, sandboxesDir, forgetSandboxDir, sandboxesMounted, SANDBOX_NAME } from './sandboxPaths'
 import { composeUp, composeStop, composeStart, composeDown, composeUpInner, composeConfigInner, composeRemove } from './compose'
 import { concurrency } from './concurrency'
@@ -50,6 +50,8 @@ export interface SandboxInfo extends SandboxMeta {
   tunnel_urls: string[]
   /** Running, but frps or its inner Docker did not answer just now: tunnel_urls are the ones it last answered with */
   apps_stale?: true
+  /** Started less than STARTING_MS ago and its apps have not all answered yet: they are on their way */
+  starting?: true
   extras: Record<string, string>
 }
 
@@ -377,14 +379,14 @@ export const sandboxService = {
 
   /** The sandboxes `only` lets through (all without it), each with its app links: the running ones are asked, so
    * filter here, not afterwards (a user's list asks their own sandboxes, not every one on the server). */
-  async listSandboxes(only: (meta: SandboxMeta) => boolean = () => true): Promise<Array<SandboxMeta & { tunnel_urls: string[]; apps_stale?: true }>> {
+  async listSandboxes(only: (meta: SandboxMeta) => boolean = () => true): Promise<Array<SandboxMeta & { tunnel_urls: string[]; apps_stale?: true; starting?: true }>> {
     const live = await listManagedContainers()
     const running = await Promise.all(
       live.filter(only).map(async meta => {
         if (!fs.existsSync(`${dirOf(meta.name)}/frps.toml`)) return { ...meta, tunnel_urls: [] }
         if (meta.status !== 'running') return { ...meta, tunnel_urls: offlineApps(meta).map(e => e.host) }
-        const { links, stale } = await appLinksForView(meta.name)
-        return { ...meta, tunnel_urls: links.map(l => l.url), ...(stale ? { apps_stale: true as const } : {}) }
+        const [{ links, stale }, starting] = await Promise.all([appLinksForView(meta.name), justStarted(meta.name)])
+        return { ...meta, tunnel_urls: links.map(l => l.url), ...(stale ? { apps_stale: true as const } : {}), ...(starting ? { starting: true as const } : {}) }
       })
     )
     return [...running, ...deepSleepingSandboxes(live).filter(only).map(meta => ({ ...meta, tunnel_urls: fs.existsSync(`${dirOf(meta.name)}/frps.toml`) ? offlineApps(meta).map(e => e.host) : [] }))]
@@ -405,13 +407,14 @@ export const sandboxService = {
     const hasFrps = fs.existsSync(`${dirOf(name)}/frps.toml`)
     const offline = hasFrps && meta.status !== 'running' ? offlineApps(meta) : []
     const view = hasFrps && meta.status === 'running' ? await appLinksForView(name) : null
+    const starting = meta.status === 'running' && await justStarted(name)
     const tunnel_urls = !hasFrps ? []
       : view ? view.links.map(l => l.url)
       : offline.map(e => e.host)
     const extras = fs.existsSync(`${dirOf(name)}/extras.json`)
       ? JSON.parse(fs.readFileSync(`${dirOf(name)}/extras.json`, 'utf8')) as Record<string, string>
       : {}
-    return { ...meta, ...certs, tunnel_urls, ...(view?.stale ? { apps_stale: true as const } : {}), extras, ...(offline.length ? { app_services: Object.fromEntries(offline.map(e => [e.host, e.service])) } : {}) }
+    return { ...meta, ...certs, tunnel_urls, ...(view?.stale ? { apps_stale: true as const } : {}), ...(starting ? { starting: true as const } : {}), extras, ...(offline.length ? { app_services: Object.fromEntries(offline.map(e => [e.host, e.service])) } : {}) }
   },
 
   async refreshStatus(name: string): Promise<SandboxInfo> {
