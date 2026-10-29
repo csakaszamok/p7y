@@ -9,7 +9,7 @@ Give a coding agent (Claude Code, Codex, Cursor…) a personal access token and 
 
 [docs/agent-guide.md](agent-guide.md) is written for the agent: every call it needs, tried against a live Purgatorium. A token limited to one sandbox keeps the agent away from your other sandboxes; a token for all your sandboxes (Access tokens → + New token) acts as you.
 
-An agent with MCP can also use Purgatorium as an MCP server with the same token: see [MCP](mcp.md). In Claude Code, the [p9m plugin](claude-plugin.md) needs no token typed in: install it once (`/plugin marketplace add p9m-team/p9m`, `/plugin install p9m@p9m`), then run `/p9m:init <address> <sandbox>` in the project and approve in the browser.
+An agent with MCP can also use Purgatorium as an MCP server with the same token: see [MCP](mcp.md). In Claude Code, the [p9m plugin](claude-plugin.md) needs no token typed in: install it once (`/plugin marketplace add p9m-team/p9m`, `/plugin install p9m@p9m`), then run `/p9m:init <address>` in the project (a new sandbox; `/p9m:init <address> <sandbox>` for one you have), approve in the browser and paste back the code it shows.
 
 ## Docker, registry, export
 A coding agent (Claude Code, Codex…) can work on a sandbox with plain `docker` commands:

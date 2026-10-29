@@ -17,7 +17,7 @@ vi.mock('../../../services/sandbox', () => ({
     })
   }
 }))
-vi.mock('../../../services/tokens', () => ({ resolveToken: vi.fn(() => null) }))
+vi.mock('../../../services/tokens', () => ({ resolveToken: vi.fn((t: string) => t === 'p9m_alice' ? { owner: 'alice@example.com', sandbox: null } : null) }))
 vi.mock('../../../services/sleepSettings', async (orig) => ({
   ...await orig<typeof import('../../../services/sleepSettings')>(),
   updateSleepSettings: vi.fn(async () => ({ idle_timeout: '45m', deep_sleep_after: '7d' }))
@@ -29,11 +29,10 @@ vi.mock('../../../services/diskUsage', async (orig) => ({
   diskOf: vi.fn(() => ({ limit: 50 * 1024 ** 3, used: null, measured_at: null, over: false })),
 }))
 const { setDiskLimit } = await import('../../../services/diskUsage')
-const { createSession } = await import('../../../services/session')
 const { updateSleepSettings } = await import('../../../services/sleepSettings')
 const patch = (await import('../../../routes/sandboxes/[name]/PATCH')).default
 
-const alice = { cookie: `p9m_session=${createSession('alice@example.com', 'user')}`, origin: 'http://p9m.lvh.me', host: 'p9m.lvh.me', 'content-type': 'application/json' }
+const alice = { authorization: 'Bearer p9m_alice', host: 'p9m.lvh.me', 'content-type': 'application/json' }
 const r = (name: string, body: unknown, headers: Record<string, string> = alice) =>
   new Request(`http://p9m.lvh.me/sandboxes/${name}`, { method: 'PATCH', headers, body: typeof body === 'string' ? body : JSON.stringify(body) })
 

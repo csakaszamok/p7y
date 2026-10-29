@@ -4,6 +4,15 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **Users get their sandboxes from Claude Code; only the admin has a web UI.** `/p9m:init <address>` asks for a new sandbox (from the default template, or `--template <name>`), `/p9m:init <address> <sandbox>` for access to one the user has. The approval page only shows what was asked for, with nothing to pick: a new sandbox is created there (named by Purgatorium, under the same limits as `POST /sandboxes`, with Docker access at once), a name that is not the user's own is refused. A user who signs in sees only how to install the plugin, and a user's sign-in reaches no API (users work with tokens); the admin keeps every page.
+- **`/p9m:init` needs the code the approval page shows.** After **Approve** the page shows a confirmation code, which the user pastes into Claude Code: only with it does `POST /device/token` give the token, so a link someone else started gets them nothing. 5 wrong codes end the request. The page warns when the code was asked for from another address than the browser's. `POST /device/poll` is gone: an older plugin cannot connect until it is updated (`/plugin marketplace update p9m`).
+
+### Fixed
+
+- The approval page's own messages (an expired code, a sandbox that is not yours) were replaced by the general not-found page.
+
 ## [0.12.25] - 2026-10-29
 
 Upgrading from 0.12.24: `docker compose pull && docker compose up -d`.

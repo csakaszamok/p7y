@@ -16,12 +16,11 @@ vi.mock('../../services/sandbox', () => ({
 }))
 const { recordSignIn, recordSandboxCreated, _resetSeen } = await import('../../services/userStats')
 const { createToken, resolveToken } = await import('../../services/tokens')
-const { createSession } = await import('../../services/session')
 const list = (await import('../../routes/users/GET')).default
 const del = (await import('../../routes/users/[sub]/DELETE')).default
 
 const admin = { Authorization: 'Bearer admin-secret' }
-const asUser = { cookie: `p9m_session=${createSession('anna@example.com', 'user')}` }
+const asUser = () => ({ authorization: `Bearer ${createToken('anna@example.com', 'test', '30d').token}` })
 const get = (headers: Record<string, string>) => list(new Request('http://localhost/users', { headers }))
 const remove = (sub: string, headers: Record<string, string>) =>
   del(new Request(`http://localhost/users/${encodeURIComponent(sub)}`, { method: 'DELETE', headers: { origin: 'http://localhost', host: 'localhost', ...headers } }))
@@ -48,7 +47,7 @@ describe('GET /users', () => {
     expect(users[2]).toMatchObject({ sub: 'carl@example.com', first_seen: null, last_seen: null, sign_ins: 0, sandboxes_now: 1 })
   })
   it('only the admin', async () => {
-    expect((await get(asUser)).status).toBe(403)
+    expect((await get(asUser())).status).toBe(403)
     expect((await get({})).status).toBe(401)
   })
 })
@@ -61,6 +60,6 @@ describe('DELETE /users/:sub', () => {
   })
   it('only the admin', async () => {
     recordSignIn('bob@example.com')
-    expect((await remove('bob@example.com', asUser)).status).toBe(403)
+    expect((await remove('bob@example.com', asUser())).status).toBe(403)
   })
 })
