@@ -18,9 +18,9 @@ export function classifyFirstBytes(buf: Buffer): 'tls' | 'postgres' | 'other' | 
 /**
  * TLS-only TCP entry for sandbox ports (Traefik passes `*-tcp.<domain>` through to it).
  * A Postgres client first sends an SSLRequest: answer S, then TLS. The SNI name picks
- * the target; the plaintext side goes to the sandbox container over traefik-net.
+ * the target; the plaintext side goes to the sandbox's frps over traefik-net (under the sandbox's name), through its tunnel.
  *
- * Anyone can reach it (through Traefik, and from inside sandboxes on traefik-net), so:
+ * Anyone can reach it through Traefik, so:
  * one deadline covers everything up to a finished TLS handshake, at most `maxPending`
  * connections may wait for a target at once, and `resolve` is told when the client leaves.
  */

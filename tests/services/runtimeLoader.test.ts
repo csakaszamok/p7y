@@ -10,10 +10,24 @@ const servicesOf = (name: string) => loadRuntime(name, DIR).docker_compose.servi
 
 function expectSshMounts(name: string) {
   const sb = (loadRuntime(name, DIR).docker_compose.services as Record<string, { image: string; volumes: string[] }>).sandbox
-  expect(sb.image).toBe(`ghcr.io/csakaszamok/foxglove:0.10.0-${name}`)
+  expect(sb.image).toBe(`ghcr.io/csakaszamok/foxglove:0.11.0-${name}`)
   expect(sb.volumes).toEqual(expect.arrayContaining(['${sandbox_dir}/authorized_keys:/etc/instance/authorized_keys:ro', '${sandbox_dir}/ssh-host-keys:/etc/ssh/host-keys']))
   expect(sb).toMatchObject({ cpus: '${cpus}', mem_limit: '${memory}', memswap_limit: '${memory}' })
 }
+
+// On traefik-net a sandbox reached every other sandbox's ports: it is on its own network, frps there under its name
+describe('the runtimes keep a sandbox off the network the sandboxes share', () => {
+  for (const name of ['dind', 'sysbox']) {
+    it(name, () => {
+      const s = loadRuntime(name, DIR).docker_compose.services as Record<string, { networks?: unknown; environment?: Record<string, string>; command?: string }>
+      expect(s.sandbox.networks).toEqual(['default'])
+      expect(s.sandbox.environment?.FRP_SERVER_PORT).toBe('65000')
+      expect(s.frps.networks).toEqual({ default: null, 'traefik-net': { aliases: ['${name}'] } })
+      expect(s.socat.networks).toEqual({ default: { aliases: ['registry-cache', '${registry_host}', '${ui_host}'] }, 'traefik-net': null })
+      expect(s.socat.command).toContain('8080:${name}-frps:65080 7500:${name}-frps:65075')
+    })
+  }
+})
 
 describe('loadRuntime', () => {
   it('loads dind: privileged sandbox with frps and socat, labelled with runtime and template', () => {
