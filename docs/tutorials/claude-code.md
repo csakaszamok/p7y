@@ -85,4 +85,15 @@ A new sandbox comes from Purgatorium's default template. For another one, name i
 
 Used the earlier plugin, which asked for an address and a token? Run `/plugin marketplace update p9m` once, then `/p9m:init` in each project.
 
+Installed the plugin when it was called `p7y` (`/p7y:init`)? Claude Code knows that one by its old name, and `/plugin marketplace update p9m` finds nothing. Remove it and add the new one, in a terminal, in the folder where you installed it:
+
+```sh
+claude plugin uninstall p7y@p7y --scope local
+claude plugin marketplace remove p7y
+claude plugin marketplace add p9m-team/p9m
+claude plugin install p9m@p9m
+```
+
+`--scope` is where you installed it (`claude plugin list` shows it: `user`, `project` or `local`); a `local` one only from its own folder. Then start Claude Code again.
+
 More details: [Claude Code plugin](../claude-plugin.md).

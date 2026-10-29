@@ -4,6 +4,14 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.13.3] - 2026-10-29
+
+Upgrading from 0.13.2: only the docs changed; the server is unchanged but for the version (`docker compose pull && docker compose up -d` when convenient).
+
+### Changed
+
+- **The docs follow users without a web UI:** *Put your app online with any agent* gets the `.p9m` folder from `/p9m:init` once, or a zip from the admin; *Web UI* says users get tokens from `/p9m:init` and only the admin revokes them; `USER_VIEW_SWITCH` has no effect any more. The Claude Code docs say how to move from the plugin installed as `p7y` (`claude plugin marketplace remove p7y`, then add `p9m-team/p9m`). The tutorial screenshots of the users' UI are gone.
+
 ## [0.13.2] - 2026-10-29
 
 Upgrading from 0.13.1: plugin users run `/plugin marketplace update p9m`; the server is unchanged but for the version (`docker compose pull && docker compose up -d` when convenient).
@@ -829,7 +837,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.13.2...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.13.3...HEAD
+[0.13.3]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.3
 [0.13.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.2
 [0.13.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.1
 [0.13.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.0
