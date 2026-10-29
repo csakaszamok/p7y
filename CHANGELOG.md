@@ -4,6 +4,15 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-10-29
+
+Upgrading from 0.13.0: `docker compose pull && docker compose up -d`. Plugin users: `/plugin marketplace update p9m`.
+
+### Changed
+
+- **The `/activate` page shows that it is working.** After **Create and approve** (or **Approve**, **Deny**) the buttons give way to *Creating the sandbox…* with a glowing ember until the next page comes, instead of a page that seemed frozen for up to a minute. The confirmation code has a **Copy** button.
+- **`/p9m:init` tells the new sandbox by the name the user knows** (`k3x9q2`, as in its addresses), not by the full `p9m-k3x9q2`: `POST /device/token` also answers `name`. The plugin talks of a sandbox only by that name, and sends a sandbox without Docker access back to `/p9m:init` instead of a web UI users no longer have. Update the plugin to get it (`/plugin marketplace update p9m`).
+
 ## [0.13.0] - 2026-10-29
 
 Upgrading from 0.12.25: `docker compose pull && docker compose up -d`. Users then have no web UI, only the admin: tell them to get their sandboxes with the Claude Code plugin (`/p9m:init <address>`). Everyone with the plugin runs `/plugin marketplace update p9m` once: the older plugin cannot connect a project any more.
@@ -812,7 +821,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.13.1...HEAD
+[0.13.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.1
 [0.13.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.0
 [0.12.25]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.25
 [0.12.24]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.24
