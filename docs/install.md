@@ -43,10 +43,31 @@ Each sandbox's files (compose file, certificates, tunnel config) live in `opt/sa
 > **Give the Docker daemon a larger address pool.** Every sandbox — sleeping ones included — keeps its own compose network until it is archived. Docker's default pools only allow about 30 networks; beyond that sandbox creation fails with `fully subnetted`. Set smaller subnets in the daemon config (`/etc/docker/daemon.json`, or Docker Desktop → Settings → Docker Engine) and restart Docker:
 >
 > ```json
-> { "default-address-pools": [ { "base": "10.10.0.0/16", "size": 28 } ] }
+> { "default-address-pools": [ { "base": "10.64.0.0/12", "size": 28 } ] }
 > ```
 >
-> A sandbox network needs only a handful of addresses, so `/28` subnets are enough: this allows 4096 networks (`/24` would allow 256).
+> A sandbox network needs only a handful of addresses, so `/28` subnets are enough: `10.64.0.0/12` holds 65536 of them (`10.10.0.0/16` would hold 4096). Pick a range your server's own networks do not use (see `ip route`). Changing the pools later leaves the networks made before as they are: list the old pool too, after the new one, so Docker never hands out its addresses twice.
+>
+> **traefik-net** is the exception: every running sandbox takes two addresses on it (its frps and socat), so on a `/28` only 4 sandboxes can run at once, and the next one starts without its tunnel (`no available IPv4 addresses on this network's address pools: traefik-net`). Give it its own subnet, outside the pools above, in a `docker-compose.override.yml` next to `docker-compose.yml` (Docker Compose reads it on its own, and it stays when you replace `docker-compose.yml` on an upgrade):
+>
+> ```yaml
+> networks:
+>   traefik-net:
+>     ipam:
+>       config:
+>         - subnet: 10.11.0.0/20
+> ```
+>
+> On a server already running, the network must be made again: take Purgatorium and the sandboxes' containers down (their data stays: they wake as from a deep sleep), remove the network, and start Purgatorium again:
+>
+> ```sh
+> docker compose down
+> for p in $(docker ps -a --format '{{.Label "com.docker.compose.project"}}' | sort -u | grep '^p9m-'); do docker compose -p "$p" down; done
+> docker network rm traefik-net
+> docker compose up -d
+> ```
+>
+> `check-host.sh` tells how many sandboxes `traefik-net` has room for.
 
 > **Before exposing Purgatorium publicly**, set `ADMIN_TOKEN`, `SESSION_SECRET` and `ADMIN_PASSWORD` to real secrets. The compose defaults (`ADMIN_TOKEN=abc123`, and the `.env.example` placeholders) are only meant for local dev and the e2e scripts; Purgatorium logs a startup warning if any of them is still in effect.
 

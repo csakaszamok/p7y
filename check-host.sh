@@ -114,7 +114,7 @@ if $docker_ok; then
   pools=$(docker info 2>/dev/null | awk '/Default Address Pools:/ {on=1; next} on && /Base:/ {print $2, $4; next} on {exit}' | tr -d ',')
   if [ -z "$pools" ]; then
     warn "Docker's default address pools: about 30 networks, so about 30 sandboxes" \
-         'set "default-address-pools": [{"base": "10.10.0.0/16", "size": 28}] in /etc/docker/daemon.json and restart Docker (see https://csakaszamok.github.io/p9m/latest/install/)'
+         'set "default-address-pools": [{"base": "10.64.0.0/12", "size": 28}] in /etc/docker/daemon.json and restart Docker (see https://csakaszamok.github.io/p9m/latest/install/)'
   else
     total=0
     while read -r base size; do
@@ -153,6 +153,23 @@ else
     warn "SANDBOX_MAX_TOTAL=$set_max in .env; $max suggested for this host: $why" "more running at once than the host can serve when they all work: lower it"
   else
     ok "SANDBOX_MAX_TOTAL=$max suggested: $why${set_max:+ (.env: $set_max)}"
+  fi
+fi
+# Every running sandbox takes two addresses on traefik-net (its frps and socat), besides p9m, Traefik and the two
+# registries: on a subnet of the address pools' size (/28: 13 addresses) only a few sandboxes can run at once
+if $docker_ok; then
+  net=$(docker network inspect traefik-net -f '{{range .IPAM.Config}}{{.Subnet}}{{end}}' 2>/dev/null)
+  if [ -n "$net" ]; then bits=${net#*/} where="traefik-net ($net)"
+  else bits=$(echo "${pools:-}" | awk 'NR == 1 {print $2}') where="traefik-net (a /${bits:-?} of the address pools, once created)"; fi
+  if [ -n "$bits" ]; then
+    fits=$(( ((1 << (32 - bits)) - 3 - 4) / 2 ))
+    want=${set_max:-${max:-0}}; [ "$want" = 0 ] && want=${max:-0}
+    if [ "$fits" -lt "$want" ]; then
+      fail "$where has room for $fits running sandboxes, SANDBOX_MAX_TOTAL is $want" \
+           'give traefik-net its own subnet in docker-compose.override.yml (see "traefik-net" in https://csakaszamok.github.io/p9m/latest/install/)'
+    else
+      ok "$where has room for $fits running sandboxes"
+    fi
   fi
 fi
 
