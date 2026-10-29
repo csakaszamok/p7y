@@ -4,7 +4,9 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
-Needs the `docker-compose.yml` of this release (the Docker Hub cache's name for the sandboxes). The sandboxes made before move to their own network at the next start of Purgatorium (running ones restart, on the sandbox image foxglove 0.11.0).
+## [0.12.23] - 2026-10-29
+
+Upgrading from 0.12.22 (or before: 0.12.21 and 0.12.22 can be skipped, but read 0.12.22's note on `ADMIN_TOKEN` and `SESSION_SECRET`): download the new `docker-compose.yml` from `https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml`, then `docker compose pull && docker compose up -d`. A `docker-compose.yml` you keep from before stays on 0.12.22. This release needs the new one (the Docker Hub cache's name for the sandboxes). The sandboxes made before move to their own network at the next start of Purgatorium (running ones restart, on the sandbox image foxglove 0.11.0).
 
 ### Security
 
@@ -781,7 +783,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.22...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.23...HEAD
+[0.12.23]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.23
 [0.12.22]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.22
 [0.12.21]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.21
 [0.12.20]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.20
