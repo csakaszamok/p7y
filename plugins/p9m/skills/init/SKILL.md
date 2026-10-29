@@ -68,10 +68,13 @@ to a file. An error: 400: the sandbox's name is not a name, or the template is u
 /templates` needs a token, so do not look it up); 503: too many pending codes, try again in a few minutes; no
 answer or not JSON: the address is wrong, ask the user.
 
-Tell the user, with the link and the code as they are, then **stop and wait** for their answer:
+Tell the user, with the link and the code as they are, and nothing after it (the last line is what they do
+next), then **stop and wait** for their answer:
 
 > Open **<verification_uri_complete>** and approve the code **<user_code>** (sign in first if Purgatorium asks).
-> A new sandbox takes up to a minute. Then paste here the code Purgatorium shows.
+> A new sandbox takes up to a minute; then the page shows a new code, with a **Copy** button.
+>
+> **Paste that new code here (XXXX-XXXX) and press Enter.**
 
 ## 3. The code the user pastes
 
