@@ -1792,7 +1792,7 @@
 <h2 id="not-covered">Not covered<a class="headerlink" href="#not-covered" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>The TCP addresses</strong> (databases, SSH, Docker) are not HTTP: this does not apply to them. They are protected by their own TLS certificates and passwords, as before; see <a href="../networking/">Isolation and TCP addresses</a>.</li>
-<li><strong>Other sandboxes on the internal network.</strong> A port published on all interfaces is also reachable from other sandboxes directly on the internal <code>traefik-net</code> address (<a href="../networking/">Isolation and TCP addresses</a>), without going through Purgatorium's check. App access protects the web address, not that path: for an app no other sandbox must reach, publish its port on <code>127.0.0.1</code> and nothing else (it then has no web address either).</li>
+<li><strong>Other sandboxes do not get a way around it</strong> since 0.12.23: a sandbox is on its own network, so another sandbox reaches its apps only through their addresses, like anyone (<a href="../networking/">Isolation and TCP addresses</a>).</li>
 <li><strong>Webhooks and API clients without a browser</strong> cannot make the sign-in hop. Keep an app that receives webhooks, or that a script or a mobile app calls, <code>public</code> for now.</li>
 <li><strong>A coding agent's own <code>curl</code></strong> to an app that is not public gets the sign-in redirect. The agent checks whether an app answers from inside (<code>GET /sandboxes/:name</code> → <code>apps[].answers</code>), which is not affected.</li>
 </ul>
