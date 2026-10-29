@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Changed
+
+- **Right after a sandbox wakes, its apps show an hourglass (⏳), not a warning.** Until its apps have all answered (at most 90 seconds), an app that does not answer yet is on its way: no ⚠ and no "is not answering" tip, and "Starting: its apps show up in a moment" in place of "the server is busy". The API's `GET /sandboxes/{name}` (and the list) says so with `starting: true`.
+
 ## [0.12.24] - 2026-10-29
 
 Upgrading from 0.12.23: `docker compose pull && docker compose up -d`. If `check-host.sh` says `traefik-net` has room for fewer sandboxes than `SANDBOX_MAX_TOTAL`, give it its own subnet (see "traefik-net" in the [install guide](https://csakaszamok.github.io/p9m/latest/install/)).
