@@ -29,6 +29,7 @@ ${faviconTag()}</head>
   ${body}
 </div>
 <script src="/assets/embers.js" defer></script>
+<script src="/assets/activate.js" defer></script>
 </body></html>`, status)
 }
 
@@ -48,5 +49,5 @@ export function statusPage(status: 'working' | 'approved' | 'denied' | 'pending'
 
 /** Approved: the confirmation code to paste back into Claude Code */
 export const confirmPage = (confirm: string) => activatePage(`<p>Approved. Paste this code into Claude Code:</p>
-  <p class="user-code">${escapeHtml(confirm)}</p>
+  <div class="copy-line confirm-line"><p class="user-code" data-confirm>${escapeHtml(confirm)}</p><button type="button" data-copy-from="[data-confirm]">Copy</button></div>
   <p class="approve-warn">Only into your own Claude Code, and to nobody else: whoever has this code gets into the sandbox. It works once, for 10 minutes.</p>`)

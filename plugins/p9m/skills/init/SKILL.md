@@ -14,6 +14,11 @@ The user approves in the browser and pastes back the code Purgatorium shows; the
 single-use link straight to disk. Say what you do in plain words. **Never print** `.p9m/p9m.env` (it holds the
 token) or a key: never `cat` it, never `echo $P9M_TOKEN`, never copy a key or a certificate yourself.
 
+**A sandbox has two names.** The user knows it by its short name (`shop`, as in its addresses); Purgatorium's
+files and commands use the full one (`p9m-shop`, `P9M_SANDBOX`, the docker context). Talk to the user only
+with the short name. Never build the full one yourself: take it from the `.p9m` folder or from Purgatorium's
+answer.
+
 ## 1. What and where
 
 - The address: the first argument. Without `http://` or `https://`, put `https://` in front; drop a trailing `/`.
@@ -88,9 +93,10 @@ curl -sS -X POST -H "Content-Type: application/json" -d '{"device_code":"<device
 - `{"status":"expired"}` (410): the code expired (10 minutes), was used, or was wrong too often. Say so and
   stop; the user can run `/p9m:init` again.
 - `{"error":"…"}` (400): the request was refused. Show the error and stop.
-- `{"status":"approved", sandbox, url, expires_in, command, context_commands}`: this answer comes **once**: go
-  on at once (the link works once, for 5 minutes). `sandbox` is the sandbox's name: for a new one, tell the user
-  that name.
+- `{"status":"approved", sandbox, name, url, expires_in, command, context_commands}`: this answer comes **once**:
+  go on at once (the link works once, for 5 minutes). `name` is the sandbox as the user knows it (in its
+  addresses, in `/p9m:init <address> <name>`): for a new one, tell the user that name, never `sandbox` (the full
+  name, with the server's prefix). No `name` (an older Purgatorium): tell `sandbox` without its `p9m-`.
 
 ## 4. Unpack and connect
 

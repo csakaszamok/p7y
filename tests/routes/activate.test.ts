@@ -50,7 +50,7 @@ const send = (fields: Record<string, string>, c: string | undefined = cookie('al
   }))
 const statusOf = (userCode: string) => deviceByUserCode(userCode)?.status
 /** The confirmation code an approval page shows */
-const confirmOf = (html: string) => /class="user-code">([A-Z]{4}-[A-Z]{4})</.exec(html)?.[1] ?? ''
+const confirmOf = (html: string) => /class="user-code" data-confirm>([A-Z]{4}-[A-Z]{4})</.exec(html)?.[1] ?? ''
 
 describe('/activate', () => {
   beforeEach(() => {
@@ -93,6 +93,10 @@ describe('/activate', () => {
     const html = await (await page(user_code, cookie('alice@example.com'))).text()
     expect(html).toContain('a new sandbox from the <b>starter</b> template')
     expect(html).toContain('>Create and approve<')
+    // While it is created, the buttons give way to this (ui/activate.js)
+    expect(html).toContain('<form method="post" action="/activate" data-activate>')
+    expect(html).toContain('data-busy="Creating the sandbox…"')
+    expect(html).toContain('<script src="/assets/activate.js" defer></script>')
     expect(html).not.toContain('<select')
     expect(html).not.toContain('p9m-shop')
   })
@@ -124,6 +128,7 @@ describe('/activate', () => {
     const off = startDevice({ sandbox: 'off' })
     const offHtml = await (await page(off.user_code, cookie('alice@example.com'))).text()
     expect(offHtml).toContain('Enable Docker access and approve')
+    expect(offHtml).toContain('data-busy="Turning on Docker access…"')
     expect(offHtml).not.toContain('restarts')
     const awake = startDevice({ sandbox: 'awake' })
     expect(await (await page(awake.user_code, cookie('alice@example.com'))).text()).toContain('The sandbox restarts')
@@ -165,6 +170,7 @@ describe('/activate', () => {
     const html = await res.text()
     expect(html).toContain('Approved. Paste this code into Claude Code:')
     expect(html).toContain('Only into your own Claude Code')
+    expect(html).toContain('<button type="button" data-copy-from="[data-confirm]">Copy</button>')
     const confirm = confirmOf(html)
     expect(confirm).toMatch(/^[A-Z]{4}-[A-Z]{4}$/)
     expect(redeemDevice(device_code, confirm)).toEqual({ status: 'approved', sandbox: 'p9m-shop', owner: 'alice@example.com' })
