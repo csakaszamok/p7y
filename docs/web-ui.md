@@ -2,6 +2,9 @@
 
 Purgatorium has a small web UI (`http://p9m.<HOST_DOMAIN>`, or `UI_HOST`) for creating and managing sandboxes without the API directly, alongside the REST API.
 
+!!! note "Only the admin"
+    Users have no web UI: they get and use their sandboxes from Claude Code ([`/p9m:init`](claude-plugin.md)). A user who signs in sees only how to install the plugin; the sign-in is for approving `/p9m:init` (and for apps open only to signed-in people, see [App access](app-access.md)). A user's sign-in reaches no API either: users work with tokens. What follows is the admin's UI.
+
 Two ways to sign in:
 
 - **Admin**: a local account, set via `ADMIN_USER` / `ADMIN_PASSWORD`. Signs in with the "Administrator sign-in" form, which is there only with `ADMIN_LOGIN=on` (off by default: for emergencies), and sees every sandbox (My area + All sandboxes). Everyday, the admin signs in with OIDC, from an address in `OIDC_ADMIN_EMAILS`.

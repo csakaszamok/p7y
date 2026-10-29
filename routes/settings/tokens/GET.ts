@@ -1,7 +1,8 @@
-import { pageSession, redirect, html, renderPage, TOKENS_VIEW_BODY } from '../../../services/ui/layout'
+import { html, renderPage, TOKENS_VIEW_BODY } from '../../../services/ui/layout'
+import { guiSession } from '../../../services/ui/headlessPage'
 
 export default async (req: Request): Promise<Response> => {
-  const session = pageSession(req)
-  if (!session) return redirect('/login')
+  const session = guiSession(req)
+  if (session instanceof Response) return session
   return html(renderPage({ title: 'Access tokens', view: 'tokens', session, body: TOKENS_VIEW_BODY }))
 }

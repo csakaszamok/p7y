@@ -1,17 +1,23 @@
-// The device-approval flow behind /p9m:init: the agent asks for a code, the user approves it in the browser, the agent
-// polls. In memory and single-use like the project link: a restart just means asking again.
+// The device-approval flow behind /p9m:init: the agent asks for a code, the user approves it in the browser and gets a
+// confirmation code, which they paste back into Claude Code. Whoever sends someone else a link gets nothing from it:
+// the token only comes with the confirmation code, shown in the approver's browser.
+// In memory and single-use like the project link: a restart just means asking again.
 import crypto from 'node:crypto'
 
-/** How long a device code works, from when it was made */
+/** How long a device code works, from when it was made, and again from its approval */
 export const DEVICE_TTL_MS = 10 * 60_000
 /** Most unexpired codes at once, so nobody can fill the memory */
 export const DEVICE_MAX_PENDING = 500
+/** Wrong confirmation codes before the request is gone */
+export const DEVICE_MAX_TRIES = 5
 
 // No vowels and no look-alikes: a code read out loud or typed from a screen stays unambiguous
 const USER_CODE_ALPHABET = 'BCDFGHJKLMNPQRSTVWXZ'
 
-type Status = 'pending' | 'approved' | 'denied'
-interface Entry { userCode: string; sandbox: string | null; status: Status; expires: number; grant?: { sandbox: string; owner: string } }
+type Status = 'pending' | 'working' | 'approved' | 'denied'
+/** sandbox: one of the user's to tie to; null: a new one, from template (null: the default) */
+export interface DeviceRequest { sandbox: string | null; template: string | null; ip: string | null }
+interface Entry extends DeviceRequest { userCode: string; status: Status; expires: number; tries: number; confirm?: string; grant?: { sandbox: string; owner: string } }
 
 const devices = new Map<string, Entry>()
 const userCodes = new Map<string, string>()
@@ -30,11 +36,13 @@ export function normalizeUserCode(input: string): string {
   return input.toUpperCase().replace(/[\s-]/g, '')
 }
 
-function newUserCode(): string {
+function newCode(): string {
   let c = ''
   for (let i = 0; i < 8; i++) c += USER_CODE_ALPHABET[crypto.randomInt(USER_CODE_ALPHABET.length)]
   return c
 }
+
+const pretty = (c: string) => `${c.slice(0, 4)}-${c.slice(4)}`
 
 /** The live entry behind a user code; null when unknown or expired */
 function byUserCode(userCode: string, now: number): [string, Entry] | null {
@@ -46,30 +54,48 @@ function byUserCode(userCode: string, now: number): [string, Entry] | null {
 }
 
 /** A new device code for the agent and the user code to show; throws at the cap */
-export function startDevice(sandbox: string | null, now = Date.now()): { device_code: string; user_code: string } {
+export function startDevice(req: Partial<DeviceRequest> = {}, now = Date.now()): { device_code: string; user_code: string } {
   purge(now)
   if (devices.size >= DEVICE_MAX_PENDING) throw new Error('too many pending')
-  let code = newUserCode()
-  while (userCodes.has(code)) code = newUserCode()
+  let code = newCode()
+  while (userCodes.has(code)) code = newCode()
   const device_code = crypto.randomBytes(32).toString('base64url')
-  devices.set(device_code, { userCode: code, sandbox, status: 'pending', expires: now + DEVICE_TTL_MS })
+  devices.set(device_code, { sandbox: req.sandbox ?? null, template: req.template ?? null, ip: req.ip ?? null, userCode: code, status: 'pending', expires: now + DEVICE_TTL_MS, tries: 0 })
   userCodes.set(code, device_code)
-  return { device_code, user_code: `${code.slice(0, 4)}-${code.slice(4)}` }
+  return { device_code, user_code: pretty(code) }
 }
 
 /** What the approval page shows for a user code; null when unknown or expired */
-export function deviceByUserCode(userCode: string, now = Date.now()): { sandbox: string | null; status: Status } | null {
+export function deviceByUserCode(userCode: string, now = Date.now()): DeviceRequest & { status: Status } | null {
   const f = byUserCode(userCode, now)
-  return f ? { sandbox: f[1].sandbox, status: f[1].status } : null
+  return f ? { sandbox: f[1].sandbox, template: f[1].template, ip: f[1].ip, status: f[1].status } : null
 }
 
-/** Approves a pending code; false when unknown, expired or already decided */
-export function approveDevice(userCode: string, grant: { sandbox: string; owner: string }, now = Date.now()): boolean {
+/** Takes a pending code for an approval that takes a while (a create, new Docker keys): a second click finds it busy */
+export function claimDevice(userCode: string, now = Date.now()): boolean {
   const f = byUserCode(userCode, now)
   if (!f || f[1].status !== 'pending') return false
-  f[1].status = 'approved'
-  f[1].grant = { sandbox: grant.sandbox, owner: grant.owner }
+  f[1].status = 'working'
   return true
+}
+
+/** The approval failed: pending again, to try once more */
+export function releaseDevice(userCode: string, now = Date.now()): void {
+  const f = byUserCode(userCode, now)
+  if (f && f[1].status === 'working') f[1].status = 'pending'
+}
+
+/** Approves a claimed code: the confirmation code to show the user (XXXX-XXXX); null when unknown, expired or not claimed */
+export function approveDevice(userCode: string, grant: { sandbox: string; owner: string }, now = Date.now()): string | null {
+  const f = byUserCode(userCode, now)
+  if (!f || f[1].status !== 'working') return null
+  const e = f[1]
+  e.status = 'approved'
+  e.grant = { sandbox: grant.sandbox, owner: grant.owner }
+  e.confirm = newCode()
+  // The time to paste it starts now (a create can take a while)
+  e.expires = now + DEVICE_TTL_MS
+  return pretty(e.confirm)
 }
 
 /** Denies a pending code; false when unknown, expired or already decided */
@@ -80,15 +106,30 @@ export function denyDevice(userCode: string, now = Date.now()): boolean {
   return true
 }
 
-/** The agent's poll; approved and denied are told once, then the entry is gone */
-export function pollDevice(deviceCode: string, now = Date.now()):
-  { status: 'pending' } | { status: 'denied' } | { status: 'expired' } | { status: 'approved'; sandbox: string; owner: string } {
+function sameCode(a: string, b: string): boolean {
+  const x = crypto.createHash('sha256').update(a).digest()
+  const y = crypto.createHash('sha256').update(b).digest()
+  return crypto.timingSafeEqual(x, y)
+}
+
+export type Redeemed =
+  | { status: 'pending' } | { status: 'denied' } | { status: 'expired' }
+  | { status: 'wrong'; tries_left: number }
+  | { status: 'approved'; sandbox: string; owner: string }
+
+/** The agent hands in the confirmation code the user pasted; approved and denied are told once, then the entry is gone */
+export function redeemDevice(deviceCode: string, confirm: string, now = Date.now()): Redeemed {
   const e = devices.get(deviceCode)
   if (!e) return { status: 'expired' }
   if (e.expires <= now) { drop(deviceCode, e); return { status: 'expired' } }
-  if (e.status === 'pending') return { status: 'pending' }
+  if (e.status === 'denied') { drop(deviceCode, e); return { status: 'denied' } }
+  if (e.status !== 'approved' || !e.confirm || !e.grant) return { status: 'pending' }
+  if (!sameCode(normalizeUserCode(confirm), e.confirm)) {
+    e.tries++
+    if (e.tries >= DEVICE_MAX_TRIES) { drop(deviceCode, e); return { status: 'expired' } }
+    return { status: 'wrong', tries_left: DEVICE_MAX_TRIES - e.tries }
+  }
   drop(deviceCode, e)
-  if (e.status === 'denied' || !e.grant) return { status: 'denied' }
   return { status: 'approved', sandbox: e.grant.sandbox, owner: e.grant.owner }
 }
 

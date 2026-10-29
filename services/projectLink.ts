@@ -55,7 +55,7 @@ export function projectDirFiles(s: ProjectDirSandbox, url: string): Array<{ name
   ]
 }
 
-/** What project_dir_link and /device/poll answer for a link: its url, the unpack command and the docker context commands */
+/** What project_dir_link and /device/token answer for a link: its url, the unpack command and the docker context commands */
 export function projectLinkAnswer(sandbox: string, linkToken: string): { url: string; expires_in: number; command: string; context_commands: string[] } {
   const url = `${publicUrl()}/project-dir/${linkToken}`
   const ctx = `p9m-${rawNameOf(sandbox) ?? sandbox}`

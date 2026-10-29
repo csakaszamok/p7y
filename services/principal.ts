@@ -82,6 +82,8 @@ export function getPrincipal(req: Request): Principal | null {
   const session = readSession(getCookie(req, SESSION_COOKIE))
   if (!session) return null
   const role = sessionRole(session.sub, session.role)
+  // Only the admin has a web UI: a user's sign-in reaches no API (they work from Claude Code, with its token)
+  if (role !== 'admin') return null
   return subAllowed(session.sub, role) ? { sub: session.sub, role, via: 'session' } : null
 }
 

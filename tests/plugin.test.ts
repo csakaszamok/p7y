@@ -63,20 +63,14 @@ describe('the Claude Code plugin', () => {
     }
   })
 
-  it('init starts and polls a device approval', () => {
+  // No polling: the token only comes with the code the approver's browser shows, pasted back by the user
+  it('init starts a device approval and hands in the code the user pastes', () => {
     const md = fs.readFileSync(path.join(pluginDir, 'skills/init/SKILL.md'), 'utf8')
     expect(md).toContain('`POST /device/code`')
-    expect(md).toContain('`POST /device/poll`')
-    expect(frontmatter(md)['argument-hint']).toBe('<purgatorium address> <sandbox>')
-  })
-
-  // A Bash tool command is cut off at 2 minutes: an approved answer (told once) must not be lost to that
-  it('init polls in runs well under 2 minutes', () => {
-    const md = fs.readFileSync(path.join(pluginDir, 'skills/init/SKILL.md'), 'utf8')
-    const rounds = Number(/seq 1 (\d+)/.exec(md)?.[1])
-    const sleep = Number(/sleep (\d+)/.exec(md)?.[1])
-    expect(rounds * sleep).toBeGreaterThan(0)
-    expect(rounds * sleep).toBeLessThanOrEqual(90)
+    expect(md).toContain('`POST /device/token`')
+    expect(md).not.toContain('/device/poll')
+    expect(md).toContain('^[A-Za-z]{4}[- ]?[A-Za-z]{4}$')
+    expect(frontmatter(md)['argument-hint']).toBe('<purgatorium address> [sandbox | --template <name>]')
   })
 
   it('init checks the address before it goes into a command', () => {

@@ -32,5 +32,21 @@ ${faviconTag()}</head>
 </body></html>`, status)
 }
 
-export const expiredPage = () => activatePage('<p class="error">This code has expired or is unknown: run /p9m:init again.</p>', 404)
+// Never 404: Traefik puts its own not-found page in place of every 404 (dynamic/errors.yml), and this text would be lost
+export const expiredPage = () => activatePage('<p class="error">This code has expired or is unknown: run /p9m:init again.</p>', 410)
 export const messagePage = (text: string, status = 200, cls = 'muted') => activatePage(`<p class="${cls}">${escapeHtml(text)}</p>`, status)
+
+/** The template a new sandbox gets: the one Claude Code asked for, or the server's default */
+export const newSandboxTemplate = (template: string | null) => template ?? (process.env.DEFAULT_TEMPLATE || 'starter')
+
+/** A code that is not pending any more */
+export function statusPage(status: 'working' | 'approved' | 'denied' | 'pending', code = 200): Response {
+  return status === 'working'
+    ? messagePage('This code is being approved in another tab: wait for that one.', code)
+    : messagePage(`This code was already ${status}.`, code)
+}
+
+/** Approved: the confirmation code to paste back into Claude Code */
+export const confirmPage = (confirm: string) => activatePage(`<p>Approved. Paste this code into Claude Code:</p>
+  <p class="user-code">${escapeHtml(confirm)}</p>
+  <p class="approve-warn">Only into your own Claude Code, and to nobody else: whoever has this code gets into the sandbox. It works once, for 10 minutes.</p>`)

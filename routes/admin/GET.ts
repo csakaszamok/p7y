@@ -1,8 +1,8 @@
-import { pageSession, redirect, html, renderPage, SANDBOX_VIEW_BODY } from '../../services/ui/layout'
+import { html, renderPage, SANDBOX_VIEW_BODY } from '../../services/ui/layout'
+import { guiSession } from '../../services/ui/headlessPage'
 
 export default async (req: Request): Promise<Response> => {
-  const session = pageSession(req)
-  if (!session) return redirect('/login')
-  if (session.role !== 'admin') return redirect('/')
+  const session = guiSession(req)
+  if (session instanceof Response) return session
   return html(renderPage({ title: 'All sandboxes', view: 'all', session, body: SANDBOX_VIEW_BODY }))
 }

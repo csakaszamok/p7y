@@ -20,23 +20,30 @@ vi.mock('../../services/sandbox', () => ({
 }))
 
 const { createSession } = await import('../../services/session')
+const { createToken } = await import('../../services/tokens')
 const me = (await import('../../routes/me/GET')).default
 const listT = (await import('../../routes/tokens/GET')).default
 const createT = (await import('../../routes/tokens/POST')).default
 const deleteT = (await import('../../routes/tokens/[id]/DELETE')).default
 
-const as = (sub: string, role: 'user' | 'admin' = 'user') => ({
-  cookie: `p9m_session=${createSession(sub, role)}`, origin: 'http://p9m.lvh.me', host: 'p9m.lvh.me', 'content-type': 'application/json'
-})
+// The admin with its sign-in; a user with a token named cli (a user's sign-in reaches no API)
+const cli = new Map<string, string>()
+const as = (sub: string, role: 'user' | 'admin' = 'user'): Record<string, string> => role === 'admin'
+  ? { cookie: `p9m_session=${createSession(sub, role)}`, origin: 'http://p9m.lvh.me', host: 'p9m.lvh.me', 'content-type': 'application/json' }
+  : { authorization: `Bearer ${cli.get(sub) ?? cli.set(sub, createToken(sub, 'cli', '30d').token).get(sub)}`, host: 'p9m.lvh.me', 'content-type': 'application/json' }
+const names = (rows: Array<{ name: string }>) => rows.map(t => t.name).sort()
 const r = (p: string, method: string, headers: Record<string, string>, body?: unknown) =>
   new Request(`http://p9m.lvh.me${p}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
 
 describe('token API', () => {
-  beforeEach(() => fs.rmSync(FILE, { force: true }))
+  beforeEach(() => { fs.rmSync(FILE, { force: true }); cli.clear() })
 
   it('reports who is calling', async () => {
-    expect(await (await me(r('/me', 'GET', as('alice@example.com')))).json()).toMatchObject({ sub: 'alice@example.com', role: 'user', via: 'session', quota: 3, sandbox_count: 1 })
+    expect(await (await me(r('/me', 'GET', as('alice@example.com')))).json()).toMatchObject({ sub: 'alice@example.com', role: 'user', via: 'token', quota: 3, sandbox_count: 1 })
+    expect(await (await me(r('/me', 'GET', as('admin', 'admin')))).json()).toMatchObject({ sub: 'admin', role: 'admin', via: 'session' })
     expect((await me(r('/me', 'GET', {}))).status).toBe(401)
+    // Headless: a user's sign-in is not a way into the API
+    expect((await me(r('/me', 'GET', { cookie: `p9m_session=${createSession('alice@example.com', 'user')}` }))).status).toBe(401)
   })
 
   it('creates a token once, lists it without the secret, and the token authenticates as its owner', async () => {
@@ -45,7 +52,8 @@ describe('token API', () => {
     const created = await res.json()
     expect(created.token).toMatch(/^p9m_/)
     const listed = await (await listT(r('/tokens', 'GET', as('alice@example.com')))).json()
-    expect(listed).toEqual([expect.objectContaining({ id: created.id, name: 'laptop', owner: 'alice@example.com' })])
+    expect(names(listed)).toEqual(['cli', 'laptop'])
+    expect(listed).toContainEqual(expect.objectContaining({ id: created.id, name: 'laptop', owner: 'alice@example.com' }))
     expect(JSON.stringify(listed)).not.toContain(created.token)
     const who = await (await me(r('/me', 'GET', { authorization: `Bearer ${created.token}` }))).json()
     expect(who).toMatchObject({ sub: 'alice@example.com', role: 'user', via: 'token', quota: 3, sandbox_count: 1 })
@@ -59,7 +67,7 @@ describe('token API', () => {
     const who = await (await me(r('/me', 'GET', { authorization: `Bearer ${created.token}` }))).json()
     expect(who).toMatchObject({ sub: 'alice@example.com', role: 'user', via: 'token', sandbox: 'p9m-shop' })
     const listed = await (await listT(r('/tokens', 'GET', as('alice@example.com')))).json()
-    expect(listed[0].sandbox).toBe('p9m-shop')
+    expect(listed.find((t: { name: string }) => t.name === 'shop agent').sandbox).toBe('p9m-shop')
   })
 
   it('refuses a sandbox that is not the caller’s own, the admin included', async () => {
@@ -87,8 +95,8 @@ describe('token API', () => {
   it('users see and revoke only their own tokens; the admin sees and revokes all', async () => {
     const a = await (await createT(r('/tokens', 'POST', as('alice@example.com'), { name: 'a' }))).json()
     await createT(r('/tokens', 'POST', as('bob@example.com'), { name: 'b' }))
-    expect((await (await listT(r('/tokens', 'GET', as('bob@example.com')))).json()).map((t: { name: string }) => t.name)).toEqual(['b'])
-    expect((await (await listT(r('/tokens', 'GET', as('admin', 'admin')))).json()).length).toBe(2)
+    expect(names(await (await listT(r('/tokens', 'GET', as('bob@example.com')))).json())).toEqual(['b', 'cli'])
+    expect(names(await (await listT(r('/tokens', 'GET', as('admin', 'admin')))).json())).toEqual(['a', 'b', 'cli', 'cli'])
     expect((await deleteT(r(`/tokens/${a.id}`, 'DELETE', as('bob@example.com')))).status).toBe(404)
     expect((await deleteT(r(`/tokens/${a.id}`, 'DELETE', as('admin', 'admin')))).status).toBe(200)
     expect((await me(r('/me', 'GET', { authorization: `Bearer ${a.token}` }))).status).toBe(401)
