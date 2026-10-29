@@ -24,6 +24,17 @@ Or in Claude Code:
 
 Claude Code asks where to install it: **user** (every folder of yours; usually what you want), **project** (this repository, for everyone who uses it, through its `.claude/settings.json`) or **local** (this folder, only you). It asks for nothing else: no address, no token. Updates come with Purgatorium's releases (`/plugin marketplace update p9m`).
 
+Installed the plugin when it was called `p7y` (`/p7y:init`)? Claude Code knows that one by its old name, and `/plugin marketplace update p9m` finds nothing. Remove it and add the new one, in a terminal, in the folder where you installed it:
+
+```
+claude plugin uninstall p7y@p7y --scope local
+claude plugin marketplace remove p7y
+claude plugin marketplace add p9m-team/p9m
+claude plugin install p9m@p9m
+```
+
+`--scope` is where you installed it (`claude plugin list` shows it: `user`, `project` or `local`); a `local` one only from its own folder. Then start Claude Code again.
+
 ## Connect a project: `/p9m:init`
 
 Users get their sandboxes here, not in a web UI: only the admin has one. In Claude Code, in the project's root folder:

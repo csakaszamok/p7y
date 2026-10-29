@@ -1744,6 +1744,13 @@ claude plugin install p9m@p9m
 /plugin install p9m@p9m
 </code></pre></div>
 <p>Claude Code asks where to install it: <strong>user</strong> (every folder of yours; usually what you want), <strong>project</strong> (this repository, for everyone who uses it, through its <code>.claude/settings.json</code>) or <strong>local</strong> (this folder, only you). It asks for nothing else: no address, no token. Updates come with Purgatorium's releases (<code>/plugin marketplace update p9m</code>).</p>
+<p>Installed the plugin when it was called <code>p7y</code> (<code>/p7y:init</code>)? Claude Code knows that one by its old name, and <code>/plugin marketplace update p9m</code> finds nothing. Remove it and add the new one, in a terminal, in the folder where you installed it:</p>
+<div class="highlight"><pre><span></span><code>claude<span class="w"> </span>plugin<span class="w"> </span>uninstall<span class="w"> </span>p7y@p7y<span class="w"> </span>--scope<span class="w"> </span><span class="nb">local</span>
+claude<span class="w"> </span>plugin<span class="w"> </span>marketplace<span class="w"> </span>remove<span class="w"> </span>p7y
+claude<span class="w"> </span>plugin<span class="w"> </span>marketplace<span class="w"> </span>add<span class="w"> </span>p9m-team/p9m
+claude<span class="w"> </span>plugin<span class="w"> </span>install<span class="w"> </span>p9m@p9m
+</code></pre></div>
+<p><code>--scope</code> is where you installed it (<code>claude plugin list</code> shows it: <code>user</code>, <code>project</code> or <code>local</code>); a <code>local</code> one only from its own folder. Then start Claude Code again.</p>
 <h2 id="connect-a-project-p9minit">Connect a project: <code>/p9m:init</code><a class="headerlink" href="#connect-a-project-p9minit" title="Permanent link">&para;</a></h2>
 <p>Users get their sandboxes here, not in a web UI: only the admin has one. In Claude Code, in the project's root folder:</p>
 <div class="highlight"><pre><span></span><code>/p9m:init https://p9m.example.com                      # a new sandbox, from the default template

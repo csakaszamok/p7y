@@ -767,10 +767,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-download-the-zip" class="md-nav__link">
+  <a href="#1-get-the-p9m-folder" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Download the zip
+        1. Get the .p9m folder
       
     </span>
   </a>
@@ -1646,10 +1646,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-download-the-zip" class="md-nav__link">
+  <a href="#1-get-the-p9m-folder" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Download the zip
+        1. Get the .p9m folder
       
     </span>
   </a>
@@ -1707,25 +1707,28 @@
 
 
 <h1 id="put-your-app-online-with-any-agent">Put your app online with any agent<a class="headerlink" href="#put-your-app-online-with-any-agent" title="Permanent link">&para;</a></h1>
-<p>For Codex, Cursor, Claude Code without the plugin, or any agent that can run commands on your computer. You download a small zip from Purgatorium; the agent uses it to build and run your app in your sandbox, and gives you its link.</p>
-<p><strong>What you need:</strong> the agent, <a href="https://docs.docker.com/get-docker/">Docker</a> installed on your computer, and a Purgatorium account with a sandbox (<strong>+ New sandbox</strong> in Purgatorium; see <a href="../claude-code/#1-make-a-sandbox">step 1 of the Claude Code tutorial</a>).</p>
-<h2 id="1-download-the-zip">1. Download the zip<a class="headerlink" href="#1-download-the-zip" title="Permanent link">&para;</a></h2>
-<p>In Purgatorium, click your sandbox, then <strong>Let your agent deploy…</strong> → <strong>Download</strong>; in the Advanced view the same window also has <strong>Options</strong> (the token's name and expiry, a zip without the Docker keys, <strong>Copy as .env</strong>). You get <code>p9m-&lt;sandbox&gt;.zip</code>.</p>
-<p><img alt="Let your agent deploy: Download, under Other agents" src="../../media/tutorial-agent.png" width="360" /></p>
-<p>It holds a token for this sandbox and its keys: treat it like a password. Do not email it or commit it.</p>
+<p>For Codex, Cursor, Claude Code without the plugin, or any agent that can run commands on your computer. Your project gets a small <code>.p9m</code> folder from Purgatorium; the agent uses it to build and run your app in your sandbox, and gives you its link.</p>
+<p><strong>What you need:</strong> the agent, <a href="https://docs.docker.com/get-docker/">Docker</a> installed on your computer, and a Purgatorium account.</p>
+<h2 id="1-get-the-p9m-folder">1. Get the <code>.p9m</code> folder<a class="headerlink" href="#1-get-the-p9m-folder" title="Permanent link">&para;</a></h2>
+<p>Users have no web UI in Purgatorium, so the folder comes one of two ways:</p>
+<ul>
+<li><strong>With Claude Code, once:</strong> in your app's folder, <a href="../claude-code/"><code>/p9m:init &lt;address&gt;</code></a> makes you a sandbox and writes the <code>.p9m</code> folder. From then on any agent can use the folder; Claude Code is not needed any more.</li>
+<li><strong>From the admin:</strong> they open your sandbox in Purgatorium and download its zip (<strong>Let your agent deploy…</strong> → <strong>Download</strong>), <code>p9m-&lt;sandbox&gt;.zip</code>, and give it to you. Save it in your Downloads.</li>
+</ul>
+<p>Either way it holds a token for this sandbox and its keys: treat it like a password. Do not email it or commit it.</p>
 <h2 id="2-hand-it-to-the-agent">2. Hand it to the agent<a class="headerlink" href="#2-hand-it-to-the-agent" title="Permanent link">&para;</a></h2>
 <p>Open your app's folder with the agent and say:</p>
 <blockquote>
-<p>Set up the p9m zip from my Downloads in this project and deploy.</p>
+<p>Deploy this app to my p9m sandbox.</p>
 </blockquote>
-<p>The agent unpacks it into a <code>.p9m</code> folder in your project, deletes the zip, builds your app in the sandbox, starts it and gives you its link. The <code>.p9m</code> folder keeps itself out of git on its own (it has its own <code>.gitignore</code>); leave it there, the agent uses it for every later update.</p>
+<p>With a zip, say where it is: <em>Set up the p9m zip from my Downloads in this project and deploy.</em> The agent unpacks it into a <code>.p9m</code> folder in your project and deletes the zip. Then it builds your app in the sandbox, starts it and gives you its link. The <code>.p9m</code> folder keeps itself out of git on its own (it has its own <code>.gitignore</code>); leave it there, the agent uses it for every later update.</p>
 <p>If the agent does not know what to do, point it to the instructions inside: <em>read .p9m/README.md and deploy this app to my sandbox</em>.</p>
 <h2 id="3-update">3. Update<a class="headerlink" href="#3-update" title="Permanent link">&para;</a></h2>
 <p>Changed something? <em>Update the app in my sandbox.</em> The same link shows the new version.</p>
 <h2 id="good-to-know">Good to know<a class="headerlink" href="#good-to-know" title="Permanent link">&para;</a></h2>
 <ul>
-<li>The zip's token expires in 90 days (in the Advanced view you can choose 30 days or never). Download a new zip then.</li>
-<li>Lost the zip, or someone else got it? In Purgatorium (Advanced view): the sandbox → <strong>Access</strong> → <strong>Rotate Docker keys…</strong> makes the old keys useless, and <strong>Access tokens</strong> lets you revoke its token.</li>
+<li>The folder's token expires in 90 days. Then run <code>/p9m:init &lt;address&gt; &lt;sandbox&gt;</code> in Claude Code again, or ask the admin for a new zip.</li>
+<li>Lost the folder or the zip, or someone else got it? Tell the admin: they can make the old keys useless (<strong>Rotate Docker keys…</strong>) and revoke its token.</li>
 <li>Sleep and wake work the same as with Claude Code: see <a href="../claude-code/#good-to-know">Good to know</a> there.</li>
 </ul>
 <p>For agent builders: everything the agent does is in the <a href="../../agent-guide/">agent guide</a>.</p>

@@ -1827,6 +1827,13 @@ claude plugin install p9m@p9m
 <p>To use a sandbox you already have, add its name: <code>/p9m:init https://p9m.example.com k3x9q2</code>. The page then asks for access to that sandbox (only one of your own), and it works the same way. This is how you move a folder to another sandbox, or connect a folder again after 90 days: Claude Code asks, then replaces the connection.</p>
 <p>A new sandbox comes from Purgatorium's default template. For another one, name it: <code>/p9m:init https://p9m.example.com --template &lt;template&gt;</code>.</p>
 <p>Used the earlier plugin, which asked for an address and a token? Run <code>/plugin marketplace update p9m</code> once, then <code>/p9m:init</code> in each project.</p>
+<p>Installed the plugin when it was called <code>p7y</code> (<code>/p7y:init</code>)? Claude Code knows that one by its old name, and <code>/plugin marketplace update p9m</code> finds nothing. Remove it and add the new one, in a terminal, in the folder where you installed it:</p>
+<div class="highlight"><pre><span></span><code>claude<span class="w"> </span>plugin<span class="w"> </span>uninstall<span class="w"> </span>p7y@p7y<span class="w"> </span>--scope<span class="w"> </span><span class="nb">local</span>
+claude<span class="w"> </span>plugin<span class="w"> </span>marketplace<span class="w"> </span>remove<span class="w"> </span>p7y
+claude<span class="w"> </span>plugin<span class="w"> </span>marketplace<span class="w"> </span>add<span class="w"> </span>p9m-team/p9m
+claude<span class="w"> </span>plugin<span class="w"> </span>install<span class="w"> </span>p9m@p9m
+</code></pre></div>
+<p><code>--scope</code> is where you installed it (<code>claude plugin list</code> shows it: <code>user</code>, <code>project</code> or <code>local</code>); a <code>local</code> one only from its own folder. Then start Claude Code again.</p>
 <p>More details: <a href="../../claude-plugin/">Claude Code plugin</a>.</p>
 
 
