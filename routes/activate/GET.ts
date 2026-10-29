@@ -26,6 +26,7 @@ export default async (req: Request): Promise<Response> => {
 
   let what: string
   let approve = 'Approve'
+  let busy = 'Approving…'
   let note = ''
   if (device.sandbox) {
     // The admin may tie a user's sandbox; never saying whether someone else's exists
@@ -36,11 +37,13 @@ export default async (req: Request): Promise<Response> => {
     what = `Claude Code asks for access to <b>${escapeHtml(rawNameOf(fixed.name) ?? fixed.name)}</b>: a token for this sandbox only and its Docker keys, written into the project's <code>.p9m</code> folder.`
     if (dockerAccessState(fixed.name) !== 'ready') {
       approve = ENABLE
+      busy = 'Turning on Docker access…'
       if (fixed.status !== 'deep_sleep') note = '<p class="muted">The sandbox restarts to turn on Docker access (~30 s).</p>'
     }
   } else {
     what = `Claude Code asks for a new sandbox from the <b>${escapeHtml(newSandboxTemplate(device.template))}</b> template: a token for it only and its Docker keys, written into the project's <code>.p9m</code> folder.`
     approve = 'Create and approve'
+    busy = 'Creating the sandbox…'
     note = '<p class="muted">Creating it takes up to a minute: keep this page open.</p>'
   }
   // Asked for from another network than this browser's: most likely someone else's code
@@ -50,12 +53,12 @@ export default async (req: Request): Promise<Response> => {
     : ''
   const pretty = displayCode(code)
   return activatePage(`<p class="user-code">${escapeHtml(pretty)}</p>
-  <form method="post" action="/activate">
+  <form method="post" action="/activate" data-activate>
     <input type="hidden" name="code" value="${escapeHtml(pretty)}">
     <p>${what}</p>
     ${note}
     ${elsewhere}
     <p class="approve-warn">Approve only if you just ran /p9m:init yourself and Claude Code shows this same code. Never approve a code someone sent you.</p>
-    <div class="actions"><button class="primary" name="decision" value="approve">${approve}</button><button name="decision" value="deny" formnovalidate>Deny</button></div>
+    <div class="actions"><button class="primary" name="decision" value="approve" data-busy="${busy}">${approve}</button><button name="decision" value="deny" data-busy="Denying…" formnovalidate>Deny</button></div>
   </form>`)
 }

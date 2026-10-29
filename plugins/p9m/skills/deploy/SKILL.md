@@ -16,6 +16,11 @@ by character, and never print one (`cat key.pem`). Copied by hand they get garbl
 still looks like a key), and in an answer they go into your context and the transcript. Only `/p9m:init`, a
 single-use link (step 3) or an export zip puts them on disk. Never ask for `include_keys`.
 
+**A sandbox has two names.** The user knows it by its short name (`shop`, as in its addresses); Purgatorium's
+files and commands use the full one (`p9m-shop`, `P9M_SANDBOX`, the docker context). Talk to the user only
+with the short name. Never build the full one yourself: take it from the `.p9m` folder or from Purgatorium's
+answer.
+
 ## 1. The project's `.p9m` folder
 
 A project is tied to its sandbox by a `.p9m` folder in the project's root folder:
@@ -83,9 +88,9 @@ The calls (`:name` is `$P9M_SANDBOX`):
 connection does not wake it. A refusal that the running limit is reached: tell the user, and that putting
 another sandbox to sleep frees a place. Never put a sandbox to sleep without asking.
 
-`docker_access.state` must be `ready`. If it is `needs-certs`: the user turns Docker access on in Purgatorium
-(the sandbox → Access → Enable). Tell them it restarts the sandbox and its apps are unreachable for about 30
-seconds; the token here may not do it.
+`docker_access.state` must be `ready`. If it is `needs-certs`: the user runs `/p9m:init <address> <name>`
+again and approves with **Enable Docker access and approve**. Tell them it restarts the sandbox and its apps are
+unreachable for about 30 seconds; the token here may not do it.
 
 The docker context is `p9m-<sandbox>`, with the sandbox's name as the user sees it (for `P9M_SANDBOX=p9m-shop`:
 `p9m-shop`). Check it with a compose command, not only `ps` (`ps` can work with a key that compose

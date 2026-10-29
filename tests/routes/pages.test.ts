@@ -243,8 +243,8 @@ describe('pages', () => {
     expect((await asset(r('/assets/secret.env'))).status).toBe(404)
   })
 
-  it('serves the ember animation, the waiting-page poller and the logo', async () => {
-    for (const f of ['embers.js', 'waiting.js']) {
+  it('serves the ember animation, the waiting-page poller, the approval page script and the logo', async () => {
+    for (const f of ['embers.js', 'waiting.js', 'activate.js']) {
       const res = await asset(r(`/assets/${f}`))
       expect(res.status, f).toBe(200)
       expect(res.headers.get('content-type'), f).toMatch(/javascript/)

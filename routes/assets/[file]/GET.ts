@@ -7,6 +7,7 @@ const ASSETS: Record<string, string> = {
   'idle.js': 'text/javascript; charset=utf-8',
   'embers.js': 'text/javascript; charset=utf-8',
   'waiting.js': 'text/javascript; charset=utf-8',
+  'activate.js': 'text/javascript; charset=utf-8',
   'style.css': 'text/css; charset=utf-8',
   'logo.svg': 'image/svg+xml',
   'terminal.js': 'text/javascript; charset=utf-8',

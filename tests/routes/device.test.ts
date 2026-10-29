@@ -84,6 +84,7 @@ describe('POST /device/token', () => {
     const b = await ok.json()
     expect(b.status).toBe('approved')
     expect(b.sandbox).toBe('p9m-shop')
+    expect(b.name).toBe('shop')
     expect(b.url).toMatch(/^https:\/\/p9m\.example\.com\/project-dir\/[A-Za-z0-9_-]{40,}$/)
     expect(b.command).toBe(`curl -sf "${b.url}" | tar -x -C "<project folder>"`)
     expect(b.context_commands).toHaveLength(2)

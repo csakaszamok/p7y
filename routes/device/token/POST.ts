@@ -1,5 +1,6 @@
 import { redeemDevice } from '../../../services/deviceAuth'
 import { issueProjectLink, projectLinkAnswer } from '../../../services/projectLink'
+import { rawNameOf } from '../../../services/naming'
 
 export const openapi = {
   // No auth: the device code and the confirmation code (both in the body, never a URL) are the secret
@@ -7,7 +8,7 @@ export const openapi = {
   summary: 'Hand in the confirmation code the user got on the approval page: a single-use link to the .p9m folder',
   tags: ['device'],
   responses: {
-    200: { description: '{ status: approved, sandbox, url, expires_in, command, context_commands }, once' },
+    200: { description: '{ status: approved, sandbox, name, url, expires_in, command, context_commands }, once; name: the sandbox as the user knows it (in its addresses, in /p9m:init)' },
     400: { description: 'device_code or code missing, or { status: wrong, tries_left }: not the code (5 wrong ones end the request)' },
     403: { description: '{ status: denied }' },
     409: { description: '{ status: pending }: not approved yet' },
@@ -28,5 +29,5 @@ export default async (req: Request): Promise<Response> => {
   if (r.status === 'denied') return Response.json(r, { status: 403, headers })
   if (r.status === 'pending') return Response.json(r, { status: 409, headers })
   if (r.status === 'wrong') return Response.json(r, { status: 400, headers })
-  return Response.json({ status: 'approved', sandbox: r.sandbox, ...projectLinkAnswer(r.sandbox, issueProjectLink(r.sandbox, Date.now(), { owner: r.owner })) }, { headers })
+  return Response.json({ status: 'approved', sandbox: r.sandbox, name: rawNameOf(r.sandbox) ?? r.sandbox, ...projectLinkAnswer(r.sandbox, issueProjectLink(r.sandbox, Date.now(), { owner: r.owner })) }, { headers })
 }
