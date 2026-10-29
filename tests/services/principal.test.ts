@@ -22,22 +22,27 @@ describe('getPrincipal with OIDC_ALLOWED_DOMAINS', () => {
   // Taken off the list: their session and tokens stop at once, not in 7 days or never
   it('drops the session and the tokens of someone no longer allowed; the admin stays', () => {
     vi.stubEnv('OIDC_ALLOWED_DOMAINS', 'partner.org')
+    // carol an admin: a user's session reaches no API anyway
+    vi.stubEnv('OIDC_ADMIN_EMAILS', 'carol@partner.org')
     try {
       expect(getPrincipal(req({ authorization: 'Bearer ldr_good' }))).toBeNull()
       expect(getPrincipal(req({ cookie: `p9m_session=${createSession('bob@example.com', 'user')}` }))).toBeNull()
-      expect(getPrincipal(req({ cookie: `p9m_session=${createSession('carol@partner.org', 'user')}` }))).toMatchObject({ sub: 'carol@partner.org' })
+      expect(getPrincipal(req({ cookie: `p9m_session=${createSession('carol@partner.org', 'admin')}` }))).toMatchObject({ sub: 'carol@partner.org' })
       expect(getPrincipal(req({ authorization: 'Bearer admin-secret' }))).toMatchObject({ role: 'admin' })
       expect(getPrincipal(req({ cookie: `p9m_session=${createSession('admin', 'admin')}` }))).toMatchObject({ role: 'admin' })
-    } finally { vi.stubEnv('OIDC_ALLOWED_DOMAINS', '') }
+    } finally { vi.stubEnv('OIDC_ALLOWED_DOMAINS', ''); vi.stubEnv('OIDC_ADMIN_EMAILS', '') }
   })
 })
 
 describe('getPrincipal', () => {
-  it('resolves admin token, personal token and session cookie', () => {
+  it("resolves admin token, personal token and the admin's session cookie", () => {
     expect(getPrincipal(req({ authorization: 'Bearer admin-secret' }))).toEqual({ sub: 'admin', role: 'admin', via: 'admin-token' })
     expect(getPrincipal(req({ authorization: 'Bearer ldr_good' }))).toEqual({ sub: 'alice@example.com', role: 'user', via: 'token' })
-    const cookie = `p9m_session=${createSession('bob@example.com', 'user')}`
-    expect(getPrincipal(req({ cookie }))).toEqual({ sub: 'bob@example.com', role: 'user', via: 'session' })
+    expect(getPrincipal(req({ cookie: `p9m_session=${createSession('admin', 'admin')}` }))).toEqual({ sub: 'admin', role: 'admin', via: 'session' })
+  })
+
+  it("headless: a user's session cookie reaches no API", () => {
+    expect(getPrincipal(req({ cookie: `p9m_session=${createSession('bob@example.com', 'user')}` }))).toBeNull()
   })
 
   it('treats unknown bearer tokens and bad cookies as anonymous', () => {
@@ -71,7 +76,7 @@ describe('getPrincipal', () => {
 })
 
 describe('requirePrincipal', () => {
-  const session = `p9m_session=${createSession('bob@example.com', 'user')}`
+  const session = `p9m_session=${createSession('admin', 'admin')}`
 
   it('401s anonymous requests', async () => {
     const r = requirePrincipal(req())
@@ -86,9 +91,9 @@ describe('requirePrincipal', () => {
       const r = requirePrincipal(req(h, 'POST'))
       expect((r as Response).status).toBe(403)
     }
-    expect(requirePrincipal(req({ cookie: session, origin: 'http://p9m.lvh.me' }, 'POST'))).toMatchObject({ sub: 'bob@example.com' })
-    expect(requirePrincipal(req({ cookie: session, referer: 'http://p9m.lvh.me/admin' }, 'DELETE'))).toMatchObject({ sub: 'bob@example.com' })
-    expect(requirePrincipal(req({ cookie: session }, 'GET'))).toMatchObject({ sub: 'bob@example.com' })
+    expect(requirePrincipal(req({ cookie: session, origin: 'http://p9m.lvh.me' }, 'POST'))).toMatchObject({ sub: 'admin' })
+    expect(requirePrincipal(req({ cookie: session, referer: 'http://p9m.lvh.me/admin' }, 'DELETE'))).toMatchObject({ sub: 'admin' })
+    expect(requirePrincipal(req({ cookie: session }, 'GET'))).toMatchObject({ sub: 'admin' })
   })
 
   it('does not apply the Origin check to bearer tokens', () => {
@@ -220,8 +225,8 @@ describe('getPrincipal with OIDC_ADMIN_EMAILS', () => {
       expect(getPrincipal(req({ authorization: 'Bearer ldr_good' }))).toMatchObject({ sub: 'alice@example.com', role: 'user' })
     } finally { vi.stubEnv('OIDC_ADMIN_EMAILS', '') }
   })
-  it('taken off the list: the admin session is a user one at once (still signed in if allowed)', () => {
+  it('taken off the list: the admin session is a user one at once, which reaches no API', () => {
     vi.stubEnv('OIDC_ADMIN_EMAILS', '')
-    expect(getPrincipal(req({ cookie: `p9m_session=${createSession('alice@example.com', 'admin')}` }))).toMatchObject({ sub: 'alice@example.com', role: 'user' })
+    expect(getPrincipal(req({ cookie: `p9m_session=${createSession('alice@example.com', 'admin')}` }))).toBeNull()
   })
 })

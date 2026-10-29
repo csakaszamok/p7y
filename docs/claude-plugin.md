@@ -7,7 +7,7 @@ The `p9m` plugin teaches Claude Code to deploy: you say *put my app online*, it 
 
 ## Install
 
-Once on your computer, from a terminal (a sandbox's **Let your agent deploy…** shows these lines ready to copy). Claude Code in an editor (the VS Code extension) has no `/plugin`, so there this is the way:
+Once on your computer, from a terminal (Purgatorium shows these lines once you sign in). Claude Code in an editor (the VS Code extension) has no `/plugin`, so there this is the way:
 
 ```
 claude plugin marketplace add p9m-team/p9m
@@ -25,17 +25,21 @@ Claude Code asks where to install it: **user** (every folder of yours; usually w
 
 ## Connect a project: `/p9m:init`
 
-In Claude Code, in the project's root folder, run the line that **Let your agent deploy…** shows for the sandbox:
+Users get their sandboxes here, not in a web UI: only the admin has one. In Claude Code, in the project's root folder:
 
 ```
-/p9m:init https://p9m.example.com shop
+/p9m:init https://p9m.example.com                      # a new sandbox, from the default template
+/p9m:init https://p9m.example.com --template empty     # a new sandbox, from that template
+/p9m:init https://p9m.example.com k3x9q2               # one of your sandboxes
 ```
 
-Claude Code prints a link. Open it in your browser (sign in first if Purgatorium asks). The page shows a code and the sandbox; check that the code is the one Claude Code printed and click **Approve** (or **Deny**). Only the sandbox's owner (or the admin) can approve. The code works once and expires in 10 minutes.
+Claude Code prints a link. Open it in your browser (sign in first if Purgatorium asks). The page shows a code and what Claude Code asks for (a new sandbox from a template, or access to the named one); check that the code is the one Claude Code printed and click **Create and approve** or **Approve** (or **Deny**). There is nothing to pick on the page: a new sandbox gets a generated name, and a name that is not one of yours is refused. Only the sandbox's owner (or the admin) can approve. A new sandbox counts against the same limits as any other, and gets Docker access at once.
 
-Then Claude Code unpacks the project's `.p9m` folder straight to disk: a new token for that sandbox only (in `.p9m/p9m.env`, 90 days) and the sandbox's Docker keys. The token never shows on the screen or in the chat. The folder keeps itself out of git, and the token is listed in Purgatorium under **My area → Access tokens** as `Claude Code init <date>`, where you can revoke it.
+After the approval the page shows a second code. Paste it into Claude Code: only with it does Claude Code get the token, so a link someone else started gets them nothing unless you also send them that code. Both codes work once, for 10 minutes; 5 wrong pastes end the request.
 
-Run `/p9m:init` again whenever the token has expired or was revoked. A project can be tied to one sandbox at a time; another project in another folder can be tied to another sandbox, or to another Purgatorium.
+Then Claude Code unpacks the project's `.p9m` folder straight to disk: a new token for that sandbox only (in `.p9m/p9m.env`, 90 days) and the sandbox's Docker keys. The token never shows on the screen or in the chat. The folder keeps itself out of git; the token is named `Claude Code init <date>` (the admin sees and revokes it under **Access tokens**).
+
+Run `/p9m:init` with the sandbox's name again whenever the token has expired or was revoked. A project can be tied to one sandbox at a time; another project in another folder can be tied to another sandbox, or to another Purgatorium.
 
 ## The `.p9m` folder
 

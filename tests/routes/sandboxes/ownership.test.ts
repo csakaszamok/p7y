@@ -37,7 +37,9 @@ vi.mock('../../../services/composeView', () => ({
 }))
 vi.mock('../../../services/tokens', () => ({
   resolveToken: vi.fn((t: string) =>
-    t === 'p9m_a1' ? { owner: 'alice@example.com', sandbox: 'p9m-a1' }
+    // A user works with a token: a user's sign-in reaches no API
+    t === 'p9m_alice' ? { owner: 'alice@example.com', sandbox: null }
+    : t === 'p9m_a1' ? { owner: 'alice@example.com', sandbox: 'p9m-a1' }
     // alice's token for a name that is now bob's (her sandbox was deleted, bob took the name)
     : t === 'p9m_b1' ? { owner: 'alice@example.com', sandbox: 'p9m-b1' }
     : null)
@@ -47,7 +49,6 @@ vi.mock('../../../services/sleepTimes', () => ({
   sleepTimesMany: vi.fn(async (names: string[]) => new Map(names.map(n => [n, { stops_at: null, deep_sleep_at: `${n}-deep`, deep_sleep_after: '7d' }])))
 }))
 
-const { createSession } = await import('../../../services/session')
 const { sandboxService } = await import('../../../services/sandbox')
 const list = (await import('../../../routes/sandboxes/GET')).default
 const get = (await import('../../../routes/sandboxes/[name]/GET')).default
@@ -59,7 +60,7 @@ const deepSleep = (await import('../../../routes/sandboxes/[name]/deep-sleep/POS
 const { deepSleepNow } = await import('../../../services/deepSleep')
 const compose = (await import('../../../routes/sandboxes/[name]/compose/GET')).default
 
-const alice = { cookie: `p9m_session=${createSession('alice@example.com', 'user')}`, origin: 'http://p9m.lvh.me', host: 'p9m.lvh.me' }
+const alice = { authorization: 'Bearer p9m_alice', host: 'p9m.lvh.me' }
 const r = (path: string, method = 'GET', headers: Record<string, string> = alice) =>
   new Request(`http://p9m.lvh.me${path}`, { method, headers })
 
