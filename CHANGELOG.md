@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.12.25] - 2026-10-29
+
+Upgrading from 0.12.24: `docker compose pull && docker compose up -d`.
+
 ### Changed
 
 - **Right after a sandbox wakes, its apps show an hourglass (⏳), not a warning.** Until its apps have all answered (at most 90 seconds), an app that does not answer yet is on its way: no ⚠ and no "is not answering" tip, and "Starting: its apps show up in a moment" in place of "the server is busy". The API's `GET /sandboxes/{name}` (and the list) says so with `starting: true`.
@@ -795,7 +799,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.24...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.12.25...HEAD
+[0.12.25]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.25
 [0.12.24]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.24
 [0.12.23]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.23
 [0.12.22]: https://github.com/csakaszamok/p9m/releases/tag/v0.12.22
