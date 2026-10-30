@@ -4,6 +4,12 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+Upgrading: `docker compose pull && docker compose up -d` with this release's `docker-compose.yml`. **Users move to `sbx.<HOST_DOMAIN>`**: register `https://sbx.<HOST_DOMAIN>/auth/callback` with the OIDC provider first (the wildcard DNS record and certificate already cover it), or set `USER_HOST=off` to keep everyone on `UI_HOST`.
+
+### Changed
+
+- **The users' own address is on by default:** `USER_HOST` empty means `sbx.<HOST_DOMAIN>`, as `UI_HOST` empty means `p9m.<HOST_DOMAIN>`. `USER_HOST=off` (or the same as `UI_HOST`) turns it off.
+
 ## [0.15.0] - 2026-10-30
 
 Upgrading from 0.14.x: `docker compose pull && docker compose up -d` with this release's `docker-compose.yml` (it routes `USER_HOST`). Nothing changes until `USER_HOST` is set.

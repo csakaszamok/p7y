@@ -156,7 +156,7 @@ describe('OIDC login', () => {
       // The admin signs in there
       claims = { email: 'boss@example.com', email_verified: true }
       expect(readSession(cookieValue(await cbOn('p9m.lvh.me', (await startOn('p9m.lvh.me')).flow), 'p9m_session'))).toMatchObject({ role: 'admin' })
-    } finally { vi.stubEnv('USER_HOST', ''); vi.stubEnv('OIDC_ADMIN_EMAILS', ''); claims = { email: 'Alice@Example.com', email_verified: true } }
+    } finally { vi.stubEnv('USER_HOST', 'off'); vi.stubEnv('OIDC_ADMIN_EMAILS', ''); claims = { email: 'Alice@Example.com', email_verified: true } }
   })
 
   it('an address on OIDC_ADMIN_EMAILS gets an admin session; anyone else a user one', async () => {

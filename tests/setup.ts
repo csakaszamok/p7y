@@ -18,5 +18,7 @@ const defaults: Record<string, string> = {
   ARCHIVE_DIR: path.join(dir, 'archive'),
   // Rendering a page never asks GitHub for the topbar's counts (tests/services/repoInfo.test.ts turns it on)
   GITHUB_STATS: 'off',
+  // One address for everyone (sbx.<HOST_DOMAIN> by default); the USER_HOST tests turn it on
+  USER_HOST: 'off',
 }
 for (const [k, v] of Object.entries(defaults)) if (process.env[k] === undefined) process.env[k] = v
