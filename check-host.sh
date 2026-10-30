@@ -22,6 +22,8 @@ insecure() { printf '  \033[1;31m!\033[0m %s\n' "$1"; [ -n "${2:-}" ] && printf 
 # A setting of .env (none before setup.sh)
 env_get() { [ -f .env ] && sed -n "s/^$1=//p" .env | tail -1; }
 has() { command -v "$1" >/dev/null 2>&1; }
+# docker ...: at most 30 s, so a daemon that does not answer is reported instead of hanging the check
+dk() { if has timeout; then timeout 30 docker "$@"; else docker "$@"; fi; }
 # size_mb SIZE: 4g, 512m, 1024k → megabytes
 size_mb() { awk -v s="$1" 'BEGIN { n = s + 0; u = tolower(substr(s, length(s))); print int(u == "g" ? n * 1024 : u == "m" ? n : u == "k" ? n / 1024 : n / 1048576) }'; }
 # suggest CPUS MEMORY_MB DISK_GB PER_CPUS PER_MEMORY_MB PER_DISK_MB → "suggested ideal bottleneck" (DISK_GB empty: unknown).
@@ -60,16 +62,20 @@ fi
 
 section "Docker"
 docker_ok=false
+docker_rc=0
+has docker && { dk info >/dev/null 2>&1 || docker_rc=$?; }
 if ! has docker; then
   fail "docker is not installed" "install Docker Engine: https://docs.docker.com/engine/install/"
-elif ! docker info >/dev/null 2>&1; then
+elif [ "$docker_rc" = 124 ]; then
+  fail "the Docker daemon did not answer in 30 s" "is it busy or stuck? systemctl status docker, then run this again"
+elif [ "$docker_rc" != 0 ]; then
   fail "the Docker daemon is not reachable" "is it running? Run this as root or as a member of the docker group"
 else
   docker_ok=true
-  engine=$(docker version --format '{{.Server.Version}}' 2>/dev/null)
+  engine=$(dk version --format '{{.Server.Version}}' 2>/dev/null)
   if version_ge "$engine" 24; then ok "Docker Engine $engine"
   else warn "Docker Engine $engine" "Purgatorium is tested on Docker 24 or newer"; fi
-  if compose=$(docker compose version --short 2>/dev/null); then
+  if compose=$(dk compose version --short 2>/dev/null); then
     compose=${compose#v}
     if version_ge "$compose" 2.20; then ok "Docker Compose $compose"
     # p9m-init: depends_on with restart: true needs 2.17
@@ -256,10 +262,21 @@ fi
 section "Security"
 if [ -f .env ]; then
   # The settings of this folder's .env (a server already set up)
-  case "$(env_get P9M_API_BIND)" in
-    ""|127.0.0.1|localhost|::1) ok "the API port 8081 listens on this machine only (P9M_API_BIND)" ;;
-    *) insecure "the API port 8081 is open to every network, as plain HTTP: tokens and passwords cross it unencrypted" "P9M_API_BIND=127.0.0.1 (or empty) in .env, then docker compose up -d" ;;
-  esac
+  # Where it really listens (Purgatorium running), else what .env asks for: a docker-compose.yml from before 0.14.0
+  # opens it to every network with P9M_API_BIND empty
+  api_bind=""
+  if $docker_ok; then
+    api_bind=$(docker ps --filter publish=8081 --filter label=com.docker.compose.service=p9m --format '{{.Ports}}' | tr ',' '\n' \
+      | sed -n 's/^ *\(.*\):8081->.*/\1/p' | sort -u | tr '\n' ' ')
+  fi
+  if [ -n "$api_bind" ]; then
+    api_open=false
+    for a in $api_bind; do case "$a" in 127.0.0.1|::1|"[::1]") ;; *) api_open=true ;; esac; done
+  else
+    case "$(env_get P9M_API_BIND)" in ""|127.0.0.1|localhost|::1) api_open=false ;; *) api_open=true ;; esac
+  fi
+  if $api_open; then insecure "the API port 8081 is open to every network, as plain HTTP: tokens and passwords cross it unencrypted" "P9M_API_BIND=127.0.0.1 (or empty, with the docker-compose.yml of 0.14.0 or later) in .env, then docker compose up -d"
+  else ok "the API port 8081 listens on this machine only (P9M_API_BIND)"; fi
   case "$(env_get ADMIN_LOGIN | tr 'A-Z' 'a-z' | tr -d ' ')" in
     on|true|1|yes) insecure "ADMIN_LOGIN is on: the admin can sign in with a password" "it is for emergencies: ADMIN_LOGIN=off once you are done, then docker compose up -d" ;;
     *) ok "the admin's password sign-in is off (ADMIN_LOGIN)" ;;
