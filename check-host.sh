@@ -257,8 +257,8 @@ section "Security"
 if [ -f .env ]; then
   # The settings of this folder's .env (a server already set up)
   case "$(env_get P9M_API_BIND)" in
-    127.0.0.1|localhost|::1) ok "the API port 8081 listens on this machine only (P9M_API_BIND)" ;;
-    *) insecure "the API port 8081 is open to every network, as plain HTTP: tokens and passwords cross it unencrypted" "P9M_API_BIND=127.0.0.1 in .env, then docker compose up -d" ;;
+    ""|127.0.0.1|localhost|::1) ok "the API port 8081 listens on this machine only (P9M_API_BIND)" ;;
+    *) insecure "the API port 8081 is open to every network, as plain HTTP: tokens and passwords cross it unencrypted" "P9M_API_BIND=127.0.0.1 (or empty) in .env, then docker compose up -d" ;;
   esac
   case "$(env_get ADMIN_LOGIN | tr 'A-Z' 'a-z' | tr -d ' ')" in
     on|true|1|yes) insecure "ADMIN_LOGIN is on: the admin can sign in with a password" "it is for emergencies: ADMIN_LOGIN=off once you are done, then docker compose up -d" ;;
@@ -271,7 +271,8 @@ if [ -f .env ]; then
   if [ -n "$weak" ]; then insecure "default or example secrets in .env:$weak" "run ./setup.sh (it fills in random ones), or set long random values"
   else ok "no default secrets in .env"; fi
   if [ -n "$(env_get OIDC_ISSUER)" ] && [ -z "$(env_get OIDC_ALLOWED_DOMAINS)$(env_get OIDC_ALLOWED_EMAILS)" ]; then
-    insecure "OIDC sign-in is open to anyone with an account at the provider: strangers can create sandboxes" "OIDC_ALLOWED_DOMAINS or OIDC_ALLOWED_EMAILS in .env"
+    # Without OIDC_ALLOW_ANYONE=true Purgatorium does not even start so
+    insecure "OIDC sign-in is open to anyone with an account at the provider: strangers can create sandboxes" "OIDC_ALLOWED_DOMAINS or OIDC_ALLOWED_EMAILS in .env (OIDC_ALLOW_ANYONE=true only if you mean it)"
   fi
   if [ "$(env_get SESSION_IDLE_TIMEOUT | tr 'A-Z' 'a-z' | tr -d ' ')" = off ]; then
     insecure "SESSION_IDLE_TIMEOUT=off: a browser left signed in stays signed in for 7 days" "empty SESSION_IDLE_TIMEOUT in .env (30 minutes), then docker compose up -d"

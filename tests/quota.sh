@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Integration test: per-user sandbox quota. Run the stack like tests/self-service.sh
 # (mock OIDC env) plus SANDBOX_QUOTA=1:
-#   SANDBOX_QUOTA=1 OIDC_ISSUER=http://host.docker.internal:8090/default OIDC_CLIENT_ID=p9m #   OIDC_CLIENT_SECRET=secret ADMIN_PASSWORD=pw SESSION_SECRET=e2e PUBLIC_URL=http://localhost:8081 #   docker compose up -d p9m
+#   SANDBOX_QUOTA=1 ADMIN_TOKEN=abc123 OIDC_ALLOW_ANYONE=true OIDC_ISSUER=http://host.docker.internal:8090/default OIDC_CLIENT_ID=p9m #   OIDC_CLIENT_SECRET=secret ADMIN_PASSWORD=pw SESSION_SECRET=e2e PUBLIC_URL=http://localhost:8081 #   docker compose up -d p9m
 # Usage: bash tests/quota.sh   (from the repo root)
 set -euo pipefail
 

@@ -8,7 +8,8 @@ What it does:
 - an app's private addresses are reachable only inside its own sandbox, and ports published on `127.0.0.1` only through its tunnel (see [Isolation between sandboxes](networking.md#isolation-between-sandboxes));
 - users see and change only their own sandboxes, through the UI, the API or a personal access token; the admin sees all;
 - a sandbox's web apps open only for its owner (and the admin) unless labelled `domain` or `public` ([App access](app-access.md));
-- with an `https://` `PUBLIC_URL`, Purgatorium refuses to start with default secrets.
+- with an `https://` `PUBLIC_URL`, Purgatorium refuses to start with default secrets; `docker compose` does not start without an `ADMIN_TOKEN`, and Purgatorium does not start with OIDC open to anyone (`OIDC_ALLOW_ANYONE=true` aside);
+- the direct plain-HTTP API port `8081` listens on the host only (`P9M_API_BIND`): from elsewhere everything goes through Traefik.
 
 **On every server**: install [sysbox](https://github.com/nestybox/sysbox) on the host. Only `sysbox` is allowed by default (`ALLOWED_RUNTIMES`), so nobody can create a privileged `dind` sandbox; without sysbox no sandbox can be created at all. **The `dind` runtime is for development only** (a laptop, Docker Desktop): never allow it on a server. `check-host.sh` tells whether sysbox works on the machine, and, run in the `p9m` folder, lists what else is not secure. Sandboxes that already exist keep their runtime: recreate the `dind` ones.
 
@@ -21,6 +22,6 @@ What it does not do:
 - A sandbox is on its own network only: Purgatorium and Traefik reach it through its frp tunnel (frpc connects out of it), so no sandbox reaches another one's ports past [app access](app-access.md).
 - A [host folder](web-ui.md#host-folders) the admin mounts into a sandbox (`HOST_MOUNT_ROOTS`) is the sandbox owner's, as root, and every app's and agent's in it: read-only only limits writing. Keep the roots narrow.
 
-For untrusted code (public sign-up, code from strangers), use sysbox or a microVM-based sandbox instead; a Kata Containers runtime (a VM per sandbox) is on the [roadmap](roadmap.md).
+In short, run it for a team, on a server you can rebuild, best behind a VPN or with the sign-in limited to your domain; for untrusted code (public sign-up, code from strangers), use a microVM-based sandbox instead; a Kata Containers runtime (a VM per sandbox) is on the [roadmap](roadmap.md).
 
 Found a vulnerability? See [SECURITY.md](https://github.com/csakaszamok/p9m/blob/main/SECURITY.md).

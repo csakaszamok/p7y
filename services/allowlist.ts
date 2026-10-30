@@ -1,7 +1,7 @@
 /**
  * Who may sign in with OIDC: OIDC_ALLOWED_DOMAINS (e.g. `example.com,partner.org`) and OIDC_ALLOWED_EMAILS (single
- * addresses). Without either, anyone the provider lets through — with Google, any Google account. The local admin is
- * never on a list.
+ * addresses). Without either, anyone the provider lets through — with Google, any Google account: Purgatorium starts
+ * so only with OIDC_ALLOW_ANYONE=true (configWarnings.ts). The local admin is never on a list.
  */
 import { hubEnabled, hubUrl } from './hub/config'
 const list = (raw: string | undefined, strip = '') =>

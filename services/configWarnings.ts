@@ -1,5 +1,6 @@
 import { parseHostMountRoots } from './hostMounts'
 import { adminLoginEnabled } from './loginGuard'
+import { openSignInWarning } from './allowlist'
 
 /**
  * Local-dev defaults that must not survive into a publicly reachable
@@ -33,10 +34,16 @@ export function hostMountWarnings(env: NodeJS.ProcessEnv = process.env): string[
   return warnings
 }
 
-/** With an https PUBLIC_URL Purgatorium is public: default or example secrets are fatal, not warnings. */
+/**
+ * Settings Purgatorium refuses to start with: OIDC open to anyone without OIDC_ALLOW_ANYONE=true; and with an https
+ * PUBLIC_URL (Purgatorium is public) default or example secrets.
+ */
 export function insecureConfigErrors(env: NodeJS.ProcessEnv = process.env): string[] {
-  if (!(env.PUBLIC_URL ?? '').startsWith('https://')) return []
   const errors: string[] = []
+  if (openSignInWarning(env) && env.OIDC_ALLOW_ANYONE !== 'true') {
+    errors.push(`OIDC sign-in is open to anyone with an account at ${env.OIDC_ISSUER}, who could create sandboxes: set OIDC_ALLOWED_DOMAINS or OIDC_ALLOWED_EMAILS, or OIDC_ALLOW_ANYONE=true if that is what you want.`)
+  }
+  if (!(env.PUBLIC_URL ?? '').startsWith('https://')) return errors
   if (env.ADMIN_TOKEN === 'abc123' || env.ADMIN_TOKEN === 'change-me-to-a-strong-secret') {
     errors.push('ADMIN_TOKEN is a default/example value; set a strong random ADMIN_TOKEN.')
   }
