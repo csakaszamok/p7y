@@ -6,7 +6,7 @@ import crypto from 'node:crypto'
 import path from 'node:path'
 import { sandboxParent } from './sandboxPaths'
 import { dockerHostName } from './dockerAccess'
-import { publicUrl } from './session'
+import { userUrl } from './userHost'
 import { rawNameOf } from './naming'
 
 /** How long a link works, from when it was made */
@@ -57,7 +57,7 @@ export function projectDirFiles(s: ProjectDirSandbox, url: string): Array<{ name
 
 /** What project_dir_link and /device/token answer for a link: its url, the unpack command and the docker context commands */
 export function projectLinkAnswer(sandbox: string, linkToken: string): { url: string; expires_in: number; command: string; context_commands: string[] } {
-  const url = `${publicUrl()}/project-dir/${linkToken}`
+  const url = `${userUrl()}/project-dir/${linkToken}`
   const ctx = `p9m-${rawNameOf(sandbox) ?? sandbox}`
   const dir = '<project folder>/.p9m/docker'
   return {

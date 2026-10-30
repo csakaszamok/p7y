@@ -8,7 +8,7 @@ import { issueTicket, appCookieValue, _resetSign } from '../../../services/appAc
 const bob = { sub: 'bob@example.com', role: 'user' as const }
 const ann = { sub: 'ann@example.com', role: 'user' as const }
 const levels: Record<string, 'public' | 'domain' | 'owner'> = { 'shop-pub.example.com': 'public', 'shop-dom.example.com': 'domain', 'shop-own.example.com': 'owner' }
-const deps = { access: async (h: string) => levels[h] ? { sandbox: 'p9m-shop', owner: 'bob@example.com', access: levels[h] } : null, env: { HOST_DOMAIN: 'example.com' } as NodeJS.ProcessEnv }
+const deps = { access: async (h: string) => levels[h] ? { sandbox: 'p9m-shop', owner: 'bob@example.com', access: levels[h] } : null, env: { HOST_DOMAIN: 'example.com', PUBLIC_URL: 'https://p9m.example.com' } as NodeJS.ProcessEnv }
 const req = (host: string, uri = '/', cookie = '') => ({ host, proto: 'https', uri, cookie })
 
 describe('/auth/app', () => {
@@ -25,6 +25,10 @@ describe('/auth/app', () => {
     const r = await decide(req('shop-dom.example.com', '/a?b=1'), deps)
     expect(r.status).toBe(302)
     expect(r.headers.Location).toBe('https://p9m.example.com/auth/app/start?rd=' + encodeURIComponent('https://shop-dom.example.com/a?b=1'))
+  })
+  it('with USER_HOST, signing in for an app is on the users\' address', async () => {
+    const r = await decide(req('shop-dom.example.com', '/a'), { ...deps, env: { ...deps.env, USER_HOST: 'sbx.example.com' } })
+    expect(r.headers.Location).toBe('https://sbx.example.com/auth/app/start?rd=' + encodeURIComponent('https://shop-dom.example.com/a'))
   })
   it('a ticket on its landing path: the cookie, and back to the page (absolute)', async () => {
     const t = issueTicket('shop-own.example.com', bob)

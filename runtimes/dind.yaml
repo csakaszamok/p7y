@@ -80,7 +80,7 @@ docker_compose:
         FRPS_API_AUTH: "${frps_api_auth}"
       networks:
         default:
-          aliases: [registry-cache, "${registry_host}", "${ui_host}"]
+          aliases: [registry-cache, "${registry_host}", "${ui_host}", "${user_host}"]
         traefik-net:
       restart: unless-stopped
       depends_on:

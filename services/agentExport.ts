@@ -3,7 +3,7 @@ import { hostDomain } from './domains'
 import { rawNameOf } from './naming'
 import { dockerHostName } from './dockerAccess'
 import { sandboxParent } from './sandboxPaths'
-import { uiHost } from './uiHost'
+import { userUrl } from './userHost'
 
 /**
  * The files of an export, in a .p9m folder for the project's folder: p9m.env, the sandbox's Docker client
@@ -17,7 +17,7 @@ export function prepareExport(
 ): (token: string, portainer?: { url: string; token: string } | { skipped: string }) => Array<{ path: string; data: string; mode?: number }> {
   const withDocker = opts.docker !== false
   const raw = rawNameOf(sandbox) ?? sandbox
-  const url = (process.env.PUBLIC_URL ?? `https://${uiHost()}`).replace(/\/$/, '')
+  const url = userUrl()
   const docker = dockerHostName(sandbox)
   const registry = `registry.${hostDomain()}`
   const dir = '.p9m'

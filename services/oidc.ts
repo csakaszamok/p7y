@@ -1,5 +1,6 @@
 import * as client from 'openid-client'
-import { signValue, verifyValue, publicUrl } from './session'
+import { signValue, verifyValue } from './session'
+import { requestUrl } from './userHost'
 
 export const OIDC_FLOW_COOKIE = 'p9m_oidc'
 const FLOW_TTL_SEC = 600
@@ -18,9 +19,9 @@ export function providerName(): string {
   return process.env.OIDC_PROVIDER_NAME ?? 'Google'
 }
 
-/** Purgatorium's own callback address. */
-export function purgatoriumRedirectUri(): string {
-  return `${publicUrl()}/auth/callback`
+/** Purgatorium's own callback address, on the host the sign-in started on (UI_HOST or USER_HOST). */
+export function purgatoriumRedirectUri(req: Request): string {
+  return `${requestUrl(req)}/auth/callback`
 }
 
 function config(): Promise<client.Configuration> {

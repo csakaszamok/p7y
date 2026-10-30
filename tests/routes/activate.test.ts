@@ -67,6 +67,18 @@ describe('/activate', () => {
     expect(nextAfterSignIn(new Request('https://p9m.example.com/', { headers: { cookie: `p9m_next=${value}` } }))).toBe('/activate?code=bcdf-ghjk')
   })
 
+  it('with USER_HOST, on the admin\'s address: to the users\' one, with the code', async () => {
+    vi.stubEnv('USER_HOST', 'sbx.example.com')
+    try {
+      const at = (host: string) => get(new Request(`https://${host}/activate?code=bcdf-ghjk`, { headers: { host, cookie: cookie('alice@example.com') } }))
+      const res = await at('p9m.example.com')
+      expect(res.status).toBe(303)
+      expect(res.headers.get('location')).toBe('https://sbx.example.com/activate?code=bcdf-ghjk')
+      // On the users' address it is the page itself (here: an unknown code)
+      expect((await at('sbx.example.com')).headers.get('location')).toBeNull()
+    } finally { vi.stubEnv('USER_HOST', '') }
+  })
+
   it('a code for my sandbox: the code and the sandbox, nothing to pick', async () => {
     const { user_code } = startDevice({ sandbox: 'shop' })
     const res = await page(user_code.toLowerCase(), cookie('alice@example.com'))

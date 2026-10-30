@@ -2,7 +2,7 @@ import { checkDockerKeys, projectDirFiles, readDockerKeys, takeProjectLink } fro
 import { prepareExport } from '../../../services/agentExport'
 import { createToken } from '../../../services/tokens'
 import { dockerHostName } from '../../../services/dockerAccess'
-import { publicUrl } from '../../../services/session'
+import { userUrl } from '../../../services/userHost'
 import { tarFiles } from '../../../services/tar'
 
 export const openapi = {
@@ -30,7 +30,7 @@ export default async (req: Request): Promise<Response> => {
       const build = prepareExport(name, { docker: true })
       const { token: t } = createToken(withToken.owner, `Claude Code init ${new Date().toISOString().slice(0, 10)}`, '90d', new Date(), name)
       files = build(t).map(f => ({ name: f.path, data: f.data, mode: f.mode }))
-    } else files = projectDirFiles({ name, ...readDockerKeys(name), docker_host: dockerHostName(name) }, publicUrl())
+    } else files = projectDirFiles({ name, ...readDockerKeys(name), docker_host: dockerHostName(name) }, userUrl())
   } catch (err) {
     return new Response(`cannot give the sandbox's Docker keys: ${err instanceof Error ? err.message : err}\n`, { status: 500, headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
   }

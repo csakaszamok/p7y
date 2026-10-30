@@ -1,4 +1,5 @@
 import { publicUrl } from '../../services/session'
+import { userUrl } from '../../services/userHost'
 import { requirePrincipal } from '../../services/principal'
 import { quotaStatus, serverLimit, serverUsed, runningStatus } from '../../services/quota'
 import { resourceDefaults } from '../../services/resources'
@@ -22,5 +23,5 @@ export default async (req: Request): Promise<Response> => {
   const server_full = p.role !== 'admin' && server !== null && used >= server
   // The server's places for the topbar, for everyone: the sign-in page shows them publicly already
   const server_places = server === null ? null : { used, limit: server }
-  return Response.json({ ...p, ...(await quotaStatus(p, all)), ...(await runningStatus(p, all)), server_full, server_places, resources, view: viewOf(p.sub, p.role), view_switch: canSwitchView(p.role), theme: themeOf(p.sub), url: publicUrl() })
+  return Response.json({ ...p, ...(await quotaStatus(p, all)), ...(await runningStatus(p, all)), server_full, server_places, resources, view: viewOf(p.sub, p.role), view_switch: canSwitchView(p.role), theme: themeOf(p.sub), url: p.role === 'admin' ? publicUrl() : userUrl() })
 }

@@ -23,7 +23,7 @@ describe('the runtimes keep a sandbox off the network the sandboxes share', () =
       expect(s.sandbox.networks).toEqual(['default'])
       expect(s.sandbox.environment?.FRP_SERVER_PORT).toBe('65000')
       expect(s.frps.networks).toEqual({ default: null, 'traefik-net': { aliases: ['${name}'] } })
-      expect(s.socat.networks).toEqual({ default: { aliases: ['registry-cache', '${registry_host}', '${ui_host}'] }, 'traefik-net': null })
+      expect(s.socat.networks).toEqual({ default: { aliases: ['registry-cache', '${registry_host}', '${ui_host}', '${user_host}'] }, 'traefik-net': null })
       expect(s.socat.command).toContain('8080:${name}-frps:65080 7500:${name}-frps:65075')
     })
   }
