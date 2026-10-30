@@ -4,6 +4,11 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- **`check-host.sh` tells where the API port really listens.** It read only `P9M_API_BIND` from `.env`, so with the `docker-compose.yml` of 0.13 or earlier and the setting empty it said *on this machine only* while port 8081 was open to every network. With Purgatorium running it now asks Docker; otherwise it still reads `.env`.
+- **`check-host.sh` no longer hangs on a Docker daemon that does not answer:** after 30 seconds it says so and goes on.
+
 ## [0.14.0] - 2026-10-30
 
 Upgrading from 0.13.x to 0.14.0: **check `.env` first** (see [Upgrading](https://csakaszamok.github.io/p9m/latest/upgrading/)): `ADMIN_TOKEN` must be set, the API port `8081` is on the host only, and OIDC needs `OIDC_ALLOWED_DOMAINS` or `OIDC_ALLOWED_EMAILS` (or `OIDC_ALLOW_ANYONE=true`). Then `docker compose pull && docker compose up -d`; `./check-host.sh` lists what is still open.
