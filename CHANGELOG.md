@@ -4,7 +4,9 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
-Upgrading: `docker compose pull && docker compose up -d` with this release's `docker-compose.yml`. **Users move to `sbx.<HOST_DOMAIN>`**: register `https://sbx.<HOST_DOMAIN>/auth/callback` with the OIDC provider first (the wildcard DNS record and certificate already cover it), or set `USER_HOST=off` to keep everyone on `UI_HOST`.
+## [0.16.0] - 2026-10-30
+
+Upgrading from 0.15.x: `docker compose pull && docker compose up -d` with this release's `docker-compose.yml`. **Users move to `sbx.<HOST_DOMAIN>`**: register `https://sbx.<HOST_DOMAIN>/auth/callback` with the OIDC provider first (the wildcard DNS record and certificate already cover it), or set `USER_HOST=off` to keep everyone on `UI_HOST`.
 
 ### Changed
 
@@ -872,7 +874,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.16.0
 [0.15.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.15.0
 [0.14.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.14.1
 [0.14.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.14.0
