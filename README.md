@@ -55,16 +55,23 @@ To remove it: delete the sandboxes in the UI first (each is a compose project of
 
 ## Install
 
-On a Linux host with Docker Engine and the compose plugin, no clone needed ([check the host first](https://csakaszamok.github.io/p9m/latest/install/)):
+On a Linux host with Docker Engine, the compose plugin and [sysbox](https://github.com/nestybox/sysbox), no clone needed. First check the host; it changes nothing:
+
+```bash
+curl -fsSL https://github.com/csakaszamok/p9m/releases/latest/download/check-host.sh | bash -s -- dev.example.com
+```
+
+Then:
 
 ```bash
 mkdir p9m && cd p9m
 curl -fsSLO https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml
 curl -fsSL https://github.com/csakaszamok/p9m/releases/latest/download/setup.sh | bash -s -- dev.example.com   # .env with your domain and random secrets
 docker compose up -d
+curl -fsSL https://github.com/csakaszamok/p9m/releases/latest/download/check-host.sh | bash   # again, in p9m: what is not secure yet
 ```
 
-Then sign in at `http://p9m.<HOST_DOMAIN>` (by default `http://p9m.lvh.me`).
+Then sign in at `http://p9m.<HOST_DOMAIN>` (by default `http://p9m.lvh.me`). Rather read the scripts before running them? Download them instead of piping them into `bash`: see [Install](https://csakaszamok.github.io/p9m/latest/install/).
 
 ## When to use something else
 
