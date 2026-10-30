@@ -28,6 +28,11 @@ describe('POST /device/code', () => {
     expect(b).not.toHaveProperty('interval')
     expect(b.device_code).toMatch(/^[A-Za-z0-9_-]{40,}$/)
   })
+  it('with USER_HOST, the activate address is the users\'', async () => {
+    vi.stubEnv('USER_HOST', 'sbx.example.com')
+    try { expect((await (await ask({})).json()).verification_uri).toBe('https://sbx.example.com/activate') }
+    finally { vi.stubEnv('USER_HOST', '') }
+  })
 
   it('no body or {}: a new sandbox; a template for it; the address it came from is kept', async () => {
     const plain = await (await ask()).json()

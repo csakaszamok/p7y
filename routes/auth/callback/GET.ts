@@ -1,5 +1,6 @@
-import { finishLogin, LoginError, OIDC_FLOW_COOKIE } from '../../../services/oidc'
-import { cookieHeader, createSession, getCookie, publicUrl, SESSION_COOKIE, SESSION_MAX_AGE } from '../../../services/session'
+import { finishLogin, LoginError, OIDC_FLOW_COOKIE, purgatoriumRedirectUri } from '../../../services/oidc'
+import { cookieHeader, createSession, getCookie, SESSION_COOKIE, SESSION_MAX_AGE } from '../../../services/session'
+import { onAdminHost, userUrl } from '../../../services/userHost'
 import { purgatoriumSignInRefusal, oidcAdmin } from '../../../services/allowlist'
 import { rememberName } from '../../../services/hub/names'
 import { nextAfterSignIn, NEXT_COOKIE } from '../../../services/appAccess/start'
@@ -16,8 +17,13 @@ export default async (req: Request): Promise<Response> => {
     return new Response(null, { status: 303, headers })
   }
   try {
-    const callbackUrl = new URL(`${publicUrl()}/auth/callback${new URL(req.url).search}`)
+    const callbackUrl = new URL(`${purgatoriumRedirectUri(req)}${new URL(req.url).search}`)
     const { email, name } = await finishLogin(callbackUrl, getCookie(req, OIDC_FLOW_COOKIE), e => purgatoriumSignInRefusal(e))
+    // USER_HOST on: this address is the admin's; a user signs in on theirs (the provider knows them already)
+    if (!oidcAdmin(email) && onAdminHost(req)) {
+      headers.set('location', `${userUrl()}/auth/oidc`)
+      return new Response(null, { status: 303, headers })
+    }
     rememberName(email, name)
     recordSignIn(email)
     loginLimiter.succeeded(address)

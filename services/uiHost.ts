@@ -1,4 +1,4 @@
-/** Purgatorium's own addresses: the UI at UI_HOST (p9m.<HOST_DOMAIN> by default), the registry, the Hub. */
+/** Purgatorium's own addresses: the UI at UI_HOST (p9m.<HOST_DOMAIN> by default), the users' USER_HOST, the registry, the Hub. */
 import { hubHost } from './hub/config'
 import { appsDomain } from './domains'
 
@@ -16,5 +16,6 @@ export function uiHost(env: NodeJS.ProcessEnv = process.env): string {
 export function ownHostTaken(rawName: string, env: NodeJS.ProcessEnv = process.env): string | null {
   const d = appsDomain(env)
   const pattern = new RegExp(`^${rawName.replace(/[^a-z0-9]/g, c => `\\${c}`)}-[a-z0-9-]+\\.${d.replace(/\./g, '\\.')}$`)
-  return [uiHost(env), `registry.${domain(env)}`, hubHost(env)].find(h => pattern.test(h)) ?? null
+  const user = env.USER_HOST?.trim().toLowerCase()
+  return [uiHost(env), ...(user ? [user] : []), `registry.${domain(env)}`, hubHost(env)].find(h => pattern.test(h)) ?? null
 }

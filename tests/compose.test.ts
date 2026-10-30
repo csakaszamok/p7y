@@ -24,9 +24,12 @@ describe('docker-compose.yml', () => {
     const ui = '${UI_HOST:-p9m.${HOST_DOMAIN:-lvh.me}}'
     expect(p9m.environment?.UI_HOST).toBe('${UI_HOST:-}')
     expect(p9m.environment?.PUBLIC_URL).toBe(`\${PUBLIC_URL:-http://${ui}}`)
-    expect(p9m.labels?.['traefik.http.routers.p9m.rule']).toBe(`Host(\`${ui}\`)`)
+    // USER_HOST (the users' address): the UI's again when empty
+    const user = '${USER_HOST:-${UI_HOST:-p9m.${HOST_DOMAIN:-lvh.me}}}'
+    expect(p9m.environment?.USER_HOST).toBe('${USER_HOST:-}')
+    expect(p9m.labels?.['traefik.http.routers.p9m.rule']).toBe(`Host(\`${ui}\`) || Host(\`${user}\`)`)
     const traefik = compose.services.traefik as unknown as { networks: Record<string, { aliases?: string[] } | null> }
-    expect(traefik.networks['traefik-net']?.aliases).toContain(ui)
+    expect(traefik.networks['traefik-net']?.aliases).toEqual(expect.arrayContaining([ui, user]))
   })
   it('the TCP and Docker addresses are under APPS_DOMAIN, HOST_DOMAIN when it is empty', () => {
     const p9m = compose.services.p9m as { environment?: Record<string, string>; labels?: Record<string, string> }

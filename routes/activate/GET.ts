@@ -8,12 +8,15 @@ import { getOwnedSandbox } from '../../services/access'
 import { dockerAccessState } from '../../services/dockerAccess'
 import { rawNameOf } from '../../services/naming'
 import { clientIp } from '../../services/clientIp'
+import { onAdminHost, userUrl } from '../../services/userHost'
 
 const ENABLE = 'Enable Docker access and approve'
 
 // Only what /p9m:init asked for: one of the user's sandboxes by its name, or a new one. Nothing to pick here.
 export default async (req: Request): Promise<Response> => {
   const code = new URL(req.url).searchParams.get('code') ?? ''
+  // USER_HOST on: approved on the users' address (a code from a client that still has UI_HOST)
+  if (onAdminHost(req)) return new Response(null, { status: 303, headers: { location: `${userUrl()}/activate?code=${encodeURIComponent(code)}`, 'cache-control': 'no-store' } })
   const session = pageSession(req)
   if (!session) {
     // Back here after sign-in, signed like /auth/app/start's

@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **The users' own address (`USER_HOST`, e.g. `sbx.example.com`).** Users sign in, approve `/p9m:init` and sign in to the sandbox apps there, and `UI_HOST` (e.g. `console.example.com`) is the admin's: a user who signs in on it is sent on to `USER_HOST`, the admin's pages on `USER_HOST` go to `UI_HOST`. The users' page, the `/activate` links, new `.p9m` folders and the apps' sign-in name `USER_HOST`; the API and `/mcp` answer on both, so existing `.p9m` folders keep working. To turn it on: `USER_HOST` in `.env`, its `/auth/callback` registered with the OIDC provider, `docker compose up -d`. Off unless set.
+
 ## [0.14.1] - 2026-10-30
 
 Upgrading from 0.14.0: only `check-host.sh` changed; the server is unchanged but for the version (`docker compose pull && docker compose up -d` when convenient).

@@ -2,19 +2,25 @@
 // The admin keeps every page.
 import type { Session } from '../session'
 import { publicUrl } from '../session'
+import { isUserHost, onAdminHost, userUrl } from '../userHost'
 import { escapeHtml, html, pageSession, redirect } from './layout'
 import { brandTitle, faviconTag, logoImg } from './brand'
 
-/** The session of a web UI page (the admin's); a user's sign-in gets the page that points to Claude Code */
+/**
+ * The session of a web UI page (the admin's); a user's sign-in gets the page that points to Claude Code. With
+ * USER_HOST on, each on their own address: the admin's pages on UI_HOST, the users' page on USER_HOST.
+ */
 export function guiSession(req: Request): Session | Response {
   const session = pageSession(req)
   if (!session) return redirect('/login')
-  return session.role === 'admin' ? session : headlessPage(session.sub)
+  const url = new URL(req.url)
+  if (session.role === 'admin') return isUserHost(req.headers.get('host')) ? redirect(`${publicUrl()}${url.pathname}${url.search}`) : session
+  return onAdminHost(req) ? redirect(`${userUrl()}/`) : headlessPage(session.sub)
 }
 
 export function headlessPage(sub: string): Response {
   const name = brandTitle()
-  const url = escapeHtml(publicUrl())
+  const url = escapeHtml(userUrl())
   const line = (s: string) => `<div class="copy-line"><code>${s}</code></div>`
   return html(`<!DOCTYPE html>
 <html lang="en">

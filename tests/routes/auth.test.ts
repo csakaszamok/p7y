@@ -133,6 +133,32 @@ describe('OIDC login', () => {
     } finally { vi.stubEnv('OIDC_ALLOWED_DOMAINS', '') }
   })
 
+  it('with USER_HOST, the callback comes back to the host the sign-in started on; a user on the admin\'s is sent to theirs', async () => {
+    vi.stubEnv('USER_HOST', 'sbx.lvh.me')
+    vi.stubEnv('OIDC_ADMIN_EMAILS', 'boss@example.com')
+    try {
+      const startOn = async (host: string) => {
+        const res = await oidcStart(new Request(`http://${host}/auth/oidc`, { headers: { host } }))
+        return { flow: cookieValue(res, 'p9m_oidc')!, redirect: new URL(res.headers.get('location')!).searchParams.get('redirect_uri') }
+      }
+      const cbOn = (host: string, flow: string) =>
+        callback(new Request(`http://${host}/auth/callback?code=abc&state=state-1`, { headers: { host, cookie: `p9m_oidc=${flow}` } }))
+      const user = await startOn('sbx.lvh.me')
+      expect(user.redirect).toBe('http://sbx.lvh.me/auth/callback')
+      claims = { email: 'bob@example.com', email_verified: true }
+      expect(readSession(cookieValue(await cbOn('sbx.lvh.me', user.flow), 'p9m_session'))).toMatchObject({ sub: 'bob@example.com', role: 'user' })
+      // On the admin's address: no session, on to the users' sign-in
+      const there = await startOn('p9m.lvh.me')
+      expect(there.redirect).toBe('http://p9m.lvh.me/auth/callback')
+      const res = await cbOn('p9m.lvh.me', there.flow)
+      expect(res.headers.get('location')).toBe('http://sbx.lvh.me/auth/oidc')
+      expect(cookieValue(res, 'p9m_session')).toBeUndefined()
+      // The admin signs in there
+      claims = { email: 'boss@example.com', email_verified: true }
+      expect(readSession(cookieValue(await cbOn('p9m.lvh.me', (await startOn('p9m.lvh.me')).flow), 'p9m_session'))).toMatchObject({ role: 'admin' })
+    } finally { vi.stubEnv('USER_HOST', ''); vi.stubEnv('OIDC_ADMIN_EMAILS', ''); claims = { email: 'Alice@Example.com', email_verified: true } }
+  })
+
   it('an address on OIDC_ADMIN_EMAILS gets an admin session; anyone else a user one', async () => {
     vi.stubEnv('OIDC_ADMIN_EMAILS', 'alice@example.com')
     try {

@@ -3,12 +3,13 @@ import { oidcEnabled, providerName } from '../../services/oidc'
 import { capacityHtml, loginCapacity } from '../../services/loginCapacity'
 import { brandTitle, faviconTag, logoImg } from '../../services/ui/brand'
 import { adminLoginEnabled } from '../../services/loginGuard'
+import { isUserHost } from '../../services/userHost'
 
 export default async (req: Request): Promise<Response> => {
   if (pageSession(req)) return redirect('/')
   const error = new URL(req.url).searchParams.get('error')
-  // Off (the default): the form is not there at all
-  const adminEnabled = adminLoginEnabled()
+  // Off (the default): the form is not there at all; nor on the users' address (USER_HOST), the admin's is UI_HOST
+  const adminEnabled = adminLoginEnabled() && !isUserHost(req.headers.get('host'))
   const capacity = capacityHtml(await loginCapacity.get())
   const name = brandTitle()
   return html(`<!DOCTYPE html>

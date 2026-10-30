@@ -1,5 +1,5 @@
 import { startDevice, DEVICE_TTL_MS } from '../../../services/deviceAuth'
-import { publicUrl } from '../../../services/session'
+import { userUrl } from '../../../services/userHost'
 import { listTemplates } from '../../../services/templateLoader'
 import { clientIp } from '../../../services/clientIp'
 
@@ -44,7 +44,7 @@ export default async (req: Request): Promise<Response> => {
   if (template !== undefined && (typeof template !== 'string' || !listTemplates().some(t => t.name === template))) return Response.json({ error: 'unknown template: GET /templates lists them' }, { status: 400, headers })
   let started
   try { started = startDevice({ sandbox: sandbox ?? null, template: (template as string | undefined) ?? null, ip: clientIp(req) }) } catch { return Response.json({ error: 'too many pending codes, try again in a few minutes' }, { status: 503, headers }) }
-  const verification_uri = `${publicUrl()}/activate`
+  const verification_uri = `${userUrl()}/activate`
   return Response.json({
     device_code: started.device_code,
     user_code: started.user_code,
