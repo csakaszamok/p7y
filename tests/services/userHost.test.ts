@@ -3,12 +3,18 @@ import { userHost, isUserHost, userUrl, requestUrl, onAdminHost } from '../../se
 import { ownHostTaken } from '../../services/uiHost'
 
 const on = { HOST_DOMAIN: 'p9m.dev', UI_HOST: 'console.p9m.dev', PUBLIC_URL: 'https://console.p9m.dev', USER_HOST: ' SBX.p9m.dev ' } as NodeJS.ProcessEnv
-const off = { HOST_DOMAIN: 'p9m.dev', UI_HOST: 'console.p9m.dev', PUBLIC_URL: 'https://console.p9m.dev' } as NodeJS.ProcessEnv
+const off = { HOST_DOMAIN: 'p9m.dev', UI_HOST: 'console.p9m.dev', PUBLIC_URL: 'https://console.p9m.dev', USER_HOST: 'off' } as NodeJS.ProcessEnv
 const req = (host: string) => new Request('http://localhost/', { headers: { host } })
 
 describe('USER_HOST', () => {
-  it('off when empty or the same as UI_HOST: everyone on PUBLIC_URL, as before', () => {
-    for (const env of [off, { ...off, USER_HOST: '' }, { ...off, USER_HOST: 'Console.p9m.dev' }]) {
+  it('sbx.<HOST_DOMAIN> when empty', () => {
+    for (const env of [{ ...off, USER_HOST: undefined }, { ...off, USER_HOST: ' ' }]) {
+      expect(userHost(env)).toBe('sbx.p9m.dev')
+      expect(userUrl(env)).toBe('https://sbx.p9m.dev')
+    }
+  })
+  it('off when "off" or the same as UI_HOST: everyone on PUBLIC_URL', () => {
+    for (const env of [off, { ...off, USER_HOST: 'OFF' }, { ...off, USER_HOST: 'Console.p9m.dev' }, { ...off, USER_HOST: undefined, UI_HOST: 'sbx.p9m.dev' }]) {
       expect(userHost(env)).toBeNull()
       expect(userUrl(env)).toBe('https://console.p9m.dev')
       expect(requestUrl(req('console.p9m.dev'), env)).toBe('https://console.p9m.dev')

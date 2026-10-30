@@ -226,9 +226,10 @@ if [ -n "$DOMAIN" ]; then
   # The UI's own name (UI_HOST in .env, e.g. console.example.com), else p9m.<domain>
   ui_host=$(env_get UI_HOST)
   check_name "${ui_host:-p9m.$DOMAIN}" "the UI" fail
-  # The users' own address (USER_HOST), if set
+  # The users' own address (USER_HOST), sbx.<domain> unless off
   user_host=$(env_get USER_HOST)
-  [ -n "$user_host" ] && check_name "$user_host" "the users' address" fail
+  user_host=${user_host:-sbx.$DOMAIN}
+  [ "${user_host,,}" != off ] && [ "${user_host,,}" != "${ui_host:-p9m.$DOMAIN}" ] && check_name "$user_host" "the users' address" fail
   # A made-up name: only a wildcard record resolves it (every sandbox app has its own name)
   check_name "check-$RANDOM-web.$DOMAIN" "wildcard record for sandbox apps" warn
 

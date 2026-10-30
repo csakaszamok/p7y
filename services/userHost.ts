@@ -1,17 +1,16 @@
 /**
  * The users' own address, USER_HOST (e.g. sbx.<domain>): signing in, /activate and the API for /p9m:init, the
- * sandbox apps' sign-in. UI_HOST is then the admin's: a user who signs in there is sent here. Empty (or UI_HOST):
- * off, everyone uses UI_HOST as before.
+ * sandbox apps' sign-in. UI_HOST is then the admin's: a user who signs in there is sent here. Empty: sbx.<HOST_DOMAIN>;
+ * "off" (or the same as UI_HOST): everyone uses UI_HOST.
  */
-import { uiHost } from './uiHost'
+import { uiHost, userHostSetting } from './uiHost'
 
 const bare = (host: string | null | undefined) => (host ?? '').toLowerCase().replace(/:\d+$/, '')
 /** PUBLIC_URL, as session.ts's publicUrl() */
 const adminUrl = (env: NodeJS.ProcessEnv) => (env.PUBLIC_URL ?? `http://${uiHost(env)}`).replace(/\/+$/, '')
 
 export function userHost(env: NodeJS.ProcessEnv = process.env): string | null {
-  const h = env.USER_HOST?.trim().toLowerCase()
-  return h && h !== uiHost(env) ? h : null
+  return userHostSetting(env)
 }
 
 /** The request's Host header names USER_HOST (port and case ignored). */

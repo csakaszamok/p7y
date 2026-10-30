@@ -76,7 +76,7 @@ describe('/activate', () => {
       expect(res.headers.get('location')).toBe('https://sbx.example.com/activate?code=bcdf-ghjk')
       // On the users' address it is the page itself (here: an unknown code)
       expect((await at('sbx.example.com')).headers.get('location')).toBeNull()
-    } finally { vi.stubEnv('USER_HOST', '') }
+    } finally { vi.stubEnv('USER_HOST', 'off') }
   })
 
   it('a code for my sandbox: the code and the sandbox, nothing to pick', async () => {

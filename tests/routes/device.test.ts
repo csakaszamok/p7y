@@ -31,7 +31,7 @@ describe('POST /device/code', () => {
   it('with USER_HOST, the activate address is the users\'', async () => {
     vi.stubEnv('USER_HOST', 'sbx.example.com')
     try { expect((await (await ask({})).json()).verification_uri).toBe('https://sbx.example.com/activate') }
-    finally { vi.stubEnv('USER_HOST', '') }
+    finally { vi.stubEnv('USER_HOST', 'off') }
   })
 
   it('no body or {}: a new sandbox; a template for it; the address it came from is kept', async () => {
