@@ -4,7 +4,7 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
-Upgrading from 0.13.x: **check `.env` first** (see [Upgrading](https://csakaszamok.github.io/p9m/latest/upgrading/)): `ADMIN_TOKEN` must be set, the API port `8081` is on the host only, and OIDC needs `OIDC_ALLOWED_DOMAINS` or `OIDC_ALLOWED_EMAILS` (or `OIDC_ALLOW_ANYONE=true`). Then `docker compose pull && docker compose up -d`; `./check-host.sh` lists what is still open.
+Upgrading from 0.13.x to 0.14.0: **check `.env` first** (see [Upgrading](https://csakaszamok.github.io/p9m/latest/upgrading/)): `ADMIN_TOKEN` must be set, the API port `8081` is on the host only, and OIDC needs `OIDC_ALLOWED_DOMAINS` or `OIDC_ALLOWED_EMAILS` (or `OIDC_ALLOW_ANYONE=true`). Then `docker compose pull && docker compose up -d`; `./check-host.sh` lists what is still open.
 
 ### Changed
 

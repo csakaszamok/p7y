@@ -9,9 +9,9 @@ docker compose pull && docker compose up -d
 
 If `.env` sets `P9M_VERSION`, change or remove it. Each release's notes are in the [changelog](https://github.com/csakaszamok/p9m/blob/main/CHANGELOG.md).
 
-## From 0.13 or earlier: the secure defaults
+## To 0.14.0: the secure defaults
 
-The release after 0.13 no longer starts with open defaults. Before `docker compose up -d`, check `.env`:
+Purgatorium 0.14.0 no longer starts with open defaults. Before `docker compose up -d`, check `.env`:
 
 - **`ADMIN_TOKEN`** must be set: `docker compose` refuses to start without it (the compose file had `abc123` as a fallback). `./setup.sh` fills in a random one; scripts and agents using the old token need the new one.
 - **The API port `8081` listens on the host only.** If something on another machine called `http://<server>:8081` (a script, or docker clients getting registry tokens while `PUBLIC_URL` is empty), point it at `PUBLIC_URL` instead, or set `P9M_API_BIND=0.0.0.0` on a trusted network.
