@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-10-30
+
+Upgrading from 0.14.0: only `check-host.sh` changed; the server is unchanged but for the version (`docker compose pull && docker compose up -d` when convenient).
+
 ### Fixed
 
 - **`check-host.sh` tells where the API port really listens.** It read only `P9M_API_BIND` from `.env`, so with the `docker-compose.yml` of 0.13 or earlier and the setting empty it said *on this machine only* while port 8081 was open to every network. With Purgatorium running it now asks Docker; otherwise it still reads `.env`.
@@ -854,7 +858,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.14.1...HEAD
+[0.14.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.14.1
 [0.14.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.14.0
 [0.13.3]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.3
 [0.13.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.2
