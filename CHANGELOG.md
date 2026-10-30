@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-30
+
+Upgrading from 0.14.x: `docker compose pull && docker compose up -d` with this release's `docker-compose.yml` (it routes `USER_HOST`). Nothing changes until `USER_HOST` is set.
+
 ### Added
 
 - **The users' own address (`USER_HOST`, e.g. `sbx.example.com`).** Users sign in, approve `/p9m:init` and sign in to the sandbox apps there, and `UI_HOST` (e.g. `console.example.com`) is the admin's: a user who signs in on it is sent on to `USER_HOST`, the admin's pages on `USER_HOST` go to `UI_HOST`. The users' page, the `/activate` links, new `.p9m` folders and the apps' sign-in name `USER_HOST`; the API and `/mcp` answer on both, so existing `.p9m` folders keep working. To turn it on: `USER_HOST` in `.env`, its `/auth/callback` registered with the OIDC provider, `docker compose up -d`. Off unless set.
@@ -862,7 +866,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.14.1...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.15.0
 [0.14.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.14.1
 [0.14.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.14.0
 [0.13.3]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.3
