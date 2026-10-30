@@ -4,6 +4,8 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-10-30
+
 Upgrading from 0.13.x to 0.14.0: **check `.env` first** (see [Upgrading](https://csakaszamok.github.io/p9m/latest/upgrading/)): `ADMIN_TOKEN` must be set, the API port `8081` is on the host only, and OIDC needs `OIDC_ALLOWED_DOMAINS` or `OIDC_ALLOWED_EMAILS` (or `OIDC_ALLOW_ANYONE=true`). Then `docker compose pull && docker compose up -d`; `./check-host.sh` lists what is still open.
 
 ### Changed
@@ -847,7 +849,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.13.3...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.14.0
 [0.13.3]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.3
 [0.13.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.2
 [0.13.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.13.1
