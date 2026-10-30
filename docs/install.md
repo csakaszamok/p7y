@@ -69,6 +69,6 @@ Each sandbox's files (compose file, certificates, tunnel config) live in `opt/sa
 >
 > `check-host.sh` tells how many sandboxes `traefik-net` has room for.
 
-> **Before exposing Purgatorium publicly**, set `ADMIN_TOKEN`, `SESSION_SECRET` and `ADMIN_PASSWORD` to real secrets. The compose defaults (`ADMIN_TOKEN=abc123`, and the `.env.example` placeholders) are only meant for local dev and the e2e scripts; Purgatorium logs a startup warning if any of them is still in effect.
+> **Before exposing Purgatorium publicly**, set `ADMIN_TOKEN`, `SESSION_SECRET` and `ADMIN_PASSWORD` to real secrets (`setup.sh` does). `docker compose` does not start without an `ADMIN_TOKEN`; the `.env.example` placeholders are only meant for local dev and the e2e scripts: Purgatorium logs a startup warning while one is in effect, and refuses to start with an `https://` `PUBLIC_URL`. The direct API port `8081` listens on the host only (`P9M_API_BIND`), and OIDC needs `OIDC_ALLOWED_DOMAINS` or `OIDC_ALLOWED_EMAILS` (see [Configuration](configuration.md)).
 
 All settings: [Configuration](configuration.md). For HTTPS: [HTTPS](https.md).

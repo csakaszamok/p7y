@@ -201,7 +201,7 @@ function tooLarge(err: unknown, res: ServerResponse): boolean {
 const configErrors = insecureConfigErrors(process.env);
 if (configErrors.length) {
   for (const e of configErrors) console.error(`FATAL: ${e}`);
-  console.error("FATAL: refusing to start with PUBLIC_URL=" + process.env.PUBLIC_URL + " — fix the settings above.");
+  console.error("FATAL: refusing to start — fix the settings above in .env, then docker compose up -d.");
   process.exit(1);
 }
 console.log(`[tls] HTTPS ${syncTlsConfig()} (certs/tls.crt + certs/tls.key)`);
@@ -340,7 +340,7 @@ startUsageSampler(10_000);
 startDiskSampler();
 // The topbar's GitHub star and fork counts: fetched now, so the first page has them
 repoInfo();
-// OIDC with no OIDC_ALLOWED_DOMAINS / OIDC_ALLOWED_EMAILS: anyone with an account at the provider gets in
+// OIDC with no OIDC_ALLOWED_DOMAINS / OIDC_ALLOWED_EMAILS (only with OIDC_ALLOW_ANYONE=true): anyone with an account at the provider gets in
 { const open = openSignInWarning(); if (open) console.warn(open); }
 // Say once which runtime new sandboxes get, and why dind when sysbox would be safer
 void defaultRuntime().then(rt => {

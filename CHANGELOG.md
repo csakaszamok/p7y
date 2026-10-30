@@ -4,6 +4,16 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+Upgrading from 0.13.x to 0.14.0: **check `.env` first** (see [Upgrading](https://csakaszamok.github.io/p9m/latest/upgrading/)): `ADMIN_TOKEN` must be set, the API port `8081` is on the host only, and OIDC needs `OIDC_ALLOWED_DOMAINS` or `OIDC_ALLOWED_EMAILS` (or `OIDC_ALLOW_ANYONE=true`). Then `docker compose pull && docker compose up -d`; `./check-host.sh` lists what is still open.
+
+### Changed
+
+- **Closed by default.** A server set up without `setup.sh`, or with a setting left empty, no longer starts open:
+  - `docker compose` refuses to start without an `ADMIN_TOKEN` in `.env` (it fell back to `abc123`). `setup.sh` fills in a random one, as before.
+  - The direct plain-HTTP API port `8081` listens on the host only (`P9M_API_BIND` defaults to `127.0.0.1`, was `0.0.0.0`): from other machines everything goes through Traefik and `PUBLIC_URL`. `P9M_API_BIND=0.0.0.0` opens it again, for a trusted network.
+  - With OIDC on and neither `OIDC_ALLOWED_DOMAINS` nor `OIDC_ALLOWED_EMAILS` set, Purgatorium refuses to start (it only warned): with Google, any Google account could sign in and create sandboxes. `OIDC_ALLOW_ANYONE=true` allows that on purpose.
+- **SECURITY.md has a security model**: Purgatorium controls the host through its Docker socket, sandboxes are containers and not VMs, what is closed by default, and the open-source base images it is built on.
+
 ## [0.13.3] - 2026-10-29
 
 Upgrading from 0.13.2: only the docs changed; the server is unchanged but for the version (`docker compose pull && docker compose up -d` when convenient).

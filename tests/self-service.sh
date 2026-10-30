@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Integration test: OIDC sign-in, ownership, personal tokens, admin view.
 # Starts a local mock OIDC provider; p9m must be configured to use it:
-#   OIDC_ISSUER=http://host.docker.internal:8090/default OIDC_CLIENT_ID=p9m \
+#   ADMIN_TOKEN=abc123 OIDC_ALLOW_ANYONE=true OIDC_ISSUER=http://host.docker.internal:8090/default OIDC_CLIENT_ID=p9m \
 #   OIDC_CLIENT_SECRET=secret ADMIN_PASSWORD=pw ADMIN_LOGIN=on SESSION_SECRET=e2e \
 #   PUBLIC_URL=http://localhost:8081 docker compose up -d p9m
 #

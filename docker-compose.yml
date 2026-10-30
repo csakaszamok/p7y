@@ -5,9 +5,9 @@ services:
     # and COMPOSE_PATH_SEPARATOR=: on Windows, in .env).
     image: ghcr.io/csakaszamok/p9m:${P9M_VERSION:-0.13.3}
     ports:
-      # Direct plain-HTTP API port (scripts, local dev). In a public deployment bind it
-      # to localhost (P9M_API_BIND=127.0.0.1) so everything goes through HTTPS.
-      - "${P9M_API_BIND:-0.0.0.0}:8081:3000"
+      # Direct plain-HTTP API port (scripts, local dev): on this machine only. P9M_API_BIND=0.0.0.0 opens it
+      # to every network, without TLS; everyone else goes through Traefik (PUBLIC_URL)
+      - "${P9M_API_BIND:-127.0.0.1}:8081:3000"
     volumes:
       - ./data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
@@ -18,7 +18,8 @@ services:
     environment:
       # NOTE: Do NOT set TOKEN here — the base image's global TOKEN gate would block the UI and sign-in.
       # Per-route auth is handled by ADMIN_TOKEN in services/auth.ts instead.
-      ADMIN_TOKEN: ${ADMIN_TOKEN:-abc123}
+      # No default: setup.sh writes a random one into .env
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?ADMIN_TOKEN is not set in .env - run ./setup.sh, it fills in a random one}
       DEFAULT_RUNTIME: ${DEFAULT_RUNTIME:-auto}
       # Runtimes new sandboxes may use (comma list); default sysbox. The privileged dind is for development only
       # (ALLOWED_RUNTIMES=sysbox,dind, or all): root in a dind sandbox can reach the host
@@ -75,9 +76,11 @@ services:
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
       OIDC_PROVIDER_NAME: ${OIDC_PROVIDER_NAME:-Google}
-      # Who may sign in with OIDC (comma lists); without either, anyone with an account at the provider
+      # Who may sign in with OIDC (comma lists). With OIDC on, one of them is needed, or OIDC_ALLOW_ANYONE=true
+      # (anyone with an account at the provider): otherwise Purgatorium refuses to start
       OIDC_ALLOWED_DOMAINS: ${OIDC_ALLOWED_DOMAINS:-}
       OIDC_ALLOWED_EMAILS: ${OIDC_ALLOWED_EMAILS:-}
+      OIDC_ALLOW_ANYONE: ${OIDC_ALLOW_ANYONE:-false}
       OIDC_ADMIN_EMAILS: ${OIDC_ADMIN_EMAILS:-}
       # App access (docs: app-access.md): who opens an app without p9m.access; the key of its cookies and tickets
       APPS_ACCESS_DEFAULT: ${APPS_ACCESS_DEFAULT:-owner}

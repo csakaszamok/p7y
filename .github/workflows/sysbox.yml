@@ -44,6 +44,7 @@ jobs:
       - name: Start the stack (DEFAULT_RUNTIME=sysbox)
         run: |
           cat > .env <<EOF
+          ADMIN_TOKEN=$P9M_TOKEN
           DEFAULT_RUNTIME=sysbox
           HOST_ADDRESS=localhost
           SESSION_SECRET=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')

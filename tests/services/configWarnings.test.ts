@@ -54,9 +54,22 @@ describe('insecureConfigErrors', () => {
     expect(insecureConfigErrors({ ...https, ...strong, ADMIN_PASSWORD: 'change-me', ADMIN_LOGIN: 'off' })).toEqual([])
   })
 
-  it('never blocks a plain-http (local) start', () => {
+  it('never blocks a plain-http (local) start for its secrets', () => {
     expect(insecureConfigErrors({ PUBLIC_URL: 'http://p9m.lvh.me', ADMIN_TOKEN: 'abc123' })).toEqual([])
     expect(insecureConfigErrors({ ADMIN_TOKEN: 'abc123' })).toEqual([])
+  })
+
+  it('blocks OIDC open to anyone, on http too, unless OIDC_ALLOW_ANYONE=true', () => {
+    const oidc = { OIDC_ISSUER: 'https://accounts.google.com', OIDC_CLIENT_ID: 'id', OIDC_CLIENT_SECRET: 'secret' }
+    for (const url of ['http://p9m.lvh.me', 'https://p9m.example.com']) {
+      expect(insecureConfigErrors({ ...strong, PUBLIC_URL: url, ...oidc }).some(e => e.includes('OIDC_ALLOW_ANYONE'))).toBe(true)
+    }
+    expect(insecureConfigErrors({ ...oidc, OIDC_ALLOW_ANYONE: 'yes' }).length).toBe(1)
+    expect(insecureConfigErrors({ ...oidc, OIDC_ALLOW_ANYONE: 'true' })).toEqual([])
+    expect(insecureConfigErrors({ ...oidc, OIDC_ALLOWED_DOMAINS: 'example.com' })).toEqual([])
+    expect(insecureConfigErrors({ ...oidc, OIDC_ALLOWED_EMAILS: 'guest@gmail.com' })).toEqual([])
+    // Without OIDC nobody can sign in that way
+    expect(insecureConfigErrors({ OIDC_ISSUER: 'https://accounts.google.com' })).toEqual([])
   })
 })
 
