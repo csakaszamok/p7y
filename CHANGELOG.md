@@ -4,6 +4,12 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+Upgrading from 0.16.0: `docker compose pull && docker compose up -d`; nothing else changes.
+
+### Added
+
+- **A `claude-code` template:** Claude Code in Docker Sandboxes' (`sbx`) own image, `docker/sandbox-templates:claude-code`, next to the sandbox's own Docker, with a hello app. Open the sandbox's terminal in the `claude` container and run `claude`: it builds and runs apps with `docker compose`, and what it publishes gets an address at once. Its home directory is a volume, so the sign-in and `~/workspace` survive sleep. The image is large: about 5 GB of disk per sandbox.
+
 ## [0.16.0] - 2026-10-30
 
 Upgrading from 0.15.x: `docker compose pull && docker compose up -d` with this release's `docker-compose.yml`. **Users move to `sbx.<HOST_DOMAIN>`**: register `https://sbx.<HOST_DOMAIN>/auth/callback` with the OIDC provider first (the wildcard DNS record and certificate already cover it), or set `USER_HOST=off` to keep everyone on `UI_HOST`.
