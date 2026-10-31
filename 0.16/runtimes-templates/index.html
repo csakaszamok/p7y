@@ -1617,6 +1617,10 @@
 <td>Claude Code in Docker Sandboxes' (<code>sbx</code>) image, <code>docker/sandbox-templates:claude-code</code>, next to the sandbox's own Docker, and a hello app: open the sandbox's terminal in the <code>claude</code> container and run <code>claude</code>; it builds and runs with <code>docker compose</code>, and what it publishes gets an address. Its home directory is a volume (the sign-in and <code>~/workspace</code> survive sleep). The image is large: about 5 GB of disk per sandbox</td>
 </tr>
 <tr>
+<td><code>claude-code-minimal</code></td>
+<td>the same, slim: <code>ghcr.io/csakaszamok/p9m-claude-code-minimal</code> (built from <code>images/claude-code-minimal</code> with every release) has Claude Code, the Docker CLI with compose and buildx, git and little else, about 1.5 GB of disk per sandbox. The agent builds and runs the apps in containers, so it needs no toolchains of its own</td>
+</tr>
+<tr>
 <td><code>tcp-demo</code></td>
 <td>a demo of <a href="../networking/#tls-tcp-addresses">TLS TCP addresses</a>: Postgres, Redis, SSH and pgweb</td>
 </tr>
