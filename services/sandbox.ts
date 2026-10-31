@@ -24,7 +24,7 @@ import { sandboxName, rawNameOf, readLabel } from './naming'
 import { sessionDurationOf, cappedSleepDefault } from './sleepSettings'
 import { listManagedContainers, resolveHostSandboxesDir, execRun, justStarted, type SandboxMeta } from './docker'
 import { sandboxDir, sandboxParent, listSandboxDirs, newSandboxDir, archiveRoot, ownerDirName, ownerOfCompose, sandboxesDir, forgetSandboxDir, sandboxesMounted, SANDBOX_NAME } from './sandboxPaths'
-import { composeUp, composeStop, composeStart, composeDown, composeUpInner, composeConfigInner, composeRemove } from './compose'
+import { composeUp, composeStop, composeStart, composeDown, composeUpInner } from './compose'
 import { concurrency } from './concurrency'
 import { parseComposeText } from './composeCache'
 import { hashPassword } from './registryAuth'
@@ -193,20 +193,20 @@ export const sandboxService = {
   },
 
   /** Creates a sandbox; while it does, a request to its address waits instead of starting it (wake.ts). */
-  async createSandbox(rawName: string, createInnerStack = true, idleTimeout?: string, deepSleepAfter?: string, owner = 'admin', templateName?: string, runtimeName?: string, customCompose?: string, sshKeys?: string[], limits?: Limits): Promise<CreateSandboxResult> {
+  async createSandbox(rawName: string, createInnerStack = true, idleTimeout?: string, deepSleepAfter?: string, owner = 'admin', templateName?: string, runtimeName?: string, sshKeys?: string[], limits?: Limits): Promise<CreateSandboxResult> {
     const name = sandboxName(rawName)
     // One at a time per name: a second create of the same name (another user at the same moment) passed the
     // "does it exist" check before the first made its directory, and both worked on one sandbox
     if (!markCreating(name)) throw new Error(`Sandbox already exists: ${name}`)
     const marked = true
     try {
-      return await this.createSandboxUnmarked(rawName, createInnerStack, idleTimeout, deepSleepAfter, owner, templateName, runtimeName, customCompose, sshKeys, limits)
+      return await this.createSandboxUnmarked(rawName, createInnerStack, idleTimeout, deepSleepAfter, owner, templateName, runtimeName, sshKeys, limits)
     } finally {
       if (marked) creatingDone(name)
     }
   },
 
-  async createSandboxUnmarked(rawName: string, createInnerStack = true, idleTimeout?: string, deepSleepAfter?: string, owner = 'admin', templateName?: string, runtimeName?: string, customCompose?: string, sshKeys?: string[], limits?: Limits): Promise<CreateSandboxResult> {
+  async createSandboxUnmarked(rawName: string, createInnerStack = true, idleTimeout?: string, deepSleepAfter?: string, owner = 'admin', templateName?: string, runtimeName?: string, sshKeys?: string[], limits?: Limits): Promise<CreateSandboxResult> {
     // || : an empty variable (DEFAULT_TEMPLATE= in .env) means unset, as in POST /sandboxes
     const resolvedTemplateName = templateName ?? (process.env.DEFAULT_TEMPLATE || 'starter')
     const resolvedRuntimeName = runtimeName ?? await (await import('./defaultRuntime')).defaultRuntime()
@@ -277,7 +277,8 @@ export const sandboxService = {
       raw_name: rawName,
       runtime_name: runtime.name,
       template_name: template.name,
-      compose_source: customCompose === undefined ? 'template' : 'edited',
+      // p9m.compose label: "edited" on sandboxes made from a changed compose text before it was removed
+      compose_source: 'template',
       created_at: createdAt,
       // ${host_users_dir}/${name} (custom runtimes) and ${sandbox_dir} both name the sandbox's own directory
       host_users_dir: `${hostSandboxesDir}/${ownerDirName(owner)}`,
@@ -311,8 +312,7 @@ export const sandboxService = {
     fs.writeFileSync(`${dir}/docker-compose.yml`, applyVars(runtimeCompose, vars))
     let innerText: string | undefined
     if (createInnerStack) {
-      // A given compose text keeps its own comments and layout; the template's goes through yaml.dump as before
-      const inner = customCompose === undefined ? applyVars(template.compose, vars) : applyVarsText(customCompose, vars)
+      const inner = applyVars(template.compose, vars)
       fs.writeFileSync(`${dir}/inner/docker-compose.yml`, inner)
       innerText = inner
     }
@@ -331,18 +331,7 @@ export const sandboxService = {
 
     if (createInnerStack) {
       const project = template.inner_project_name ?? 'inner'
-      // docker compose runs in the sandbox (see composeUpInner). A given text is checked by it first: a schema error
-      // found by its compose up would leave a half-made sandbox holding the name, so the sandbox is taken down again
-      if (customCompose !== undefined) {
-        const problem = await composeConfigInner(name, project, { exec: execRun })
-        if (problem) {
-          await composeRemove(`${dir}/docker-compose.yml`).catch(err => console.warn(`[create] ${name}: ${err instanceof Error ? err.message : err}`))
-          fs.rmSync(dir, { recursive: true, force: true })
-          removeEmptyOwnerDir(dir)
-          throw new Error(`compose is not a valid compose file: ${problem}`)
-        }
-        timer.lap('compose check')
-      }
+      // docker compose runs in the sandbox (see composeUpInner)
       const tries = await composeUpInner(name, project, { exec: execRun })
       timer.lap('inner stack', tries > 1 ? `${tries} tries` : undefined)
     }

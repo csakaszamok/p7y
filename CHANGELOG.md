@@ -4,6 +4,13 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+Upgrading from 0.16.x: `docker compose pull && docker compose up -d`. A script or agent that sent `compose` when creating a sandbox gets a 400: create from a template, then deploy the apps through the sandbox's Docker.
+
+### Changed
+
+- **A template is only the start, as it is.** A sandbox's starter stack can no longer be replaced or edited: `POST /sandboxes` (and the MCP `create_sandbox` tool) refuse a `compose` text, and the **New sandbox** dialog shows the template's stack read-only. Apps, Claude Code in a sandbox made from `starter`, anything else, go in afterwards like every app, through the sandbox's Docker (`docker`, SSH or an agent). One less way to hand Purgatorium a compose text of a user's. Sandboxes made from an edited text before keep it.
+- **The `empty` template is a sandbox without a starter stack** (it wanted a pasted compose text).
+
 ## [0.16.3] - 2026-10-31
 
 Upgrading from 0.16.x: `docker compose pull && docker compose up -d`; nothing else changes.

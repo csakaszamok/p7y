@@ -17,8 +17,6 @@ vi.mock('../../services/compose', () => ({
   composeStop: vi.fn().mockResolvedValue(undefined),
   composeStart: vi.fn().mockResolvedValue(undefined),
   composeDown: vi.fn().mockResolvedValue(undefined),
-  composeConfigInner: vi.fn().mockResolvedValue(null),
-  composeRemove: vi.fn().mockResolvedValue(undefined)
 }))
 
 // Opening the Sablier session needs Traefik; here only that it is asked for
@@ -83,7 +81,7 @@ const realFs = await vi.importActual<typeof import('fs')>('fs')
 import { listManagedContainers } from '../../services/docker'
 import { primeSablierSession } from '../../services/wake'
 import { writeAuthorizedKeys } from '../../services/sandboxSsh'
-import { composeUp, composeUpInner, composeDown, composeConfigInner, composeRemove, composeStart, composeStop } from '../../services/compose'
+import { composeUp, composeUpInner, composeDown, composeStart, composeStop } from '../../services/compose'
 import { listProjectVolumes, exportVolume, removeVolume, stopProjectContainers, removeProjectContainers } from '../../services/project'
 import fs from 'fs'
 import yaml from 'js-yaml'
@@ -384,39 +382,6 @@ describe('sandbox service', () => {
     expect(vi.mocked(composeUpInner)).toHaveBeenCalledWith('p9m-demo9', 'inner', { exec: expect.any(Function) })
   }, 60000)
 
-  it('builds the inner stack from a given compose text: comments kept, variables filled, template before_script run', async () => {
-    vi.mocked(fs.writeFileSync).mockClear()
-    const text = '# my edit\nservices:\n  portainer:\n    image: portainer/portainer-ce:2.21.5\n    command: ["--admin-password", "${portainer_admin_password_hash}"]\n  extra:\n    image: hashicorp/http-echo\n    command: ["-text=hi ${name}"]\n'
-    const result = await sandboxService.createSandbox('ed1', true, undefined, undefined, 'admin', 'portainer', 'dind', text)
-    const inner = written('p9m-ed1', 'inner/docker-compose.yml')!
-    expect(inner.startsWith('# my edit\n')).toBe(true)
-    expect(inner).toContain('-text=hi p9m-ed1')
-    expect(inner).not.toContain('${portainer_admin_password_hash}')
-    expect(inner).toMatch(/\$\$2[aby]\$\$10\$\$/) // the bcrypt hash, $ escaped for compose
-    expect(result.extras.portainer_password).toBeTruthy()
-    const labels = (yaml.load(written('p9m-ed1', 'docker-compose.yml')!) as { services: { sandbox: { labels: Record<string, string> } } }).services.sandbox.labels
-    expect(labels['p9m.compose']).toBe('edited')
-  }, 60000)
-
-  it('checks a given compose text with docker compose in the sandbox before its stack, and takes the sandbox away when it fails', async () => {
-    vi.mocked(composeConfigInner).mockResolvedValueOnce("volumes.echo2 additional properties 'image' not allowed")
-    vi.mocked(composeUpInner).mockClear()
-    vi.mocked(composeRemove).mockClear()
-    vi.mocked(fs.rmSync).mockClear()
-    await expect(sandboxService.createSandbox('ed3', true, undefined, undefined, 'admin', 'starter', 'dind', 'services:\n  a:\n    image: x\n'))
-      .rejects.toThrow("compose is not a valid compose file: volumes.echo2 additional properties 'image' not allowed")
-    expect(composeConfigInner).toHaveBeenCalledWith('p9m-ed3', 'inner', { exec: expect.any(Function) })
-    expect(composeUpInner).not.toHaveBeenCalled()
-    expect(composeRemove).toHaveBeenCalledWith('/opt/sandboxes/admin/p9m-ed3/docker-compose.yml')
-    expect(vi.mocked(fs.rmSync)).toHaveBeenCalledWith('/opt/sandboxes/admin/p9m-ed3', { recursive: true, force: true })
-  }, 60000)
-
-  it('does not run the docker compose check for a template text', async () => {
-    vi.mocked(composeConfigInner).mockClear()
-    await sandboxService.createSandbox('ed4')
-    expect(composeConfigInner).not.toHaveBeenCalled()
-  }, 60000)
-
   it('labels a sandbox built from its template text as compose: template', async () => {
     vi.mocked(fs.writeFileSync).mockClear()
     await sandboxService.createSandbox('ed2', false)
@@ -430,7 +395,7 @@ describe('sandbox service', () => {
     vi.mocked(writeAuthorizedKeys).mockImplementationOnce(() => { order.push('keys'); return 1 })
     vi.mocked(composeUp).mockImplementationOnce(async () => { order.push('up') })
     const extra = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILQbLq+klAOn7bvdZ+bf7t83dWYc3AfKM/YVFsjF6tLa'
-    await sandboxService.createSandbox('ssh1', false, undefined, undefined, 'alice@example.com', undefined, undefined, undefined, [extra])
+    await sandboxService.createSandbox('ssh1', false, undefined, undefined, 'alice@example.com', undefined, undefined, [extra])
     expect(vi.mocked(fs.mkdirSync).mock.calls.map(c => c[0])).toContain('/opt/sandboxes/alice@example.com/p9m-ssh1/ssh-host-keys')
     expect(written('p9m-ssh1', 'ssh-extra-keys')).toBe(`${extra}\n`)
     expect(writeAuthorizedKeys).toHaveBeenCalledWith('p9m-ssh1', 'alice@example.com')
@@ -461,7 +426,7 @@ describe('sandbox service', () => {
     expect(d.services.sandbox).toMatchObject({ cpus: 2, mem_limit: '4096m', memswap_limit: '4096m' })
     expect(d.services.frps.mem_limit).toBeUndefined()
     vi.mocked(fs.writeFileSync).mockClear()
-    await sandboxService.createSandbox('lim2', false, undefined, undefined, 'admin', undefined, undefined, undefined, undefined, { cpus: 0.5, memory: 512 * 1024 * 1024 })
+    await sandboxService.createSandbox('lim2', false, undefined, undefined, 'admin', undefined, undefined, undefined, { cpus: 0.5, memory: 512 * 1024 * 1024 })
     expect((yaml.load(written('p9m-lim2', 'docker-compose.yml')!) as { services: { sandbox: Record<string, unknown> } }).services.sandbox).toMatchObject({ cpus: 0.5, mem_limit: '512m' })
   }, 60000)
 

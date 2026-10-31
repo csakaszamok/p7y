@@ -223,8 +223,7 @@ body.login .confirm-line .user-code { margin: 0 }
 dialog.wide { width: min(880px, 94vw) }
 pre.code { margin: 0; max-height: 60vh; overflow: auto; background: var(--code-bg); border: 1px solid var(--line-2); border-radius: 8px; padding: 12px 14px;
            font: 12.5px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--code-fg); white-space: pre }
-textarea[data-compose-editor] { display: block; width: 100%; min-height: 24em; margin-top: 6px; box-sizing: border-box; resize: vertical; font: 12px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; background: var(--code-bg); color: var(--fg); border: 1px solid var(--line-2); border-radius: 8px; padding: 10px 12px; tab-size: 2; white-space: pre; overflow: auto }
-textarea[data-compose-editor]:disabled { opacity: .5 }
+pre[data-compose-view] { max-height: 24em; margin-top: 6px; overflow: auto }
 .small { font-size: 12px; margin-top: 8px }
 dialog .actions form { margin: 0 }
 .tcp { font: 12.5px ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--code-fg) }
