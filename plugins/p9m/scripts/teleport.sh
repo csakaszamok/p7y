@@ -33,6 +33,11 @@ P9M_URL= P9M_TOKEN= P9M_SANDBOX=
 [ -n "$P9M_URL" ] && [ -n "$P9M_TOKEN" ] && [ -n "$P9M_SANDBOX" ] || err "run /p9m:init first"
 ctx=$P9M_SANDBOX
 
+# An http:// P9M_URL may be answered with a redirect to https://, and curl drops the token on a redirect to another
+# port: ask once, without the token, where the address lands, and call the API there
+landed=$(curl -s -o /dev/null -L -w '%{url_effective}' "$P9M_URL/" 2>/dev/null || true)
+case $landed in http://*|https://*) P9M_URL=$(printf '%s\n' "$landed" | sed -E 's|^(https?://[^/]+).*|\1|') ;; esac
+
 # The API, the token on stdin (never in the arguments, which other processes can see)
 api() { printf 'Authorization: Bearer %s\n' "$P9M_TOKEN" | curl -sf "$@" -H @- 2>/dev/null; }
 status() { api "$P9M_URL/sandboxes/$ctx" | grep -o '"status":"[a-z_]*"' | head -n 1 | cut -d'"' -f4; }
@@ -110,6 +115,8 @@ if [ -n "$session" ] && [ -f "$session_file" ]; then
   : > "$stage/subdir"
 fi
 [ -f "$claude_home/CLAUDE.md" ] && cp "$claude_home/CLAUDE.md" "$stage/user/"
+gname=$(git config user.name 2>/dev/null || true) gmail=$(git config user.email 2>/dev/null || true)
+[ -n "$gname$gmail" ] && printf '%s\n%s\n' "$gname" "$gmail" > "$stage/user/git-identity"
 [ -d "$claude_home/skills" ] && cp -R "$claude_home/skills" "$stage/user/"
 [ -f "$claude_home/settings.json" ] && cp "$claude_home/settings.json" "$stage/user/"
 [ -f "$claude_home/plugins/known_marketplaces.json" ] && cp "$claude_home/plugins/known_marketplaces.json" "$stage/user/"

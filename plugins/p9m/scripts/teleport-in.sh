@@ -5,7 +5,8 @@
 #   STAGE/files/          the project                    → ~/workspace/PROJECT (replaced only with --replace)
 #   STAGE/secrets/        its confirmed secrets          → ~/.secrets/PROJECT (700/600), symlinked into the project
 #   STAGE/session.jsonl   the conversation, its id in STAGE/session.id, the folder it ran in (relative) in STAGE/subdir
-#   STAGE/user/           CLAUDE.md, skills/, settings.json (permissions and enabledPlugins), known_marketplaces.json
+#   STAGE/user/           CLAUDE.md, skills/, settings.json (permissions and enabledPlugins), known_marketplaces.json,
+#                         git-identity (user.name, user.email: two lines)
 # Prints `skipped-plugin<TAB>name` for a plugin it could not install, and last `resume<TAB>id<TAB>folder`.
 # Exit 3, changing nothing, when the project is there already and --replace is not given.
 set -euo pipefail
@@ -55,6 +56,12 @@ fi
 u=$stage/user
 mkdir -p "$HOME/.claude"
 [ -f "$u/CLAUDE.md" ] && cp "$u/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+# Who commits: only the name and the e-mail of the user's git settings
+if [ -f "$u/git-identity" ]; then
+  { IFS= read -r gname; IFS= read -r gmail; } < "$u/git-identity"
+  [ -n "$gname" ] && git config --global user.name "$gname"
+  [ -n "$gmail" ] && git config --global user.email "$gmail"
+fi
 if [ -d "$u/skills" ]; then mkdir -p "$HOME/.claude/skills" && cp -a "$u/skills/." "$HOME/.claude/skills/"; fi
 if [ -f "$u/settings.json" ]; then
   mine=$HOME/.claude/settings.json

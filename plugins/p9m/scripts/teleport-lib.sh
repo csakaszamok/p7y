@@ -46,13 +46,15 @@ tp_secret_candidates() {
   done | LC_ALL=C sort
 }
 
-# The files that go: with git the tracked and untracked ones .gitignore lets through, otherwise all but TP_EXCLUDES;
-# never the secret candidates (they go only when confirmed) nor .p9m. NUL-separated, sorted.
+# The files that go: with git the tracked and untracked ones .gitignore lets through, and the repository itself (.git,
+# for the way back: commit and push in the sandbox), otherwise all but TP_EXCLUDES; never the secret candidates (they
+# go only when confirmed) nor .p9m. NUL-separated, sorted.
 tp_file_list() {
   local dir=$1 f
   {
     if git -C "$dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
       git -C "$dir" ls-files -z --cached --others --exclude-standard
+      [ -d "$dir/.git" ] && ( cd -- "$dir" && find .git \( -type f -o -type l \) -print0 )
     else
       local prune=() e
       for e in "${TP_EXCLUDES[@]}"; do prune+=(-name "$e" -o); done
@@ -60,7 +62,7 @@ tp_file_list() {
     fi
   } | while IFS= read -r -d '' f; do
     case $f in .p9m/*) continue ;; esac
-    tp_is_secret "$f" && continue
+    case $f in .git/*) ;; *) tp_is_secret "$f" && continue ;; esac
     # Deleted in the working folder but still in git's index
     [ -e "$dir/$f" ] || [ -L "$dir/$f" ] || continue
     printf '%s\0' "$f"

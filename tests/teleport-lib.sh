@@ -37,7 +37,8 @@ printf 'node_modules/\n.env\n.env.local\n*.pem\n' > "$g/.gitignore"
 eq "secret candidates (tracked config/.env too; not .env.example, not .pub, not .p9m)" \
   "$(tp_secret_candidates "$g" | tr '\n' ' ')" ".env .env.local config/.env key.pem "
 eq "git: the file list (uncommitted in, ignored and secrets and .p9m out, symlink as itself)" \
-  "$(list "$g" | tr '\n' '|')" "-dash.txt|.env.example|.gitignore|a.txt|b c/ü.txt|cur|id_ed25519.pub|new.txt|"
+  "$(list "$g" | grep -v '^\.git/' | tr '\n' '|')" "-dash.txt|.env.example|.gitignore|a.txt|b c/ü.txt|cur|id_ed25519.pub|new.txt|"
+eq "git: the repository itself (.git) goes along, for the way back" "$(list "$g" | grep -c '^\.git/HEAD$' || true)" "1"
 rm "$g/a.txt"
 eq "git: a file deleted in the working folder is not listed" "$(list "$g" | grep -c '^a.txt$' || true)" "0"
 

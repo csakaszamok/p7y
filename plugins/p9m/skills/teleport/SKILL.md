@@ -87,6 +87,7 @@ Tell the user, with the id and folder from the `resume` line:
 > ```
 >
 > Then tell Claude once: *the project now lives in <FOLDER>*. Work there from now on: this folder keeps the moment
-> of the teleport. To bring work back, commit and push in the sandbox, pull here.
+> of the teleport. To bring work back, commit and push in the sandbox, pull here (the repository and your git name
+> and e-mail went along; pushing needs your git host's credentials there once, e.g. an SSH key or a token).
 
 List any `skipped-plugin` names (the user can install them there with `/plugin`).

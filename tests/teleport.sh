@@ -34,6 +34,9 @@ SH
 cat > "$FAKE/bin/curl" <<'SH'
 #!/usr/bin/env bash
 printf '%s|' curl "$@" >> "$FAKE/log"; echo >> "$FAKE/log"
+case " $* " in *url_effective*)
+  url=${*: -1}; if [ -f "$FAKE/redirect" ]; then printf '%s' "${url/http:/https:}"; else printf '%s' "$url"; fi; exit 0 ;;
+esac
 cat > "$FAKE/curl-stdin"
 case " $* " in
   *" -X POST "*) touch "$FAKE/started"; echo '{}' ;;
@@ -44,7 +47,7 @@ esac
 SH
 chmod +x "$FAKE/bin/"*
 export PATH="$FAKE/bin:$PATH"
-reset() { rm -f "$FAKE"/log "$FAKE"/{ctx-fail,has-claude,compose-fail,exists,started,asleep,never-wakes}; rm -rf "$FAKE/copied"/*; }
+reset() { rm -f "$FAKE"/log "$FAKE"/{ctx-fail,has-claude,compose-fail,exists,started,asleep,never-wakes,redirect}; rm -rf "$FAKE/copied"/*; }
 
 # The project (as in tests/teleport-lib.sh), tied to p9m-shop, with a conversation
 proj=$tmp/shop; mkdir -p "$proj/b c" "$proj/config" "$proj/node_modules"
@@ -72,6 +75,12 @@ tp --plan >/dev/null
 start=$(grep '/sandboxes/p9m-shop/start|' "$FAKE/log" || true)
 has "$start" "|-X|POST|" "asleep: woken through the API (POST …/start)"
 has "$start" "|-H|@-|" "asleep: the token's header read from stdin"
+
+# An http:// address the server answers with a redirect to https:// (a redirect would drop the token): found first, used
+reset; touch "$FAKE/asleep" "$FAKE/redirect"
+tp --plan >/dev/null
+grep -q '|https://p9m.test/sandboxes/p9m-shop/start|' "$FAKE/log" && pass "an http:// address redirected to https://: the API is called there" || fail "redirect: $(cat "$FAKE/log")"
+grep 'url_effective' "$FAKE/log" | grep -q -- '-H' && fail "the probe for the redirect must not carry the token" || pass "the probe for the redirect carries no token"
 has "$(cat "$FAKE/curl-stdin")" "Authorization: Bearer $TOKEN" "the token goes to curl on stdin"
 
 reset; touch "$FAKE/asleep" "$FAKE/never-wakes"
