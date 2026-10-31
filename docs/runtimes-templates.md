@@ -12,6 +12,7 @@ A sandbox is a **runtime** (how it runs) plus a **template** (what runs inside),
 | `starter` (default) | a hello app; deploy yours with `docker`, SSH or an agent |
 | `portainer` | the same with Portainer, a web UI for the sandbox's Docker (its address and password in the API and the panel; it runs with `-H unix:///var/run/docker.sock`, so its environment exists from the start) |
 | `claude-code` | Claude Code in Docker Sandboxes' (`sbx`) image, `docker/sandbox-templates:claude-code`, next to the sandbox's own Docker, and a hello app: open the sandbox's terminal in the `claude` container and run `claude`; it builds and runs with `docker compose`, and what it publishes gets an address. Its home directory is a volume (the sign-in and `~/workspace` survive sleep). The image is large: about 5 GB of disk per sandbox |
+| `claude-code-minimal` | the same, slim: `ghcr.io/csakaszamok/p9m-claude-code-minimal` (built from `images/claude-code-minimal` with every release) has Claude Code, the Docker CLI with compose and buildx, git and little else, about 1.5 GB of disk per sandbox. The agent builds and runs the apps in containers, so it needs no toolchains of its own |
 | `tcp-demo` | a demo of [TLS TCP addresses](networking.md#tls-tcp-addresses): Postgres, Redis, SSH and pgweb |
 | `empty` | nothing: paste your own compose file in the dialog |
 
