@@ -114,8 +114,8 @@ describe('/activate', () => {
   })
 
   it('a new sandbox from the template Claude Code asked for', async () => {
-    const { user_code } = startDevice({ template: 'empty' })
-    expect(await (await page(user_code, cookie('alice@example.com'))).text()).toContain('a new sandbox from the <b>empty</b> template')
+    const { user_code } = startDevice({ template: 'tcp-demo' })
+    expect(await (await page(user_code, cookie('alice@example.com'))).text()).toContain('a new sandbox from the <b>tcp-demo</b> template')
   })
 
   it("someone else's sandbox, or none by that name: an error, never saying whether it exists", async () => {
@@ -191,10 +191,10 @@ describe('/activate', () => {
   })
 
   it('POST approve a new sandbox: created as POST /sandboxes would, for me, with the template asked for', async () => {
-    const { device_code, user_code } = startDevice({ template: 'empty' })
+    const { device_code, user_code } = startDevice({ template: 'tcp-demo' })
     const html = await (await send({ code: user_code, decision: 'approve' })).text()
     expect(createSandboxRequest).toHaveBeenCalledTimes(1)
-    expect(vi.mocked(createSandboxRequest).mock.calls[0]).toEqual([{ sub: 'alice@example.com', role: 'user', via: 'session' }, { template: 'empty' }])
+    expect(vi.mocked(createSandboxRequest).mock.calls[0]).toEqual([{ sub: 'alice@example.com', role: 'user', via: 'session' }, { template: 'tcp-demo' }])
     expect(redeemDevice(device_code, confirmOf(html))).toEqual({ status: 'approved', sandbox: 'p9m-k3x9q2', owner: 'alice@example.com' })
   })
 

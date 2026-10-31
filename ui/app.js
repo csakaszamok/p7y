@@ -800,25 +800,18 @@ async function fillCatalog(sel, path) {
   } catch { sel.innerHTML = '<option value="">default</option>' }
 }
 
-// The compose text of the template last loaded into the editor: a create sends compose only when the text differs
-let loadedCompose = { template: null, text: '' }
+// The selected template's starter stack, to look at: a sandbox starts with it as it is (it cannot be edited)
+let shownTemplate = null
 
-async function loadComposeEditor(name) {
-  const box = $('[data-compose-editor]')
+async function showTemplateStack(name) {
+  const box = $('[data-compose-view]')
+  shownTemplate = name
   try {
     const t = await api(`/templates/${encodeURIComponent(name)}`)
-    // As the textarea will hold it: a textarea turns CRLF (a Windows checkout) into LF
     const text = t.compose.replace(/\r\n?/g, '\n')
-    loadedCompose = { template: name, text }
-    box.value = text
-    box.placeholder = 'Paste your docker compose file here'
-    // empty: the compose is the user's to paste, so show it
-    if (name === 'empty') $('[data-compose-section]').open = true
+    box.textContent = /^services:\s*\{\}\s*$/m.test(text) || !/^services:/m.test(text) ? 'No starter stack: deploy your apps with docker, SSH or an agent.' : text
   } catch (e) {
-    loadedCompose = { template: name, text: '' }
-    box.value = ''
-    box.placeholder = `Could not load the ${name} template: ${e.message}`
-    return
+    box.textContent = `Could not load the ${name} template: ${e.message}`
   }
 }
 
@@ -826,10 +819,7 @@ async function openNewDialog() {
   const dlg = $('[data-new-dialog]')
   await Promise.all([fillCatalog($('[data-runtimes]'), '/runtimes'), fillCatalog($('[data-templates]'), '/templates')])
   const tpl = $('[data-templates]').value
-  // A failed create keeps the user's text; otherwise show the selected template's
-  if (!$('[data-compose-editor]').value || loadedCompose.template !== tpl) await loadComposeEditor(tpl)
-  // Closed for a template's stack as it is; open for empty, or for a compose of the user's own (kept from a failed create)
-  $('[data-compose-section]').open = tpl === 'empty' || $('[data-compose-editor]').value !== loadedCompose.text
+  if (shownTemplate !== tpl) await showTemplateStack(tpl)
   $('[data-new-error]').hidden = true
   dlg.showModal()
   // An empty name (not one kept from a failed create) gets a generated one, selected: typing replaces it
@@ -860,17 +850,14 @@ async function submitNew(ev) {
   if (data.memory) body.memory = data.memory
   const sshKeys = (data.ssh_keys || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean)
   if (sshKeys.length) body.ssh_keys = sshKeys
-  if (form.create_inner_stack.checked && data.compose !== undefined && data.compose !== loadedCompose.text) body.compose = data.compose
   // Only when changed from the form's default: otherwise the server's default, cut to its limit for users
   if (data.idle_timeout && data.idle_timeout !== form.idle_timeout.defaultValue) body.idle_timeout = data.idle_timeout
   if (data.deep_sleep_after && data.deep_sleep_after !== form.deep_sleep_after.defaultValue) body.deep_sleep_after = data.deep_sleep_after
   const full = `${prefix}-${data.name}`
   // Reset now, not when the create finishes (that can take a minute): a dialog opened meanwhile
   // must not lose what is being typed. A failed create puts the submitted values back.
-  const draft = { values: data, inner: form.create_inner_stack.checked, loaded: loadedCompose }
+  const draft = { values: data, inner: form.create_inner_stack.checked }
   form.reset()
-  $('[data-compose-editor]').value = ''
-  $('[data-compose-editor]').disabled = false
   pending.add(full)
   $('[data-new-dialog]').close()
   renderRows()
@@ -890,11 +877,7 @@ async function submitNew(ev) {
     if (dlg.open) { err.textContent = `${data.name}: ${e.message}`; err.hidden = false; return }
     for (const [k, v] of Object.entries(draft.values)) { const el = form.elements[k]; if (el && el.type !== 'checkbox') el.value = v }
     form.create_inner_stack.checked = draft.inner
-    $('[data-compose-editor]').disabled = !draft.inner
-    loadedCompose = draft.loaded
     err.textContent = e.message; err.hidden = false
-    // A compose error: show the compose it is about
-    if (/compose/i.test(e.message)) $('[data-compose-section]').open = true
     dlg.showModal()
     return
   }
@@ -969,19 +952,7 @@ function initSandboxes() {
   })
   $('[data-new]').addEventListener('click', openNewDialog)
   $('[data-new-form]').addEventListener('submit', submitNew)
-  let previousTemplate = null
-  $('[data-templates]').addEventListener('focus', e => { previousTemplate = e.target.value })
-  $('[data-templates]').addEventListener('change', async e => {
-    const box = $('[data-compose-editor]')
-    const edited = box.value !== loadedCompose.text
-    if (edited && !await confirmDialog(`Replace your changes with the ${e.target.value} template?`, 'Replace')) {
-      e.target.value = previousTemplate ?? loadedCompose.template
-      return
-    }
-    previousTemplate = e.target.value
-    await loadComposeEditor(e.target.value)
-  })
-  $('[data-new-form] input[name=create_inner_stack]').addEventListener('change', e => { $('[data-compose-editor]').disabled = !e.target.checked })
+  $('[data-templates]').addEventListener('change', e => showTemplateStack(e.target.value))
   $('[data-sleep-form]').addEventListener('submit', submitSleep)
   $('[data-resource-form]').addEventListener('submit', submitResources)
   initTokenDialog()
