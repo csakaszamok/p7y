@@ -36,6 +36,7 @@ jobs:
       - run: bash tests/setup.sh
       - run: bash -n plugins/p9m/scripts/*.sh
       - run: bash tests/teleport-lib.sh
+      - run: bash tests/teleport-in.sh
 
   install:
     # A fresh install from the release files
