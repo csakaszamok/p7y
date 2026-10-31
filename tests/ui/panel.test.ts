@@ -781,3 +781,10 @@ describe('mountsSection (Resources tab): host folders mounted into the sandbox',
     expect(panelOf(P.renderPanel(s, { ...user, tab: 'settings' }), 'settings')).not.toContain('/mnt/team')
   })
 })
+
+describe('a sandbox being created', () => {
+  it('is labelled creating…, and counted as running', () => {
+    expect(P.statusLabel('creating')).toBe('creating…')
+    expect(P.countsOf([{ status: 'creating' }, { status: 'exited' }], 3, 0)).toMatchObject({ running: 1, asleep: 1, deep_sleep: 0, free: 2 })
+  })
+})

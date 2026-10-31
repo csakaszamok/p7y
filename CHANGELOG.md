@@ -4,6 +4,11 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Fixed
+
+- **A sandbox being created says so:** the list, its panel and the summary showed *deep sleep*, then *asleep · not counted* while a new sandbox was only being made (its directory comes before its containers, its containers before they run). It is now *creating…*, counted as running (it takes a place already).
+- **The New sandbox dialog opens at once, and its name comes fast:** `GET /sandbox-name` (and a create without a name) picks a free name from the sandbox directories instead of asking Docker about every container, which took 10-20 seconds on a busy server; the dialog opens before the runtimes, templates and the template's stack have loaded, and does not wait for them for the name.
+
 ## [0.18.0] - 2026-10-31
 
 Upgrading from 0.17.x: `docker compose pull && docker compose up -d`; nothing else changes on the server. The Claude Code plugin updates itself (`/plugin` → update, or reinstall).
