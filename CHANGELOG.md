@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.16.3] - 2026-10-31
+
+Upgrading from 0.16.x: `docker compose pull && docker compose up -d`; nothing else changes.
+
 ### Added
 
 - **A `claude-code-ecc` template:** the slim image with [ECC](https://github.com/affaan-m/ECC) 2.2.3 (MIT) installed into Claude Code as the `ecc@ecc` plugin: agents, skills and hooks for a plan → test → review workflow, with Node.js and Python for its hooks. `ghcr.io/csakaszamok/p9m-claude-code-ecc`, built with every release on that release's `p9m-claude-code-minimal`. For trying ECC out: it adds about 31k tokens of context to every session.
@@ -894,7 +898,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.16.2...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.16.3...HEAD
+[0.16.3]: https://github.com/csakaszamok/p9m/releases/tag/v0.16.3
 [0.16.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.16.2
 [0.16.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.16.1
 [0.16.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.16.0
