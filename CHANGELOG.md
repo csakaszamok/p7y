@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **A `claude-code-minimal` template:** the same as `claude-code`, with a slim image of our own, `ghcr.io/csakaszamok/p9m-claude-code-minimal` (Claude Code, the Docker CLI with compose and buildx, git; the same `agent` user, home and sudo as Docker Sandboxes' image), built with every release. About 1.5 GB of disk per sandbox instead of about 5 GB.
+
 ## [0.16.1] - 2026-10-31
 
 Upgrading from 0.16.0: `docker compose pull && docker compose up -d`; nothing else changes.
