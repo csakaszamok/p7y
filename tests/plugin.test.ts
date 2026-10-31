@@ -41,8 +41,21 @@ describe('the Claude Code plugin', () => {
     expect(fs.existsSync(path.join(pluginDir, 'mcp'))).toBe(false)
   })
 
-  it('skills: init and deploy', () => {
-    expect(fs.readdirSync(path.join(pluginDir, 'skills')).sort()).toEqual(['deploy', 'init'])
+  it('skills: init, deploy and teleport', () => {
+    expect(fs.readdirSync(path.join(pluginDir, 'skills')).sort()).toEqual(['deploy', 'init', 'teleport'])
+  })
+
+  // The script does the copying: the secrets' contents never pass through the model, only their names
+  it('teleport runs the plugin\'s script, asks about each secret by name, and resumes the conversation', () => {
+    const md = fs.readFileSync(path.join(pluginDir, 'skills/teleport/SKILL.md'), 'utf8')
+    const fm = frontmatter(md)
+    expect(fm.description).toContain('/p9m:teleport')
+    expect(fm['argument-hint']).toBe('[--ecc]')
+    expect(md).toContain('"${CLAUDE_PLUGIN_ROOT}/scripts/teleport.sh" --plan')
+    expect(md).toContain('"${CLAUDE_PLUGIN_ROOT}/scripts/teleport.sh" --run')
+    expect(md).toContain('--secret')
+    expect(md).toContain('claude --resume')
+    expect(fs.existsSync(path.join(pluginDir, 'scripts/teleport.sh'))).toBe(true)
   })
 
   it('every skill has a name matching its folder and a description within the limit', () => {
