@@ -18,7 +18,7 @@ mkdir -p "$stage/files/b c" "$stage/secrets/config" "$stage/user/skills/mine"
 echo a > "$stage/files/a.txt"; echo u > "$stage/files/b c/ü.txt"; ln -s "b c" "$stage/files/cur"
 echo 'API_KEY=x' > "$stage/secrets/.env"; echo 'DB=y' > "$stage/secrets/config/.env"
 echo '{"type":"user"}' > "$stage/session.jsonl"; echo abc123 > "$stage/session.id"; : > "$stage/subdir"
-printf 'Ann Example\nann@example.com\n' > "$stage/user/git-identity"; echo '# mine' > "$stage/user/CLAUDE.md"; echo skill > "$stage/user/skills/mine/SKILL.md"
+printf 'Ann Example\nann@example.com\ntrue\n' > "$stage/user/git-identity"; echo '# mine' > "$stage/user/CLAUDE.md"; echo skill > "$stage/user/skills/mine/SKILL.md"
 cat > "$stage/user/settings.json" <<'JSON'
 {"permissions":{"allow":["Bash(npm test)"]},"hooks":{"Stop":[]},"env":{"X":"1"},"mcpServers":{"a":{}},
  "enabledPlugins":{"superpowers@market":true,"off@market":false,"local@here":true}}
@@ -42,6 +42,7 @@ eq "a secret file is 600" "$(stat -c %a "$home/.secrets/shop/.env")" 600
 eq "the secret's content" "$(cat "$p/.env")" "API_KEY=x"
 [ -f "$home/.claude/projects/$(tp_claude_key "$p")/abc123.jsonl" ] && pass "the conversation where --resume finds it" || fail "conversation"
 eq "git identity: who commits in the sandbox" "$(HOME=$home git config --global user.name) <$(HOME=$home git config --global user.email)>" "Ann Example <ann@example.com>"
+eq "git: core.autocrlf as on the machine (a Windows checkout's line endings)" "$(HOME=$home git config --global core.autocrlf)" "true"
 eq "global CLAUDE.md" "$(cat "$home/.claude/CLAUDE.md")" "# mine"
 eq "own skills" "$(cat "$home/.claude/skills/mine/SKILL.md")" "skill"
 eq "settings: permissions from the machine, the rest as the container had it" \

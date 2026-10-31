@@ -37,6 +37,8 @@ It answers tab-separated lines (exit 0):
 - `files COUNT BYTES`: what goes;
 - `secret PATH`: a file that looks like a secret (`.env`, `*.pem`, `credentials*.json`, …): goes **only** if the
   user says yes to it by name;
+- `secret-link PATH`: one that is a symlink: never taken (it could point anywhere, e.g. at `~/.ssh`); tell the user,
+  who can teleport the file it points to instead, if it is in the project;
 - `session ID TIME`: this conversation (its id, its last message);
 - `setting WHAT`: `CLAUDE.md`, `skills`, `permissions`, `plugins:N`;
 - `exists yes|no`: the project is in the sandbox already (teleported before);
@@ -62,7 +64,9 @@ conversation, the settings. Then:
 
 ## 3. Move
 
-With every secret the user said yes to as its own `--secret`, and `--replace` only if they said yes to replacing:
+With every secret the user said yes to as its own `--secret`, and `--replace` only if they said yes to replacing. Run
+it with the Bash tool's `timeout` set to `600000` (10 minutes): the first time it pulls the container's image, and a
+run cut off halfway leaves the work undone:
 
 ```sh
 "${CLAUDE_PLUGIN_ROOT}/scripts/teleport.sh" --run $ARGUMENTS --secret ".env" --secret "config/.env"

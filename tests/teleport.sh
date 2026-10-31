@@ -19,9 +19,10 @@ TOKEN=p9m_secret_token_123
 FAKE=$tmp/fake; mkdir -p "$FAKE/bin" "$FAKE/copied"; export FAKE
 cat > "$FAKE/bin/docker" <<'SH'
 #!/usr/bin/env bash
-printf '%s|' docker "$@" >> "$FAKE/log"; echo >> "$FAKE/log"
+printf '%s|' docker "$@" "env:MSYS_NO_PATHCONV=${MSYS_NO_PATHCONV:-}" "env:COPYFILE_DISABLE=${COPYFILE_DISABLE:-}" >> "$FAKE/log"; echo >> "$FAKE/log"
 args=" $* "
 case $args in
+  *" inspect claude "*) if [ -f "$FAKE/template-claude" ]; then echo '/home/agent /var/run/docker.sock'; else echo '/home/agent /home/agent/.secrets /var/run/docker.sock'; fi; exit 0 ;;
   *" compose ls "*) [ -f "$FAKE/ctx-fail" ] && exit 1; exit 0 ;;
   *" ps -q --filter name=^claude\$ "*) [ -f "$FAKE/has-claude" ] && echo abc; exit 0 ;;
   *" compose -p claude "*" up -d "*) if [ -f "$FAKE/compose-fail" ]; then echo 'Error: pull access denied' >&2; exit 1; fi; touch "$FAKE/has-claude"; exit 0 ;;
@@ -47,7 +48,7 @@ esac
 SH
 chmod +x "$FAKE/bin/"*
 export PATH="$FAKE/bin:$PATH"
-reset() { rm -f "$FAKE"/log "$FAKE"/{ctx-fail,has-claude,compose-fail,exists,started,asleep,never-wakes,redirect}; rm -rf "$FAKE/copied"/*; }
+reset() { rm -f "$FAKE"/log "$FAKE"/{ctx-fail,has-claude,compose-fail,exists,started,asleep,never-wakes,redirect,template-claude}; rm -rf "$FAKE/copied"/*; }
 
 # The project (as in tests/teleport-lib.sh), tied to p9m-shop, with a conversation
 proj=$tmp/shop; mkdir -p "$proj/b c" "$proj/config" "$proj/node_modules"
@@ -103,7 +104,7 @@ out=$(tp --run --secret .env)
 log=$(cat "$FAKE/log")
 up=$(grep -n 'compose|-p|claude|' <<<"$log" | head -1 | cut -d: -f1)
 cpl=$(grep -n '|cp|' <<<"$log" | grep 'stage.tgz' | head -1 | cut -d: -f1)
-ex=$(grep -n 'exec|-u|agent|claude|bash|/tmp/teleport-' <<<"$log" | head -1 | cut -d: -f1)
+ex=$(grep -n 'exec|-u|agent|claude|bash|' <<<"$log" | head -1 | cut -d: -f1)
 [ -n "$up" ] && [ -n "$cpl" ] && [ -n "$ex" ] && [ "$up" -lt "$cpl" ] && [ "$cpl" -lt "$ex" ] && pass "run: compose up, then cp, then teleport-in.sh" || fail "run order: $log"
 has "$(sed -n "${ex}p" <<<"$log")" "/stage|shop|" "run: teleport-in.sh gets the stage and the project"
 listing=$(tar -tzf "$FAKE"/copied/stage.tgz)
@@ -134,3 +135,67 @@ eq "a --secret that is not a candidate is refused" "$code" 2
 
 reset; tp --plan >/dev/null; tp --run --secret .env >/dev/null
 grep -qF "$TOKEN" "$FAKE/log" && fail "the token appeared in an argument" || pass "the token is in no argument"
+
+# #2: settings.json without enabled plugins: the plan goes to its end
+reset; mkdir -p "$HOME/.claude"; echo '{"permissions":{"allow":["Bash(ls)"]}}' > "$HOME/.claude/settings.json"
+set +e; out=$(tp --plan); code=$?; set -e
+eq "settings without plugins: the plan ends with exit 0" "$code" 0
+has "$out" $'large\tno' "settings without plugins: the plan reaches its last line"
+rm "$HOME/.claude/settings.json"
+
+# #12: macOS tar would add ._* files
+reset; tp --run >/dev/null
+grep -q 'env:COPYFILE_DISABLE=1|' "$FAKE/log" && pass "COPYFILE_DISABLE=1 (no AppleDouble ._ files from macOS tar)" || fail "COPYFILE_DISABLE not set"
+
+# #9: our container: the stage on the secrets volume (archives skip it), not in /tmp
+has "$(grep 'teleport-in.sh' "$FAKE/log" | grep 'exec|-u|agent')" "|/home/agent/.secrets/.incoming-" "run: the container-side stage is on the secrets volume"
+
+# #6: a secret whose name starts with -
+reset; echo s > "$proj/-dash.pem"
+tp --run --secret -dash.pem >/dev/null && tar -tzf "$FAKE"/copied/stage.tgz | grep -q 'stage/secrets/-dash.pem' && pass "a secret named -dash.pem is staged" || fail "-dash.pem"
+rm "$proj/-dash.pem"
+
+# #5: a secret-looking symlink is never followed
+echo outside > "$tmp/outside.txt"; ln -s ../outside.txt "$proj/.env.prod"
+reset; out=$(tp --plan)
+has "$out" $'secret-link\t.env.prod' "plan: a secret that is a symlink is listed apart"
+grep -qx $'secret\t.env.prod' <<<"$out" && fail "a symlinked secret offered as a secret" || pass "plan: a symlinked secret is not offered"
+set +e; tp --run --secret .env.prod >/dev/null; code=$?; set -e
+eq "run: a symlinked secret is refused" "$code" 2
+rm "$proj/.env.prod"
+
+# #8: a claude container from a claude-code* template has no secrets volume: no secrets into it
+reset; touch "$FAKE/has-claude" "$FAKE/template-claude"
+set +e; out=$(tp --run --secret .env); code=$?; set -e
+eq "template's claude container + a secret: exit 2" "$code" 2
+has "$out" $'error\t' "template's claude container + a secret: says why"
+grep -q '|cp|' "$FAKE/log" && fail "nothing may be copied then" || pass "template's claude container + a secret: nothing copied"
+reset; touch "$FAKE/has-claude" "$FAKE/template-claude"
+tp --run >/dev/null && pass "template's claude container without secrets: files and conversation go" || fail "template container without secrets"
+has "$(grep 'teleport-in.sh' "$FAKE/log" | grep 'exec|-u|agent')" "|/tmp/teleport-" "template's container: the stage in /tmp (it holds no secrets)"
+
+# #3 #4: Git Bash: docker.exe gets Windows paths for this machine's files, container paths untouched; the conversation
+# under Claude Code's Windows folder name
+cat > "$FAKE/bin/cygpath" <<SH
+#!/usr/bin/env bash
+[ "\$1" = -w ] || exit 1
+if [ "\$2" = "$proj" ]; then printf '%s\n' 'C:\Users\Ann\shop'; else printf 'W:%s\n' "\$2"; fi
+SH
+chmod +x "$FAKE/bin/cygpath"
+mkdir -p "$HOME/.claude/projects/C--Users-Ann-shop"; echo '{}' > "$HOME/.claude/projects/C--Users-Ann-shop/winsess.jsonl"
+touch -d '2020-01-01' "$HOME/.claude/projects/C--Users-Ann-shop/winsess.jsonl"
+reset; out=$(tp --plan)
+has "$out" $'session\twinsess\t' "Git Bash: the conversation under Claude Code's Windows folder name"
+reset; tp --run >/dev/null
+grep '|cp|' "$FAKE/log" | grep -q '|W:' && pass "Git Bash: docker cp gets a Windows path" || fail "cp path: $(grep '|cp|' "$FAKE/log")"
+grep 'compose|-p|claude' "$FAKE/log" | grep -q '|-f|W:' && pass "Git Bash: compose -f gets a Windows path" || fail "compose path"
+grep -v 'env:MSYS_NO_PATHCONV=1|' "$FAKE/log" | grep -q '^docker' && fail "a docker call without MSYS_NO_PATHCONV=1" || pass "Git Bash: no docker call has its container paths rewritten"
+rm "$FAKE/bin/cygpath"
+
+# #7: a git project after git gc: the copy is still a repository
+g2=$tmp/gc; mkdir -p "$g2/.p9m"; cp "$proj/.p9m/p9m.env" "$g2/.p9m/"
+( cd "$g2" && git init -q && echo a > a.txt && git add a.txt && git -c user.email=t@t -c user.name=t commit -qm i && git gc -q && git pack-refs --all )
+reset; (cd "$g2" && bash "$script" --run >/dev/null)
+rm -rf "$tmp/gcout"; mkdir -p "$tmp/gcout"; tar -xzf "$FAKE"/copied/stage.tgz -C "$tmp/gcout"
+git -C "$tmp/gcout/stage/files" rev-parse HEAD >/dev/null 2>&1 && pass "after git gc the staged .git is a repository" || fail "staged .git after gc"
+

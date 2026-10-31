@@ -55,6 +55,10 @@ describe('the Claude Code plugin', () => {
     expect(md).toContain('"${CLAUDE_PLUGIN_ROOT}/scripts/teleport.sh" --run')
     expect(md).toContain('--secret')
     expect(md).toContain('claude --resume')
+    // The first run pulls an image: the Bash tool's 2-minute default would kill it halfway
+    expect(md).toContain('600000')
+    // A secret that is a symlink is never taken: the skill says so instead of asking
+    expect(md).toContain('secret-link')
     expect(fs.existsSync(path.join(pluginDir, 'scripts/teleport.sh'))).toBe(true)
   })
 
