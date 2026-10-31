@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+### Added
+
+- **A `claude-code-ecc` template:** the slim image with [ECC](https://github.com/affaan-m/ECC) 2.2.3 (MIT) installed into Claude Code as the `ecc@ecc` plugin: agents, skills and hooks for a plan → test → review workflow, with Node.js and Python for its hooks. `ghcr.io/csakaszamok/p9m-claude-code-ecc`, built with every release on that release's `p9m-claude-code-minimal`. For trying ECC out: it adds about 31k tokens of context to every session.
+
 ## [0.16.2] - 2026-10-31
 
 Upgrading from 0.16.x: `docker compose pull && docker compose up -d`; nothing else changes.
