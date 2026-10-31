@@ -1621,6 +1621,10 @@
 <td>the same, slim: <code>ghcr.io/csakaszamok/p9m-claude-code-minimal</code> (built from <code>images/claude-code-minimal</code> with every release) has Claude Code, the Docker CLI with compose and buildx, git and little else, about 1.5 GB of disk per sandbox. The agent builds and runs the apps in containers, so it needs no toolchains of its own</td>
 </tr>
 <tr>
+<td><code>claude-code-ecc</code></td>
+<td>the slim one with <a href="https://github.com/affaan-m/ECC">ECC</a> installed into Claude Code as the <code>ecc@ecc</code> plugin (pinned to a release): agents, skills and hooks for a plan → test → review workflow, Node.js and Python for its hooks. For trying ECC out: it adds about 31k tokens of context to every session, and its gate asks Claude to state the request before the first shell command of a session. <code>ghcr.io/csakaszamok/p9m-claude-code-ecc</code>, built from <code>images/claude-code-ecc</code> with every release; about 2 GB of disk per sandbox</td>
+</tr>
+<tr>
 <td><code>tcp-demo</code></td>
 <td>a demo of <a href="../networking/#tls-tcp-addresses">TLS TCP addresses</a>: Postgres, Redis, SSH and pgweb</td>
 </tr>
