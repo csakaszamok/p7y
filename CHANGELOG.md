@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-10-31
+
+Upgrading from 0.17.x: `docker compose pull && docker compose up -d`; nothing else changes on the server. The Claude Code plugin updates itself (`/plugin` → update, or reinstall).
+
 ### Added
 
 - **`/p9m:teleport`: continue in the sandbox.** The Claude Code plugin moves the project you are working on into a `claude` container in its own sandbox, next to its apps: the files (uncommitted changes too, `.gitignore` respected), the secret files you confirm one by one, this conversation (`claude --resume` picks it up there) and your portable settings (global `CLAUDE.md`, skills, enabled plugins, `permissions`). It goes straight to the sandbox's Docker with the project's keys; secrets live in a volume only the `claude` container sees. `--ecc` for the image with ECC. One way: back with git.
@@ -912,7 +916,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.18.0
 [0.17.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.17.0
 [0.16.3]: https://github.com/csakaszamok/p9m/releases/tag/v0.16.3
 [0.16.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.16.2
