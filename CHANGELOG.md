@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow [semantic versioning](https
 
 ## [Unreleased]
 
+## [0.16.2] - 2026-10-31
+
+Upgrading from 0.16.x: `docker compose pull && docker compose up -d`; nothing else changes.
+
 ### Added
 
 - **A `claude-code-minimal` template:** the same as `claude-code`, with a slim image of our own, `ghcr.io/csakaszamok/p9m-claude-code-minimal` (Claude Code, the Docker CLI with compose and buildx, git; the same `agent` user, home and sudo as Docker Sandboxes' image), built with every release. About 1.5 GB of disk per sandbox instead of about 5 GB.
@@ -886,7 +890,8 @@ The first release.
 
 - The project used to be called Leander. Existing `leander-` sandboxes and `ldr_` tokens keep working; see "Upgrading from Leander" in the README.
 
-[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.16.1...HEAD
+[Unreleased]: https://github.com/csakaszamok/p9m/compare/v0.16.2...HEAD
+[0.16.2]: https://github.com/csakaszamok/p9m/releases/tag/v0.16.2
 [0.16.1]: https://github.com/csakaszamok/p9m/releases/tag/v0.16.1
 [0.16.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.16.0
 [0.15.0]: https://github.com/csakaszamok/p9m/releases/tag/v0.15.0
